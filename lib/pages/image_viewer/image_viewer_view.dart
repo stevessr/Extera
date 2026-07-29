@@ -4,6 +4,8 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/image_viewer/video_player.dart';
+import 'package:extera_next/utils/clipboard_utils.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -195,21 +197,83 @@ class _ZoomableImageState extends State<_ZoomableImage> {
     super.dispose();
   }
 
+  void _onSecondaryTapUp(TapUpDetails details) {
+    if (!PlatformInfos.isDesktop) return;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    showMenu<int>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+        overlay.size.width - details.globalPosition.dx,
+        overlay.size.height - details.globalPosition.dy,
+      ),
+      items: [
+        PopupMenuItem(
+          value: 0,
+          child: Row(
+            children: [
+              const Icon(Icons.copy_outlined, size: 20),
+              const SizedBox(width: 8),
+              Text(L10n.of(context).copy),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 1,
+          child: Row(
+            children: [
+              const Icon(Icons.save_alt_outlined, size: 20),
+              const SizedBox(width: 8),
+              Text(L10n.of(context).downloadFile),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 0) {
+        _copyImageToClipboard();
+      } else if (value == 1) {
+        widget.event.saveFile(context);
+      }
+    });
+  }
+
+  Future<void> _copyImageToClipboard() async {
+    try {
+      final data = await widget.event.downloadAndDecryptAttachment(
+        getThumbnail: false,
+      );
+      await writeImageToClipboard(data.bytes);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.of(context).copiedToClipboard),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to copy image: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return InteractiveViewer(
       transformationController: _transformController,
       minScale: 1.0,
       maxScale: 10.0,
-      // When the user puts fingers on screen, disable PageView scroll
       onInteractionStart: (_) {
         widget.onZoomStatusChanged(true);
       },
-      // When interaction ends, check if we are still zoomed in
       onInteractionEnd: (details) {
         widget.controller.onInteractionEnds(details);
-
-        // Identity matrix means scale is 1.0 and offset is 0,0
         final isZoomed = _transformController.value.row0[0] != 1.0;
         if (!isZoomed) {
           widget.onZoomStatusChanged(false);
@@ -220,6 +284,7 @@ class _ZoomableImageState extends State<_ZoomableImage> {
           tag: widget.event.eventId,
           child: GestureDetector(
             onTap: () {},
+            onSecondaryTapUp: _onSecondaryTapUp,
             child: MxcImage(
               key: ValueKey(widget.event.eventId),
               event: widget.event,
