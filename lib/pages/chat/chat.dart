@@ -941,11 +941,13 @@ class ChatController extends State<ChatPageWithRoom>
       pastedImage = image;
     }
     if (pastedImage == null) return;
+
+    final files = [XFile.fromData(pastedImage, mimeType: 'image/png')];
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
       builder: (c) => SendFileDialog(
-        files: [XFile.fromData(pastedImage!, mimeType: 'image/png')],
+        files: files,
         room: room,
         thread: thread,
         outerContext: context,
