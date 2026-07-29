@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_linkify/flutter_linkify.dart';
@@ -289,8 +290,14 @@ class SettingsHomeserverView extends StatelessWidget {
                                   const JsonEncoder.withIndent(
                                     '    ',
                                   ).convert(entry.value),
+
                                   style: TextStyle(
                                     color: theme.colorScheme.onSurface,
+                                    fontFamily: AppSettings.monospaceFont.value,
+                                    fontFamilyFallback: AppSettings
+                                        .monospaceFallbackFonts
+                                        .value
+                                        .split(','),
                                   ),
                                 ),
                               ),

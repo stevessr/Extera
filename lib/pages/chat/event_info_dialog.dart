@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -84,7 +85,14 @@ class EventInfoDialog extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: SelectableText(
                       prettyJson(MatrixEvent.fromJson(event.toJson())),
-                      style: TextStyle(color: theme.colorScheme.onSurface),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontFamily: AppSettings.monospaceFont.value,
+                        fontFamilyFallback: AppSettings
+                            .monospaceFallbackFonts
+                            .value
+                            .split(','),
+                      ),
                     ),
                   ),
                 ),
@@ -101,7 +109,14 @@ class EventInfoDialog extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       child: SelectableText(
                         prettyJson(originalSource),
-                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontFamily: AppSettings.monospaceFont.value,
+                          fontFamilyFallback: AppSettings
+                              .monospaceFallbackFonts
+                              .value
+                              .split(','),
+                        ),
                       ),
                     ),
                   ),
