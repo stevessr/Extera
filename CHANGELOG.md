@@ -135,7 +135,7 @@
 - Update translations for Spanish and Japanese (these are machine translations).
 - Ability to edit media captions.
 - Forwarding messages now respects message edits.
-- Replaced old closed-source translator backend to [Neurogate](https://codeberg.org/rustyraven/Neurogate).
+- Replaced old closed-source translator backend to [Neurogate](https://source.extera.xyz/Extera/Neurogate).
 - Account registration using password.
 - Fix: stickers not being sent in threads.
 - Fix: additional "@" sign in forward attribution.
