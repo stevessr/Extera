@@ -63,7 +63,7 @@ Other locales are not updated.
 Before building, you should have:
 
 1. Flutter SDK installed
-2. [matrix-dart-sdk](https://github.com/ExteraApp/matrix-dart-sdk) in the same directory as Extera
+2. [matrix-dart-sdk](https://source.extera.xyz/Extera/matrix-dart-sdk) in the same directory as Extera
 
 ### Setup
 
@@ -83,7 +83,7 @@ Make sure that `pubspec.yaml` has a Git reference like this:
 ```yaml
 matrix:
   git:
-    url: https://github.com/ExteraApp/matrix-dart-sdk.git
+    url: https://source.extera.xyz/Extera/matrix-dart-sdk.git
     ref: main
 ```
 
@@ -122,4 +122,4 @@ This project is licensed under the [AGPL-3.0 License](LICENSE). See the LICENSE 
 - [Matrix room](https://matrix.to/#/#extera:extera.xyz) - Support room for Extera
 - [Matrix.org](https://matrix.org/) - The Matrix protocol specification
 - [FluffyChat](https://github.com/krille-chan/fluffychat) - The original FluffyChat project
-- [matrix-dart-sdk](https://github.com/ExteraApp/matrix-dart-sdk) - Dart SDK for Matrix (a fork of [famedly/matrix-dart-sdk](https://github.com/famedly/matrix-dart-sdk))
+- [matrix-dart-sdk](https://source.extera.xyz/Extera/matrix-dart-sdk) - Dart SDK for Matrix (a fork of [famedly/matrix-dart-sdk](https://github.com/famedly/matrix-dart-sdk))
