@@ -303,12 +303,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           : roundedCorner,
     );
     final noBubble =
-        (event.messageType == MessageTypes.Sticker && !event.redacted) ||
-        (event.messageType == MessageTypes.Text &&
-            event.relationshipType == null &&
-            event.onlyEmotes &&
-            event.numberEmotes > 0 &&
-            event.numberEmotes <= 3);
+        (event.messageType == MessageTypes.Sticker && !event.redacted);
 
     final onlyMedia =
         {MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
@@ -412,11 +407,6 @@ class _MessageBubbleState extends State<MessageBubble> {
           MessageTypes.None,
         }.contains(event.messageType) ||
         event.redacted;
-    final isBigEmote =
-        noBubble &&
-        event.messageType == MessageTypes.Text &&
-        event.relationshipType == null &&
-        event.onlyEmotes;
 
     final useInlineStatus =
         !noBubble &&
@@ -424,10 +414,8 @@ class _MessageBubbleState extends State<MessageBubble> {
         (isTextLike || event.fileDescription != null) &&
         !event.redacted;
 
-    final useChipStatus = (noBubble || onlyMedia) && !isBigEmote;
-    final useBottomChipStatus = isBigEmote;
-    final useBottomRowStatus =
-        !useInlineStatus && !useChipStatus && !useBottomChipStatus;
+    final useChipStatus = noBubble || onlyMedia;
+    final useBottomRowStatus = !useInlineStatus && !useChipStatus;
 
     final hasReplyRelation =
         event.inReplyToEventId(includingFallback: false) != null;
@@ -747,18 +735,6 @@ class _MessageBubbleState extends State<MessageBubble> {
                                             // reserve vertical space for bottomrowstatus
                                             if (useBottomRowStatus)
                                               const SizedBox(height: 22),
-                                            if (useBottomChipStatus)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  top: 4,
-                                                  left: 4,
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [messageStatusChip],
-                                                ),
-                                              ),
                                           ],
                                         ),
                                         if (showSenderOverlay)

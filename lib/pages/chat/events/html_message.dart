@@ -432,7 +432,7 @@ class _HtmlMessageState extends State<HtmlMessage> {
           actualHeight *= AppSettings.fontSizeFactor.value;
 
           if (actualHeight <= 24 && widget.bigEmotes) {
-            final scale = 36 / actualHeight;
+            final scale = 48 / actualHeight;
             actualWidth *= scale;
             actualHeight *= scale;
           }

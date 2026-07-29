@@ -357,7 +357,7 @@ class MessageContent extends StatelessWidget {
             );
             final messageStyle = TextStyle(
               color: textColor,
-              fontSize: bigEmotes ? fontSize * 5 : fontSize,
+              fontSize: bigEmotes ? fontSize * 2 : fontSize,
               decoration: event.redacted ? TextDecoration.lineThrough : null,
               fontFamily: AppSettings.systemFont.value
                   ? 'SystemFont'
