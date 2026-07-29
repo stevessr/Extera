@@ -903,6 +903,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendFileAction({FileType type = .any}) async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     final files = await selectFiles(context, allowMultiple: true, type: type);
     if (files.isEmpty) {
       Logs().v("Returning in sendFileAction, bc files.isEmpty==true");
@@ -926,6 +928,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendImageFromClipBoard(Uint8List? image) async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     Uint8List? pastedImage;
     if (PlatformInfos.isLinux) {
       pastedImage = await getImageFromClipboardLinux();
@@ -954,6 +958,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void openCameraAction() async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     inputFocus.unfocus();
     final file = await ImagePicker().pickImage(source: ImageSource.camera);
     if (file == null) return;
@@ -971,6 +977,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void openVideoCameraAction() async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     inputFocus.unfocus();
     final file = await ImagePicker().pickVideo(
       source: ImageSource.camera,
@@ -996,6 +1004,8 @@ class ChatController extends State<ChatPageWithRoom>
     List<int> waveform,
     String fileName,
   ) async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final audioFile = XFile(path);
 
@@ -1045,6 +1055,8 @@ class ChatController extends State<ChatPageWithRoom>
     int duration,
     String fileName,
   ) async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final videoFile = XFile(path);
 
@@ -1117,6 +1129,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendLocationAction() async {
+    final proceed = await showTrustUserInRoomDialog(context, room);
+    if (!mounted || !proceed) return;
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
