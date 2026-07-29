@@ -93,8 +93,7 @@ dependencies:
   share_plus: ^12.0.1
   shared_preferences: ^2.5.5 # Pinned because https://github.com/flutter/flutter/issues/118401
   slugify: ^2.0.0
-  sqflite_common_ffi: ^2.3.7+1
-  sqlcipher_flutter_libs: ^0.6.8
+  sqflite_common_ffi: ^2.4.2
   swipe_to_action: ^0.3.0
   timezone: ^0.10.0
   unifiedpush: ^6.2.0
@@ -112,7 +111,7 @@ dependencies:
   uuid: ^4.5.3
   flutter_ringtone_player: ^4.0.0+4
   audioplayers_linux: ^4.2.1
-  pro_image_editor: ^12.1.0
+  pro_image_editor: ^13.2.3
   google_fonts: ^8.0.2
   marquee: ^2.3.0
   particles_network: ^1.9.3
@@ -127,11 +126,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   import_sorter: ^4.6.0
-#  integration_test:
-#    sdk: flutter
+  #  integration_test:
+  #    sdk: flutter
   license_checker: ^1.6.2
   msix: ^3.6.13
   translations_cleaner: ^0.1.0
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlcipher
 
 flutter_native_splash:
   color: "#ffffff"
@@ -147,16 +151,16 @@ flutter:
     - assets/sounds/ringtones/
     - assets/font/
   fonts:
-    - family: 'Twemoji Mozilla'
+    - family: "Twemoji Mozilla"
       fonts:
         - asset: assets/font/Twemoji.ttf
-    - family: 'Roboto'
+    - family: "Roboto"
       fonts:
         - asset: assets/font/RobotoVariable.ttf
           style: normal
         - asset: assets/font/RobotoItalicVariable.ttf
           style: italic
-    - family: 'Roboto Mono'
+    - family: "Roboto Mono"
       fonts:
         - asset: assets/font/RobotoMonoVariable.ttf
 
