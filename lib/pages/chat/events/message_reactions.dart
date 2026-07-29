@@ -179,7 +179,7 @@ class _Reaction extends StatelessWidget {
       onSecondaryTap: () => onLongPress != null
           ? onLongPress!()
           : null, // It is better to make it a seperate option
-      borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
       child: Container(
         decoration: BoxDecoration(
           color: translucencyEffect ? color.withValues(alpha: 0.7) : color,
