@@ -22,6 +22,7 @@ class HtmlMessage extends StatefulWidget {
   final Color textColor;
   final double fontSize;
   final TextStyle linkStyle;
+  final bool bigEmotes;
 
   final void Function(LinkableElement) onOpen;
   final void Function() onCopy;
@@ -40,6 +41,7 @@ class HtmlMessage extends StatefulWidget {
     required this.onOpen,
     required this.onCopy,
     this.selectable = false,
+    this.bigEmotes = false,
     this.trailingSpan,
   });
 
@@ -428,6 +430,12 @@ class _HtmlMessageState extends State<HtmlMessage> {
         if (node.attributes.containsKey('data-mx-emoticon')) {
           actualWidth *= AppSettings.fontSizeFactor.value;
           actualHeight *= AppSettings.fontSizeFactor.value;
+
+          if (actualHeight <= 24 && widget.bigEmotes) {
+            final scale = 36 / actualHeight;
+            actualWidth *= scale;
+            actualHeight *= scale;
+          }
         }
 
         final ratio = actualWidth / actualHeight;

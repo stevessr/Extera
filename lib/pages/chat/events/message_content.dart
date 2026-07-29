@@ -125,6 +125,8 @@ class MessageContent extends StatelessWidget {
     final fontSize =
         AppSettings.fontSizeFactor.value * AppSettings.messageFontSize.value;
     final buttonTextColor = textColor;
+    final bigEmotes =
+        event.onlyEmotes && event.numberEmotes > 0 && event.numberEmotes <= 3;
     switch (event.type) {
       case EventTypes.Message:
       case EventTypes.Encrypted:
@@ -258,6 +260,7 @@ class MessageContent extends StatelessWidget {
                   fontSize:
                       AppSettings.fontSizeFactor.value *
                       AppSettings.messageFontSize.value,
+                  bigEmotes: bigEmotes,
                   linkStyle: TextStyle(
                     color: linkColor,
                     fontSize:
@@ -348,10 +351,6 @@ class MessageContent extends StatelessWidget {
                 fontSize: fontSize,
               );
             }
-            final bigEmotes =
-                event.onlyEmotes &&
-                event.numberEmotes > 0 &&
-                event.numberEmotes <= 3;
             final messageText = event.calcLocalizedBodyFallback(
               MatrixLocals(L10n.of(context)),
               hideReply: true,
