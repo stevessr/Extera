@@ -4189,5 +4189,7 @@
       "placeholders": {
         "timezone": {"type": "String"}
       }
-    }
+    },
+    "userNote": "Заметка",
+    "userNoteHint": "Добавьте личную заметку об этом пользователе..."
 }

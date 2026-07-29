@@ -1,10 +1,10 @@
-import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
@@ -179,13 +179,13 @@ class _Reaction extends StatelessWidget {
       onSecondaryTap: () => onLongPress != null
           ? onLongPress!()
           : null, // It is better to make it a seperate option
-      borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
       child: Container(
         decoration: BoxDecoration(
           color: translucencyEffect ? color.withValues(alpha: 0.7) : color,
-          borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         child: content,
       ),
     );

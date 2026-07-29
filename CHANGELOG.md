@@ -1,3 +1,13 @@
+## Extera 26.4.4
+- BREAKING: update sqlite to 3.0.0. You will be logged out.
+- Fixed markdown issue
+- Added user notes
+- Fixed image editor not working for pasted images
+- Fixed wrong time format being used in profile view
+- Fixed TOFU dialogs not appearing when sending files
+- Updated reaction design, also translucency effect now affects reactions
+- Updated links
+
 ## Extera 26.4.31
 - Fix message composer alignment
 - Fix wrong sender name layout being used in images sent in threads
@@ -135,7 +145,7 @@
 - Update translations for Spanish and Japanese (these are machine translations).
 - Ability to edit media captions.
 - Forwarding messages now respects message edits.
-- Replaced old closed-source translator backend to [Neurogate](https://codeberg.org/rustyraven/Neurogate).
+- Replaced old closed-source translator backend to [Neurogate](https://source.extera.xyz/Extera/Neurogate).
 - Account registration using password.
 - Fix: stickers not being sent in threads.
 - Fix: additional "@" sign in forward attribution.

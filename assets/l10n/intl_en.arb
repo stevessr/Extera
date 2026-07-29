@@ -4104,5 +4104,7 @@
       }
     },
     "navigationAndLayout": "Navigation & layout",
-    "@navigationAndLayout": {}
+    "@navigationAndLayout": {},
+    "userNote": "Note",
+    "userNoteHint": "Add a personal note about this user..."
 }
