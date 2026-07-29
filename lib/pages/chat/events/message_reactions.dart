@@ -183,9 +183,9 @@ class _Reaction extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: translucencyEffect ? color.withValues(alpha: 0.7) : color,
-          borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         child: content,
       ),
     );
