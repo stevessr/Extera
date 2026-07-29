@@ -47,7 +47,8 @@ abstract class AppConfig {
 
   static String get webBaseUrl => _webBaseUrl;
   static const String sourceCodeUrl = 'https://source.extera.xyz/Extera/Extera';
-  static const String supportUrl = 'https://source.extera.xyz/Extera/Extera/issues';
+  static const String supportUrl =
+      'https://source.extera.xyz/Extera/Extera/issues';
   static const String changelogUrl =
       'https://source.extera.xyz/Extera/Extera/blob/main/CHANGELOG.md';
   static final Uri newIssueUrl = Uri(
@@ -71,7 +72,6 @@ abstract class AppConfig {
     host: 'servers.joinmatrix.org',
     path: 'servers.json',
   );
-  static const Set<String> defaultReactions = {'👍', '❤️', '😂', '😮', '😢'};
 
   // See CREDITS.md
   static const Map<String, String> ringtoneFiles = {
@@ -80,16 +80,6 @@ abstract class AppConfig {
   };
 
   static void loadFromJson(Map<String, dynamic> json) {
-    // if (json['chat_color'] != null) {
-    //   try {
-    //     colorSchemeSeed = Color(json['chat_color']);
-    //   } catch (e) {
-    //     Logs().w(
-    //       'Invalid color in config.json! Please make sure to define the color in this format: "0xffdd0000"',
-    //       e,
-    //     );
-    //   }
-    // }
     if (json['application_name'] is String) {
       _applicationName = json['application_name'];
     }
