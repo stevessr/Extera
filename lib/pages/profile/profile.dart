@@ -1,3 +1,4 @@
+import 'package:extera_next/utils/matrix_sdk_extensions/user_notes_extension.dart';
 import 'package:flutter/material.dart';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -34,6 +35,8 @@ class ProfileController extends State<ProfilePage> {
   Uri? bannerUrl;
 
   bool isQuerying = false;
+
+  late final TextEditingController noteController;
 
   Future<void> queryData() async {
     final client = Matrix.of(context).client;
@@ -158,12 +161,28 @@ class ProfileController extends State<ProfilePage> {
 
   @override
   void initState() {
+    final client = Matrix.of(context).client;
+
     super.initState();
+    noteController = TextEditingController(
+      text: client.getUserNote(widget.profile.userId) ?? "",
+    );
     queryData();
 
-    if (Matrix.of(context).client.userID != widget.profile.userId) {
+    if (client.userID != widget.profile.userId) {
       queryMutualRooms();
     }
+  }
+
+  @override
+  void dispose() {
+    noteController.dispose();
+    super.dispose();
+  }
+
+  void saveNote(String? note) async {
+    note ??= noteController.text;
+    await Matrix.of(context).client.setUserNote(widget.profile.userId, note);
   }
 
   void onChatTap(Room room) {

@@ -499,6 +499,65 @@ class ProfileView extends StatelessWidget {
                         children: [
                           ListTile(
                             title: Text(
+                              L10n.of(context).userNote,
+                              style: TextStyle(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const .fromLTRB(16, 0, 16, 16),
+                            child: Material(
+                              clipBehavior: .hardEdge,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                              child: TextField(
+                                controller: controller.noteController,
+                                spellCheckConfiguration:
+                                    const SpellCheckConfiguration(),
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(59989),
+                                ],
+                                keyboardType: .text,
+                                maxLines: null,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.only(
+                                    left: 16.0,
+                                    right: 16.0,
+                                    bottom: 10.0,
+                                    top: 10.0,
+                                  ),
+                                  counter: const SizedBox.shrink(),
+                                  hintText: L10n.of(context).userNoteHint,
+                                  hintMaxLines: 1,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  filled: false,
+                                ),
+                                onSubmitted: controller.saveNote,
+                                onEditingComplete: () =>
+                                    controller.saveNote(null),
+                                onTapOutside: (_) => controller.saveNote(null),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (profile.userId != client.userID &&
+                      !controller.isQueryingMutualRooms &&
+                      controller.mutualRooms.isNotEmpty) ...[
+                    Material(
+                      clipBehavior: .hardEdge,
+                      color: theme.colorScheme.surfaceContainerHigh,
+                      borderRadius: borderRadius,
+                      child: Column(
+                        children: [
+                          ListTile(
+                            title: Text(
                               L10n.of(context).mutualRooms,
                               style: TextStyle(
                                 color: theme.colorScheme.secondary,
