@@ -72,7 +72,7 @@ dependencies:
   matrix:
     path: ../matrix-dart-sdk
     #git:
-    #  url: https://github.com/ExteraApp/matrix-dart-sdk.git
+    #  url: https://source.extera.xyz/Extera/matrix-dart-sdk.git
     #  ref: main
   mime: ^2.0.0
   native_imaging: ^0.4.0
