@@ -1,10 +1,10 @@
-import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
