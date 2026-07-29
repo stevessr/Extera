@@ -580,7 +580,7 @@ class _TimezoneClockState extends State<_TimezoneClock> {
     final utcLabel = _formatUtcOffset(offset);
 
     return Text(
-      '${userTime.localizedTimeShort(context)} ($utcLabel)',
+      '${userTime.localizedTimeOfDay(context)} ($utcLabel)',
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
