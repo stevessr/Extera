@@ -56,11 +56,11 @@ enum AppSettings<T> {
   logoUrl<String>('xyz.extera.logo_url', 'https://extera.xyz/logo.svg'),
   privacyPolicy<String>(
     'xyz.extera.tos',
-    'https://github.com/ExteraApp/Extera/blob/main/PRIVACY.md',
+    'https://source.extera.xyz/Extera/Extera/blob/main/PRIVACY.md',
   ),
   tos<String>(
     'xyz.extera.tos',
-    'https://github.com/ExteraApp/Extera/blob/main/README.md',
+    'https://source.extera.xyz/Extera/Extera/blob/main/README.md',
   ),
   website<String>('xyz.extera.website', 'https://extera.xyz'),
   defaultHomeserver<String>('xyz.extera.default_hs', 'extera.xyz'),

@@ -31,7 +31,7 @@ abstract class AppConfig {
   static const Color primaryColorLight = Color(0xFFCCBDEA);
   static const Color secondaryColor = Color(0xFF41a2bc);
   static String _privacyUrl =
-      'https://github.com/ExteraApp/Extera/blob/main/PRIVACY.md';
+      'https://source.extera.xyz/Extera/Extera/blob/main/PRIVACY.md';
 
   static String get privacyUrl => _privacyUrl;
   static const String website = 'https://extera.xyz';
@@ -46,14 +46,14 @@ abstract class AppConfig {
   static String _webBaseUrl = 'https://fluffychat.im/web';
 
   static String get webBaseUrl => _webBaseUrl;
-  static const String sourceCodeUrl = 'https://github.com/ExteraApp/Extera';
-  static const String supportUrl = 'https://github.com/ExteraApp/Extera/issues';
+  static const String sourceCodeUrl = 'https://source.extera.xyz/Extera/Extera';
+  static const String supportUrl = 'https://source.extera.xyz/Extera/Extera/issues';
   static const String changelogUrl =
-      'https://github.com/ExteraApp/Extera/blob/main/CHANGELOG.md';
+      'https://source.extera.xyz/Extera/Extera/blob/main/CHANGELOG.md';
   static final Uri newIssueUrl = Uri(
     scheme: 'https',
-    host: 'github.com',
-    path: '/ExteraApp/Extera/issues',
+    host: 'source.extera.xyz',
+    path: '/Extera/Extera/issues',
   );
 
   static const bool hideTypingUsernames = false;
