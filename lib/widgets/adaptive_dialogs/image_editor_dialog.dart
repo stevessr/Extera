@@ -94,13 +94,11 @@ Future<Uint8List?> showImageEditor({
   return showAdaptiveDialog<Uint8List>(
     context: context,
     useSafeArea: true,
-    builder: (context) {
-      return MaterialYouEditor(
-        byteArray: byteArray,
-        onImageEditingComplete: (bytes) async {
-          Navigator.of(context).pop<Uint8List>(bytes);
-        },
-      );
-    },
+    builder: (context) => MaterialYouEditor(
+      byteArray: byteArray,
+      onImageEditingComplete: (bytes) async {
+        Navigator.of(context).pop<Uint8List>(bytes);
+      },
+    ),
   );
 }
