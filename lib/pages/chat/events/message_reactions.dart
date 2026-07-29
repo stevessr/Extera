@@ -1,3 +1,4 @@
+import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -32,6 +33,7 @@ class MessageReactions extends StatelessWidget {
     );
     final reactionMap = <String, _ReactionEntry>{};
     final client = Matrix.of(context).client;
+    final translucencyEffect = AppSettings.enableChatFrostedGlass.value;
 
     for (final e in allReactionEvents) {
       final key = e.content
@@ -65,6 +67,7 @@ class MessageReactions extends StatelessWidget {
             reactionKey: r.key,
             count: r.count,
             reacted: r.reacted,
+            translucencyEffect: translucencyEffect,
             onTap: () {
               if (r.reacted) {
                 final evt = allReactionEvents.firstWhereOrNull(
@@ -109,6 +112,7 @@ class _Reaction extends StatelessWidget {
   final bool? reacted;
   final void Function()? onTap;
   final void Function()? onLongPress;
+  final bool translucencyEffect;
 
   const _Reaction({
     required this.reactionKey,
@@ -116,6 +120,7 @@ class _Reaction extends StatelessWidget {
     required this.reacted,
     required this.onTap,
     required this.onLongPress,
+    this.translucencyEffect = false,
   });
 
   @override
@@ -177,7 +182,7 @@ class _Reaction extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
       child: Container(
         decoration: BoxDecoration(
-          color: color,
+          color: translucencyEffect ? color.withValues(alpha: 0.7) : color,
           borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
