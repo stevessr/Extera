@@ -100,6 +100,24 @@ class ChatPermissionsSettingsView extends StatelessWidget {
             isStateEvent: false,
           ),
           _PermissionEntry(
+            title: l10n.startPolls,
+            permissionKey: EventTypes.PollStart,
+            category: 'events',
+            isStateEvent: false,
+          ),
+          _PermissionEntry(
+            title: l10n.voteInPolls,
+            permissionKey: EventTypes.PollResponse,
+            category: 'events',
+            isStateEvent: false,
+          ),
+          _PermissionEntry(
+            title: l10n.endPolls,
+            permissionKey: 'org.matrix.msc3381.poll.end',
+            category: 'events',
+            isStateEvent: false,
+          ),
+          _PermissionEntry(
             title: l10n.sendRoomNotifications,
             permissionKey: 'room',
             category: 'notifications',
