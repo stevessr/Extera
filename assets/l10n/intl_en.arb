@@ -4115,7 +4115,7 @@
     "aclUserAtRiskWarning": "Saving these changes may block you from this room. Continue?",
     "addAllowedServer": "Add allowed server",
     "addBannedServer": "Add banned server",
-    "startPolls": "Send polls",
+    "startPolls": "Start polls",
     "voteInPolls": "Vote in polls",
     "endPolls": "End polls"
 }
