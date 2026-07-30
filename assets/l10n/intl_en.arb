@@ -952,7 +952,7 @@
     "@globalChatId": {},
     "accessAndVisibility": "Access and visibility",
     "@accessAndVisibility": {},
-    "accessAndVisibilityDescription": "Who is allowed to join this chat and how the chat can be discovered.",
+    "accessAndVisibilityDescription": "Who is allowed to join this chat and how the chat can be discovered",
     "@accessAndVisibilityDescription": {},
     "calls": "Calls",
     "@calls": {},
@@ -4106,5 +4106,13 @@
     "navigationAndLayout": "Navigation & layout",
     "@navigationAndLayout": {},
     "userNote": "Note",
-    "userNoteHint": "Add a personal note about this user..."
+    "userNoteHint": "Add a personal note about this user...",
+    "roomServerAcl": "Server ACL",
+    "roomServerAclDescription": "Which servers are allowed to participate",
+    "allowIpLiterals": "Allow IP literals",
+    "allowedServers": "Allowed servers",
+    "bannedServers": "Banned servers",
+    "aclUserAtRiskWarning": "Saving these changes may block you from this room. Continue?",
+    "addAllowedServer": "Add allowed server",
+    "addBannedServer": "Add banned server"
 }

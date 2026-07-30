@@ -1,5 +1,6 @@
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
@@ -60,29 +61,31 @@ class ChatAclSettingsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('ACL settings'),
+        title: Text(L10n.of(context).roomServerAcl),
         actions: [
           if (canEdit)
             IconButton(
               icon: const Icon(Icons.save_outlined),
-              tooltip: 'Save',
+              tooltip: L10n.of(context).saveChanges,
               onPressed: controller.save,
             ),
         ],
       ),
       body: MaxWidthBody(
+        withoutVerticalPadding: true,
+        withoutVisibleBorder: true,
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const .symmetric(horizontal: 8),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: .min,
               children: [
                 Material(
                   borderRadius: borderRadius,
                   color: theme.colorScheme.surfaceContainerHigh,
-                  clipBehavior: Clip.hardEdge,
+                  clipBehavior: .hardEdge,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: .min,
                     children: [
                       SwitchListTile(
                         secondary: CircleAvatar(
@@ -90,7 +93,7 @@ class ChatAclSettingsView extends StatelessWidget {
                           backgroundColor: theme.colorScheme.primaryContainer,
                           child: const Icon(Icons.numbers),
                         ),
-                        title: Text('Allow IP literals'),
+                        title: Text(L10n.of(context).allowIpLiterals),
                         value: controller.allowIpLiterals,
                         onChanged: canEdit
                             ? controller.setAllowIpLiterals
@@ -104,11 +107,11 @@ class ChatAclSettingsView extends StatelessWidget {
                           backgroundColor: theme.colorScheme.tertiaryContainer,
                           child: const Icon(Icons.check_circle_outline),
                         ),
-                        title: Text('Allowed servers'),
+                        title: Text(L10n.of(context).allowedServers),
                         trailing: canEdit
                             ? IconButton(
                                 icon: const Icon(Icons.add_outlined),
-                                tooltip: 'Add allowed server',
+                                tooltip: L10n.of(context).addAllowedServer,
                                 onPressed: () =>
                                     _addServer(context, allowed: true),
                               )
@@ -134,11 +137,11 @@ class ChatAclSettingsView extends StatelessWidget {
                           backgroundColor: theme.colorScheme.errorContainer,
                           child: const Icon(Icons.block_outlined),
                         ),
-                        title: Text('Banned servers'),
+                        title: Text(L10n.of(context).bannedServers),
                         trailing: canEdit
                             ? IconButton(
                                 icon: const Icon(Icons.add_outlined),
-                                tooltip: 'Add banned server',
+                                tooltip: L10n.of(context).addBannedServer,
                                 onPressed: () =>
                                     _addServer(context, allowed: false),
                               )

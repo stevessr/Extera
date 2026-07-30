@@ -1,3 +1,4 @@
+import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings_view.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -26,17 +27,13 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
   void _ensureDraftsInitialized() {
     if (_initialized) return;
     final serverAcl = room.getState('m.room.server_acl');
-    ipLiteralsDraft = serverAcl?.content.tryGet<bool>('allow_ip_literals') ?? false;
+    ipLiteralsDraft =
+        serverAcl?.content.tryGet<bool>('allow_ip_literals') ?? false;
     allowDraft =
-        (serverAcl?.content['allow'] as List?)
-            ?.cast<String>()
-            .toList() ??
+        (serverAcl?.content['allow'] as List?)?.cast<String>().toList() ??
         ['*'];
     denyDraft =
-        (serverAcl?.content['deny'] as List?)
-            ?.cast<String>()
-            .toList() ??
-        [];
+        (serverAcl?.content['deny'] as List?)?.cast<String>().toList() ?? [];
     _initialized = true;
   }
 
@@ -90,8 +87,7 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
     if (userServer == null) return false;
     final isAllowed =
         allowDraft.contains('*') || allowDraft.contains(userServer);
-    final isDenied =
-        denyDraft.contains(userServer) || denyDraft.contains('*');
+    final isDenied = denyDraft.contains(userServer) || denyDraft.contains('*');
     return !isAllowed || isDenied;
   }
 
@@ -99,11 +95,11 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
     if (_userAtRisk) {
       final consent = await showOkCancelAlertDialog(
         context: context,
-        title: 'Warning',
-        message:
-            'Saving these changes may block you out of the room. Continue?',
-        okLabel: 'Save',
-        cancelLabel: 'Cancel',
+        title: L10n.of(context).areYouSure,
+        message: L10n.of(context).aclUserAtRiskWarning,
+        okLabel: L10n.of(context).continueText,
+        cancelLabel: L10n.of(context).cancel,
+        isDestructive: true,
       );
       if (consent != OkCancelResult.ok) return;
     }
@@ -114,8 +110,12 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
     };
     await showFutureLoadingDialog(
       context: context,
-      future: () =>
-          room.client.setRoomStateWithKey(room.id, 'm.room.server_acl', '', content),
+      future: () => room.client.setRoomStateWithKey(
+        room.id,
+        'm.room.server_acl',
+        '',
+        content,
+      ),
     );
     setState(() {
       _initialized = false;

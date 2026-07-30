@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Visibility;
+import 'package:go_router/go_router.dart';
 
 import 'package:matrix/matrix.dart';
 
@@ -127,15 +128,15 @@ class ChatAccessSettingsPageView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Material(
-                    borderRadius: borderRadius,
-                    color: theme.colorScheme.surfaceContainerHigh,
-                    child: Column(
-                      children: [
-                        if ({
-                          JoinRules.public,
-                          JoinRules.knock,
-                        }.contains(room.joinRules)) ...[
+                  if ({
+                    JoinRules.public,
+                    JoinRules.knock,
+                  }.contains(room.joinRules)) ...[
+                    Material(
+                      borderRadius: borderRadius,
+                      color: theme.colorScheme.surfaceContainerHigh,
+                      child: Column(
+                        children: [
                           ListTile(
                             title: Text(
                               L10n.of(context).areGuestsAllowedToJoin,
@@ -247,9 +248,28 @@ class ChatAccessSettingsPageView extends StatelessWidget {
                                       controller.setChatVisibilityOnDirectory,
                                 ),
                           ),
-                          const SizedBox(height: 8),
                         ],
-                      ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Material(
+                    borderRadius: borderRadius,
+                    color: theme.colorScheme.surfaceContainerHigh,
+                    clipBehavior: .hardEdge,
+                    child: ListTile(
+                      title: Text(L10n.of(context).roomServerAcl),
+                      subtitle: Text(L10n.of(context).roomServerAclDescription),
+                      leading: CircleAvatar(
+                        backgroundColor: theme.colorScheme.tertiary,
+                        child: Icon(
+                          Icons.router_outlined,
+                          color: theme.colorScheme.onTertiary,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_outlined),
+                      onTap: () =>
+                          context.push('/rooms/${room.id}/details/acl'),
                     ),
                   ),
                   const SizedBox(height: 8),
