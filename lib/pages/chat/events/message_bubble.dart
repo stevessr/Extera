@@ -903,6 +903,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 top: 4.0,
                 left: (ownMessage ? 0 : 30) + 12.0,
                 right: ownMessage ? 0 : 12.0,
+                bottom: 4.0,
               ),
               child: MessageReactions(
                 event,
