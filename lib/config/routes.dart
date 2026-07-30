@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -569,6 +570,17 @@ abstract class AppRoutes {
                         context,
                         state,
                         ChatAccessSettings(
+                          roomId: state.pathParameters['roomid']!,
+                        ),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
+                      path: 'acl',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        ChatAclSettings(
                           roomId: state.pathParameters['roomid']!,
                         ),
                       ),

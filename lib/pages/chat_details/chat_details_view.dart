@@ -384,6 +384,23 @@ class ChatDetailsView extends StatelessWidget {
                           onTap: () =>
                               context.push('/rooms/${room.id}/details/privacy'),
                         ),
+                        const ListDivider(),
+                        ListTile(
+                          title: Text("Server ACL"),
+                          subtitle: Text(
+                            "Which servers are allowed to participate",
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: theme.colorScheme.tertiary,
+                            child: Icon(
+                              Icons.router_outlined,
+                              color: theme.colorScheme.onTertiary,
+                            ),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_outlined),
+                          onTap: () =>
+                              context.push('/rooms/${room.id}/details/acl'),
+                        ),
                       ],
                     ),
                   ),
