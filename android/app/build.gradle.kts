@@ -31,7 +31,7 @@ dependencies {
 
 android {
     namespace = "xyz.extera.next"
-    compileSdk = 37
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -73,6 +73,7 @@ android {
         versionName = flutter.versionName
     }
 
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
@@ -81,6 +82,22 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
     }
+
+
+    flavorDimensions += "type"
+    productFlavors {
+        create("fDebug") {
+            dimension = "type"
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            resValue("string", "app_name", "Extera Next (Debug)")
+        }
+
+        create("fRelease") {
+            dimension = "type"
+        }
+    }
+
 }
 
 flutter {
