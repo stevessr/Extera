@@ -66,7 +66,7 @@ jobs:
           # `yes` gets SIGPIPE when sdkmanager closes stdin after install;
           # wrap it so pipefail doesn't treat that as a failure.
           ( yes || true ) | "$SDKMGR" \
-            "platforms;android-37" \
+            "platforms;android-37.0" \
             "build-tools;37.0.0" \
             "platform-tools"
       - name: Accept Android licenses
@@ -156,7 +156,12 @@ jobs:
             libssl-dev libwebkit2gtk-4.1-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-good1.0-dev \
-            libfuse2 libkeybinder-3.0-dev
+            libfuse2 libkeybinder-3.0-dev \
+            libpulse-dev libasound2-dev \
+            libx11-dev libxcb1-dev libxcb-randr0-dev \
+            libxrandr-dev libxcomposite-dev libxdamage-dev \
+            libxrender-dev libxtst-dev libxi-dev \
+            libegl1-mesa-dev libgl1-mesa-dev
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -250,7 +255,12 @@ jobs:
             libssl-dev libwebkit2gtk-4.1-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-good1.0-dev \
-            libkeybinder-3.0-dev
+            libkeybinder-3.0-dev \
+            libpulse-dev libasound2-dev \
+            libx11-dev libxcb1-dev libxcb-randr0-dev \
+            libxrandr-dev libxcomposite-dev libxdamage-dev \
+            libxrender-dev libxtst-dev libxi-dev \
+            libegl1-mesa-dev libgl1-mesa-dev
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
