@@ -59,21 +59,23 @@ jobs:
         uses: https://github.com/android-actions/setup-android@v3
       - name: Install Android SDK packages
         run: |
-          set -euo pipefail
+          set -eu
           export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
           SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           [ -x "$SDKMGR" ] || SDKMGR="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
-          yes | "$SDKMGR" \
-            "platforms;android-37.0" \
+          # `yes` gets SIGPIPE when sdkmanager closes stdin after install;
+          # wrap it so pipefail doesn't treat that as a failure.
+          ( yes || true ) | "$SDKMGR" \
+            "platforms;android-37" \
             "build-tools;37.0.0" \
             "platform-tools"
       - name: Accept Android licenses
         run: |
-          set -euo pipefail
+          set -eu
           export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
           SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           [ -x "$SDKMGR" ] || SDKMGR="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
-          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          ( yes || true ) | "$SDKMGR" --licenses > /dev/null 2>&1 || true
           yes | "$ANDROID_HOME/tools/bin/sdkmanager" \
             --licenses > /dev/null 2>&1 || true
       - uses: https://github.com/subosito/flutter-action@v2
