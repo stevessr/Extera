@@ -31,7 +31,7 @@ abstract class AppConfig {
   static const Color primaryColorLight = Color(0xFFCCBDEA);
   static const Color secondaryColor = Color(0xFF41a2bc);
   static String _privacyUrl =
-      'https://source.extera.xyz/Extera/Extera/blob/main/PRIVACY.md';
+      'https://source.extera.xyz/Extera/Extera/src/branch/main/PRIVACY.md';
 
   static String get privacyUrl => _privacyUrl;
   static const String website = 'https://extera.xyz';
@@ -50,7 +50,7 @@ abstract class AppConfig {
   static const String supportUrl =
       'https://source.extera.xyz/Extera/Extera/issues';
   static const String changelogUrl =
-      'https://source.extera.xyz/Extera/Extera/blob/main/CHANGELOG.md';
+      'https://source.extera.xyz/Extera/Extera/src/branch/main/CHANGELOG.md';
   static final Uri newIssueUrl = Uri(
     scheme: 'https',
     host: 'source.extera.xyz',
