@@ -59,7 +59,7 @@ jobs:
         uses: https://github.com/android-actions/setup-android@v3
         with:
           packages: |
-            platforms;android-37
+            platforms;android-37.0
             build-tools;37.0.0
             platform-tools
       - name: Accept Android licenses
