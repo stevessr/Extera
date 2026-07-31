@@ -49,13 +49,13 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://github.com/actions/checkout@v4
       - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: actions/setup-java@v4
+      - uses: https://github.com/actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: "zulu"
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
@@ -108,7 +108,7 @@ jobs:
             exit 0
           fi
           "$APKSIGNER" verify --print-certs artifacts/*.apk || true
-      - uses: actions/upload-artifact@v4
+      - uses: https://github.com/actions/upload-artifact@v4
         with:
           name: apk
           path: artifacts/*.apk
@@ -121,7 +121,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://github.com/actions/checkout@v4
       - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
       - name: Install Linux build dependencies
         run: |
@@ -131,7 +131,7 @@ jobs:
             libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
             cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
             libssl-dev libwebkit2gtk-4.1-dev
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
@@ -156,7 +156,7 @@ jobs:
             cp appimage/*.AppImage \
               artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-x86_64.AppImage
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: https://github.com/actions/upload-artifact@v4
         with:
           name: appimage
           path: artifacts/*.AppImage
@@ -169,13 +169,13 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://github.com/actions/checkout@v4
       - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: https://github.com/dtolnay/rust-toolchain@stable
       - name: Install cargo utilities
         run: |
           # prepare-web.sh installs flutter_rust_bridge_codegen via cargo,
@@ -195,7 +195,7 @@ jobs:
           mkdir -p artifacts
           tar -czvf "artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-web.tar.gz" \
             -C build/web .
-      - uses: actions/upload-artifact@v4
+      - uses: https://github.com/actions/upload-artifact@v4
         with:
           name: web
           path: artifacts/*.tar.gz
@@ -208,7 +208,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://github.com/actions/checkout@v4
       - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
       - name: Install Linux build dependencies
         run: |
@@ -218,7 +218,7 @@ jobs:
             libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
             cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
             libssl-dev libwebkit2gtk-4.1-dev
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
@@ -232,7 +232,7 @@ jobs:
           mkdir -p artifacts
           cp build/linux/x64/release/bundle.tar.gz \
             artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-linux-x64.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: https://github.com/actions/upload-artifact@v4
         with:
           name: linux
           path: artifacts/*.tar.gz
@@ -246,8 +246,8 @@ jobs:
     needs: [prepare, build_apk, build_appimage, build_linux, build_web]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: https://github.com/actions/checkout@v4
+      - uses: https://github.com/actions/download-artifact@v4
         with:
           path: artifacts
       - name: Flatten artifacts
