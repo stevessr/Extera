@@ -4,8 +4,17 @@ on:
   push:
     tags:
       - 'v*.*.*'
-      - '!v*.*.*-*'  # excludes prereleases handled below
-      - 'v*.*.*-*'    # prereleases (e.g. v1.2.3-beta)
+      - 'v*.*.*-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag/version name to use for artifacts and release (e.g. v0.0.0-test)'
+        required: true
+        default: 'v0.0.0-test'
+      publish:
+        description: 'Create a Forgejo release (otherwise just build + upload artifacts)'
+        required: false
+        default: 'false'
 
 # Triggering on every tag starting with `v` works because we filter
 # release vs prerelease inside the workflow based on the tag name.
@@ -32,7 +41,12 @@ jobs:
       - name: Resolve release metadata
         id: meta
         run: |
-          TAG="${GITHUB_REF##*/}"
+          # On tag push: use the pushed tag. On manual dispatch: use the input.
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF##*/}"
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           # A tag containing a dash after the version number is a prerelease
           # (e.g. v1.2.3-beta, v1.2.3-rc1).
@@ -60,13 +74,29 @@ jobs:
         uses: https://github.com/actions/cache@v4
         with:
           path: /root/.android/sdk
-          key: android-sdk-gradle-managed-${{ runner.os }}
+          # Bump this key when ndkVersion / compileSdk change in build.gradle.kts
+          key: android-sdk-37.0-ndk28-${{ runner.os }}
       - name: Setup Android SDK
         if: steps.android-sdk-cache.outputs.cache-hit != 'true'
         uses: https://github.com/android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        # Always run — sdkmanager is idempotent and skips installed packages.
+        # This guards against a stale/partial cache.
+        run: |
+          set -eu
+          export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKMGR" ] || SDKMGR="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+          # `yes` gets SIGPIPE when sdkmanager closes stdin after install;
+          # wrap it so pipefail doesn't treat that as a failure.
+          ( yes || true ) | "$SDKMGR" \
+            "platforms;android-37.0" \
+            "build-tools;37.0.0" \
+            "platform-tools" \
+            "ndk;28.2.13676358"
       - name: Accept Android licenses
-        # Accept once so Gradle's auto-install of platform/NDK/build-tools
-        # doesn't block waiting for license confirmation.
+        # Always run — cheap, and ensures Gradle's auto-install (if anything
+        # else is needed) doesn't block on license acceptance.
         run: |
           set -eu
           export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
@@ -327,6 +357,7 @@ jobs:
   # ---------------------------------------------------------------------------
   publish:
     needs: [prepare, build_apk, build_appimage, build_linux, build_web]
+    if: ${{ github.event_name == 'push' || inputs.publish == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: https://github.com/actions/checkout@v4
