@@ -127,7 +127,7 @@ jobs:
           EOF
           ls -l android/key.properties
       - name: Build signed release APK
-        run: flutter build apk --release
+        run: flutter build apk --flavor fRelease --release
       - name: Rename APK
         run: |
           mkdir -p artifacts
