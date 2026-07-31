@@ -154,7 +154,7 @@ jobs:
             libssl-dev libwebkit2gtk-4.1-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             libgstreamer-plugins-good1.0-dev \
-            libfuse2
+            libfuse2 libkeybinder-3.0-dev
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -247,7 +247,8 @@ jobs:
             cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
             libssl-dev libwebkit2gtk-4.1-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-            libgstreamer-plugins-good1.0-dev
+            libgstreamer-plugins-good1.0-dev \
+            libkeybinder-3.0-dev
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
