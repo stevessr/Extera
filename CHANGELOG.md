@@ -1,3 +1,11 @@
+## Extera 26.4.5
+- Added room server ACL section
+- Fixed loading history in threads
+- Fixed scrolling to replies in threads
+- Fixed user notes not displaying when not having mutual rooms
+- Added poll start/end/vote permissions in room settings
+- Fixed invalid links (privacy, changelog)
+
 ## Extera 26.4.4
 - BREAKING: update sqlite to 3.0.0. You will be logged out.
 - Fixed markdown issue
