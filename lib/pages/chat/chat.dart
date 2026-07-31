@@ -686,7 +686,7 @@ class ChatController extends State<ChatPageWithRoom>
         _showScrollUpMaterialBanner(eventContextId!);
       }
     }
-    if (timeline is ThreadTimeline) {
+    if (timeline is ThreadTimeline && eventContextId == null) {
       (timeline as ThreadTimeline).getThreadEvents();
     }
   }
@@ -1519,11 +1519,18 @@ class ChatController extends State<ChatPageWithRoom>
       (event) => event.eventId == eventId,
     );
 
+    // print('Scrolling to $eventId.');
+
     final eventIndex = foundEvent == null
         ? -1
         : timeline!.events
-              .filterByVisibleInGui(exceptionEventId: eventId)
+              .filterByVisibleInGui(
+                exceptionEventId: eventId,
+                threadId: threadRootEventId,
+              )
               .indexOf(foundEvent);
+
+    // print('Scrolling to $eventId - index: $eventIndex');
 
     // invalidate cache
     _cachedEventsKeyMap = null;
@@ -1545,9 +1552,14 @@ class ChatController extends State<ChatPageWithRoom>
         );
       });
       await loadTimelineFuture;
+      // print('Scrolling to $eventId (retry)');
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        scrollToEventId(eventId, scrolledFromEventId,
-            highlightEvent: highlightEvent, isRetry: true);
+        scrollToEventId(
+          eventId,
+          scrolledFromEventId,
+          highlightEvent: highlightEvent,
+          isRetry: true,
+        );
       });
       return;
     }
