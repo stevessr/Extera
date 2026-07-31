@@ -1513,6 +1513,7 @@ class ChatController extends State<ChatPageWithRoom>
     String eventId,
     String? scrolledFromEventId, {
     bool highlightEvent = true,
+    bool isRetry = false,
   }) async {
     final foundEvent = timeline!.events.firstWhereOrNull(
       (event) => event.eventId == eventId,
@@ -1529,6 +1530,10 @@ class ChatController extends State<ChatPageWithRoom>
     _cachedFilteredEvents = null;
 
     if (eventIndex == -1) {
+      if (isRetry) {
+        _showScrollUpMaterialBanner(eventId);
+        return;
+      }
       setState(() {
         timeline = null;
         _scrolledUp.value = false;
@@ -1541,7 +1546,8 @@ class ChatController extends State<ChatPageWithRoom>
       });
       await loadTimelineFuture;
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        scrollToEventId(eventId, scrolledFromEventId);
+        scrollToEventId(eventId, scrolledFromEventId,
+            highlightEvent: highlightEvent, isRetry: true);
       });
       return;
     }
