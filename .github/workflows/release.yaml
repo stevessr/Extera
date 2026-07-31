@@ -55,6 +55,21 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: "zulu"
+      - name: Setup Android SDK
+        uses: https://github.com/android-actions/setup-android@v3
+        with:
+          packages: |
+            platforms;android-37
+            build-tools;37.0.0
+            platform-tools
+      - name: Accept Android licenses
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            --licenses > /dev/null 2>&1 || true
+          yes | "$ANDROID_HOME/tools/bin/sdkmanager" \
+            --licenses > /dev/null 2>&1 || true
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -86,11 +101,11 @@ jobs:
           # KEY_ALIAS defaults to "key" if the secret is not configured.
           alias="${KEY_ALIAS:-key}"
           cat > android/key.properties <<EOF
-          storePassword=${KEYSTORE_PASS}
-          keyPassword=${KEY_PASS}
-          keyAlias=${alias}
-          storeFile=key.jks
-          EOF
+storePassword=${KEYSTORE_PASS}
+keyPassword=${KEY_PASS}
+keyAlias=${alias}
+storeFile=key.jks
+EOF
           ls -l android/key.properties
       - name: Build signed release APK
         run: flutter build apk --release
@@ -130,7 +145,10 @@ jobs:
             git wget curl clang cmake ninja-build pkg-config \
             libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
             cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev
+            libssl-dev libwebkit2gtk-4.1-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-good1.0-dev \
+            libfuse2
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -143,6 +161,10 @@ jobs:
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x /usr/local/bin/appimagetool
       - name: Build AppImage
+        env:
+          # Containers lack /dev/fuse, so run AppImages in extract-and-run
+          # mode instead of mounting via FUSE.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: ./scripts/build-appimage.sh
       - name: Rename AppImage
         run: |
@@ -217,7 +239,9 @@ jobs:
             git wget curl clang cmake ninja-build pkg-config \
             libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
             cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev
+            libssl-dev libwebkit2gtk-4.1-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-good1.0-dev
       - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
