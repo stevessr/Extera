@@ -101,11 +101,11 @@ jobs:
           # KEY_ALIAS defaults to "key" if the secret is not configured.
           alias="${KEY_ALIAS:-key}"
           cat > android/key.properties <<EOF
-storePassword=${KEYSTORE_PASS}
-keyPassword=${KEY_PASS}
-keyAlias=${alias}
-storeFile=key.jks
-EOF
+          storePassword=${KEYSTORE_PASS}
+          keyPassword=${KEY_PASS}
+          keyAlias=${alias}
+          storeFile=key.jks
+          EOF
           ls -l android/key.properties
       - name: Build signed release APK
         run: flutter build apk --release
