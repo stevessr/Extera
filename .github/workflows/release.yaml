@@ -113,9 +113,30 @@ jobs:
       #     ./scripts/add-firebase-messaging.sh
       # - uses: ./.forgejo/actions/free_up_space --- add later
       - uses: https://github.com/dtolnay/rust-toolchain@stable
+      - name: Install Android SDK
+        env:
+          ANDROID_HOME: ${{ github.workspace }}/android-sdk
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+        run: |
+          set -e
+          sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl -sS -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip
+          unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          rm cmdline-tools.zip
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "build-tools;35.0.0" "platforms;android-35" "ndk;28.2.13676358"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $FORGEJO_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $FORGEJO_ENV
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
       - run: flutter pub get
       - name: Prepare Android Release Build
         env:
+          ANDROID_HOME: ${{ github.workspace }}/android-sdk
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           KEY_PASS: ${{ secrets.KEY_PASS }}
