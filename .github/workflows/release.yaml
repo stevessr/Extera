@@ -66,11 +66,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: https://data.forgejo.org/actions/checkout@v6
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version-file: .tool_versions.yaml
           cache: true
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: https://github.com/dtolnay/rust-toolchain@stable
       - run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       - run: flutter pub get
       - name: Prepare web
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: https://data.forgejo.org/actions/checkout@v6
-      - uses: subosito/flutter-action@v2
+      - uses: https://github.com/subosito/flutter-action@v2
         with:
           flutter-version-file: .tool_versions.yaml
           cache: true
@@ -112,7 +112,7 @@ jobs:
       #     echo '${{secrets.GOOGLE_SERVICES_JSON}}' | base64 -d > android/app/google-services.json
       #     ./scripts/add-firebase-messaging.sh
       - uses: ./.forgejo/actions/free_up_space
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: https://github.com/dtolnay/rust-toolchain@stable
       - run: flutter pub get
       - name: Prepare Android Release Build
         env:
@@ -148,7 +148,7 @@ jobs:
         run: |
           git clone --branch ${{ env.FLUTTER_VERSION }} https://github.com/flutter/flutter.git
           ./flutter/bin/flutter doctor
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: https://github.com/dtolnay/rust-toolchain@stable
       - run: ./flutter/bin/flutter pub get
       - run: ./flutter/bin/flutter build linux --target-platform linux-${{ matrix.arch }}
       - name: Create archive
