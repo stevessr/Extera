@@ -87,21 +87,12 @@
 #       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
 #       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
 
-<<<<<<< HEAD
-#       - uses: https://github.com/actions/upload-artifact@v7
+#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
 #         with:
 #           name: apk
 #           path: artifacts/*.apk
 #           retention-days: 14
 #           if-no-files-found: error
-=======
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-        with:
-          name: apk
-          path: artifacts/*.apk
-          retention-days: 14
-          if-no-files-found: error
->>>>>>> 74ff4fbf1daad403a8555e990c66b75ba813078f
 
 #   # One Flutter build feeds both the tarball and the AppImage.
 #   build-linux:
@@ -139,8 +130,7 @@
 #           APPIMAGE_EXTRACT_AND_RUN: '1'
 #         run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
 
-<<<<<<< HEAD
-#       - uses: https://github.com/actions/upload-artifact@v7
+#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
 #         with:
 #           name: linux
 #           path: |
@@ -148,16 +138,6 @@
 #             artifacts/*.AppImage
 #           retention-days: 14
 #           if-no-files-found: error
-=======
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-        with:
-          name: linux
-          path: |
-            artifacts/*.tar.gz
-            artifacts/*.AppImage
-          retention-days: 14
-          if-no-files-found: error
->>>>>>> 74ff4fbf1daad403a8555e990c66b75ba813078f
 
 #   build-web:
 #     name: Web bundle
@@ -171,17 +151,11 @@
 #           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
 #           $sudo apt-get install -y nodejs
 
-<<<<<<< HEAD
 #       - uses: https://github.com/actions/checkout@v7
 #       - uses: ./.github/actions/setup-flutter
 #       - uses: ./.github/actions/setup-rust
-=======
-      - uses: https://github.com/actions/checkout@v7
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
-        with:
-          cache-target-dir: 'true'
->>>>>>> 74ff4fbf1daad403a8555e990c66b75ba813078f
+#         with:
+#           cache-target-dir: 'true'
 
 #       # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
 #       # bindings. Installing the toolchain by name avoids naming a host triple,
@@ -197,21 +171,12 @@
 
 #       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
 
-<<<<<<< HEAD
-#       - uses: https://github.com/actions/upload-artifact@v7
+#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
 #         with:
 #           name: web
 #           path: artifacts/*.tar.gz
 #           retention-days: 14
 #           if-no-files-found: error
-=======
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-        with:
-          name: web
-          path: artifacts/*.tar.gz
-          retention-days: 14
-          if-no-files-found: error
->>>>>>> 74ff4fbf1daad403a8555e990c66b75ba813078f
 
 #   publish:
 #     name: Publish release
@@ -228,12 +193,12 @@
 
 #       - uses: https://github.com/actions/checkout@v7
 
-      # Forgejo's fork, not actions/download-artifact: upstream v4+ aborts on a
-      # hard "not running against GitHub.com" check that Forgejo cannot satisfy.
-      # The fork is that check removed, nothing else.
-      # - uses: https://data.forgejo.org/forgejo/download-artifact@v4
-      #   with:
-      #     path: downloads
+#       # Forgejo's fork, not actions/download-artifact: upstream v4+ aborts on a
+#       # hard "not running against GitHub.com" check that Forgejo cannot satisfy.
+#       # The fork is that check removed, nothing else.
+#       - uses: https://data.forgejo.org/forgejo/download-artifact@v4
+#         with:
+#           path: downloads
 
 #       - name: Collect release assets
 #         run: ./scripts/ci/collect-release-assets.sh downloads release-assets
