@@ -14,6 +14,12 @@ runs:
       shell: bash
       run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
 
+    # Every job runs this action, so this is the one place that reliably
+    # reports a runner whose cache service is off or unreachable.
+    - name: Check cache service
+      shell: bash
+      run: ./scripts/ci/check-cache.sh
+
     # Set before flutter-action so it adopts this location rather than picking
     # its own, which keeps the cache path below correct by construction.
     - name: Pin pub cache location

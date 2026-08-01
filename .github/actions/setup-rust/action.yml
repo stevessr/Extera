@@ -1,6 +1,16 @@
 name: Setup Rust
 description: Installs the stable Rust toolchain and restores the cargo caches.
 
+inputs:
+  cache-target-dir:
+    description: >
+      Also redirect and cache CARGO_TARGET_DIR. Only for the web build, whose
+      vodozemac wasm crate is otherwise compiled from scratch every run inside
+      a directory prepare-web.sh deletes. Leave off wherever cargokit builds,
+      since it expects cargo output in its own location.
+    required: false
+    default: "false"
+
 runs:
   using: composite
   steps:
@@ -22,3 +32,16 @@ runs:
           ~/.cargo/git/db
         key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
         restore-keys: cargo-${{ runner.os }}-
+
+    - name: Pin cargo target directory
+      if: ${{ inputs.cache-target-dir == 'true' }}
+      shell: bash
+      run: echo "CARGO_TARGET_DIR=$HOME/.cargo-target" >>"$GITHUB_ENV"
+
+    - name: Restore cargo target directory
+      if: ${{ inputs.cache-target-dir == 'true' }}
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: ~/.cargo-target
+        key: cargo-target-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: cargo-target-${{ runner.os }}-

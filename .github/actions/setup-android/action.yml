@@ -8,17 +8,34 @@ runs:
       shell: bash
       run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
 
+    - name: Resolve tool cache location
+      id: toolcache
+      shell: bash
+      run: ./scripts/ci/tool-cache-info.sh
+
+    # setup-java keeps the JDK in the runner tool cache, which lives inside the
+    # job container and is gone by the next run. Restoring it first turns the
+    # ~200 MB Zulu download into a tool-cache hit.
+    - name: Restore JDK
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: ${{ steps.toolcache.outputs.java }}
+        key: java-zulu-${{ runner.os }}-${{ env.JAVA_VERSION }}
+
     - name: Install JDK
       uses: https://github.com/actions/setup-java@v5
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: zulu
 
-    # Always run: it is cheap, and it is what exports ANDROID_HOME for every
-    # step below. Only the heavy SDK components are cached.
+    # packages defaults to "tools platform-tools", and the obsolete "tools"
+    # package drags in the whole Android Emulator — several hundred megabytes
+    # downloaded and unzipped on every run, for a headless APK build. Ask for
+    # platform-tools only.
     - name: Install Android command line tools
       uses: https://github.com/android-actions/setup-android@v4
       with:
+        packages: platform-tools
         accept-android-sdk-licenses: true
         log-accepted-android-sdk-licenses: false
 
@@ -37,6 +54,7 @@ runs:
           ${{ steps.sdk.outputs.path }}/build-tools
           ${{ steps.sdk.outputs.path }}/platform-tools
           ${{ steps.sdk.outputs.path }}/ndk
+          ${{ steps.sdk.outputs.path }}/licenses
         key: android-sdk-${{ runner.os }}-${{ steps.sdk.outputs.key }}
 
     - name: Install Android SDK components
