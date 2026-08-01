@@ -2,6 +2,9 @@
 # Installs the apt packages required to build the Flutter Linux desktop bundle.
 # Set INSTALL_APPIMAGE_DEPS=true to also pull in the FUSE runtime appimagetool
 # needs.
+#
+# Downloads land in APT_CACHE_DIR so CI can cache them: apt reuses a .deb that
+# is already in its archive directory rather than fetching it again.
 set -euo pipefail
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -29,6 +32,12 @@ if [ "${INSTALL_APPIMAGE_DEPS:-false}" = "true" ]; then
   packages+=(libfuse2 file desktop-file-utils)
 fi
 
+archives="${APT_CACHE_DIR:-$HOME/.apt-cache}"
+mkdir -p "$archives/partial"
+
 export DEBIAN_FRONTEND=noninteractive
 $sudo apt-get update
-$sudo apt-get install -y --no-install-recommends "${packages[@]}"
+$sudo apt-get -o "Dir::Cache::archives=$archives" \
+  install -y --no-install-recommends "${packages[@]}"
+
+echo "apt archives cached: $(du -sh "$archives" 2>/dev/null | cut -f1)"
