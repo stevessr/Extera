@@ -103,6 +103,9 @@ jobs:
       - uses: https://github.com/actions/checkout@v7
       - uses: ./.github/actions/setup-android
       - uses: ./.github/actions/setup-flutter
+      # cargokit compiles the vodozemac Rust crate for Android, so this job
+      # needs the toolchain and its cache as much as the release build does.
+      - uses: ./.github/actions/setup-rust
 
       - run: flutter build apk --flavor fDebug --debug
 
@@ -122,6 +125,8 @@ jobs:
       - uses: https://github.com/actions/checkout@v7
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
+        with:
+          cache-target-dir: 'true'
 
       - run: ./scripts/ci/install-yq.sh
       - name: Prepare web
@@ -168,6 +173,28 @@ jobs:
       - uses: https://github.com/actions/checkout@v7
       - uses: ./.github/actions/setup-linux-deps
 
+      - name: Check cache service
+        run: ./scripts/ci/check-cache.sh
+
+      - name: Resolve Flutter version
+        id: flutter
+        run: echo "version=$(./scripts/ci/flutter-version.sh)" >>"$GITHUB_OUTPUT"
+
+      # install-flutter-source.sh skips the clone when the directory is there,
+      # so restoring it turns a full SDK clone into a cache hit.
+      - name: Restore Flutter SDK
+        uses: https://github.com/actions/cache@v6
+        with:
+          path: ~/flutter
+          key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
+
+      - name: Restore pub cache
+        uses: https://github.com/actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
+
       # No prebuilt Flutter archive exists for Linux arm64, so clone the SDK at
       # the version pinned in .tool_versions.yaml.
       - run: ./scripts/ci/install-flutter-source.sh
@@ -196,6 +223,13 @@ jobs:
           xcode-version: latest-stable
 
       - uses: ./.github/actions/setup-flutter
+
+      - name: Restore CocoaPods specs
+        uses: https://github.com/actions/cache@v6
+        with:
+          path: ~/.cocoapods
+          key: cocoapods-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: cocoapods-${{ runner.os }}-
 
       - run: brew install sqlcipher
       - run: flutter build ios --no-codesign

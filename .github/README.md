@@ -34,10 +34,30 @@ image only ships Node 20. It cannot be a script, because it has to run before
 `actions/checkout` back to `v4` and the other actions to their last Node 20
 release.
 
-Actions are pinned to their newest major with one exception:
-`actions/download-artifact` stays on `v7`. Its `v8` errors on any artifact
-digest mismatch and inspects `Content-Type` before unzipping, and Forgejo's
-artifact server is not guaranteed to satisfy either.
+## Forgejo specifics
+
+**Artifacts must come from Forgejo's fork.** `actions/upload-artifact` and
+`actions/download-artifact` v4+ abort on a hard "not running against
+GitHub.com" check with no fallback, so both are taken from
+`data.forgejo.org/forgejo/…@v4`, which is that check removed and nothing else.
+Cross-run downloads (`run-id` / `github-token`) fall back to a REST API Forgejo
+does not implement, so those inputs must stay unused.
+
+**`actions/cache` needs no fork.** It resolves the cache service by treating a
+non-GitHub `GITHUB_SERVER_URL` as GHES and falling back to the legacy API,
+which is exactly what the Forgejo runner serves, so the newest major works.
+
+**The runner tool cache does not survive a job.** Since runner 5.0.1 the
+`/opt/hostedtoolcache` directory is per-job by design, so `setup-java` would
+re-download the JDK every run. The Android setup action caches that directory
+itself. Baking the tools into a custom runner image is the alternative.
+
+**Verifying the cache actually works.** A disabled or unreachable cache server
+only produces a warning, and the build carries on rebuilding everything. Every
+job therefore runs `scripts/ci/check-cache.sh`, which reports both cases; set
+`CACHE_REQUIRED=true` to make them fail instead. If it warns, the runner needs
+`cache.enabled`, and containerised runners also need `cache.host` and
+`cache.proxy_port` pointing at an address the job container can reach.
 
 ## Secrets
 
