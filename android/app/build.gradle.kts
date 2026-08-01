@@ -1,4 +1,4 @@
-import java.util.Properties
+\import java.util.Properties
 import java.io.FileInputStream
 
 plugins {
@@ -31,7 +31,7 @@ dependencies {
 
 android {
     namespace = "xyz.extera.next"
-    compileSdk = 37
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
     compileOptions {
