@@ -1,0 +1,53 @@
+name: Setup Android
+description: Installs the JDK and Android SDK components, and restores the Gradle cache.
+
+runs:
+  using: composite
+  steps:
+    - name: Load pinned tool versions
+      shell: bash
+      run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
+
+    - name: Install JDK
+      uses: https://github.com/actions/setup-java@v5
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: zulu
+
+    # Always run: it is cheap, and it is what exports ANDROID_HOME for every
+    # step below. Only the heavy SDK components are cached.
+    - name: Install Android command line tools
+      uses: https://github.com/android-actions/setup-android@v4
+      with:
+        accept-android-sdk-licenses: true
+        log-accepted-android-sdk-licenses: false
+
+    # Resolving the location into a step output keeps it out of the cache
+    # path expression, where an unset value would silently become "/platforms".
+    - name: Resolve Android SDK location
+      id: sdk
+      shell: bash
+      run: ./scripts/ci/android-sdk-cache-info.sh
+
+    - name: Restore Android SDK components
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: |
+          ${{ steps.sdk.outputs.path }}/platforms
+          ${{ steps.sdk.outputs.path }}/build-tools
+          ${{ steps.sdk.outputs.path }}/platform-tools
+          ${{ steps.sdk.outputs.path }}/ndk
+        key: android-sdk-${{ runner.os }}-${{ steps.sdk.outputs.key }}
+
+    - name: Install Android SDK components
+      shell: bash
+      run: ./scripts/ci/setup-android-sdk.sh
+
+    - name: Restore Gradle cache
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties', 'pubspec.lock') }}
+        restore-keys: gradle-${{ runner.os }}-

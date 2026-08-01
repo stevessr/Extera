@@ -1,185 +1,211 @@
-name: Release Workflow
+name: Release
 
 on:
   push:
     tags:
+      # Also covers prerelease tags such as v1.2.3-rc1.
       - 'v*.*.*'
-      - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag/version name to use for artifacts and release (e.g. v0.0.0-test)'
+        description: 'Tag to name the artifacts and release after (e.g. v0.0.0-test)'
         required: true
         default: 'v0.0.0-test'
       publish:
-        description: 'Create a Forgejo release (otherwise just build + upload artifacts)'
+        description: 'Create the Forgejo release instead of only uploading artifacts'
         type: boolean
-        required: false
+        default: false
+      draft:
+        description: 'Leave the release as a draft'
+        type: boolean
         default: false
 
-# Triggering on every tag starting with `v` works because we filter
-# release vs prerelease inside the workflow based on the tag name.
-
 concurrency:
-  group: release_workflow-${{ forgejo.ref }}
+  group: release-${{ inputs.tag || github.ref }}
   cancel-in-progress: false
 
-env:
-  REGISTRY: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
-  IMAGE_NAME: ${{ forgejo.repository }}
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  create_release:
-    if: ${{ forgejo.event_name == 'push' || inputs.publish == true }}
+  prepare:
+    name: Resolve release metadata
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      id: ${{ steps.create_release.outputs.id }}
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v6
-      - name: Create Forgejo release
-        id: create_release
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      # The JS actions below declare runs.using: node24, which older runner
+      # images do not ship. Must come before the first one of them.
+      - name: Ensure Node 24
         run: |
-          set -e
-          TAG="${{ inputs.tag || forgejo.ref_name }}"
-          TAG="${TAG#refs/tags/}"
-          IS_PRERELEASE="false"
-          if echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-|\.)?([a-zA-Z0-9]+)?$' && [[ "$TAG" == *-* ]]; then
-            IS_PRERELEASE="true"
-          fi
-          BODY=$(git tag -l --format='%(contents:body)' "$FORGEJO_REF_NAME" 2>/dev/null || true)
-          BODY="${BODY:-Release $TAG}"
-          API_URL="${{ forgejo.api_url }}/repos/${{ forgejo.repository }}/releases"
-          JSON=$(jq -n --arg tag "$TAG" --arg name "$TAG" --arg body "$BODY" --argjson prerelease "$IS_PRERELEASE" '{tag_name: $tag, name: $name, body: $body, prerelease: $prerelease}')
-          RESPONSE=$(curl -sS -X POST "$API_URL" \
-            -H "Authorization: token $RELEASE_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$JSON")
-          echo "upload_url=$(echo "$RESPONSE" | jq -r '.upload_url // empty')" >> $FORGEJO_OUTPUT
-          echo "id=$(echo "$RESPONSE" | jq -r '.id // empty')" >> $FORGEJO_OUTPUT
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-  build_web:
-    needs:
-      - create_release
+      - uses: https://github.com/actions/checkout@v7
+
+      - id: meta
+        run: ./scripts/ci/resolve-release-meta.sh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+
+  build-apk:
+    name: Android APK
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v6
-      - uses: https://github.com/subosito/flutter-action@v2
-        with:
-          flutter-version-file: .tool_versions.yaml
-          cache: true
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
-      - run: flutter pub get
-      - name: Prepare web
-        run: ./scripts/prepare-web.sh
-      - run: rm ./assets/vodozemac/.gitignore
-      - name: Build Release Web
-        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
-      - name: Create archive
-        run: tar -czf extera-web.tar.gz build/web/
-      - name: Upload Web Build
-        uses: https://data.forgejo.org/actions/upload-artifact@v4
-        with:
-          name: Web Build
-          path: extera-web.tar.gz
-      - name: Upload extera-web.tar.gz to Forgejo release
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      - name: Ensure Node 24
         run: |
-          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
-          curl -sS -X POST "${UPLOAD_URL%?}=extera-web.tar.gz" \
-            -H "Authorization: token $RELEASE_TOKEN" \
-            -H "Content-Type: application/gzip" \
-            --data-binary @extera-web.tar.gz
-      # Forgejo does not provide GitHub Pages; publish the public/ artifact via Forgejo static pages or another method.
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-  build_apk:
-    needs:
-      - create_release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: https://data.forgejo.org/actions/checkout@v6
-      - uses: https://github.com/subosito/flutter-action@v2
-        with:
-          flutter-version-file: .tool_versions.yaml
-          cache: true
-      # We don't have FCM yet, but it's PLANNED
-      #  - name: Add Firebase Messaging
-      #   run: |
-      #     echo '${{secrets.GOOGLE_SERVICES_JSON}}' | base64 -d > android/app/google-services.json
-      #     ./scripts/add-firebase-messaging.sh
-      # - uses: ./.forgejo/actions/free_up_space --- add later
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - name: Install Android SDK
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-android
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+
+      - name: Write signing configuration
         env:
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
-          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-        run: |
-          set -e
-          sudo apt-get update && sudo apt-get install -y openjdk-21-jdk
-          mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -sS -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip
-          unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
-          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
-          rm cmdline-tools.zip
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "build-tools;35.0.0" "platforms;android-35" "ndk;28.2.13676358"
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $FORGEJO_ENV
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $FORGEJO_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-      - run: flutter pub get
-      - name: Prepare Android Release Build
-        env:
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
-          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           KEY_PASS: ${{ secrets.KEY_PASS }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: ./scripts/prepare-android-release.sh
-      - run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
-      - name: Upload extera.apk to Forgejo release
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
-          curl -sS -X POST "${UPLOAD_URL%?}=extera.apk" \
-            -H "Authorization: token $RELEASE_TOKEN" \
-            -H "Content-Type: application/vnd.android.package-archive" \
-            --data-binary @build/app/outputs/apk/release/app-frelease-release.apk
+        run: ./scripts/ci/write-android-signing.sh
 
-  build_linux:
-    needs:
-      - create_release
-    strategy:
-      matrix:
-        arch: [ x64 ]
-    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest'}}
+      - name: Build signed release APK
+        run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
+
+      - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
+      - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
+
+      - uses: https://github.com/actions/upload-artifact@v7
+        with:
+          name: apk
+          path: artifacts/*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  # One Flutter build feeds both the tarball and the AppImage.
+  build-linux:
+    name: Linux tarball and AppImage
+    needs: prepare
+    runs-on: ubuntu-latest
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v6
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install curl clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev cmake-data libsecret-1-dev libsecret-1-0 librhash0 libssl-dev libwebkit2gtk-4.1-dev -y
-      - run: echo "FLUTTER_VERSION=$(yq '.environment.flutter' < .tool_versions.yaml)" >> $FORGEJO_ENV
-      - name: Install Flutter
+      - name: Ensure Node 24
         run: |
-          git clone --branch ${{ env.FLUTTER_VERSION }} https://github.com/flutter/flutter.git
-          ./flutter/bin/flutter doctor
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - run: ./flutter/bin/flutter pub get
-      - run: ./flutter/bin/flutter build linux --target-platform linux-${{ matrix.arch }}
-      - name: Create archive
-        run: tar -czf extera-linux-${{ matrix.arch }}.tar.gz -C build/linux/${{ matrix.arch }}/release/bundle/ .
-      - name: Upload extera-linux-${{ matrix.arch }}.tar.gz to Forgejo release
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+
+      - uses: ./.github/actions/setup-linux-deps
+        with:
+          appimage: 'true'
+
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+
+      - run: ./scripts/ci/install-appimagetool.sh
+
+      - name: Build Linux bundle
+        run: flutter build linux --release --target-platform linux-x64
+
+      - name: Package tarball
+        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}"
+
+      - name: Package AppImage
+        env:
+          # Build containers have no /dev/fuse, so AppImages must self-extract.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
+
+      - uses: https://github.com/actions/upload-artifact@v7
+        with:
+          name: linux
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.AppImage
+          retention-days: 14
+          if-no-files-found: error
+
+  build-web:
+    name: Web bundle
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+
+      - run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
+      - run: ./scripts/ci/install-yq.sh
+
+      - name: Prepare web
+        run: ./scripts/prepare-web.sh
+
+      - name: Build release web
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
+
+      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
+
+      - uses: https://github.com/actions/upload-artifact@v7
+        with:
+          name: web
+          path: artifacts/*.tar.gz
+          retention-days: 14
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [prepare, build-apk, build-linux, build-web]
+    if: ${{ github.event_name == 'push' || inputs.publish }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+
+      # Deliberately v7, not v8: v8 errors on any artifact digest mismatch and
+      # sniffs Content-Type before unzipping, neither of which Forgejo's
+      # artifact server is guaranteed to satisfy.
+      - uses: https://github.com/actions/download-artifact@v7
+        with:
+          path: downloads
+
+      - name: Collect release assets
+        run: ./scripts/ci/collect-release-assets.sh downloads release-assets
+
+      - name: Generate release notes
+        run: ./scripts/ci/release-notes.sh "${{ needs.prepare.outputs.version }}" release-notes.md
+
+      - name: Create release and upload assets
         env:
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
-          curl -sS -X POST "${UPLOAD_URL%?}=extera-linux-${{ matrix.arch }}.tar.gz" \
-            -H "Authorization: token $RELEASE_TOKEN" \
-            -H "Content-Type: application/gzip" \
-            --data-binary @extera-linux-${{ matrix.arch }}.tar.gz
+          TAG: ${{ needs.prepare.outputs.tag }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+          KEEP_DRAFT: ${{ inputs.draft || 'false' }}
+          TARGET_COMMITISH: ${{ github.sha }}
+        run: ./scripts/ci/publish-release.sh

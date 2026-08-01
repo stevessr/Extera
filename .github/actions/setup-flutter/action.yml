@@ -1,0 +1,46 @@
+name: Setup Flutter
+description: Installs the pinned Flutter SDK and restores the pub cache.
+
+inputs:
+  pub-get:
+    description: Run "flutter pub get" once the SDK is ready.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Load pinned tool versions
+      shell: bash
+      run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
+
+    # Set before flutter-action so it adopts this location rather than picking
+    # its own, which keeps the cache path below correct by construction.
+    - name: Pin pub cache location
+      shell: bash
+      run: echo "PUB_CACHE=$HOME/.pub-cache" >>"$GITHUB_ENV"
+
+    # pub-cache is off because the step below already caches that directory,
+    # with restore-keys that flutter-action's own pub cache does not have.
+    - name: Install Flutter
+      uses: https://github.com/subosito/flutter-action@v2
+      with:
+        flutter-version-file: .tool_versions.yaml
+        cache: true
+        pub-cache: 'false'
+
+    - name: Verify Flutter version
+      shell: bash
+      run: ./scripts/ci/verify-flutter-version.sh
+
+    - name: Restore pub cache
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: ~/.pub-cache
+        key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: pub-${{ runner.os }}-
+
+    - name: Resolve dependencies
+      if: ${{ inputs.pub-get == 'true' }}
+      shell: bash
+      run: flutter pub get
