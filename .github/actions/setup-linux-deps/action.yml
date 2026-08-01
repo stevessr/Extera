@@ -1,0 +1,17 @@
+name: Setup Linux build dependencies
+description: Installs the apt packages needed to build the Flutter Linux desktop bundle.
+
+inputs:
+  appimage:
+    description: Also install what appimagetool needs.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install apt packages
+      shell: bash
+      run: ./scripts/ci/install-linux-deps.sh
+      env:
+        INSTALL_APPIMAGE_DEPS: ${{ inputs.appimage }}
