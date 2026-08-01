@@ -6,13 +6,13 @@
 # are safe: existing assets with the same name are replaced.
 #
 # Required environment:
-#   GITHUB_TOKEN, GITHUB_API_URL, GITHUB_REPOSITORY, TAG
+#   RELEASE_TOKEN, GITHUB_API_URL, GITHUB_REPOSITORY, TAG
 # Optional:
 #   PRERELEASE (false), ASSETS_DIR (release-assets), NOTES_FILE (release-notes.md),
 #   KEEP_DRAFT (false), TARGET_COMMITISH
 set -euo pipefail
 
-: "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
+: "${RELEASE_TOKEN:?RELEASE_TOKEN is required}"
 : "${GITHUB_API_URL:?GITHUB_API_URL is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 : "${TAG:?TAG is required}"
@@ -30,7 +30,7 @@ curl_config=$(mktemp)
 response=$(mktemp)
 trap 'rm -f "$curl_config" "$response"' EXIT
 chmod 600 "$curl_config"
-printf 'header = "Authorization: token %s"\nsilent\nshow-error\n' "$GITHUB_TOKEN" >"$curl_config"
+printf 'header = "Authorization: token %s"\nsilent\nshow-error\n' "$RELEASE_TOKEN" >"$curl_config"
 
 api_curl() {
   curl --config "$curl_config" "$@"

@@ -68,3 +68,9 @@ ios/Runner.ipa
 /ios/Flutter/ephemeral
 
 lib/generated
+
+# CI build output
+/artifacts
+/release-assets
+/release-notes.md
+/appimage/Extera_Next-*.AppImage

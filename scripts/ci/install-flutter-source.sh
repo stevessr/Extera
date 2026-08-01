@@ -4,7 +4,9 @@
 # `flutter` directly.
 set -euo pipefail
 
-version="${FLUTTER_VERSION:?FLUTTER_VERSION is not set}"
+cd "$(dirname "$0")/../.."
+
+version=$(./scripts/ci/flutter-version.sh)
 target="${FLUTTER_INSTALL_DIR:-$HOME/flutter}"
 
 if [ ! -x "$target/bin/flutter" ]; then

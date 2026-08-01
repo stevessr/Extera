@@ -15,10 +15,27 @@ arch="${3:-x64}"
 
 mkdir -p artifacts
 
+find_apk() {
+  # Flutter reports the APK under flutter-apk/, but a flavoured Gradle build
+  # also leaves one under apk/. Take whichever exists.
+  local candidate
+  for candidate in \
+    build/app/outputs/flutter-apk/app-frelease-release.apk \
+    build/app/outputs/apk/fRelease/release/app-frelease-release.apk \
+    build/app/outputs/apk/release/app-frelease-release.apk; do
+    if [ -f "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  echo "No release APK found under build/app/outputs." >&2
+  find build/app/outputs -name '*.apk' >&2 || true
+  return 1
+}
+
 case "$target" in
   apk)
-    cp build/app/outputs/flutter-apk/app-frelease-release.apk \
-      "artifacts/ExteraNext-$tag-android.apk"
+    cp "$(find_apk)" "artifacts/ExteraNext-$tag-android.apk"
     ;;
   linux)
     ./scripts/build-linux.sh "$arch"
