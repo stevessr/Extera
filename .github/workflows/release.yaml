@@ -13,460 +13,152 @@ on:
         default: 'v0.0.0-test'
       publish:
         description: 'Create a Forgejo release (otherwise just build + upload artifacts)'
+        type: boolean
         required: false
-        default: 'false'
+        default: false
 
 # Triggering on every tag starting with `v` works because we filter
 # release vs prerelease inside the workflow based on the tag name.
 
 concurrency:
-  group: release_workflow-${{ github.ref }}
+  group: release_workflow-${{ forgejo.ref }}
   cancel-in-progress: false
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME: ${{ forgejo.repository }}
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Figure out whether this is a stable release or a prerelease.
-  # Exposes `is_prerelease` and `release_name` for downstream jobs.
-  # ---------------------------------------------------------------------------
-  prepare:
+  create_release:
+    if: ${{ forgejo.event_name == 'push' || inputs.publish == true }}
     runs-on: ubuntu-latest
     outputs:
-      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
-      tag: ${{ steps.meta.outputs.tag }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      id: ${{ steps.create_release.outputs.id }}
     steps:
-      - name: Resolve release metadata
-        id: meta
-        run: |
-          # On tag push: use the pushed tag. On manual dispatch: use the input.
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF##*/}"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          # A tag containing a dash after the version number is a prerelease
-          # (e.g. v1.2.3-beta, v1.2.3-rc1).
-          if [[ "$TAG" == *-* ]]; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ---------------------------------------------------------------------------
-  # Android APK
-  # ---------------------------------------------------------------------------
-  build_apk:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: https://github.com/actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: https://github.com/actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: "zulu"
-      - name: Cache Android SDK
-        id: android-sdk-cache
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: /root/.android/sdk
-          # Bump this key when ndkVersion / compileSdk change in build.gradle.kts
-          key: android-sdk-37.0-ndk28-clean-${{ runner.os }}
-      - name: Setup Android SDK
-        if: steps.android-sdk-cache.outputs.cache-hit != 'true'
-        uses: https://github.com/android-actions/setup-android@v3
-      - name: Install Android SDK packages
-        # Always run — sdkmanager is idempotent, but we first remove the
-        # platform dir to force a clean re-extract in case a previous run
-        # left it partial/corrupted.
-        run: |
-          set -eu
-          export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
-          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          [ -x "$SDKMGR" ] || SDKMGR="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
-          # Force clean reinstall of the platform dir.
-          rm -rf "$ANDROID_HOME/platforms/android-37.0"
-          # `yes` gets SIGPIPE when sdkmanager closes stdin after install;
-          # wrap it so pipefail doesn't treat that as a failure.
-          ( yes || true ) | "$SDKMGR" \
-            "platforms;android-37.0" \
-            "build-tools;37.0.0" \
-            "platform-tools" \
-            "ndk;28.2.13676358"
-          # Verify the platform is actually usable by Gradle.
-          if [ ! -f "$ANDROID_HOME/platforms/android-37.0/source.properties" ]; then
-            echo "ERROR: platforms/android-37.0/source.properties missing after install" >&2
-            ls -la "$ANDROID_HOME/platforms/" >&2 || true
-            exit 1
-          fi
-          echo "Platform installed OK:"
-          cat "$ANDROID_HOME/platforms/android-37.0/source.properties"
-      - name: Accept Android licenses
-        # Always run — cheap, and ensures Gradle's auto-install (if anything
-        # else is needed) doesn't block on license acceptance.
-        run: |
-          set -eu
-          export ANDROID_HOME="${ANDROID_HOME:-/root/.android/sdk}"
-          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          [ -x "$SDKMGR" ] || SDKMGR="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
-          ( yes || true ) | "$SDKMGR" --licenses > /dev/null 2>&1 || true
-      - name: Export Android SDK path
-        run: echo "ANDROID_HOME=/root/.android/sdk" >> "$GITHUB_ENV"
-      - uses: https://github.com/subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache pub packages
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
-      - name: Cache Gradle
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
-          restore-keys: gradle-${{ runner.os }}-
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - name: Decode keystore
+      - uses: https://data.forgejo.org/actions/checkout@v6
+      - name: Create Forgejo release
+        id: create_release
         env:
-          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          set -euo pipefail
-          if [ -z "$KEYSTORE_FILE" ]; then
-            echo "Secret KEYSTORE_FILE is not set — cannot sign release APK." >&2
-            exit 1
+          set -e
+          TAG="${{ inputs.tag || forgejo.ref_name }}"
+          TAG="${TAG#refs/tags/}"
+          IS_PRERELEASE="false"
+          if echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-|\.)?([a-zA-Z0-9]+)?$' && [[ "$TAG" == *-* ]]; then
+            IS_PRERELEASE="true"
           fi
-          printf '%s' "$KEYSTORE_FILE" | base64 --decode > android/key.jks
-          echo "Keystore decoded: $(ls -l android/key.jks)"
-      - name: Write key.properties
-        env:
-          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          KEY_PASS: ${{ secrets.KEY_PASS }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: |
-          set -euo pipefail
-          if [ -z "$KEYSTORE_PASS" ] || [ -z "$KEY_PASS" ]; then
-            echo "Secrets KEYSTORE_PASS and KEY_PASS must be set." >&2
-            exit 1
-          fi
-          # KEY_ALIAS defaults to "key" if the secret is not configured.
-          alias="${KEY_ALIAS:-key}"
-          cat > android/key.properties <<EOF
-          storePassword=${KEYSTORE_PASS}
-          keyPassword=${KEY_PASS}
-          keyAlias=${alias}
-          storeFile=key.jks
-          EOF
-          ls -l android/key.properties
-      - name: Build signed release APK
-        run: flutter build apk --flavor fRelease --release
-      - name: Rename APK
-        run: |
-          mkdir -p artifacts
-          cp build/app/outputs/flutter-apk/app-frelease-release.apk \
-            artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-android.apk
-      - name: Verify APK signature
-        run: |
-          # Print signer certs so you can confirm it was signed with your key.
-          APKSIGNER="$(find $ANDROID_HOME -name apksigner -type f 2>/dev/null | head -1)"
-          if [ -z "$APKSIGNER" ]; then
-            echo "apksigner not found, skipping verification"
-            exit 0
-          fi
-          "$APKSIGNER" verify --print-certs artifacts/*.apk || true
-      - uses: https://github.com/actions/upload-artifact@v4
-        with:
-          name: apk
-          path: artifacts/*.apk
-          retention-days: 14
+          BODY=$(git tag -l --format='%(contents:body)' "$FORGEJO_REF_NAME" 2>/dev/null || true)
+          BODY="${BODY:-Release $TAG}"
+          API_URL="${{ forgejo.api_url }}/repos/${{ forgejo.repository }}/releases"
+          JSON=$(jq -n --arg tag "$TAG" --arg name "$TAG" --arg body "$BODY" --argjson prerelease "$IS_PRERELEASE" '{tag_name: $tag, name: $name, body: $body, prerelease: $prerelease}')
+          RESPONSE=$(curl -sS -X POST "$API_URL" \
+            -H "Authorization: token $RELEASE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$JSON")
+          echo "upload_url=$(echo "$RESPONSE" | jq -r '.upload_url // empty')" >> $FORGEJO_OUTPUT
+          echo "id=$(echo "$RESPONSE" | jq -r '.id // empty')" >> $FORGEJO_OUTPUT
 
-  # ---------------------------------------------------------------------------
-  # Linux AppImage (x86_64)
-  # ---------------------------------------------------------------------------
-  build_appimage:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: https://github.com/actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git wget curl clang cmake ninja-build pkg-config \
-            libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
-            cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev \
-            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-            libgstreamer-plugins-good1.0-dev \
-            libfuse2 libkeybinder-3.0-dev \
-            libpulse-dev libasound2-dev \
-            libx11-dev libxcb1-dev libxcb-randr0-dev \
-            libxrandr-dev libxcomposite-dev libxdamage-dev \
-            libxrender-dev libxtst-dev libxi-dev \
-            libegl1-mesa-dev libgl1-mesa-dev
-      - uses: https://github.com/subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache pub packages
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
-      - name: Cache cargo registry
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - name: Install appimagetool
-        run: |
-          wget -q -O /usr/local/bin/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x /usr/local/bin/appimagetool
-      - name: Build Linux bundle
-        run: flutter build linux --release -v
-      - name: Build AppImage
-        env:
-          # Containers lack /dev/fuse, so run AppImages in extract-and-run
-          # mode instead of mounting via FUSE.
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-        run: ./scripts/build-appimage.sh
-      - name: Rename AppImage
-        run: |
-          mkdir -p artifacts
-          # appimagetool outputs Extera_Next-x86_64.AppImage in the appimage dir
-          if [ -f appimage/Extera_Next-x86_64.AppImage ]; then
-            cp appimage/Extera_Next-x86_64.AppImage \
-              artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-x86_64.AppImage
-          else
-            # fall back to whatever AppImage was produced
-            cp appimage/*.AppImage \
-              artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-x86_64.AppImage
-          fi
-      - uses: https://github.com/actions/upload-artifact@v4
-        with:
-          name: appimage
-          path: artifacts/*.AppImage
-          retention-days: 14
-
-  # ---------------------------------------------------------------------------
-  # Web build (tar.gz)
-  # ---------------------------------------------------------------------------
   build_web:
-    needs: prepare
+    needs:
+      - create_release
     runs-on: ubuntu-latest
     steps:
-      - uses: https://github.com/actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: https://github.com/subosito/flutter-action@v2
+      - uses: https://data.forgejo.org/actions/checkout@v6
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .tool_versions.yaml
           cache: true
-      - name: Cache pub packages
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - name: Cache cargo registry
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
-      - name: Install cargo utilities
-        run: |
-          # prepare-web.sh installs flutter_rust_bridge_codegen via cargo,
-          # so cargo must be available (rust-toolchain installs cargo).
-          cargo --version
-      - name: Install yq
-        run: |
-          sudo wget -q -O /usr/local/bin/yq \
-            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       - run: flutter pub get
       - name: Prepare web
         run: ./scripts/prepare-web.sh
-      - run: flutter build web --release
-      - name: Package web bundle
-        run: |
-          mkdir -p artifacts
-          tar -czvf "artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-web.tar.gz" \
-            -C build/web .
-      - uses: https://github.com/actions/upload-artifact@v4
+      - run: rm ./assets/vodozemac/.gitignore
+      - name: Build Release Web
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
+      - name: Create archive
+        run: tar -czf extera-web.tar.gz build/web/
+      - name: Upload Web Build
+        uses: https://data.forgejo.org/actions/upload-artifact@v4
         with:
-          name: web
-          path: artifacts/*.tar.gz
-          retention-days: 14
-
-  # ---------------------------------------------------------------------------
-  # Linux tarball (x64 release bundle)
-  # ---------------------------------------------------------------------------
-  build_linux:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: https://github.com/actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: https://github.com/dtolnay/rust-toolchain@stable
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git wget curl clang cmake ninja-build pkg-config \
-            libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
-            cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev \
-            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-            libgstreamer-plugins-good1.0-dev \
-            libkeybinder-3.0-dev \
-            libpulse-dev libasound2-dev \
-            libx11-dev libxcb1-dev libxcb-randr0-dev \
-            libxrandr-dev libxcomposite-dev libxdamage-dev \
-            libxrender-dev libxtst-dev libxi-dev \
-            libegl1-mesa-dev libgl1-mesa-dev
-      - uses: https://github.com/subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Cache pub packages
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
-      - name: Cache cargo registry
-        uses: https://github.com/actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: cargo-${{ runner.os }}-
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build linux --release
-      - name: Package Linux bundle
-        run: ./scripts/build-linux.sh
-      - name: Rename tarball
-        run: |
-          mkdir -p artifacts
-          cp build/linux/x64/release/bundle.tar.gz \
-            artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-linux-x64.tar.gz
-      - uses: https://github.com/actions/upload-artifact@v4
-        with:
-          name: linux
-          path: artifacts/*.tar.gz
-          retention-days: 14
-
-  # ---------------------------------------------------------------------------
-  # Publish all artifacts to the Forgejo release.
-  # Uses the Gitea/Forgejo release API (compatible token: GITHUB_TOKEN).
-  # ---------------------------------------------------------------------------
-  publish:
-    needs: [prepare, build_apk, build_appimage, build_linux, build_web]
-    if: ${{ github.event_name == 'push' || inputs.publish == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: https://github.com/actions/checkout@v4
-      - uses: https://github.com/actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Flatten artifacts
-        run: |
-          mkdir -p release-assets
-          find artifacts -type f \( \
-            -name '*.apk' -o \
-            -name '*.AppImage' -o \
-            -name '*.tar.gz' \) -exec cp {} release-assets/ \;
-          ls -lR release-assets
-      - name: Create / update release and upload assets
+          name: Web Build
+          path: extera-web.tar.gz
+      - name: Upload extera-web.tar.gz to Forgejo release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
-          REPO: ${{ github.repository }}
-          API: ${{ github.api_url }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          set -euo pipefail
+          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
+          curl -sS -X POST "${UPLOAD_URL%?}=extera-web.tar.gz" \
+            -H "Authorization: token $RELEASE_TOKEN" \
+            -H "Content-Type: application/gzip" \
+            --data-binary @extera-web.tar.gz
+      # Forgejo does not provide GitHub Pages; publish the public/ artifact via Forgejo static pages or another method.
 
-          # Check if release already exists for this tag.
-          http_code=$(curl -s -o /tmp/release.json -w '%{http_code}' \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/json" \
-            "$API/repos/$REPO/releases/tags/$TAG")
+  build_apk:
+    needs:
+      - create_release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .tool_versions.yaml
+          cache: true
+      # We don't have FCM yet, but it's PLANNED
+      #  - name: Add Firebase Messaging
+      #   run: |
+      #     echo '${{secrets.GOOGLE_SERVICES_JSON}}' | base64 -d > android/app/google-services.json
+      #     ./scripts/add-firebase-messaging.sh
+      - uses: ./.forgejo/actions/free_up_space
+      - uses: dtolnay/rust-toolchain@stable
+      - run: flutter pub get
+      - name: Prepare Android Release Build
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: ./scripts/prepare-android-release.sh
+      - run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
+      - name: Upload extera.apk to Forgejo release
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
+          curl -sS -X POST "${UPLOAD_URL%?}=extera.apk" \
+            -H "Authorization: token $RELEASE_TOKEN" \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            --data-binary @build/app/outputs/apk/release/app-frelease-release.apk
 
-          if [ "$http_code" = "200" ]; then
-            release_id=$(jq -r '.id' /tmp/release.json)
-            echo "Release #$release_id already exists, uploading assets to it."
-          else
-            body=$(jq -n --arg name "$TAG" --arg tag "$TAG" --argjson pre "$IS_PRERELEASE" \
-              '{
-                tag_name: $tag,
-                name: $name,
-                body: ("ExteraNext " + $name),
-                draft: false,
-                prerelease: $pre,
-                make_latest: "true"
-              }')
-            curl -s -o /tmp/release.json -w '%{http_code}\n' \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$body" \
-              "$API/repos/$REPO/releases"
-            release_id=$(jq -r '.id' /tmp/release.json)
-            if [ -z "$release_id" ] || [ "$release_id" = "null" ]; then
-              echo "Failed to create release:" >&2
-              cat /tmp/release.json >&2
-              exit 1
-            fi
-            echo "Created release #$release_id"
-          fi
-
-          # Upload every asset to the release.
-          for asset in release-assets/*; do
-            name=$(basename "$asset")
-            echo "Uploading $name ..."
-            # Delete an existing asset with the same name (allows re-runs).
-            existing=$(curl -s \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              "$API/repos/$REPO/releases/$release_id/assets" \
-              | jq -r --arg name "$name" \
-                '.[] | select(.name == $name) | .id' 2>/dev/null || true)
-            for aid in $existing; do
-              [ -n "$aid" ] && \
-                curl -s -X DELETE \
-                  -H "Authorization: token $GITHUB_TOKEN" \
-                  "$API/repos/$REPO/releases/assets/$aid" || true
-            done
-            # Upload the new asset.
-            upload_url="$API/repos/$REPO/releases/$release_id/assets?name=$name"
-            curl -sSf -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$asset" \
-              "$upload_url"
-          done
-
-          echo "Release published."
+  build_linux:
+    needs:
+      - create_release
+    strategy:
+      matrix:
+        arch: [ x64 ]
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest'}}
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v6
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install curl clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev cmake-data libsecret-1-dev libsecret-1-0 librhash0 libssl-dev libwebkit2gtk-4.1-dev -y
+      - run: echo "FLUTTER_VERSION=$(yq '.environment.flutter' < .tool_versions.yaml)" >> $FORGEJO_ENV
+      - name: Install Flutter
+        run: |
+          git clone --branch ${{ env.FLUTTER_VERSION }} https://github.com/flutter/flutter.git
+          ./flutter/bin/flutter doctor
+      - uses: dtolnay/rust-toolchain@stable
+      - run: ./flutter/bin/flutter pub get
+      - run: ./flutter/bin/flutter build linux --target-platform linux-${{ matrix.arch }}
+      - name: Create archive
+        run: tar -czf extera-linux-${{ matrix.arch }}.tar.gz -C build/linux/${{ matrix.arch }}/release/bundle/ .
+      - name: Upload extera-linux-${{ matrix.arch }}.tar.gz to Forgejo release
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          UPLOAD_URL="${{ needs.create_release.outputs.upload_url }}"
+          curl -sS -X POST "${UPLOAD_URL%?}=extera-linux-${{ matrix.arch }}.tar.gz" \
+            -H "Authorization: token $RELEASE_TOKEN" \
+            -H "Content-Type: application/gzip" \
+            --data-binary @extera-linux-${{ matrix.arch }}.tar.gz
