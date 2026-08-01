@@ -1,289 +1,225 @@
 name: Release Workflow
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
-      - '!v*.*.*-*'  # excludes prereleases handled below
-      - 'v*.*.*-*'    # prereleases (e.g. v1.2.3-beta)
-
-# Triggering on every tag starting with `v` works because we filter
-# release vs prerelease inside the workflow based on the tag name.
+  release:
+    types:
+      - created
 
 concurrency:
-  group: release_workflow-${{ github.ref }}
-  cancel-in-progress: false
+  group: release_workflow
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Figure out whether this is a stable release or a prerelease.
-  # Exposes `is_prerelease` and `release_name` for downstream jobs.
-  # ---------------------------------------------------------------------------
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
-      tag: ${{ steps.meta.outputs.tag }}
-    steps:
-      - name: Resolve release metadata
-        id: meta
-        run: |
-          TAG="${GITHUB_REF##*/}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          # A tag containing a dash after the version number is a prerelease
-          # (e.g. v1.2.3-beta, v1.2.3-rc1).
-          if [[ "$TAG" == *-* ]]; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ---------------------------------------------------------------------------
-  # Android APK
-  # ---------------------------------------------------------------------------
-  build_apk:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: "zulu"
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - name: Build APK
-        run: flutter build apk --release
-      - name: Rename APK
-        run: |
-          mkdir -p artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk \
-            artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-android.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: artifacts/*.apk
-          retention-days: 14
-
-  # ---------------------------------------------------------------------------
-  # Linux AppImage (x86_64)
-  # ---------------------------------------------------------------------------
-  build_appimage:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git wget curl clang cmake ninja-build pkg-config \
-            libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
-            cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - name: Install appimagetool
-        run: |
-          wget -q -O /usr/local/bin/appimagetool \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x /usr/local/bin/appimagetool
-      - name: Build AppImage
-        run: ./scripts/build-appimage.sh
-      - name: Rename AppImage
-        run: |
-          mkdir -p artifacts
-          # appimagetool outputs Extera_Next-x86_64.AppImage in the appimage dir
-          if [ -f appimage/Extera_Next-x86_64.AppImage ]; then
-            cp appimage/Extera_Next-x86_64.AppImage \
-              artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-x86_64.AppImage
-          else
-            # fall back to whatever AppImage was produced
-            cp appimage/*.AppImage \
-              artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-x86_64.AppImage
-          fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: appimage
-          path: artifacts/*.AppImage
-          retention-days: 14
-
-  # ---------------------------------------------------------------------------
-  # Web build (tar.gz)
-  # ---------------------------------------------------------------------------
   build_web:
-    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
+      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo utilities
-        run: |
-          # prepare-web.sh installs flutter_rust_bridge_codegen via cargo,
-          # so cargo must be available (rust-toolchain installs cargo).
-          cargo --version
-      - name: Install yq
-        run: |
-          sudo wget -q -O /usr/local/bin/yq \
-            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install nodejs -y
       - run: flutter pub get
       - name: Prepare web
         run: ./scripts/prepare-web.sh
-      - run: flutter build web --release
-      - name: Package web bundle
-        run: |
-          mkdir -p artifacts
-          tar -czvf "artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-web.tar.gz" \
-            -C build/web .
-      - uses: actions/upload-artifact@v4
+      - name: Build Release Web
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
+      - name: Create archive
+        run: tar -czf fluffychat-web.tar.gz build/web/
+      - name: Upload Web Build
+        uses: actions/upload-artifact@v4
         with:
-          name: web
-          path: artifacts/*.tar.gz
-          retention-days: 14
+          name: Web Build
+          path: fluffychat-web.tar.gz
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: fluffychat-web.tar.gz
+          asset_name: fluffychat-web.tar.gz
+          asset_content_type: application/gzip
+      - name: Install and build tailwindcss
+        working-directory: docs
+        run: |
+          npm install tailwindcss @tailwindcss/cli
+          npx tailwindcss -o ./tailwind.css
+      - name: Build Website
+        run: |
+          mv docs public
+          mv repo public || true
+          mv build/web/ public/web
+          cp public/web -r public/nightly
+      - name: Deploy to GitHub Pages
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: fluffychat.im
 
-  # ---------------------------------------------------------------------------
-  # Linux tarball (x64 release bundle)
-  # ---------------------------------------------------------------------------
-  build_linux:
-    needs: prepare
+  build_apk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> "$GITHUB_ENV"
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git wget curl clang cmake ninja-build pkg-config \
-            libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev \
-            cmake-data libsecret-1-dev libsecret-1-0 librhash0 \
-            libssl-dev libwebkit2gtk-4.1-dev
+      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'zulu'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+      - name: Apply Google Services Patch
+        run: git apply ./scripts/enable-android-google-services.patch
       - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build linux --release
-      - name: Package Linux bundle
-        run: ./scripts/build-linux.sh
-      - name: Rename tarball
-        run: |
-          mkdir -p artifacts
-          cp build/linux/x64/release/bundle.tar.gz \
-            artifacts/ExteraNext-${{ needs.prepare.outputs.tag }}-linux-x64.tar.gz
-      - uses: actions/upload-artifact@v4
+      - name: Prepare Android Release Build
+        env:
+          FDROID_KEY: ${{ secrets.FDROID_KEY }}
+          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+          PLAYSTORE_DEPLOY_KEY: ${{ secrets.PLAYSTORE_DEPLOY_KEY }}
+        run: ./scripts/prepare-android-release.sh
+      - run: flutter build apk --release
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
         with:
-          name: linux
-          path: artifacts/*.tar.gz
-          retention-days: 14
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/app/outputs/apk/release/app-release.apk
+          asset_name: fluffychat.apk
+          asset_content_type: application/vnd.android.package-archive
 
-  # ---------------------------------------------------------------------------
-  # Publish all artifacts to the Forgejo release.
-  # Uses the Gitea/Forgejo release API (compatible token: GITHUB_TOKEN).
-  # ---------------------------------------------------------------------------
-  publish:
-    needs: [prepare, build_apk, build_appimage, build_linux, build_web]
+  build_linux:
+    strategy:
+      matrix:
+        arch: [ x64, arm64 ]
+    runs-on: ${{ matrix.arch == 'arm64' && 'self-hosted' || 'ubuntu-latest'}}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install curl clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev cmake-data libsecret-1-dev libsecret-1-0 librhash0 libssl-dev libwebkit2gtk-4.1-dev -y
+      - name: Install Flutter
+        run: |
+          git clone --branch ${{ env.FLUTTER_VERSION }} https://github.com/flutter/flutter.git
+          ./flutter/bin/flutter doctor
+      - run: ./flutter/bin/flutter pub get
+      - run: ./flutter/bin/flutter build linux --target-platform linux-${{ matrix.arch }}
+      - name: Create archive
+        run: tar -czf fluffychat-linux-${{ matrix.arch }}.tar.gz -C build/linux/${{ matrix.arch }}/release/bundle/ .
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: fluffychat-linux-${{ matrix.arch }}.tar.gz
+          asset_name: fluffychat-linux-${{ matrix.arch }}.tar.gz
+          asset_content_type: application/gzip
+
+  deploy_playstore:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
+      - uses: actions/setup-java@v4
         with:
-          path: artifacts
-      - name: Flatten artifacts
-        run: |
-          mkdir -p release-assets
-          find artifacts -type f \( \
-            -name '*.apk' -o \
-            -name '*.AppImage' -o \
-            -name '*.tar.gz' \) -exec cp {} release-assets/ \;
-          ls -lR release-assets
-      - name: Create / update release and upload assets
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'zulu'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install Fastlane
+        run: gem install fastlane -NV
+      - name: Apply Google Services Patch
+        run: git apply ./scripts/enable-android-google-services.patch
+      - run: flutter pub get
+      - name: Prepare Android Release Build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
-          REPO: ${{ github.repository }}
-          API: ${{ github.api_url }}
+          FDROID_KEY: ${{ secrets.FDROID_KEY }}
+          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+          PLAYSTORE_DEPLOY_KEY: ${{ secrets.PLAYSTORE_DEPLOY_KEY }}
+        run: ./scripts/prepare-android-release.sh
+      - name: Build Android Release
+        run: flutter build appbundle --target-platform android-arm,android-arm64,android-x64
+      - name: Get Tag Name
+        id: tag_name
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+      - name: Deploy Android Release
         run: |
-          set -euo pipefail
-
-          # Check if release already exists for this tag.
-          http_code=$(curl -s -o /tmp/release.json -w '%{http_code}' \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/json" \
-            "$API/repos/$REPO/releases/tags/$TAG")
-
-          if [ "$http_code" = "200" ]; then
-            release_id=$(jq -r '.id' /tmp/release.json)
-            echo "Release #$release_id already exists, uploading assets to it."
+          mkdir -p build/android
+          cp build/app/outputs/bundle/release/app-release.aab build/android/
+          cd android
+          bundle install
+          bundle update fastlane
+          bundle exec fastlane deploy_internal_test
+          if [[ $GITHUB_REF_NAME == rc* ]]; then
+              bundle exec fastlane deploy_candidate
           else
-            body=$(jq -n --arg name "$TAG" --arg tag "$TAG" --argjson pre "$IS_PRERELEASE" \
-              '{
-                tag_name: $tag,
-                name: $name,
-                body: ("ExteraNext " + $name),
-                draft: false,
-                prerelease: $pre,
-                make_latest: "true"
-              }')
-            curl -s -o /tmp/release.json -w '%{http_code}\n' \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$body" \
-              "$API/repos/$REPO/releases"
-            release_id=$(jq -r '.id' /tmp/release.json)
-            if [ -z "$release_id" ] || [ "$release_id" = "null" ]; then
-              echo "Failed to create release:" >&2
-              cat /tmp/release.json >&2
-              exit 1
-            fi
-            echo "Created release #$release_id"
+              bundle exec fastlane deploy_release
+          fi
+          cd ..
+
+  promote_snapcraft:
+    runs-on: ubuntu-latest
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v3
+      - name: Get Tag Name
+        id: tag_name
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+      - name: Promote Snap
+        env: # Workaround for https://github.com/snapcore/snapcraft/issues/4439
+          SNAPCRAFT_HAS_TTY: "true"
+        run: |
+          if [[ $GITHUB_REF_NAME == rc* ]]; then
+              yes | snapcraft promote fluffychat --from-channel edge --to-channel candidate
+          else
+              yes | snapcraft promote fluffychat --from-channel edge --to-channel stable
           fi
 
-          # Upload every asset to the release.
-          for asset in release-assets/*; do
-            name=$(basename "$asset")
-            echo "Uploading $name ..."
-            # Delete an existing asset with the same name (allows re-runs).
-            existing=$(curl -s \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              "$API/repos/$REPO/releases/$release_id/assets" \
-              | jq -r --arg name "$name" \
-                '.[] | select(.name == $name) | .id' 2>/dev/null || true)
-            for aid in $existing; do
-              [ -n "$aid" ] && \
-                curl -s -X DELETE \
-                  -H "Authorization: token $GITHUB_TOKEN" \
-                  "$API/repos/$REPO/releases/assets/$aid" || true
-            done
-            # Upload the new asset.
-            upload_url="$API/repos/$REPO/releases/$release_id/assets?name=$name"
-            curl -sSf -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$asset" \
-              "$upload_url"
-          done
-
-          echo "Release published."
+  deploy_docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
