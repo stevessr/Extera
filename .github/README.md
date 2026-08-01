@@ -16,9 +16,16 @@ Workflows stay thin. Everything they do lives in one of two places:
 - `scripts/ci/*.sh` — the actual logic, runnable outside CI.
 
 The Flutter version is pinned in `.tool_versions.yaml`, which
-`subosito/flutter-action` reads directly. Everything else is pinned in
-`workflows/versions.env` and sourced into `$GITHUB_ENV` by the composite
+`subosito/flutter-action` reads directly. The JDK and yq versions live in
+`workflows/versions.env` and are sourced into `$GITHUB_ENV` by the composite
 actions.
+
+No Android API level appears anywhere in CI. `compileSdk` follows
+`flutter.compileSdkVersion`, so the Gradle plugin downloads the platform and
+build-tools that the pinned Flutter asks for; CI only accepts the licences and
+preinstalls the NDK revision it reads from `android/app/build.gradle.kts`. The
+Android SDK cache is keyed on the Flutter and NDK versions, so bumping Flutter
+rebuilds it.
 
 Every job starts with a small inline step that installs Node 24 if the runner
 image only ships Node 20. It cannot be a script, because it has to run before

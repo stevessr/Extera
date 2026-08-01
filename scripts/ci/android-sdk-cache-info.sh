@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Emits the Android SDK location and a cache key to $GITHUB_OUTPUT.
 #
-# The key covers only what changes the installed components — the requested
-# package list and the NDK revision — so unrelated edits to build.gradle.kts do
-# not throw away a multi-gigabyte cache.
+# The key is built from the Flutter version and the NDK revision. The Flutter
+# version is in there because compileSdk follows flutter.compileSdkVersion:
+# when Flutter moves, Gradle pulls a different platform and build-tools, and
+# the cache has to be rebuilt to pick them up. Nothing else about
+# build.gradle.kts changes what is installed, so nothing else belongs in the
+# key.
 set -euo pipefail
+
+cd "$(dirname "$0")/../.."
 
 root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 if [ -z "$root" ]; then
@@ -12,14 +17,14 @@ if [ -z "$root" ]; then
   exit 1
 fi
 
-ndk_version=$(sed -nE 's/^[[:space:]]*ndkVersion[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' \
-  android/app/build.gradle.kts | head -1 || true)
+flutter_version=$(./scripts/ci/flutter-version.sh)
+ndk_version=$(./scripts/ci/android-ndk-version.sh)
 
-key=$(printf '%s|%s' "${ANDROID_SDK_PACKAGES:-}" "$ndk_version" | sha256sum | cut -c1-16)
+key=$(printf 'flutter=%s|ndk=%s' "$flutter_version" "$ndk_version" | sha256sum | cut -c1-16)
 
 {
   echo "path=$root"
   echo "key=$key"
 } >>"${GITHUB_OUTPUT:-/dev/stdout}"
 
-echo "Android SDK at $root (cache key $key, ndk ${ndk_version:-none})"
+echo "Android SDK at $root (cache key $key, flutter $flutter_version, ndk ${ndk_version:-none})"

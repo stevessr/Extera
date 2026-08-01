@@ -3,7 +3,20 @@
 # is already present.
 set -euo pipefail
 
-version="${YQ_VERSION:-v4.53.3}"
+cd "$(dirname "$0")/../.."
+
+# Fall back to versions.env rather than repeating the version here, so there is
+# only ever one place to bump.
+version="${YQ_VERSION:-}"
+if [ -z "$version" ]; then
+  version=$(sed -nE 's/^YQ_VERSION=(.+)$/\1/p' .github/workflows/versions.env | head -1 || true)
+fi
+
+if [ -z "$version" ]; then
+  echo "YQ_VERSION is unset and missing from .github/workflows/versions.env" >&2
+  exit 1
+fi
+
 target="${YQ_INSTALL_DIR:-/usr/local/bin}/yq"
 
 if [ -x "$target" ] && "$target" --version 2>/dev/null | grep -q "${version#v}"; then
