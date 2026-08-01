@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# Installs the Android SDK components Gradle needs and accepts their licences.
+# Prepares the Android SDK for a Gradle build.
 #
-# The package list comes from ANDROID_SDK_PACKAGES (.github/workflows/versions.env);
-# the NDK revision is read from android/app/build.gradle.kts so the two can
-# never disagree. Safe to run on a warm cache: sdkmanager skips what is already
-# installed.
+# No API level is installed here on purpose. compileSdk follows
+# flutter.compileSdkVersion, so the Android Gradle Plugin downloads the
+# matching platform and build-tools itself once the licences are accepted;
+# pinning them in CI would only drift from whatever Flutter asks for.
+#
+# The NDK is preinstalled because its revision is pinned in
+# android/app/build.gradle.kts and it is large enough to be worth caching.
+# Safe to run on a warm cache: sdkmanager skips what is already installed.
 set -euo pipefail
+
+cd "$(dirname "$0")/../.."
 
 android_home="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 if [ -z "$android_home" ]; then
@@ -27,21 +33,16 @@ if [ -z "$sdkmanager" ]; then
   exit 1
 fi
 
-read -r -a packages <<<"${ANDROID_SDK_PACKAGES:-}"
+packages=(platform-tools)
 
-ndk_version=$(sed -nE 's/^[[:space:]]*ndkVersion[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' \
-  android/app/build.gradle.kts | head -1 || true)
+ndk_version=$(./scripts/ci/android-ndk-version.sh)
 if [ -n "$ndk_version" ]; then
   packages+=("ndk;$ndk_version")
 fi
 
-if [ ${#packages[@]} -eq 0 ]; then
-  echo "No SDK packages requested."
-  exit 0
-fi
-
 # sdkmanager closes stdin as soon as it stops reading answers, which kills `yes`
 # with SIGPIPE; swallow that so pipefail does not abort the script.
+# Accepting the licences is also what lets Gradle fetch the compile SDK.
 ( yes || true ) | "$sdkmanager" --licenses >/dev/null
 ( yes || true ) | "$sdkmanager" "${packages[@]}"
 
