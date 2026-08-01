@@ -111,7 +111,7 @@ jobs:
       #   run: |
       #     echo '${{secrets.GOOGLE_SERVICES_JSON}}' | base64 -d > android/app/google-services.json
       #     ./scripts/add-firebase-messaging.sh
-      - uses: ./.forgejo/actions/free_up_space
+      # - uses: ./.forgejo/actions/free_up_space --- add later
       - uses: https://github.com/dtolnay/rust-toolchain@stable
       - run: flutter pub get
       - name: Prepare Android Release Build
