@@ -25,6 +25,7 @@ Map<String, Object?> sanitizeContent(Map<String, Object?> content) {
     'filename',
     'info',
     'url',
+    'file',
   ];
   final newContent = <String, Object?>{};
   for (final field in allowedFields) {
