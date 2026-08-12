@@ -1,3 +1,10 @@
+## Extera 26.4.6
+- Added message quick action: double tap to react or reply. Available in **settings** -> **chat**.
+- Add media content warnings with MSC3725.
+- Changed space chat list view.
+- Show default power levels according to Matrix specification.
+- Fix forwarding files from encrypted chats.
+
 ## Extera 26.4.5
 - Added room server ACL section
 - Fixed loading history in threads
