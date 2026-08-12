@@ -63,7 +63,7 @@ class ChatAclSettingsView extends StatelessWidget {
       appBar: AppBar(
         title: Text(L10n.of(context).roomServerAcl),
         actions: [
-          if (canEdit)
+          if (canEdit && controller.enableSaveButton)
             IconButton(
               icon: const Icon(Icons.save_outlined),
               tooltip: L10n.of(context).saveChanges,
