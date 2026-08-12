@@ -1928,7 +1928,7 @@
             }
         }
     },
-    "send": "Прислать",
+    "send": "Отправить",
     "@send": {
         "type": "String",
         "placeholders": {}
