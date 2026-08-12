@@ -9,6 +9,7 @@ class DialogTextField extends StatelessWidget {
   final String? counterText;
   final String? prefixText;
   final String? suffixText;
+  final Widget? suffix;
   final String? errorText;
   final bool readOnly;
   final TextStyle? textStyle;
@@ -29,6 +30,7 @@ class DialogTextField extends StatelessWidget {
     this.initialText,
     this.prefixText,
     this.suffixText,
+    this.suffix,
     this.minLines,
     this.maxLines,
     this.keyboardType,
@@ -47,6 +49,7 @@ class DialogTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final prefixText = this.prefixText;
     final suffixText = this.suffixText;
+    final suffix = this.suffix;
     final errorText = this.errorText;
     final theme = Theme.of(context);
     switch (theme.platform) {
@@ -73,6 +76,7 @@ class DialogTextField extends StatelessWidget {
             prefixText: prefixText,
             suffixText: suffixText,
             counterText: counterText,
+            suffixIcon: suffix,
           ),
         );
       case TargetPlatform.iOS:
@@ -91,7 +95,7 @@ class DialogTextField extends StatelessWidget {
               keyboardType: keyboardType,
               autocorrect: autocorrect,
               prefix: prefixText != null ? Text(prefixText) : null,
-              suffix: suffixText != null ? Text(suffixText) : null,
+              suffix: suffix ?? (suffixText != null ? Text(suffixText) : null),
               placeholder: labelText ?? hintText,
               textInputAction: textInputAction,
               onSubmitted: onSubmitted,

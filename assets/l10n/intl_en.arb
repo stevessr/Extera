@@ -4117,5 +4117,20 @@
     "addBannedServer": "Add banned server",
     "startPolls": "Start polls",
     "voteInPolls": "Vote in polls",
-    "endPolls": "End polls"
+    "endPolls": "End polls",
+    "contentWarning": "Content warning",
+    "contentWarningSpoiler": "Spoiler",
+    "contentWarningNsfw": "NSFW",
+    "contentWarningGraphic": "Graphic or disturbing",
+    "contentWarningMedical": "Health hazard",
+    "revealSpoiler": "Reveal spoiler",
+    "revealMedia": "Reveal media",
+    "contentWarningReason": "{reason}",
+    "@contentWarningReason": {
+      "placeholders": {
+        "reason": {"type": "String"}
+      }
+    },
+    "loadAudio": "Load audio",
+    "downloadFile": "Download file"
 }

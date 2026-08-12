@@ -48,12 +48,6 @@ class SendFileDialog extends StatefulWidget {
   SendFileDialogState createState() => SendFileDialogState();
 }
 
-class _ContentWarningType {
-  final String id;
-  final String displayName;
-  const _ContentWarningType(this.id, this.displayName);
-}
-
 class SendFileDialogState extends State<SendFileDialog> {
   bool compress = true;
   bool isSending = false;
@@ -161,6 +155,12 @@ class SendFileDialogState extends State<SendFileDialog> {
 
         final label = _labelTextController.text.trim();
         final extraContent = <String, dynamic>{};
+
+        if (contentWarning != null) {
+          extraContent['town.robin.msc3725.content_warning'] = {
+            'type': contentWarning,
+          };
+        }
 
         if (label.isNotEmpty) {
           extraContent['body'] = label;
@@ -489,6 +489,48 @@ class SendFileDialogState extends State<SendFileDialog> {
                             ? .send
                             : null,
                         onSubmitted: (_) => _send(),
+                        suffix: PopupMenuButton<String?>(
+                          initialValue: contentWarning,
+                          onSelected: (value) {
+                            setState(() {
+                              contentWarning = value;
+                            });
+                          },
+                          icon: Icon(
+                            contentWarning == null
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          tooltip: L10n.of(context).contentWarning,
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: null,
+                              child: Text(L10n.of(context).none),
+                            ),
+                            PopupMenuItem(
+                              value: "town.robin.msc3725.spoiler",
+                              child: Text(
+                                L10n.of(context).contentWarningSpoiler,
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: "town.robin.msc3725.nsfw",
+                              child: Text(L10n.of(context).contentWarningNsfw),
+                            ),
+                            PopupMenuItem(
+                              value: "town.robin.msc3725.graphic",
+                              child: Text(
+                                L10n.of(context).contentWarningGraphic,
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: "town.robin.msc3725.medical",
+                              child: Text(
+                                L10n.of(context).contentWarningMedical,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   // Workaround for SwitchListTile.adaptive crashes in CupertinoDialog

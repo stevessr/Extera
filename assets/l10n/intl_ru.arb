@@ -4204,5 +4204,20 @@
     "voteInPolls": "Участвовать в опросах",
     "endPolls": "Завершать опросы",
     "navigationAndLayout": "Интерфейс",
-    "@navigationAndLayout": {}
+    "@navigationAndLayout": {},
+    "contentWarning": "Предупреждение",
+    "contentWarningSpoiler": "Спойлер",
+    "contentWarningNsfw": "NSFW",
+    "contentWarningGraphic": "Жестокие кадры",
+    "contentWarningMedical": "Угроза здоровью",
+    "revealSpoiler": "Показать спойлер",
+    "revealMedia": "Загрузить медиа",
+    "contentWarningReason": "{reason}",
+    "@contentWarningReason": {
+      "placeholders": {
+        "reason": {"type": "String"}
+      }
+    },
+    "loadAudio": "Загрузить аудио",
+    "downloadFile": "Скачать файл"
 }

@@ -45,6 +45,9 @@ class MessageContent extends StatelessWidget {
 
   final bool loadMedia;
   final void Function()? onLoadMedia;
+  final bool showHiddenMedia;
+  final void Function()? onRevealHiddenMedia;
+  final String? contentWarning;
 
   /// Optional trailing inline span appended to the end of plain text messages
   /// (used to reserve space for the inline status row, Telegram-style).
@@ -65,6 +68,9 @@ class MessageContent extends StatelessWidget {
     this.selectable = false,
     this.loadMedia = false,
     this.onLoadMedia,
+    this.showHiddenMedia = false,
+    this.onRevealHiddenMedia,
+    this.contentWarning,
     this.trailingSpan,
   });
 
@@ -186,8 +192,11 @@ class MessageContent extends StatelessWidget {
               textColor: textColor,
               linkColor: linkColor,
               loadMedia: loadMedia,
+              showHiddenMedia: showHiddenMedia,
               trailingSpan: trailingSpan,
               onLoadMedia: onLoadMedia,
+              onRevealHiddenMedia: onRevealHiddenMedia,
+              contentWarning: contentWarning,
               ownMessage: ownMessage,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
@@ -206,6 +215,11 @@ class MessageContent extends StatelessWidget {
                 linkColor: linkColor,
                 fontSize: fontSize,
                 trailingSpan: trailingSpan,
+                loadMedia: loadMedia,
+                showHiddenMedia: showHiddenMedia,
+                onLoadMedia: onLoadMedia,
+                onRevealHiddenMedia: onRevealHiddenMedia,
+                contentWarning: contentWarning,
               );
             }
             return MessageDownloadContent(
@@ -213,6 +227,11 @@ class MessageContent extends StatelessWidget {
               textColor: textColor,
               linkColor: linkColor,
               trailingSpan: trailingSpan,
+              loadMedia: loadMedia,
+              showHiddenMedia: showHiddenMedia,
+              onLoadMedia: onLoadMedia,
+              onRevealHiddenMedia: onRevealHiddenMedia,
+              contentWarning: contentWarning,
             );
           case MessageTypes.Video:
             return EventVideoPlayer(
@@ -221,7 +240,10 @@ class MessageContent extends StatelessWidget {
               linkColor,
               timeline: timeline,
               loadThumbnail: loadMedia,
+              showHiddenMedia: showHiddenMedia,
               trailingSpan: trailingSpan,
+              onRevealHiddenMedia: onRevealHiddenMedia,
+              contentWarning: contentWarning,
               ownMessage: ownMessage,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
@@ -232,6 +254,11 @@ class MessageContent extends StatelessWidget {
               textColor: textColor,
               linkColor: linkColor,
               trailingSpan: trailingSpan,
+              loadMedia: loadMedia,
+              showHiddenMedia: showHiddenMedia,
+              onLoadMedia: onLoadMedia,
+              onRevealHiddenMedia: onRevealHiddenMedia,
+              contentWarning: contentWarning,
             );
 
           case MessageTypes.Text:

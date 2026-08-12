@@ -18,11 +18,22 @@ class MessageDownloadContent extends StatefulWidget {
   final Color linkColor;
   final InlineSpan? trailingSpan;
 
+  final bool loadMedia;
+  final bool showHiddenMedia;
+  final void Function()? onLoadMedia;
+  final void Function()? onRevealHiddenMedia;
+  final String? contentWarning;
+
   const MessageDownloadContent(
     this.event, {
     required this.textColor,
     required this.linkColor,
     this.trailingSpan,
+    this.loadMedia = false,
+    this.showHiddenMedia = false,
+    this.onLoadMedia,
+    this.onRevealHiddenMedia,
+    this.contentWarning,
     super.key,
   });
 
@@ -85,6 +96,22 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
     super.dispose();
   }
 
+  String _hiddenReason() {
+    final l10n = L10n.of(context);
+    switch (widget.contentWarning) {
+      case 'town.robin.msc3725.spoiler':
+        return l10n.contentWarningReason(l10n.contentWarningSpoiler);
+      case 'town.robin.msc3725.nsfw':
+        return l10n.contentWarningReason(l10n.contentWarningNsfw);
+      case 'town.robin.msc3725.graphic':
+        return l10n.contentWarningReason(l10n.contentWarningGraphic);
+      case 'town.robin.msc3725.medical':
+        return l10n.contentWarningReason(l10n.contentWarningMedical);
+      default:
+        return l10n.contentWarningReason(l10n.contentWarning);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // ... (Your existing build code remains exactly the same)
@@ -110,75 +137,118 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
     final textColor = widget.textColor;
     final linkColor = widget.linkColor;
 
+    final isHidden = widget.contentWarning != null && !widget.showHiddenMedia;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 8,
       children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
-            onTap: () {
-              if (isDownloading) return;
-              if (downloadSuccess) {
-                if (filePath != null) OpenFile.open(filePath);
-                return;
-              }
-              if (event.canDownloadInBackground) {
-                event.downloadInBackground(context);
-              } else {
-                event.saveFile(context);
-              }
-            },
-            child: Container(
-              width: 400,
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 16,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: textColor.withAlpha(32),
-                    child: isDownloading
-                        ? CircularProgressIndicator.adaptive(
-                            value: downloadProgress / 100,
-                          )
-                        : Icon(
-                            downloadError
-                                ? Icons.error_outline
-                                : downloadSuccess
-                                ? Icons.file_download_done
-                                : Icons.file_download_outlined,
+        if (isHidden)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+              onTap: widget.onRevealHiddenMedia,
+              child: Container(
+                width: 400,
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 16,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: textColor.withAlpha(32),
+                      child: Icon(
+                        Icons.visibility_off_outlined,
+                        color: textColor,
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _hiddenReason(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
                             color: textColor,
+                            fontWeight: FontWeight.w500,
                           ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        filename,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: textColor,
-                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      Text(
-                        '$sizeString | $filetype',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: textColor, fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        else
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+              onTap: () {
+                if (isDownloading) return;
+                if (downloadSuccess) {
+                  if (filePath != null) OpenFile.open(filePath);
+                  return;
+                }
+                if (event.canDownloadInBackground) {
+                  event.downloadInBackground(context);
+                } else {
+                  event.saveFile(context);
+                }
+              },
+              child: Container(
+                width: 400,
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 16,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: textColor.withAlpha(32),
+                      child: isDownloading
+                          ? CircularProgressIndicator.adaptive(
+                              value: downloadProgress / 100,
+                            )
+                          : Icon(
+                              downloadError
+                                  ? Icons.error_outline
+                                  : downloadSuccess
+                                  ? Icons.file_download_done
+                                  : Icons.file_download_outlined,
+                              color: textColor,
+                            ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          filename,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '$sizeString | $filetype',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: textColor, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         if (fileDescription != null) ...[
           Padding(
             padding: const EdgeInsets.symmetric(

@@ -93,6 +93,15 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
   Future<User?>? _threadSenderFuture;
 
   bool loadMedia = false;
+  bool showHiddenMedia = false;
+
+  String? get contentWarning {
+    final contentWarning = widget.event.content.tryGet<Map<String, dynamic>>(
+      'town.robin.msc3725.content_warning',
+    );
+    if (contentWarning == null) return null;
+    return contentWarning.tryGet<String>('type');
+  }
 
   @override
   void initState() {
@@ -101,7 +110,6 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
       widget.event.room.client,
       widget.event.room.id,
     );
-    _initFutures();
   }
 
   @override
@@ -678,12 +686,39 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                                 onInfoTab: widget.onInfoTab,
                                                 borderRadius: borderRadius,
                                                 timeline: timeline,
-                                                loadMedia: loadMedia,
-                                                onLoadMedia: () {
+                                                loadMedia:
+                                                    loadMedia &&
+                                                        (showHiddenMedia ||
+                                                            contentWarning == null),
+                                                showHiddenMedia:
+                                                    showHiddenMedia ||
+                                                    contentWarning == null,
+                                                onLoadMedia:
+                                                    contentWarning != null
+                                                        ? () {
+                                                          setState(() {
+                                                            if (!showHiddenMedia) {
+                                                              showHiddenMedia = true;
+                                                            } else if (!loadMedia) {
+                                                              loadMedia = true;
+                                                            }
+                                                          });
+                                                        }
+                                                        : () {
+                                                          setState(() {
+                                                            loadMedia = true;
+                                                          });
+                                                        },
+                                                onRevealHiddenMedia: () {
                                                   setState(() {
-                                                    loadMedia = true;
+                                                    if (!showHiddenMedia) {
+                                                      showHiddenMedia = true;
+                                                    } else if (!loadMedia) {
+                                                      loadMedia = true;
+                                                    }
                                                   });
                                                 },
+                                                contentWarning: contentWarning,
                                                 useBubbleLayout: true,
                                                 selectable:
                                                     PlatformInfos.isMobile

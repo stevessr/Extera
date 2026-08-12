@@ -93,6 +93,15 @@ class _MessageBubbleState extends State<MessageBubble> {
   Future<User?>? _threadSenderFuture;
 
   bool loadMedia = false;
+  bool showHiddenMedia = false;
+
+  String? get contentWarning {
+    final contentWarning = widget.event.content.tryGet<Map<String, dynamic>>(
+      'town.robin.msc3725.content_warning',
+    );
+    if (contentWarning == null) return null;
+    return contentWarning.tryGet<String>('type');
+  }
 
   @override
   void initState() {
@@ -211,6 +220,24 @@ class _MessageBubbleState extends State<MessageBubble> {
   void _scrollToEvent(Event event, Event? scrolledFrom) {
     if (event.status == .error) return; // didn't load yet
     widget.scrollToEventId(event.eventId, scrolledFrom?.eventId);
+  }
+
+  void _loadMedia() {
+    setState(() {
+      if (!loadMedia) {
+        loadMedia = true;
+      }
+    });
+  }
+
+  void _revealHiddenMedia() {
+    setState(() {
+      if (contentWarning != null && !showHiddenMedia) {
+        showHiddenMedia = true;
+      } else if (!loadMedia) {
+        loadMedia = true;
+      }
+    });
   }
 
   @override
@@ -711,12 +738,20 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                 onInfoTab: widget.onInfoTab,
                                                 borderRadius: borderRadius,
                                                 timeline: timeline,
-                                                loadMedia: loadMedia,
-                                                onLoadMedia: () {
-                                                  setState(() {
-                                                    loadMedia = true;
-                                                  });
-                                                },
+                                                loadMedia:
+                                                    loadMedia &&
+                                                        (showHiddenMedia ||
+                                                            contentWarning == null),
+                                                showHiddenMedia:
+                                                    showHiddenMedia ||
+                                                    contentWarning == null,
+                                                onLoadMedia:
+                                                    contentWarning != null
+                                                        ? _revealHiddenMedia
+                                                        : _loadMedia,
+                                                onRevealHiddenMedia:
+                                                    _revealHiddenMedia,
+                                                contentWarning: contentWarning,
                                                 nextEventSameSender:
                                                     nextEventSameSender,
                                                 previousEventSameSender:
