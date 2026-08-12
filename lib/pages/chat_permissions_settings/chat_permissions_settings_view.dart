@@ -78,6 +78,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
           _PermissionEntry(
             title: l10n.defaultPermissionLevel,
             permissionKey: 'users_default',
+            defaultLevel: 0,
           ),
         ],
       ),
@@ -135,6 +136,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
           _PermissionEntry(
             title: l10n.otherMessageEvents,
             permissionKey: 'events_default',
+            defaultLevel: 0,
           ),
         ],
       ),
@@ -155,10 +157,23 @@ class ChatPermissionsSettingsView extends StatelessWidget {
           _PermissionEntry(
             title: l10n.inviteOtherUsers,
             permissionKey: 'invite',
+            defaultLevel: 0,
           ),
-          _PermissionEntry(title: l10n.kickUsers, permissionKey: 'kick'),
-          _PermissionEntry(title: l10n.banUsers, permissionKey: 'ban'),
-          _PermissionEntry(title: l10n.redactMessage, permissionKey: 'redact'),
+          _PermissionEntry(
+            title: l10n.kickUsers,
+            permissionKey: 'kick',
+            defaultLevel: 50,
+          ),
+          _PermissionEntry(
+            title: l10n.banUsers,
+            permissionKey: 'ban',
+            defaultLevel: 50,
+          ),
+          _PermissionEntry(
+            title: l10n.redactMessage,
+            permissionKey: 'redact',
+            defaultLevel: 50,
+          ),
           _PermissionEntry(
             title: l10n.redactOwnMessages,
             permissionKey: EventTypes.Redaction,
@@ -250,6 +265,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
           _PermissionEntry(
             title: l10n.editOtherRoomSettings,
             permissionKey: 'state_default',
+            defaultLevel: 50,
           ),
         ],
       ),
