@@ -43,6 +43,7 @@ enum AppSettings<T> {
     'Roboto,SystemFont,sans-serif',
   ),
 
+  alwaysShowInputBar<bool>('xyz.extera.alwaysShowInputBar', false),
   enablePeopleTab<bool>('xyz.extera.enablePeopleTab', true),
   autoLoadMedia<bool>('xyz.extera.autoLoadMedia', true),
   showCameraButton<bool>('xyz.extera.cameraButton', true),
