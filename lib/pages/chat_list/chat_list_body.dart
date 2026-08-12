@@ -260,8 +260,6 @@ class ChatListViewBody extends StatelessWidget {
                         onLongPress: (context) =>
                             controller.chatContextAction(room, context, space),
                         activeChat: controller.activeChat == room.id,
-                        firstElement: i == 0,
-                        lastElement: rooms.length - 1 == i,
                       );
                     },
                   ),
