@@ -14,8 +14,8 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
-import 'package:extera_next/utils/string_color.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -51,6 +51,148 @@ class SpaceView extends StatefulWidget {
 
   @override
   State<SpaceView> createState() => _SpaceViewState();
+}
+
+class _LastMessageSubtitle extends StatelessWidget {
+  final Room joinedRoom;
+  final Client client;
+  final ThemeData theme;
+
+  const _LastMessageSubtitle({
+    required this.joinedRoom,
+    required this.client,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final lastEvent = joinedRoom.lastEvent;
+    final ownMessage = lastEvent?.senderId == client.userID;
+    final isDirectChat = joinedRoom.directChatMatrixID != null;
+    final typingText = joinedRoom.getLocalizedTypingText(context);
+    final unread = joinedRoom.isUnread;
+    final needLastEventSender = lastEvent == null
+        ? false
+        : joinedRoom.getState(EventTypes.RoomMember, lastEvent.senderId) ==
+              null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        if (typingText.isEmpty &&
+            ownMessage &&
+            lastEvent?.status.isSending == true) ...[
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+          ),
+          const SizedBox(width: 4),
+        ],
+        AnimatedContainer(
+          width: typingText.isEmpty ? 0 : 18,
+          clipBehavior: Clip.hardEdge,
+          decoration: const BoxDecoration(),
+          duration: FluffyThemes.animationDuration,
+          curve: FluffyThemes.animationCurve,
+          padding: const EdgeInsets.only(right: 4),
+          child: Icon(
+            Icons.edit_outlined,
+            color: theme.colorScheme.secondary,
+            size: 14,
+          ),
+        ),
+        Expanded(
+          child: joinedRoom.isSpace && joinedRoom.membership == Membership.join
+              ? Text(
+                  L10n.of(context).countChatsAndCountParticipants(
+                    joinedRoom.spaceChildren.length,
+                    (joinedRoom.summary.mJoinedMemberCount ?? 1),
+                  ),
+                  style: TextStyle(color: theme.colorScheme.outline),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : typingText.isNotEmpty
+              ? Text(
+                  typingText,
+                  style: TextStyle(color: theme.colorScheme.primary),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : FutureBuilder(
+                  key: ValueKey(
+                    '${lastEvent?.eventId}_${lastEvent?.type}_${lastEvent?.redacted}',
+                  ),
+                  future: needLastEventSender
+                      ? lastEvent.calcLocalizedBody(
+                          MatrixLocals(L10n.of(context)),
+                          hideReply: true,
+                          hideEdit: true,
+                          plaintextBody: true,
+                          removeMarkdown: false,
+                          withSenderNamePrefix:
+                              (!isDirectChat ||
+                              joinedRoom.directChatMatrixID !=
+                                  lastEvent.senderId),
+                        )
+                      : null,
+                  initialData: lastEvent?.calcLocalizedBodyFallback(
+                    MatrixLocals(L10n.of(context)),
+                    hideReply: true,
+                    hideEdit: true,
+                    plaintextBody: true,
+                    removeMarkdown: true,
+                    withSenderNamePrefix: !isDirectChat,
+                  ),
+                  builder: (context, snapshot) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 2,
+                    children: [
+                      if (joinedRoom.membership == .join &&
+                          lastEvent?.senderId == client.userID)
+                        Icon(
+                          lastEvent != null &&
+                                  lastEvent.receipts
+                                      .where(
+                                        (receipt) =>
+                                            joinedRoom.directChatMatrixID ==
+                                                null
+                                            ? receipt.user.id != client.userID!
+                                            : receipt.user.id ==
+                                                  joinedRoom.directChatMatrixID,
+                                      )
+                                      .isNotEmpty
+                              ? Icons.done_all
+                              : Icons.done,
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                      Flexible(
+                        child: Text(
+                          snapshot.data ?? L10n.of(context).noMessagesYet,
+                          softWrap: false,
+                          maxLines: joinedRoom.notificationCount >= 1 ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: unread || joinedRoom.hasNewMessages
+                                ? theme.colorScheme.onSurface
+                                : theme.colorScheme.outline,
+                            decoration: lastEvent?.redacted == true
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
 }
 
 class _SpaceViewState extends State<SpaceView> {
@@ -187,6 +329,7 @@ class _SpaceViewState extends State<SpaceView> {
       context: context,
       builder: (_) => PublicRoomDialog(
         chunk: item,
+        roomAlias: item.canonicalAlias,
         via: space?.spaceChildren
             .firstWhereOrNull((child) => child.roomId == item.roomId)
             ?.via,
@@ -440,7 +583,7 @@ class _SpaceViewState extends State<SpaceView> {
     final room = Matrix.of(context).client.getRoomById(widget.spaceId);
     final displayname =
         room?.getLocalizedDisplayname() ?? L10n.of(context).nothingFound;
-    const avatarSize = Avatar.defaultSize / 1.5;
+    const avatarSize = Avatar.defaultSize / 1.25;
     final isAdmin = room?.canChangeStateEvent(EventTypes.SpaceChild) == true;
     return Scaffold(
       appBar: AppBar(
@@ -681,9 +824,11 @@ class _SpaceViewState extends State<SpaceView> {
                             joinedRoom?.getLocalizedDisplayname() ??
                             L10n.of(context).emptyChat;
                         final avatarUrl = item.avatarUrl ?? joinedRoom?.avatar;
+                        final client = Matrix.of(context).client;
                         if (joinedRoom?.membership == .leave) {
                           joinedRoom = null;
                         }
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -721,7 +866,6 @@ class _SpaceViewState extends State<SpaceView> {
                                         dimension: avatarSize,
                                         child: IconButton(
                                           splashRadius: avatarSize,
-                                          iconSize: 14,
                                           style: IconButton.styleFrom(
                                             foregroundColor: theme
                                                 .colorScheme
@@ -741,12 +885,7 @@ class _SpaceViewState extends State<SpaceView> {
                                     : Avatar(
                                         size: avatarSize,
                                         mxContent: avatarUrl,
-                                        name: '#',
-                                        backgroundColor:
-                                            theme.colorScheme.surfaceContainer,
-                                        textColor:
-                                            item.name?.darkColor ??
-                                            theme.colorScheme.onSurface,
+                                        name: displayname,
                                         border: item.roomType == 'm.space'
                                             ? BorderSide(
                                                 color: theme
@@ -769,6 +908,15 @@ class _SpaceViewState extends State<SpaceView> {
                                           displayname,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontWeight:
+                                                (joinedRoom?.isUnread == true ||
+                                                    joinedRoom
+                                                            ?.hasNewMessages ==
+                                                        true)
+                                                ? FontWeight.w500
+                                                : null,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -778,6 +926,13 @@ class _SpaceViewState extends State<SpaceView> {
                                       const Icon(Icons.chevron_right_outlined),
                                   ],
                                 ),
+                                subtitle: joinedRoom == null
+                                    ? null
+                                    : _LastMessageSubtitle(
+                                        joinedRoom: joinedRoom,
+                                        client: client,
+                                        theme: theme,
+                                      ),
                               ),
                             ),
                           ),
