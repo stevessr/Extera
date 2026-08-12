@@ -160,6 +160,7 @@ class SendFileDialogState extends State<SendFileDialog> {
           extraContent['town.robin.msc3725.content_warning'] = {
             'type': contentWarning,
           };
+          extraContent['page.codeberg.everypizza.msc4193.spoiler'] = true;
         }
 
         if (label.isNotEmpty) {
