@@ -32,7 +32,7 @@
 	"cleanExif": "EXIFを削除",
 	"cleanExifDescription": "送信前に画像からEXIFメタデータ（カメラモデル、位置情報、時刻）を削除します。",
 	"@@locale": "ja",
-	"@@last_modified": "2026-06-28T16:07:12.798Z",
+	"@@last_modified": "2026-08-12T21:54:17.665Z",
 	"doNotSendIfCantClean": "クリーンできない画像を送信しない",
 	"doNotSendIfCantCleanDescription": "EXIFメタデータを削除できない場合、画像を送信しません",
 	"repeatPassword": "パスワードを再入力",
@@ -4104,6 +4104,44 @@
 	"@publishTimezoneConfirmation": {
 		"placeholders": {
 			"timezone": {
+				"type": "String"
+			}
+		}
+	},
+	"userNote": "メモ",
+	"userNoteHint": "このユーザーについての個人的なメモを追加してください…",
+	"roomServerAcl": "ブロックされたサーバー",
+	"roomServerAclDescription": "このチャットに参加できるサーバー",
+	"allowIpLiterals": "IP アドレスを許可",
+	"allowedServers": "許可されたサーバー",
+	"bannedServers": "ブロックされたサーバー",
+	"aclUserAtRiskWarning": "これらの変更を適用すると、このチャットへのアクセスを失う可能性があります。続行しますか？",
+	"addAllowedServer": "サーバーを許可",
+	"addBannedServer": "サーバーをブロック",
+	"startPolls": "投票を作成",
+	"voteInPolls": "投票に参加",
+	"endPolls": "投票を終了",
+	"navigationAndLayout": "インターフェース",
+	"contentWarning": "注意",
+	"contentWarningSpoiler": "ネタバレ",
+	"contentWarningNsfw": "NSFW",
+	"contentWarningGraphic": "残酷な映像",
+	"contentWarningMedical": "健康への危害",
+	"revealSpoiler": "ネタバレを表示",
+	"revealMedia": "メディアをロード",
+	"contentWarningReason": "{reason}",
+	"loadAudio": "音声をロード",
+	"quickAction": "クイックアクション",
+	"quickActionDescription": "メッセージをダブルタップしたときにアクションを実行します。",
+	"react": "リアクション",
+	"@messageFontSize": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@navigationAndLayout": {},
+	"@contentWarningReason": {
+		"placeholders": {
+			"reason": {
 				"type": "String"
 			}
 		}
