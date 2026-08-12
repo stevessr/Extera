@@ -444,7 +444,9 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                 onTapDown: (details) => _tapPosition = details.globalPosition,
                 onSecondaryTapDown: (details) =>
                     _tapPosition = details.globalPosition,
-                onTap: () => widget.onSelect(event, _tapPosition),
+                onDoubleTap: () {
+                  widget.chatController?.performQuickAction(event);
+                },
                 onLongPress: () {
                   if (PlatformInfos.isMobile) {
                     widget.onSelect(event, _tapPosition);
@@ -550,6 +552,9 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                         child: GestureDetector(
                           onTapDown: (details) =>
                               _tapPosition = details.globalPosition,
+                          onDoubleTap: () {
+                            widget.chatController?.performQuickAction(event);
+                          },
                           onLongPress: widget.longPressSelect
                               ? null
                               : () {
@@ -688,27 +693,28 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                                 timeline: timeline,
                                                 loadMedia:
                                                     loadMedia &&
-                                                        (showHiddenMedia ||
-                                                            contentWarning == null),
+                                                    (showHiddenMedia ||
+                                                        contentWarning == null),
                                                 showHiddenMedia:
                                                     showHiddenMedia ||
                                                     contentWarning == null,
                                                 onLoadMedia:
                                                     contentWarning != null
-                                                        ? () {
-                                                          setState(() {
-                                                            if (!showHiddenMedia) {
-                                                              showHiddenMedia = true;
-                                                            } else if (!loadMedia) {
-                                                              loadMedia = true;
-                                                            }
-                                                          });
-                                                        }
-                                                        : () {
-                                                          setState(() {
+                                                    ? () {
+                                                        setState(() {
+                                                          if (!showHiddenMedia) {
+                                                            showHiddenMedia =
+                                                                true;
+                                                          } else if (!loadMedia) {
                                                             loadMedia = true;
-                                                          });
-                                                        },
+                                                          }
+                                                        });
+                                                      }
+                                                    : () {
+                                                        setState(() {
+                                                          loadMedia = true;
+                                                        });
+                                                      },
                                                 onRevealHiddenMedia: () {
                                                   setState(() {
                                                     if (!showHiddenMedia) {

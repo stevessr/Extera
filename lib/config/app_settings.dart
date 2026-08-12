@@ -43,6 +43,11 @@ enum AppSettings<T> {
     'Roboto,SystemFont,sans-serif',
   ),
 
+  doubleTapAction<String>(
+    'xyz.extera.doubleTapAction',
+    'none',
+  ), // none | reply | react
+  doubleTapReaction<String>('xyz.extera.doubleTapReaction', '👍'),
   alwaysShowInputBar<bool>('xyz.extera.alwaysShowInputBar', false),
   enablePeopleTab<bool>('xyz.extera.enablePeopleTab', true),
   autoLoadMedia<bool>('xyz.extera.autoLoadMedia', true),

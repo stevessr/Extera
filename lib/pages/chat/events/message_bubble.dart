@@ -568,7 +568,9 @@ class _MessageBubbleState extends State<MessageBubble> {
                 onTapDown: (details) => _tapPosition = details.globalPosition,
                 onSecondaryTapDown: (details) =>
                     _tapPosition = details.globalPosition,
-                onTap: () => widget.onSelect(event, _tapPosition),
+                onDoubleTap: () {
+                  widget.chatController?.performQuickAction(event);
+                },
                 onLongPress: () {
                   if (PlatformInfos.isMobile) {
                     widget.onSelect(event, _tapPosition);
@@ -651,6 +653,9 @@ class _MessageBubbleState extends State<MessageBubble> {
                         child: GestureDetector(
                           onTapDown: (details) =>
                               _tapPosition = details.globalPosition,
+                          onDoubleTap: () {
+                            widget.chatController?.performQuickAction(event);
+                          },
                           onLongPress: widget.longPressSelect
                               ? null
                               : () {
@@ -740,15 +745,15 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                 timeline: timeline,
                                                 loadMedia:
                                                     loadMedia &&
-                                                        (showHiddenMedia ||
-                                                            contentWarning == null),
+                                                    (showHiddenMedia ||
+                                                        contentWarning == null),
                                                 showHiddenMedia:
                                                     showHiddenMedia ||
                                                     contentWarning == null,
                                                 onLoadMedia:
                                                     contentWarning != null
-                                                        ? _revealHiddenMedia
-                                                        : _loadMedia,
+                                                    ? _revealHiddenMedia
+                                                    : _loadMedia,
                                                 onRevealHiddenMedia:
                                                     _revealHiddenMedia,
                                                 contentWarning: contentWarning,

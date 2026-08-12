@@ -782,6 +782,42 @@ class ChatController extends State<ChatPageWithRoom>
     // TODO same for Threads
   }
 
+  void performQuickAction(Event event) {
+    switch (AppSettings.doubleTapAction.value) {
+      case 'reply':
+        replyAction(event);
+        break;
+      case 'react':
+        _quickReaction(event);
+        break;
+    }
+  }
+
+  void _quickReaction(Event event) async {
+    final reaction = AppSettings.doubleTapReaction.value;
+    if (timeline == null) {
+      await room.sendReaction(event.eventId, reaction);
+      return;
+    }
+    final allReactionEvents = event.aggregatedEvents(
+      timeline!,
+      RelationshipTypes.reaction,
+    );
+    final myReaction = allReactionEvents.firstWhereOrNull(
+      (event) =>
+          event.senderId == sendingClient.userID! &&
+          event.content
+                  .tryGet<Map<String, dynamic>>('m.relates_to')
+                  ?.tryGet<String>('key') ==
+              reaction,
+    );
+    if (myReaction == null) {
+      await room.sendReaction(event.eventId, reaction);
+    } else {
+      await room.redactEvent(myReaction.eventId);
+    }
+  }
+
   @override
   void dispose() {
     _scrolledUp.dispose();
