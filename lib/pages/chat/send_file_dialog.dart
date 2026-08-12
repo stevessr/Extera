@@ -48,9 +48,16 @@ class SendFileDialog extends StatefulWidget {
   SendFileDialogState createState() => SendFileDialogState();
 }
 
+class _ContentWarningType {
+  final String id;
+  final String displayName;
+  const _ContentWarningType(this.id, this.displayName);
+}
+
 class SendFileDialogState extends State<SendFileDialog> {
   bool compress = true;
   bool isSending = false;
+  String? contentWarning;
 
   /// Images smaller than 20kb don't need compression.
   static const int minSizeToCompress = 20 * 1000;
@@ -489,23 +496,12 @@ class SendFileDialogState extends State<SendFileDialog> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if ({
-                          TargetPlatform.iOS,
-                          TargetPlatform.macOS,
-                        }.contains(theme.platform))
-                          CupertinoSwitch(
-                            value: compressionSupported && compress,
-                            onChanged: compressionSupported
-                                ? (v) => setState(() => compress = v)
-                                : null,
-                          )
-                        else
-                          Switch.adaptive(
-                            value: compressionSupported && compress,
-                            onChanged: compressionSupported
-                                ? (v) => setState(() => compress = v)
-                                : null,
-                          ),
+                        Switch.adaptive(
+                          value: compressionSupported && compress,
+                          onChanged: compressionSupported
+                              ? (v) => setState(() => compress = v)
+                              : null,
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
