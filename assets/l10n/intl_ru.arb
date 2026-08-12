@@ -4202,5 +4202,7 @@
     "addBannedServer": "Заблокировать сервер",
     "startPolls": "Создавать опросы",
     "voteInPolls": "Участвовать в опросах",
-    "endPolls": "Завершать опросы"
+    "endPolls": "Завершать опросы",
+    "navigationAndLayout": "Интерфейс",
+    "@navigationAndLayout": {}
 }
