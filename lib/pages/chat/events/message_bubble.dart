@@ -87,6 +87,9 @@ class MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<MessageBubble> {
   Offset _tapPosition = Offset.zero;
 
+  /// Used for a custom double-tap detection that does not delay child taps.
+  DateTime? _lastTapTime;
+
   // Cached futures to avoid re-creating them on every build
   late Future<User?> _senderUserFuture;
   Future<Event?>? _replyEventFuture;
@@ -228,6 +231,17 @@ class _MessageBubbleState extends State<MessageBubble> {
         loadMedia = true;
       }
     });
+  }
+
+  void _handleQuickActionTap() {
+    final now = DateTime.now();
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!).inMilliseconds < 400) {
+      _lastTapTime = null;
+      widget.chatController?.performQuickAction(widget.event);
+    } else {
+      _lastTapTime = now;
+    }
   }
 
   void _revealHiddenMedia() {
@@ -568,9 +582,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 onTapDown: (details) => _tapPosition = details.globalPosition,
                 onSecondaryTapDown: (details) =>
                     _tapPosition = details.globalPosition,
-                onDoubleTap: () {
-                  widget.chatController?.performQuickAction(event);
-                },
+                onTap: () => _handleQuickActionTap(),
                 onLongPress: () {
                   if (PlatformInfos.isMobile) {
                     widget.onSelect(event, _tapPosition);
@@ -653,15 +665,18 @@ class _MessageBubbleState extends State<MessageBubble> {
                         child: GestureDetector(
                           onTapDown: (details) =>
                               _tapPosition = details.globalPosition,
-                          onDoubleTap: () {
-                            widget.chatController?.performQuickAction(event);
-                          },
                           onLongPress: widget.longPressSelect
                               ? null
                               : () {
                                   HapticFeedback.heavyImpact();
                                   widget.onSelect(event, _tapPosition);
                                 },
+                          onTap: widget.longPressSelect
+                              ? () {
+                                  HapticFeedback.heavyImpact();
+                                  widget.onSelect(event, _tapPosition);
+                                }
+                              : null,
                           child: Material(
                             color: noBubble
                                 ? Colors.transparent
