@@ -110,6 +110,7 @@ class _MessageModernState extends State<MessageModern> {
       widget.event.room.client,
       widget.event.room.id,
     );
+    _initFutures();
   }
 
   @override
@@ -460,26 +461,26 @@ class _MessageModernState extends State<MessageModern> {
                                     timeline: timeline,
                                     loadMedia:
                                         loadMedia &&
-                                            (showHiddenMedia ||
-                                                contentWarning == null),
+                                        (showHiddenMedia ||
+                                            contentWarning == null),
                                     showHiddenMedia:
                                         showHiddenMedia ||
                                         contentWarning == null,
                                     onLoadMedia: contentWarning != null
                                         ? () {
-                                          setState(() {
-                                            if (!showHiddenMedia) {
-                                              showHiddenMedia = true;
-                                            } else if (!loadMedia) {
-                                              loadMedia = true;
-                                            }
-                                          });
-                                        }
+                                            setState(() {
+                                              if (!showHiddenMedia) {
+                                                showHiddenMedia = true;
+                                              } else if (!loadMedia) {
+                                                loadMedia = true;
+                                              }
+                                            });
+                                          }
                                         : () {
-                                          setState(() {
-                                            loadMedia = true;
-                                          });
-                                        },
+                                            setState(() {
+                                              loadMedia = true;
+                                            });
+                                          },
                                     onRevealHiddenMedia: () {
                                       setState(() {
                                         if (!showHiddenMedia) {

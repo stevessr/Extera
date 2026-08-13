@@ -113,6 +113,7 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
       widget.event.room.client,
       widget.event.room.id,
     );
+    _initFutures();
   }
 
   @override
