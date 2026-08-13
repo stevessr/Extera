@@ -1,3 +1,6 @@
+## Extera 26.4.61
+- Update how quick action works.
+
 ## Extera 26.4.6
 - Added message quick action: double tap to react or reply. Available in **settings** -> **chat**.
 - Add media content warnings with MSC3725.
