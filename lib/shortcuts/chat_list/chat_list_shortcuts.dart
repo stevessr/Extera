@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:hotkey_manager/hotkey_manager.dart';
+//import 'package:hotkey_manager/hotkey_manager.dart';
 
 class NextChatIntent extends Intent {
   const NextChatIntent();
@@ -43,25 +43,25 @@ class ChatListShortcutsState extends State<ChatListShortcuts> {
   @override
   void initState() {
     super.initState();
-    hotKeyManager.register(
+    /* hotKeyManager.register(
       prevChatKey,
       keyDownHandler: (hotKey) {
         widget.onPreviousChat();
       },
-    );
-    hotKeyManager.register(
+     );*/
+    /*.register(
       nextChatKey,
       keyDownHandler: (hotKey) {
         widget.onNextChat();
       },
-    );
+    );*/
   }
 
   @override
   void dispose() {
     super.dispose();
-    hotKeyManager.unregister(prevChatKey);
-    hotKeyManager.unregister(nextChatKey);
+    // hotKeyManager.unregister(prevChatKey);
+    // hotKeyManager.unregister(nextChatKey);
   }
 
   @override
