@@ -4,24 +4,7 @@ import 'dart:typed_data';
 import 'package:pasteboard/pasteboard.dart';
 
 Future<void> writeImageToClipboard(Uint8List bytes) async {
-  if (Platform.isWindows || Platform.isIOS || Platform.isMacOS || Platform.isAndroid) {
-    await Pasteboard.writeImage(bytes);
-  } else if (Platform.isLinux) {
-    final tempFile = File('${Directory.systemTemp.path}/clipboard_image.png');
-    await tempFile.writeAsBytes(bytes);
-    try {
-      await Process.run('xclip', [
-        '-selection', 'clipboard',
-        '-t', 'image/png',
-        '-i', tempFile.path,
-      ]);
-    } catch (_) {
-      try {
-        await Process.run('wl-copy', ['--type', 'image/png', tempFile.path]);
-      } catch (_) {}
-    }
-    await tempFile.delete();
-  }
+  await Pasteboard.writeImage(bytes);
 }
 
 Future<Uint8List?> getImageFromClipboardLinux() async {

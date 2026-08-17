@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -10,7 +9,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
-import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import '../../../utils/error_reporter.dart';
 import '../../widgets/mxc_image.dart';
@@ -33,6 +31,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
 
   void _downloadAction() async {
     try {
+      // Dispose the controllers if we already have them.
       _disposeControllers();
       final player = Player();
       _mediaKitPlayer = player;

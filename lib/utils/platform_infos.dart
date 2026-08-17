@@ -30,7 +30,7 @@ abstract class PlatformInfos {
 
   static bool get usesTouchscreen => !isMobile;
 
-/// media_kit supports video playback on all platforms.
+  /// media_kit supports video playback on all platforms.
   /// Kept as a flag in case some platform needs to be excluded in the future.
   static bool get supportsVideoPlayer => true;
   static bool get supportsSpellCheck => isMobile;
