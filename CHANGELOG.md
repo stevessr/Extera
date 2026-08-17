@@ -1,3 +1,9 @@
+## Extera 26.4.7
+- Fix legacy bubbles and modern message layouts.
+- Support playing videos on desktop.
+- Add copy image context menu action.
+- Show encryption status in room title and member list.
+
 ## Extera 26.4.61
 - Update how quick action works.
 
