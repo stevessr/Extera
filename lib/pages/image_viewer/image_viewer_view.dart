@@ -199,16 +199,17 @@ class _ZoomableImageState extends State<_ZoomableImage> {
 
   void _onSecondaryTapUp(TapUpDetails details) {
     if (!PlatformInfos.isDesktop) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
     showMenu<int>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
-        overlay.size.width - details.globalPosition.dx,
-        overlay.size.height - details.globalPosition.dy,
-      ),
+      useRootNavigator: true,
+      positionBuilder: (context, constraints) {
+        return RelativeRect.fromLTRB(
+          details.globalPosition.dx,
+          details.globalPosition.dy,
+          details.globalPosition.dx + constraints.minWidth,
+          details.globalPosition.dy + constraints.minHeight,
+        );
+      },
       items: [
         PopupMenuItem(
           value: 0,
@@ -256,9 +257,9 @@ class _ZoomableImageState extends State<_ZoomableImage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to copy image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to copy image: $e')));
       }
     }
   }
