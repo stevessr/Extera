@@ -1,3 +1,4 @@
+import 'package:extera_next/utils/matrix_sdk_extensions/room_verified_extension.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -21,6 +22,7 @@ class ChatAppBarTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final room = controller.room;
     if (controller.selectedEvents.isNotEmpty) {
       return Text(
@@ -76,6 +78,14 @@ class ChatAppBarTitle extends StatelessWidget {
                             ),
                     ),
                     const SizedBox(width: 8),
+                    if (room.allUsersVerified) ...[
+                      Icon(
+                        Icons.shield,
+                        color: theme.colorScheme.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Flexible(
                       child: Text(
                         controller.thread == null
@@ -197,6 +207,14 @@ class ChatAppBarTitle extends StatelessWidget {
                         ),
                 ),
                 const SizedBox(width: 12),
+                if (room.allUsersVerified) ...[
+                  Icon(
+                    Icons.shield,
+                    color: theme.colorScheme.primary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
