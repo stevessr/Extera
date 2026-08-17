@@ -1928,7 +1928,7 @@
             }
         }
     },
-    "send": "Прислать",
+    "send": "Отправить",
     "@send": {
         "type": "String",
         "placeholders": {}
@@ -4202,5 +4202,25 @@
     "addBannedServer": "Заблокировать сервер",
     "startPolls": "Создавать опросы",
     "voteInPolls": "Участвовать в опросах",
-    "endPolls": "Завершать опросы"
+    "endPolls": "Завершать опросы",
+    "navigationAndLayout": "Интерфейс",
+    "@navigationAndLayout": {},
+    "contentWarning": "Предупреждение",
+    "contentWarningSpoiler": "Спойлер",
+    "contentWarningNsfw": "NSFW",
+    "contentWarningGraphic": "Жестокие кадры",
+    "contentWarningMedical": "Угроза здоровью",
+    "revealSpoiler": "Показать спойлер",
+    "revealMedia": "Загрузить медиа",
+    "contentWarningReason": "{reason}",
+    "@contentWarningReason": {
+      "placeholders": {
+        "reason": {"type": "String"}
+      }
+    },
+    "loadAudio": "Загрузить аудио",
+    "downloadFile": "Скачать файл",
+    "quickAction": "Быстрое действие",
+    "quickActionDescription": "Выполнить действие при двойном нажатии на сообщение.",
+    "react": "Реакция"
 }

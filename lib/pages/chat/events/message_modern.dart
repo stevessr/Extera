@@ -84,12 +84,24 @@ class MessageModern extends StatefulWidget {
 class _MessageModernState extends State<MessageModern> {
   Offset _tapPosition = Offset.zero;
 
+  /// Used for a custom double-tap detection that does not delay child taps.
+  DateTime? _lastTapTime;
+
   // Cached futures to avoid re-creating them on every build
   late Future<User?> _senderUserFuture;
   Future<Event?>? _replyEventFuture;
   Future<User?>? _threadSenderFuture;
 
   bool loadMedia = false;
+  bool showHiddenMedia = false;
+
+  String? get contentWarning {
+    final contentWarning = widget.event.content.tryGet<Map<String, dynamic>>(
+      'town.robin.msc3725.content_warning',
+    );
+    if (contentWarning == null) return null;
+    return contentWarning.tryGet<String>('type');
+  }
 
   @override
   void initState() {
@@ -156,6 +168,17 @@ class _MessageModernState extends State<MessageModern> {
   void _scrollToEvent(Event event, Event? scrolledFrom) {
     if (event.status == EventStatus.error) return; // didn't load yet
     widget.scrollToEventId(event.eventId, scrolledFrom?.eventId);
+  }
+
+  void _handleQuickActionTap() {
+    final now = DateTime.now();
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!).inMilliseconds < 400) {
+      _lastTapTime = null;
+      widget.chatController?.performQuickAction(widget.event);
+    } else {
+      _lastTapTime = now;
+    }
   }
 
   @override
@@ -294,7 +317,7 @@ class _MessageModernState extends State<MessageModern> {
                 onTapDown: (details) => _tapPosition = details.globalPosition,
                 onSecondaryTapDown: (details) =>
                     _tapPosition = details.globalPosition,
-                onTap: () => widget.onSelect(event, _tapPosition),
+                onTap: () => _handleQuickActionTap(),
                 onLongPress: () {
                   if (PlatformInfos.isMobile) {
                     widget.onSelect(event, _tapPosition);
@@ -436,12 +459,38 @@ class _MessageModernState extends State<MessageModern> {
                                     linkColor: theme.colorScheme.primary,
                                     onInfoTab: widget.onInfoTab,
                                     timeline: timeline,
-                                    loadMedia: loadMedia,
-                                    onLoadMedia: () {
+                                    loadMedia:
+                                        loadMedia &&
+                                        (showHiddenMedia ||
+                                            contentWarning == null),
+                                    showHiddenMedia:
+                                        showHiddenMedia ||
+                                        contentWarning == null,
+                                    onLoadMedia: contentWarning != null
+                                        ? () {
+                                            setState(() {
+                                              if (!showHiddenMedia) {
+                                                showHiddenMedia = true;
+                                              } else if (!loadMedia) {
+                                                loadMedia = true;
+                                              }
+                                            });
+                                          }
+                                        : () {
+                                            setState(() {
+                                              loadMedia = true;
+                                            });
+                                          },
+                                    onRevealHiddenMedia: () {
                                       setState(() {
-                                        loadMedia = true;
+                                        if (!showHiddenMedia) {
+                                          showHiddenMedia = true;
+                                        } else if (!loadMedia) {
+                                          loadMedia = true;
+                                        }
                                       });
                                     },
+                                    contentWarning: contentWarning,
                                     useBubbleLayout: false,
                                     borderRadius: BorderRadius.zero,
                                     selectable: PlatformInfos.isMobile

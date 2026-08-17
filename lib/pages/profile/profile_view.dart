@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -513,7 +514,9 @@ class ProfileView extends StatelessWidget {
                               child: TextField(
                                 controller: controller.noteController,
                                 spellCheckConfiguration:
-                                    const SpellCheckConfiguration(),
+                                    PlatformInfos.supportsSpellCheck
+                                    ? const SpellCheckConfiguration()
+                                    : null,
                                 inputFormatters: [
                                   LengthLimitingTextInputFormatter(59989),
                                 ],

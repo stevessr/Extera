@@ -1,0 +1,47 @@
+name: Setup Rust
+description: Installs the stable Rust toolchain and restores the cargo caches.
+
+inputs:
+  cache-target-dir:
+    description: >
+      Also redirect and cache CARGO_TARGET_DIR. Only for the web build, whose
+      vodozemac wasm crate is otherwise compiled from scratch every run inside
+      a directory prepare-web.sh deletes. Leave off wherever cargokit builds,
+      since it expects cargo output in its own location.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust toolchain
+      uses: https://github.com/dtolnay/rust-toolchain@stable
+
+    # ~/.cargo/bin holds flutter_rust_bridge_codegen, which prepare-web.sh would
+    # otherwise recompile every run. Its install tracker lives in .crates.toml /
+    # .crates2.json, so those are cached alongside it.
+    - name: Restore cargo cache
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: |
+          ~/.cargo/bin
+          ~/.cargo/.crates.toml
+          ~/.cargo/.crates2.json
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git/db
+        key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: cargo-${{ runner.os }}-
+
+    - name: Pin cargo target directory
+      if: ${{ inputs.cache-target-dir == 'true' }}
+      shell: bash
+      run: echo "CARGO_TARGET_DIR=$HOME/.cargo-target" >>"$GITHUB_ENV"
+
+    - name: Restore cargo target directory
+      if: ${{ inputs.cache-target-dir == 'true' }}
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: ~/.cargo-target
+        key: cargo-target-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: cargo-target-${{ runner.os }}-

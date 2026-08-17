@@ -1,6 +1,6 @@
 {
 	"@@locale": "de",
-	"@@last_modified": "2026-06-28T16:08:36.548Z",
+	"@@last_modified": "2026-08-12T21:54:46.749Z",
 	"alwaysUse24HourFormat": "true",
 	"@alwaysUse24HourFormat": {
 		"description": "Set to true to always display time of day in 24 hour format."
@@ -4223,6 +4223,44 @@
 	"@publishTimezoneConfirmation": {
 		"placeholders": {
 			"timezone": {
+				"type": "String"
+			}
+		}
+	},
+	"userNote": "Notiz",
+	"userNoteHint": "Fügen Sie eine persönliche Notiz zu diesem Benutzer hinzu...",
+	"roomServerAcl": "Blockierte Server",
+	"roomServerAclDescription": "Welche Server können an diesem Chat teilnehmen",
+	"allowIpLiterals": "IP-Adressen zulassen",
+	"allowedServers": "Erlaubte Server",
+	"bannedServers": "Gesperrte Server",
+	"aclUserAtRiskWarning": "Durch das Anwenden dieser Änderungen könnten Sie den Zugriff auf diesen Chat verlieren. Fortfahren?",
+	"addAllowedServer": "Server zulassen",
+	"addBannedServer": "Server blockieren",
+	"startPolls": "Umfragen starten",
+	"voteInPolls": "An Umfragen teilnehmen",
+	"endPolls": "Umfragen beenden",
+	"navigationAndLayout": "Benutzeroberfläche",
+	"contentWarning": "Inhaltshinweis",
+	"contentWarningSpoiler": "Spoiler",
+	"contentWarningNsfw": "NSFW",
+	"contentWarningGraphic": "Gewaltdarstellung",
+	"contentWarningMedical": "Gesundheitsgefährdung",
+	"revealSpoiler": "Spoiler anzeigen",
+	"revealMedia": "Medien laden",
+	"contentWarningReason": "{reason}",
+	"loadAudio": "Audio laden",
+	"quickAction": "Schnellaktion",
+	"quickActionDescription": "Aktion ausführen bei Doppelklick auf Nachricht.",
+	"react": "Reaktion",
+	"@messageFontSize": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@navigationAndLayout": {},
+	"@contentWarningReason": {
+		"placeholders": {
+			"reason": {
 				"type": "String"
 			}
 		}

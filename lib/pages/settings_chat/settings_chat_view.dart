@@ -1,3 +1,5 @@
+import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -50,6 +52,90 @@ class SettingsChatView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      ListTile(
+                        title: Text(L10n.of(context).quickAction),
+                        subtitle: Text(L10n.of(context).quickActionDescription),
+                        trailing: Row(
+                          spacing: 8,
+                          mainAxisSize: .min,
+                          children: [
+                            if (controller.doubleTapAction == 'react')
+                              Material(
+                                borderRadius: BorderRadius.circular(
+                                  AppConfig.borderRadius / 2,
+                                ),
+                                color: theme.colorScheme.surfaceContainerLow,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(
+                                    AppConfig.borderRadius / 2,
+                                  ),
+                                  onTap: () {
+                                    controller.changeDefaultReaction();
+                                  },
+                                  child: Padding(
+                                    padding: const .symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    child:
+                                        controller.doubleTapReact.startsWith(
+                                          'mxc://',
+                                        )
+                                        ? MxcImage(
+                                            client: Matrix.of(context).client,
+                                            height: 28,
+                                            width: 28,
+                                            isThumbnail: false,
+                                            animated: true,
+                                            uri: Uri.parse(
+                                              controller.doubleTapReact,
+                                            ),
+                                          )
+                                        : Text(
+                                            controller.doubleTapReact,
+                                            style: TextStyle(fontSize: 20),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            Material(
+                              borderRadius: BorderRadius.circular(
+                                AppConfig.borderRadius / 2,
+                              ),
+                              color: theme.colorScheme.surfaceContainerLow,
+                              child: DropdownButton<String>(
+                                value: controller.doubleTapAction,
+                                padding: const .symmetric(horizontal: 12.0),
+                                borderRadius: BorderRadius.circular(
+                                  AppConfig.borderRadius / 2,
+                                ),
+                                underline: const SizedBox.shrink(),
+                                icon: const SizedBox.shrink(),
+                                onChanged: (value) {
+                                  controller.setDoubleTapAction(
+                                    value ?? "none",
+                                  );
+                                },
+                                items: [
+                                  DropdownMenuItem(
+                                    value: "none",
+                                    child: Text(L10n.of(context).none),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "react",
+                                    child: Text(L10n.of(context).react),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "reply",
+                                    child: Text(L10n.of(context).reply),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const ListDivider(),
                       SettingsSwitchListTile.adaptive(
                         title: L10n.of(context).formattedMessages,
                         subtitle: L10n.of(context).formattedMessagesDescription,

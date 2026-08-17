@@ -31,6 +31,7 @@ abstract class PlatformInfos {
   static bool get usesTouchscreen => !isMobile;
 
   static bool get supportsVideoPlayer => !isWindows && !isLinux;
+  static bool get supportsSpellCheck => isMobile;
 
   /// Web could also record in theory but currently only wav which is too large
   static bool get platformCanRecord => (isMobile || isMacOS);

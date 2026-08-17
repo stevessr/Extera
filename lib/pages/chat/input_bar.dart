@@ -1,3 +1,4 @@
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -448,7 +449,9 @@ class InputBar extends StatelessWidget {
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         autofocus: autofocus!,
-        spellCheckConfiguration: const SpellCheckConfiguration(),
+        spellCheckConfiguration: PlatformInfos.supportsSpellCheck
+            ? const SpellCheckConfiguration()
+            : null,
         inputFormatters: [
           LengthLimitingTextInputFormatter((maxPDUSize / 3).floor()),
         ],

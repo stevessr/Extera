@@ -1,20 +1,33 @@
-#!/bin/sh -ve
+#!/bin/sh -e
 
+# Compile Vodozemac for web
 version=$(yq ".dependencies.flutter_vodozemac" < pubspec.yaml)
-version=$(expr "$version" : '\^*\(.*\)')
-git clone https://github.com/famedly/dart-vodozemac.git -b ${version} .vodozemac
+version=$(printf "%s" "$version" | tr -d '"^')
+rm -rf .vodozemac
+git clone --depth 1 https://github.com/famedly/dart-vodozemac.git -b ${version} .vodozemac
 cd .vodozemac
-cargo install flutter_rust_bridge_codegen
+
+# Cached in CI via ~/.cargo/bin. Skip explicitly rather than letting cargo
+# decide: on a restored cache it refuses to overwrite a binary it does not
+# track, which would abort this script.
+if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1; then
+  cargo install flutter_rust_bridge_codegen
+fi
+
 flutter_rust_bridge_codegen build-web --dart-root dart --rust-root $(readlink -f rust) --release
 cd ..
+mkdir -p ./assets/vodozemac
 rm -f ./assets/vodozemac/vodozemac_bindings_dart*
 mv .vodozemac/dart/web/pkg/vodozemac_bindings_dart* ./assets/vodozemac/
 rm -rf .vodozemac
+flutter pub get
+dart compile js ./web/native_executor.dart -o ./web/native_executor.js -m
 
-# Add native imaging:
-cd web/
-curl -L 'https://github.com/famedly/dart_native_imaging/releases/download/v0.2.1/native_imaging.zip' > native_imaging.zip # make sure to sync version with pubspec.yaml
-unzip native_imaging.zip
-mv js/* .
+# Download native_imaging for web:
+version=$(yq ".dependencies.native_imaging" < pubspec.yaml)
+version=$(printf "%s" "$version" | tr -d '"^')
+curl -L "https://github.com/famedly/dart_native_imaging/releases/download/v${version}/native_imaging.zip" > native_imaging.zip
+unzip -o native_imaging.zip
+mv js/* web/
 rmdir js
 rm native_imaging.zip

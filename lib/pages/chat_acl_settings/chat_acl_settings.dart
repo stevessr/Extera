@@ -35,6 +35,7 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
     denyDraft =
         (serverAcl?.content['deny'] as List?)?.cast<String>().toList() ?? [];
     _initialized = true;
+    _enableSaveButton = false;
   }
 
   @override
@@ -49,36 +50,46 @@ class ChatAclSettingsController extends State<ChatAclSettings> {
     return room.canChangeStateEvent('m.room.server_acl');
   }
 
+  bool _enableSaveButton = false;
+  bool get enableSaveButton {
+    return _enableSaveButton;
+  }
+
   List<String> get allowServers => allowDraft;
   List<String> get bannedServers => denyDraft;
 
   void setAllowIpLiterals(bool value) {
     setState(() {
       ipLiteralsDraft = value;
+      _enableSaveButton = true;
     });
   }
 
   void addAllowedServer(String server) {
     setState(() {
       allowDraft.add(server);
+      _enableSaveButton = true;
     });
   }
 
   void removeAllowedServer(String server) {
     setState(() {
       allowDraft.remove(server);
+      _enableSaveButton = true;
     });
   }
 
   void addBannedServer(String server) {
     setState(() {
       denyDraft.add(server);
+      _enableSaveButton = true;
     });
   }
 
   void removeBannedServer(String server) {
     setState(() {
       denyDraft.remove(server);
+      _enableSaveButton = true;
     });
   }
 

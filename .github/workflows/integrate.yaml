@@ -1,95 +1,248 @@
-name: Pull Request Workflow
+name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  code_tests:
+  changes:
+    name: Detect changes
+    if: ${{ github.event.pull_request.draft != true }}
+    runs-on: ubuntu-latest
+    outputs:
+      android: ${{ steps.detect.outputs.android }}
+      web: ${{ steps.detect.outputs.web }}
+      linux: ${{ steps.detect.outputs.linux }}
+    steps:
+      # The JS actions below declare runs.using: node24, which older runner
+      # images do not ship. Must come before the first one of them.
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: detect
+        run: ./scripts/ci/detect-changes.sh
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          FORCE_ALL: ${{ github.event_name != 'pull_request' }}
+
+  analyze:
+    name: Analyze and test
+    needs: changes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: ./scripts/generate-locale-config.sh
-      - run: git diff --exit-code
-      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Check locale config is up to date
+        run: |
+          ./scripts/generate-locale-config.sh
+          git diff --exit-code
+
+      - uses: ./.github/actions/setup-flutter
+
       - run: flutter gen-l10n
+
       - name: Check formatting
         run: dart format lib/ test/ --set-exit-if-changed
-      - name: Check import formatting
+
+      - name: Check import ordering
         run: dart run import_sorter:main --no-comments --exit-if-changed
+
       - name: Check license compliance
         run: dart run license_checker check-licenses -c licenses.yaml --problematic
+
       - run: flutter analyze
-      - name: Apply google services patch
-        run: git apply ./scripts/enable-android-google-services.patch
-      - run: flutter analyze
+
+      - name: Analyze with Google services enabled
+        run: |
+          git apply ./scripts/enable-android-google-services.patch
+          flutter analyze
+
       - run: flutter test
 
-  build_debug_apk:
+  build-apk:
+    name: Debug APK
+    needs: changes
+    if: ${{ needs.changes.outputs.android == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
-      - uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: "zulu"
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
-      - run: flutter build apk --debug
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-  build_debug_web:
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-android
+      - uses: ./.github/actions/setup-flutter
+      # cargokit compiles the vodozemac Rust crate for Android, so this job
+      # needs the toolchain and its cache as much as the release build does.
+      - uses: ./.github/actions/setup-rust
+
+      - run: flutter build apk --flavor fDebug --debug
+
+  build-web:
+    name: Debug web
+    needs: changes
+    if: ${{ needs.changes.outputs.web == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
-      - uses: subosito/flutter-action@v2
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
+          cache-target-dir: 'true'
+
+      - run: ./scripts/ci/install-yq.sh
       - name: Prepare web
         run: ./scripts/prepare-web.sh
+
       - run: flutter build web
 
-  build_debug_linux:
-    strategy:
-      matrix:
-        arch: [ x64, arm64 ]
-    runs-on: ${{ matrix.arch == 'arm64' && 'self-hosted' || 'ubuntu-latest'}}
+  build-linux:
+    name: Debug Linux (x64)
+    needs: changes
+    if: ${{ needs.changes.outputs.linux == 'true' }}
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install git wget curl clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev cmake-data libsecret-1-dev libsecret-1-0 librhash0 libssl-dev libwebkit2gtk-4.1-dev -y
-      - name: Install Flutter
+      - name: Ensure Node 24
         run: |
-          git clone --branch ${{ env.FLUTTER_VERSION }} https://github.com/flutter/flutter.git
-          ./flutter/bin/flutter doctor
-      - run: ./flutter/bin/flutter pub get
-      - run: ./flutter/bin/flutter build linux --target-platform linux-${{ matrix.arch }}
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-  build_debug_ios:
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-linux-deps
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+
+      - run: flutter build linux --target-platform linux-x64
+
+  # Opt-in: set the repository variable ENABLE_ARM64_RUNNER to "true" once a
+  # self-hosted arm64 runner exists. Skipped otherwise, so a missing runner
+  # never leaves a pull request waiting.
+  build-linux-arm64:
+    name: Debug Linux (arm64)
+    needs: changes
+    if: ${{ needs.changes.outputs.linux == 'true' && vars.ENABLE_ARM64_RUNNER == 'true' }}
+    runs-on: self-hosted
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-linux-deps
+
+      - name: Check cache service
+        run: ./scripts/ci/check-cache.sh
+
+      - name: Resolve Flutter version
+        id: flutter
+        run: echo "version=$(./scripts/ci/flutter-version.sh)" >>"$GITHUB_OUTPUT"
+
+      # install-flutter-source.sh skips the clone when the directory is there,
+      # so restoring it turns a full SDK clone into a cache hit.
+      - name: Restore Flutter SDK
+        uses: https://github.com/actions/cache@v6
+        with:
+          path: ~/flutter
+          key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
+
+      - name: Restore pub cache
+        uses: https://github.com/actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
+
+      # No prebuilt Flutter archive exists for Linux arm64, so clone the SDK at
+      # the version pinned in .tool_versions.yaml.
+      - run: ./scripts/ci/install-flutter-source.sh
+
+      - run: flutter pub get
+      - run: flutter build linux --target-platform linux-arm64
+
+  # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true".
+  build-ios:
+    name: Debug iOS
+    needs: changes
+    if: ${{ vars.ENABLE_MACOS_RUNNER == 'true' }}
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - run: cat .github/workflows/versions.env >> $GITHUB_ENV
-      - uses: subosito/flutter-action@v2
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          brew install node@24
+          echo "$(brew --prefix node@24)/bin" >>"$GITHUB_PATH"
+
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Select Xcode
+        uses: https://github.com/maxim-lobanov/setup-xcode@v1.7.0
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - name: Setup Xcode version
-        uses: maxim-lobanov/setup-xcode@v1.6.0
+          xcode-version: latest-stable
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Restore CocoaPods specs
+        uses: https://github.com/actions/cache@v6
         with:
-          xcode-version: latest
+          path: ~/.cocoapods
+          key: cocoapods-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: cocoapods-${{ runner.os }}-
+
       - run: brew install sqlcipher
-      - run: flutter pub get
       - run: flutter build ios --no-codesign
+
+  ci:
+    name: CI
+    # `changes` is listed so that an infrastructure failure there cannot leave
+    # every build skipped and still report green.
+    needs: [changes, analyze, build-apk, build-web, build-linux, build-linux-arm64, build-ios]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        run: |
+          echo '${{ toJSON(needs) }}' |
+            jq -e 'all(.[]; .result == "success" or .result == "skipped")' >/dev/null

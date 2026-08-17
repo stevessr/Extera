@@ -2,10 +2,10 @@ name: extera_next
 description: Chat with your friends.
 publish_to: none
 # Version schema: <YEAR>.<MAJOR UPDATE>.<MINOR><PATCH>
-version: 26.4.5
+version: 26.4.61
 
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.11.1 <4.0.0"
 
 dependencies:
   action_slider: ^0.7.0
@@ -71,7 +71,7 @@ dependencies:
   material: ^1.0.1
   matrix:
     path: ../matrix-dart-sdk
-    #git:
+    # git:
     #  url: https://source.extera.xyz/Extera/matrix-dart-sdk.git
     #  ref: main
   mime: ^2.0.0
@@ -87,7 +87,7 @@ dependencies:
   punycode: ^1.0.0
   qr_code_scanner_plus: ^2.1.1
   qr_image: ^1.0.0
-  receive_sharing_intent: ^1.8.1
+  receive_sharing_intent: 1.8.1
   record: ^6.2.0
   scroll_to_index: ^3.0.1
   share_plus: ^12.0.1

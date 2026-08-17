@@ -1,6 +1,6 @@
 {
 	"@@locale": "nl",
-	"@@last_modified": "2026-06-28T16:07:30.978Z",
+	"@@last_modified": "2026-08-12T21:54:34.514Z",
 	"@choicesSelected": {
 		"type": "String",
 		"placeholders": {
@@ -4104,6 +4104,44 @@
 	"@publishTimezoneConfirmation": {
 		"placeholders": {
 			"timezone": {
+				"type": "String"
+			}
+		}
+	},
+	"userNote": "Notitie",
+	"userNoteHint": "Voeg een persoonlijke notitie over deze gebruiker toe...",
+	"roomServerAcl": "Geblokkeerde servers",
+	"roomServerAclDescription": "Welke servers kunnen deelnemen aan deze chat",
+	"allowIpLiterals": "IP-adressen toestaan",
+	"allowedServers": "Toegestane servers",
+	"bannedServers": "Geblokkeerde servers",
+	"aclUserAtRiskWarning": "Door deze wijzigingen toe te passen, kunt u de toegang tot deze chat verliezen. Doorgaan?",
+	"addAllowedServer": "Server toestaan",
+	"addBannedServer": "Server blokkeren",
+	"startPolls": "Enquêtes aanmaken",
+	"voteInPolls": "Deelnemen aan enquêtes",
+	"endPolls": "Enquêtes beëindigen",
+	"navigationAndLayout": "Interface",
+	"contentWarning": "Waarschuwing",
+	"contentWarningSpoiler": "Spoiler",
+	"contentWarningNsfw": "NSFW",
+	"contentWarningGraphic": "Gewelddadige beelden",
+	"contentWarningMedical": "Gezondheidsrisico",
+	"revealSpoiler": "Spoiler tonen",
+	"revealMedia": "Media laden",
+	"contentWarningReason": "{reason}",
+	"loadAudio": "Audio laden",
+	"quickAction": "Snelle actie",
+	"quickActionDescription": "Voer een actie uit bij dubbel klikken op een bericht.",
+	"react": "Reactie",
+	"@messageFontSize": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@navigationAndLayout": {},
+	"@contentWarningReason": {
+		"placeholders": {
+			"reason": {
 				"type": "String"
 			}
 		}

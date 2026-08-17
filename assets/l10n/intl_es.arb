@@ -128,7 +128,7 @@
 	"chatBackup": "Copia de seguridad de claves",
 	"pinCode": "Código PIN",
 	"@@locale": "es",
-	"@@last_modified": "2026-06-28T16:09:15.850Z",
+	"@@last_modified": "2026-08-12T21:53:44.760Z",
 	"chatBackupDescription": "La copia de seguridad de las claves está protegida con una clave de recuperación. Guárdala en un lugar seguro.",
 	"chatDetails": "Configuración del chat",
 	"chatHasBeenAddedToThisSpace": "El chat ha sido añadido a este espacio",
@@ -4107,5 +4107,43 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"@messageFontSize": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@navigationAndLayout": {},
+	"@contentWarningReason": {
+		"placeholders": {
+			"reason": {
+				"type": "String"
+			}
+		}
+	},
+	"userNote": "Nota",
+	"userNoteHint": "Añade una nota personal sobre este usuario...",
+	"roomServerAcl": "Servidores bloqueados",
+	"roomServerAclDescription": "Qué servidores pueden participar en este chat",
+	"allowIpLiterals": "Permitir direcciones IP",
+	"allowedServers": "Servidores permitidos",
+	"bannedServers": "Servidores bloqueados",
+	"aclUserAtRiskWarning": "Al aplicar estos cambios, podrías perder el acceso a este chat. ¿Continuar?",
+	"addAllowedServer": "Permitir servidor",
+	"addBannedServer": "Bloquear servidor",
+	"startPolls": "Crear encuestas",
+	"voteInPolls": "Participar en encuestas",
+	"endPolls": "Finalizar encuestas",
+	"navigationAndLayout": "Interfaz",
+	"contentWarning": "Advertencia",
+	"contentWarningSpoiler": "Spoiler",
+	"contentWarningNsfw": "NSFW",
+	"contentWarningGraphic": "Escenas violentas",
+	"contentWarningMedical": "Amenaza a la salud",
+	"revealSpoiler": "Mostrar spoiler",
+	"revealMedia": "Cargar medios",
+	"contentWarningReason": "{reason}",
+	"loadAudio": "Cargar audio",
+	"quickAction": "Acción rápida",
+	"quickActionDescription": "Ejecutar acción al doble toque en el mensaje.",
+	"react": "Reacción"
 }

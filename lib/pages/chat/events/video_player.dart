@@ -29,6 +29,10 @@ class EventVideoPlayer extends StatelessWidget {
   final bool nextEventSameSender;
   final bool previousEventSameSender;
 
+  final bool showHiddenMedia;
+  final void Function()? onRevealHiddenMedia;
+  final String? contentWarning;
+
   const EventVideoPlayer(
     this.event,
     this.textColor,
@@ -39,10 +43,29 @@ class EventVideoPlayer extends StatelessWidget {
     this.ownMessage = false,
     this.nextEventSameSender = false,
     this.previousEventSameSender = false,
+    this.showHiddenMedia = false,
+    this.onRevealHiddenMedia,
+    this.contentWarning,
     super.key,
   });
 
   static const String fallbackBlurHash = 'L5H2EC=PM+yV0g-mq.wG9c010J}I';
+
+  String _hiddenReason(BuildContext context) {
+    final l10n = L10n.of(context);
+    switch (contentWarning) {
+      case 'town.robin.msc3725.spoiler':
+        return l10n.contentWarningReason(l10n.contentWarningSpoiler);
+      case 'town.robin.msc3725.nsfw':
+        return l10n.contentWarningReason(l10n.contentWarningNsfw);
+      case 'town.robin.msc3725.graphic':
+        return l10n.contentWarningReason(l10n.contentWarningGraphic);
+      case 'town.robin.msc3725.medical':
+        return l10n.contentWarningReason(l10n.contentWarningMedical);
+      default:
+        return l10n.contentWarningReason(l10n.contentWarning);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +88,7 @@ class EventVideoPlayer extends StatelessWidget {
         : event.fileDescription!
               .replaceAll('<', '&lt;')
               .replaceAll('>', '&gt;');
+    final isHidden = contentWarning != null && !showHiddenMedia;
 
     final maxSize = 384.0;
 
@@ -140,7 +164,7 @@ class EventVideoPlayer extends StatelessWidget {
                 aspectRatio: aspectRatio,
                 child: Stack(
                   children: [
-                    if (event.hasThumbnail && loadThumbnail)
+                    if (!isHidden && event.hasThumbnail && loadThumbnail)
                       MxcImage(
                         event: event,
                         uri: event.thumbnailMxcUrl,
@@ -164,45 +188,60 @@ class EventVideoPlayer extends StatelessWidget {
                         height: bubbleWidth * aspectRatio,
                         fit: BoxFit.cover,
                       ),
-                    Center(
-                      // child: CircleAvatar(
-                      //   child: supportsVideoPlayer
-                      //       ? const Icon(Icons.play_arrow_outlined)
-                      //       : const Icon(Icons.file_download_outlined),
-                      // ),
-                      child: FilledButton.tonal(
-                        onPressed: () => supportsVideoPlayer
-                            ? showDialog(
-                                context: context,
-                                useRootNavigator: false,
-                                builder: (_) => ImageViewer(
-                                  event,
-                                  timeline: timeline,
-                                  outerContext: context,
-                                ),
-                              )
-                            : event.saveFile(context),
-                        child: Row(
-                          mainAxisSize: .min,
-                          children: [
-                            supportsVideoPlayer
-                                ? const Icon(Icons.play_arrow_outlined)
-                                : const Icon(Icons.file_download_outlined),
-                            const SizedBox(width: 12),
-                            Text(
+                    if (isHidden)
+                      Center(
+                        child: FilledButton.tonal(
+                          onPressed: onRevealHiddenMedia,
+                          child: Row(
+                            mainAxisSize: .min,
+                            children: [
+                              const Icon(Icons.visibility_off_outlined),
+                              const SizedBox(width: 12),
+                              Text(_hiddenReason(context)),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Center(
+                        // child: CircleAvatar(
+                        //   child: supportsVideoPlayer
+                        //       ? const Icon(Icons.play_arrow_outlined)
+                        //       : const Icon(Icons.file_download_outlined),
+                        // ),
+                        child: FilledButton.tonal(
+                          onPressed: () => supportsVideoPlayer
+                              ? showDialog(
+                                  context: context,
+                                  useRootNavigator: false,
+                                  builder: (_) => ImageViewer(
+                                    event,
+                                    timeline: timeline,
+                                    outerContext: context,
+                                  ),
+                                )
+                              : event.saveFile(context),
+                          child: Row(
+                            mainAxisSize: .min,
+                            children: [
                               supportsVideoPlayer
-                                  ? sizeInt == null
-                                        ? L10n.of(context).playVideoNoSize
-                                        : sizeInt.sizeString
-                                  : sizeInt == null
-                                  ? L10n.of(context).downloadVideoNoSize
-                                  : sizeInt.sizeString,
-                            ),
-                          ],
+                                  ? const Icon(Icons.play_arrow_outlined)
+                                  : const Icon(Icons.file_download_outlined),
+                              const SizedBox(width: 12),
+                              Text(
+                                supportsVideoPlayer
+                                    ? sizeInt == null
+                                          ? L10n.of(context).playVideoNoSize
+                                          : sizeInt.sizeString
+                                    : sizeInt == null
+                                    ? L10n.of(context).downloadVideoNoSize
+                                    : sizeInt.sizeString,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    if (duration != null)
+                    if (!isHidden && duration != null)
                       Positioned(
                         bottom: 8,
                         left: 16,

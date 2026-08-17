@@ -1,0 +1,26 @@
+name: Setup Linux build dependencies
+description: Installs the apt packages needed to build the Flutter Linux desktop bundle.
+
+inputs:
+  appimage:
+    description: Also install what appimagetool needs.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Roughly 250 MB of -dev packages, otherwise re-fetched on every run.
+    # The key covers the script, which is where the package list lives.
+    - name: Restore apt archives
+      uses: https://github.com/actions/cache@v6
+      with:
+        path: ~/.apt-cache
+        key: apt-${{ runner.os }}-${{ inputs.appimage }}-${{ hashFiles('scripts/ci/install-linux-deps.sh') }}
+        restore-keys: apt-${{ runner.os }}-${{ inputs.appimage }}-
+
+    - name: Install apt packages
+      shell: bash
+      run: ./scripts/ci/install-linux-deps.sh
+      env:
+        INSTALL_APPIMAGE_DEPS: ${{ inputs.appimage }}

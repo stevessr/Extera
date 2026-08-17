@@ -23,8 +23,6 @@ class ChatListItem extends StatelessWidget {
   final Room? space;
   final bool noBackgroundColor;
   final bool activeChat;
-  final bool firstElement;
-  final bool lastElement;
   final void Function(BuildContext context)? onLongPress;
   final void Function()? onForget;
   final void Function() onTap;
@@ -39,8 +37,6 @@ class ChatListItem extends StatelessWidget {
     this.onForget,
     this.filter,
     this.space,
-    this.firstElement = false,
-    this.lastElement = false,
     super.key,
   });
 

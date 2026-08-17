@@ -37,6 +37,9 @@ class ImageBubble extends StatelessWidget {
 
   final bool loadMedia;
   final void Function()? onLoadMedia;
+  final bool showHiddenMedia;
+  final void Function()? onRevealHiddenMedia;
+  final String? contentWarning;
 
   const ImageBubble(
     this.event, {
@@ -57,6 +60,9 @@ class ImageBubble extends StatelessWidget {
     this.linkColor,
     this.loadMedia = false,
     this.onLoadMedia,
+    this.showHiddenMedia = false,
+    this.onRevealHiddenMedia,
+    this.contentWarning,
     this.trailingSpan,
     super.key,
   });
@@ -106,6 +112,22 @@ class ImageBubble extends StatelessWidget {
     );
   }
 
+  String _contentWarningReason(BuildContext context) {
+    final l10n = L10n.of(context);
+    switch (contentWarning) {
+      case 'town.robin.msc3725.spoiler':
+        return l10n.contentWarningReason(l10n.contentWarningSpoiler);
+      case 'town.robin.msc3725.nsfw':
+        return l10n.contentWarningReason(l10n.contentWarningNsfw);
+      case 'town.robin.msc3725.graphic':
+        return l10n.contentWarningReason(l10n.contentWarningGraphic);
+      case 'town.robin.msc3725.medical':
+        return l10n.contentWarningReason(l10n.contentWarningMedical);
+      default:
+        return l10n.contentWarningReason(l10n.contentWarning);
+    }
+  }
+
   Widget _buildUnloaded(BuildContext context) {
     final blurHashString = event.infoMap['xyz.amorgan.blurhash'] is String
         ? event.infoMap['xyz.amorgan.blurhash'] as String
@@ -136,6 +158,40 @@ class ImageBubble extends StatelessWidget {
                           ? size.sizeString
                           : L10n.of(context).loadImageNoSize,
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHidden(BuildContext context) {
+    final blurHashString = event.infoMap['xyz.amorgan.blurhash'] is String
+        ? event.infoMap['xyz.amorgan.blurhash'] as String
+        : 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
+    final reason = _contentWarningReason(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            BlurHash(
+              blurhash: blurHashString,
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              fit: fit,
+            ),
+            Center(
+              child: FilledButton.tonal(
+                onPressed: onRevealHiddenMedia,
+                child: Row(
+                  mainAxisSize: .min,
+                  children: [
+                    const Icon(Icons.visibility_off_outlined),
+                    const SizedBox(width: 12),
+                    Text(reason),
                   ],
                 ),
               ),
@@ -177,6 +233,7 @@ class ImageBubble extends StatelessWidget {
         : event.fileDescription!
               .replaceAll('<', '&lt;')
               .replaceAll('>', '&gt;');
+    final isHidden = contentWarning != null && !showHiddenMedia;
     final textColor = this.textColor;
 
     if (ownMessage) {
@@ -225,26 +282,28 @@ class ImageBubble extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: width, maxHeight: height),
               child: AspectRatio(
                 aspectRatio: _aspectRatio,
-                child: InkWell(
-                  onTap: () => _onTap(context),
-                  child: Hero(
-                    tag: event.eventId,
-                    child: loadMedia
-                        ? MxcImage(
-                            event: event,
-                            width: _effectiveImageWidth,
-                            height: _effectiveImageHeight,
-                            fit: fit,
-                            animated: animated,
-                            isThumbnail: thumbnailOnly,
-                            placeholder:
-                                event.messageType == MessageTypes.Sticker
-                                ? null
-                                : _buildPlaceholder,
-                          )
-                        : _buildUnloaded(context),
+                  child: InkWell(
+                    onTap: () => _onTap(context),
+                    child: Hero(
+                      tag: event.eventId,
+                      child: isHidden
+                          ? _buildHidden(context)
+                          : loadMedia
+                              ? MxcImage(
+                                  event: event,
+                                  width: _effectiveImageWidth,
+                                  height: _effectiveImageHeight,
+                                  fit: fit,
+                                  animated: animated,
+                                  isThumbnail: thumbnailOnly,
+                                  placeholder:
+                                      event.messageType == MessageTypes.Sticker
+                                      ? null
+                                      : _buildPlaceholder,
+                                )
+                              : _buildUnloaded(context),
+                    ),
                   ),
-                ),
               ),
             ),
           ),

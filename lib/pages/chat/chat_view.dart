@@ -644,7 +644,9 @@ class _ChatViewState extends State<ChatView> {
                               constraints: const BoxConstraints(
                                 maxWidth: FluffyThemes.columnWidth * 2.5,
                               ),
-                              child: controller.room.isExtinct
+                              child:
+                                  controller.room.isExtinct &&
+                                      !AppSettings.alwaysShowInputBar.value
                                   ? (AppSettings.enableChatFrostedGlass.value
                                         ? _FloatingInputShell(
                                             child: ElevatedButton.icon(
@@ -668,11 +670,16 @@ class _ChatViewState extends State<ChatView> {
                                             onPressed:
                                                 controller.goToNewRoomAction,
                                           ))
-                                  : controller.room.canSendDefaultMessages &&
-                                        controller.room.membership == .join
+                                  : (controller.room.canSendDefaultMessages &&
+                                            controller.room.membership ==
+                                                .join) ||
+                                        AppSettings.alwaysShowInputBar.value
                                   ? (() {
                                       final inputChild =
-                                          controller.room.isAbandonedDMRoom
+                                          controller.room.isAbandonedDMRoom &&
+                                              !AppSettings
+                                                  .alwaysShowInputBar
+                                                  .value
                                           ? Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.spaceEvenly,
