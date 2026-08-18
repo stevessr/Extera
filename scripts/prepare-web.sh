@@ -21,7 +21,6 @@ rm -f ./assets/vodozemac/vodozemac_bindings_dart*
 mv .vodozemac/dart/web/pkg/vodozemac_bindings_dart* ./assets/vodozemac/
 rm -rf .vodozemac
 flutter pub get
-dart compile js ./web/native_executor.dart -o ./web/native_executor.js -m
 
 # Download native_imaging for web:
 version=$(yq ".dependencies.native_imaging" < pubspec.yaml)

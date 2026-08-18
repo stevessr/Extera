@@ -151,6 +151,7 @@ flutter:
     - assets/sounds/
     - assets/sounds/ringtones/
     - assets/font/
+    - assets/vodozemac/
   fonts:
     - family: "Twemoji Mozilla"
       fonts:
