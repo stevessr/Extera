@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import 'package:hotkey_manager/hotkey_manager.dart';
 
+import 'package:extera_next/utils/platform_infos.dart';
+
 class NextChatIntent extends Intent {
   const NextChatIntent();
 }
@@ -28,6 +30,8 @@ class ChatListShortcuts extends StatefulWidget {
 }
 
 class ChatListShortcutsState extends State<ChatListShortcuts> {
+  bool _usesFlutterKeyboardHandler = false;
+
   final HotKey prevChatKey = HotKey(
     key: LogicalKeyboardKey.arrowUp,
     modifiers: [HotKeyModifier.alt],
@@ -43,6 +47,14 @@ class ChatListShortcutsState extends State<ChatListShortcuts> {
   @override
   void initState() {
     super.initState();
+    if (!PlatformInfos.isDesktop) {
+      // hotkey_manager has no web/mobile implementation. The shortcuts are
+      // in-app shortcuts, so Flutter's keyboard API is sufficient here.
+      HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+      _usesFlutterKeyboardHandler = true;
+      return;
+    }
+
     hotKeyManager.register(
       prevChatKey,
       keyDownHandler: (hotKey) {
@@ -57,11 +69,31 @@ class ChatListShortcutsState extends State<ChatListShortcuts> {
     );
   }
 
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent || !HardwareKeyboard.instance.isAltPressed) {
+      return false;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      widget.onPreviousChat();
+      return true;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      widget.onNextChat();
+      return true;
+    }
+    return false;
+  }
+
   @override
   void dispose() {
+    if (_usesFlutterKeyboardHandler) {
+      HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    } else if (PlatformInfos.isDesktop) {
+      hotKeyManager.unregister(prevChatKey);
+      hotKeyManager.unregister(nextChatKey);
+    }
     super.dispose();
-    hotKeyManager.unregister(prevChatKey);
-    hotKeyManager.unregister(nextChatKey);
   }
 
   @override

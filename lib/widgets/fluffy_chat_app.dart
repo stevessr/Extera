@@ -17,6 +17,7 @@ import 'package:extera_next/widgets/background_audio_player.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 import '../config/app_config.dart';
 import '../utils/custom_scroll_behaviour.dart';
+import '../utils/platform_infos.dart';
 import 'matrix.dart';
 
 class FluffyChatApp extends StatefulWidget {
@@ -65,27 +66,28 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    String fontFilePath;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
+    // android_system_font only registers a native Android implementation.
+    // Calling it on the web falls back to a MethodChannel and produces a
+    // MissingPluginException during the first frame.
+    if (!PlatformInfos.isAndroid) return;
+
     try {
-      fontFilePath =
-          await _androidSystemFontPlugin.getFilePath() ??
-          'Unknown font file path';
-    } on PlatformException {
-      fontFilePath = 'Failed to get font file path.';
-    }
+      final fontFilePath = await _androidSystemFontPlugin.getFilePath();
+      if (!mounted || fontFilePath == null || fontFilePath.isEmpty) return;
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
       final fontLoader = FontLoader('SystemFont');
       fontLoader.addFont(_readFileBytes(fontFilePath));
-      fontLoader.load();
-    });
+      await fontLoader.load();
+    } on PlatformException {
+      // The system font is optional; keep the app usable if Android does not
+      // expose a readable font path.
+    } on MissingPluginException {
+      // The system font is optional; keep the app usable if the plugin was not
+      // registered by the Android embedding.
+    } on FileSystemException {
+      // The system font is optional; keep the app usable if the path becomes
+      // unavailable while the font is loading.
+    }
   }
 
   @override

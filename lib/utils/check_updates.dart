@@ -16,10 +16,11 @@ Future<String> getLatestVersion() async {
   final http = CustomHttpClient.createHTTPClient();
   final response = await http.get(Uri.parse(AppConfig.updateCheckUrl));
 
-  if (response.statusCode > 399)
+  if (response.statusCode > 399) {
     throw HttpException(
       "Failed to fetch latest version: ${response.statusCode}",
     );
+  }
 
   final latestVersion = response.body.trim();
 
@@ -27,8 +28,14 @@ Future<String> getLatestVersion() async {
 }
 
 void checkForUpdates(BuildContext context) async {
-  if (!AppSettings.checkForUpdates.value || AppConfig.alreadyCheckedUpdates)
+  // Web assets are updated in place and PlatformInfos reports the package
+  // version as "Web". Do not make a cross-origin request from local web
+  // development (the version endpoint intentionally does not enable CORS).
+  if (PlatformInfos.isWeb ||
+      !AppSettings.checkForUpdates.value ||
+      AppConfig.alreadyCheckedUpdates) {
     return;
+  }
   Logs().v("Checking updates...");
   try {
     final currentVersion = await PlatformInfos.getVersion();
