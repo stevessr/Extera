@@ -45,7 +45,9 @@ void main() async {
 
   tz.initializeTimeZones();
 
-  FlutterForegroundTask.initCommunicationPort();
+  if (!PlatformInfos.isWeb) {
+    FlutterForegroundTask.initCommunicationPort();
+  }
 
   await vod.init(wasmPath: './assets/assets/vodozemac/');
 
