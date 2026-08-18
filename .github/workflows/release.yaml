@@ -1,216 +1,216 @@
-# name: Release
+name: Release
 
-# on:
-#   push:
-#     tags:
-#       # Also covers prerelease tags such as v1.2.3-rc1.
-#       - 'v*.*.*'
-#   workflow_dispatch:
-#     inputs:
-#       tag:
-#         description: 'Tag to name the artifacts and release after (e.g. v0.0.0-test)'
-#         required: true
-#         default: 'v0.0.0-test'
-#       publish:
-#         description: 'Create the Forgejo release instead of only uploading artifacts'
-#         type: boolean
-#         default: false
-#       draft:
-#         description: 'Leave the release as a draft'
-#         type: boolean
-#         default: false
+on:
+  push:
+    tags:
+      Also covers prerelease tags such as v1.2.3-rc1.
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to name the artifacts and release after (e.g. v0.0.0-test)'
+        required: true
+        default: 'v0.0.0-test'
+      publish:
+        description: 'Create the Forgejo release instead of only uploading artifacts'
+        type: boolean
+        default: false
+      draft:
+        description: 'Leave the release as a draft'
+        type: boolean
+        default: false
 
-# concurrency:
-#   group: release-${{ inputs.tag || github.ref }}
-#   cancel-in-progress: false
+concurrency:
+  group: release-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
 
-# permissions:
-#   contents: write
+permissions:
+  contents: write
 
-# defaults:
-#   run:
-#     shell: bash
+defaults:
+  run:
+    shell: bash
 
-# jobs:
-#   prepare:
-#     name: Resolve release metadata
-#     runs-on: ubuntu-latest
-#     outputs:
-#       tag: ${{ steps.meta.outputs.tag }}
-#       version: ${{ steps.meta.outputs.version }}
-#       prerelease: ${{ steps.meta.outputs.prerelease }}
-#     steps:
-#       # The JS actions below declare runs.using: node24, which older runner
-#       # images do not ship. Must come before the first one of them.
-#       - name: Ensure Node 24
-#         run: |
-#           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-#           command -v sudo >/dev/null && sudo=sudo || sudo=
-#           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-#           $sudo apt-get install -y nodejs
+jobs:
+  prepare:
+    name: Resolve release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+    steps:
+      #The JS actions below declare runs.using: node24, which older runner
+      #images do not ship. Must come before the first one of them.
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-#       - uses: https://github.com/actions/checkout@v7
+      - uses: https://github.com/actions/checkout@v7
 
-#       - id: meta
-#         run: ./scripts/ci/resolve-release-meta.sh
-#         env:
-#           RELEASE_TAG: ${{ inputs.tag }}
+      - id: meta
+        run: ./scripts/ci/resolve-release-meta.sh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
 
-#   build-apk:
-#     name: Android APK
-#     needs: prepare
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Ensure Node 24
-#         run: |
-#           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-#           command -v sudo >/dev/null && sudo=sudo || sudo=
-#           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-#           $sudo apt-get install -y nodejs
+  build-apk:
+    name: Android APK
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-#       - uses: https://github.com/actions/checkout@v7
-#       - uses: ./.github/actions/setup-android
-#       - uses: ./.github/actions/setup-flutter
-#       - uses: ./.github/actions/setup-rust
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-android
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
 
-#       - name: Write signing configuration
-#         env:
-#           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
-#           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-#           KEY_PASS: ${{ secrets.KEY_PASS }}
-#           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-#         run: ./scripts/ci/write-android-signing.sh
+      - name: Write signing configuration
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: ./scripts/ci/write-android-signing.sh
 
-#       - name: Build signed release APK
-#         run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
+      - name: Build signed release APK
+        run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
 
-#       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
-#       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
+      - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
+      - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
 
-#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-#         with:
-#           name: apk
-#           path: artifacts/*.apk
-#           retention-days: 14
-#           if-no-files-found: error
+      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: apk
+          path: artifacts/*.apk
+          retention-days: 14
+          if-no-files-found: error
 
-#   # One Flutter build feeds both the tarball and the AppImage.
-#   build-linux:
-#     name: Linux tarball and AppImage
-#     needs: prepare
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Ensure Node 24
-#         run: |
-#           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-#           command -v sudo >/dev/null && sudo=sudo || sudo=
-#           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-#           $sudo apt-get install -y nodejs
+  # One Flutter build feeds both the tarball and the AppImage.
+  build-linux:
+    name: Linux tarball and AppImage
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-#       - uses: https://github.com/actions/checkout@v7
+      - uses: https://github.com/actions/checkout@v7
 
-#       - uses: ./.github/actions/setup-linux-deps
-#         with:
-#           appimage: 'true'
+      - uses: ./.github/actions/setup-linux-deps
+        with:
+          appimage: 'true'
 
-#       - uses: ./.github/actions/setup-flutter
-#       - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
 
-#       - run: ./scripts/ci/install-appimagetool.sh
+      - run: ./scripts/ci/install-appimagetool.sh
 
-#       - name: Build Linux bundle
-#         run: flutter build linux --release --target-platform linux-x64
+      - name: Build Linux bundle
+        run: flutter build linux --release --target-platform linux-x64
 
-#       - name: Package tarball
-#         run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}"
+      - name: Package tarball
+        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}"
 
-#       - name: Package AppImage
-#         env:
-#           # Build containers have no /dev/fuse, so AppImages must self-extract.
-#           APPIMAGE_EXTRACT_AND_RUN: '1'
-#         run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
+      - name: Package AppImage
+        env:
+          # Build containers have no /dev/fuse, so AppImages must self-extract.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
 
-#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-#         with:
-#           name: linux
-#           path: |
-#             artifacts/*.tar.gz
-#             artifacts/*.AppImage
-#           retention-days: 14
-#           if-no-files-found: error
+      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.AppImage
+          retention-days: 14
+          if-no-files-found: error
 
-#   build-web:
-#     name: Web bundle
-#     needs: prepare
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Ensure Node 24
-#         run: |
-#           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-#           command -v sudo >/dev/null && sudo=sudo || sudo=
-#           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-#           $sudo apt-get install -y nodejs
+  build-web:
+    name: Web bundle
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-#       - uses: https://github.com/actions/checkout@v7
-#       - uses: ./.github/actions/setup-flutter
-#       - uses: ./.github/actions/setup-rust
-#         with:
-#           cache-target-dir: 'true'
+      - uses: https://github.com/actions/checkout@v7
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-target-dir: 'true'
 
-#       # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
-#       # bindings. Installing the toolchain by name avoids naming a host triple,
-#       # and works whether or not nightly is already present.
-#       - run: rustup toolchain install nightly --component rust-src
-#       - run: ./scripts/ci/install-yq.sh
+      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
+      # bindings. Installing the toolchain by name avoids naming a host triple,
+      # and works whether or not nightly is already present.
+      - run: rustup toolchain install nightly --component rust-src
+      - run: ./scripts/ci/install-yq.sh
 
-#       - name: Prepare web
-#         run: ./scripts/prepare-web.sh
+      - name: Prepare web
+        run: ./scripts/prepare-web.sh
 
-#       - name: Build release web
-#         run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
+      - name: Build release web
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
 
-#       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
+      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
 
-#       - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-#         with:
-#           name: web
-#           path: artifacts/*.tar.gz
-#           retention-days: 14
-#           if-no-files-found: error
+      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: web
+          path: artifacts/*.tar.gz
+          retention-days: 14
+          if-no-files-found: error
 
-#   publish:
-#     name: Publish release
-#     needs: [prepare, build-apk, build-linux, build-web]
-#     if: ${{ github.event_name == 'push' || inputs.publish }}
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Ensure Node 24
-#         run: |
-#           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-#           command -v sudo >/dev/null && sudo=sudo || sudo=
-#           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-#           $sudo apt-get install -y nodejs
+  publish:
+    name: Publish release
+    needs: [prepare, build-apk, build-linux, build-web]
+    if: ${{ github.event_name == 'push' || inputs.publish }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
 
-#       - uses: https://github.com/actions/checkout@v7
+      - uses: https://github.com/actions/checkout@v7
 
-#       # Forgejo's fork, not actions/download-artifact: upstream v4+ aborts on a
-#       # hard "not running against GitHub.com" check that Forgejo cannot satisfy.
-#       # The fork is that check removed, nothing else.
-#       - uses: https://data.forgejo.org/forgejo/download-artifact@v4
-#         with:
-#           path: downloads
+      # Forgejo's fork, not actions/download-artifact: upstream v4+ aborts on a
+      # hard "not running against GitHub.com" check that Forgejo cannot satisfy.
+      # The fork is that check removed, nothing else.
+      - uses: https://data.forgejo.org/forgejo/download-artifact@v4
+        with:
+          path: downloads
 
-#       - name: Collect release assets
-#         run: ./scripts/ci/collect-release-assets.sh downloads release-assets
+      - name: Collect release assets
+        run: ./scripts/ci/collect-release-assets.sh downloads release-assets
 
-#       - name: Generate release notes
-#         run: ./scripts/ci/release-notes.sh "${{ needs.prepare.outputs.version }}" release-notes.md
+      - name: Generate release notes
+        run: ./scripts/ci/release-notes.sh "${{ needs.prepare.outputs.version }}" release-notes.md
 
-#       - name: Create release and upload assets
-#         env:
-#           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-#           TAG: ${{ needs.prepare.outputs.tag }}
-#           PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
-#           KEEP_DRAFT: ${{ inputs.draft || 'false' }}
-#           TARGET_COMMITISH: ${{ github.sha }}
-#         run: ./scripts/ci/publish-release.sh
+      - name: Create release and upload assets
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+          KEEP_DRAFT: ${{ inputs.draft || 'false' }}
+          TARGET_COMMITISH: ${{ github.sha }}
+        run: ./scripts/ci/publish-release.sh
