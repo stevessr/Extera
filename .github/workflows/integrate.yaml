@@ -5,6 +5,23 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
   workflow_dispatch:
+    inputs:
+      android:
+        description: 'Build Android (APK)'
+        type: boolean
+        default: false
+      web:
+        description: 'Build web'
+        type: boolean
+        default: false
+      linux:
+        description: 'Build Linux'
+        type: boolean
+        default: false
+      ios:
+        description: 'Build iOS'
+        type: boolean
+        default: false
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -26,6 +43,7 @@ jobs:
       android: ${{ steps.detect.outputs.android }}
       web: ${{ steps.detect.outputs.web }}
       linux: ${{ steps.detect.outputs.linux }}
+      ios: ${{ steps.detect.outputs.ios }}
     steps:
       # The JS actions below declare runs.using: node24, which older runner
       # images do not ship. Must come before the first one of them.
@@ -44,7 +62,11 @@ jobs:
         run: ./scripts/ci/detect-changes.sh
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
-          FORCE_ALL: ${{ github.event_name != 'pull_request' }}
+          FORCE_ALL: ${{ github.event_name == 'merge_group' }}
+          MANUAL_ANDROID: ${{ github.event_name == 'workflow_dispatch' && inputs.android || 'false' }}
+          MANUAL_WEB: ${{ github.event_name == 'workflow_dispatch' && inputs.web || 'false' }}
+          MANUAL_LINUX: ${{ github.event_name == 'workflow_dispatch' && inputs.linux || 'false' }}
+          MANUAL_IOS: ${{ github.event_name == 'workflow_dispatch' && inputs.ios || 'false' }}
 
   analyze:
     name: Analyze and test
@@ -206,7 +228,7 @@ jobs:
   build-ios:
     name: Debug iOS
     needs: changes
-    if: ${{ vars.ENABLE_MACOS_RUNNER == 'true' }}
+    if: ${{ needs.changes.outputs.ios == 'true' && vars.ENABLE_MACOS_RUNNER == 'true' }}
     runs-on: macos-15
     steps:
       - name: Ensure Node 24

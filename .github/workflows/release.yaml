@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      Also covers prerelease tags such as v1.2.3-rc1.
+      # Also covers prerelease tags such as v1.2.3-rc1.
       - 'v*.*.*'
   workflow_dispatch:
     inputs:
@@ -17,6 +17,18 @@ on:
         default: false
       draft:
         description: 'Leave the release as a draft'
+        type: boolean
+        default: false
+      android:
+        description: 'Build Android APK'
+        type: boolean
+        default: false
+      web:
+        description: 'Build web bundle'
+        type: boolean
+        default: false
+      linux:
+        description: 'Build Linux tarball and AppImage'
         type: boolean
         default: false
 
@@ -59,6 +71,7 @@ jobs:
   build-apk:
     name: Android APK
     needs: prepare
+    if: ${{ github.event_name == 'push' || inputs.android }}
     runs-on: ubuntu-latest
     steps:
       - name: Ensure Node 24
@@ -98,6 +111,7 @@ jobs:
   build-linux:
     name: Linux tarball and AppImage
     needs: prepare
+    if: ${{ github.event_name == 'push' || inputs.linux }}
     runs-on: ubuntu-latest
     steps:
       - name: Ensure Node 24
@@ -142,6 +156,7 @@ jobs:
   build-web:
     name: Web bundle
     needs: prepare
+    if: ${{ github.event_name == 'push' || inputs.web }}
     runs-on: ubuntu-latest
     steps:
       - name: Ensure Node 24
@@ -181,7 +196,7 @@ jobs:
   publish:
     name: Publish release
     needs: [prepare, build-apk, build-linux, build-web]
-    if: ${{ github.event_name == 'push' || inputs.publish }}
+    if: ${{ always() && (github.event_name == 'push' || inputs.publish) }}
     runs-on: ubuntu-latest
     steps:
       - name: Ensure Node 24
