@@ -3345,5 +3345,944 @@
   "enterNewChat": "进入新聊天",
   "@enterNewChat": {},
   "commandHint_roomupgrade": "将此聊天室升级到给定的聊天室版本",
-  "@commandHint_roomupgrade": {}
+  "@commandHint_roomupgrade": {},
+  "noSendPermission": "你没有权限在此发送消息",
+  "@noSendPermission": {},
+  "noMessagesYet": "暂无消息",
+  "longPressToRecordVoiceMessage": "长按录制语音消息。",
+  "pause": "暂停",
+  "resume": "继续",
+  "newSubSpace": "新建子空间",
+  "moveToDifferentSpace": "移动到其他空间",
+  "moveUp": "上移",
+  "moveDown": "下移",
+  "removeFromSpaceDescription": "聊天将从该空间中移除，但仍会保留在你的聊天列表中。",
+  "endPoll": "结束投票",
+  "anonymousPoll": "匿名",
+  "publicPoll": "公开",
+  "endedPoll": "已结束",
+  "activePoll": "进行中",
+  "singleChoice": "单选",
+  "multipleChoice": "多选",
+  "vote": "投票",
+  "changeVote": "重新投票",
+  "choicesSelected": "已选 {selected} / {max} 项",
+  "@choicesSelected": {
+    "type": "String",
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      }
+    },
+    "max": {
+      "type": "int"
+    }
+  },
+  "discuss": "讨论",
+  "pollType": "投票类型",
+  "question": "问题",
+  "answer": "答案",
+  "addAnswer": "添加答案",
+  "pleaseEnterQuestion": "请输入问题",
+  "atLeastTwoAnswersRequired": "至少需要两个选项",
+  "maxSelections": "最大选择数",
+  "createPoll": "创建投票",
+  "cleanExif": "清除 EXIF 元数据",
+  "@cleanExif": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "cleanExifDescription": "发送照片时移除 EXIF 元数据（相机型号、地理位置、拍摄时间等）。",
+  "@cleanExifDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "doNotSendIfCantClean": "严格禁止包含 EXIF",
+  "doNotSendIfCantCleanDescription": "如果清除 EXIF 元数据失败，则不发送图片",
+  "setCustomPermissionLevel": "设置自定义权限等级",
+  "setPermissionsLevelDescription": "请在下方选择预设角色，或输入 0 到 100 之间的自定义权限等级。",
+  "ignoreUser": "忽略用户",
+  "normalUser": "普通用户",
+  "pinCode": "PIN 码",
+  "displayNavigationRail": "在移动设备上显示侧边导航栏",
+  "enableGradient": "启用气泡渐变背景",
+  "translationDisabledInE2e": "为保护隐私，已在加密聊天室中禁用云端翻译。如需翻译，可长按选中文本后使用系统菜单翻译。",
+  "chatThreads": "话题",
+  "@chatThreads": {},
+  "chatThreadsDescription": "查看此聊天室中的所有话题",
+  "messageFontSize": "消息字体大小",
+  "@messageFontSize": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "avatarBorderRadius": "头像圆角",
+  "mentions": "提及",
+  "downloads": "下载",
+  "@downloads": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "translateMessage": "翻译消息",
+  "@translateMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "translatedMessage": "已翻译消息",
+  "@translatedMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "errorTranslatingMessage": "翻译消息时出错。",
+  "@errorTranslatingMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "recoverMessage": "恢复消息",
+  "@recoverMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "recoveredMessage": "已恢复消息",
+  "@recoveredMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "errorRecoveringMessage": "恢复消息时发生错误。",
+  "@errorRecoveringMessage": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "errorRecoveringMessageNoAdmin": "此功能仅供 Synapse 主服务器管理员使用。",
+  "@errorRecoveringMessageNoAdmin": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "retry": "重试",
+  "@retry": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "hideAvatarsInInvites": "在邀请中隐藏头像",
+  "@hideAvatarsInInvites": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "hideAvatarsInInvitesDescription": "在邀请中不显示聊天室头像",
+  "@hideAvatarsInInvitesDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "pureBlackToggle": "纯黑模式",
+  "@pureBlackToggle": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "pollHasBeenEnded": "投票已结束",
+  "startedAPoll": "{senderName} 发起了投票",
+  "@startedAPoll": {
+    "type": "String",
+    "placeholders": {
+      "senderName": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceIdentityKey": "设备身份密钥",
+  "newMessages": "新消息",
+  "@newMessages": {},
+  "signInWithLabel": "登录方式",
+  "doYouWantToKick": "踢出 {user}",
+  "@doYouWantToKick": {
+    "type": "String",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "doYouWantToBan": "封禁 {user}",
+  "@doYouWantToBan": {
+    "type": "String",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "customReaction": "添加回应",
+  "spaceMemberOf": "属于空间 {spaces} 的成员",
+  "@spaceMemberOf": {
+    "type": "String",
+    "placeholders": {
+      "spaces": {
+        "type": "String"
+      }
+    }
+  },
+  "spaceMemberOfCanKnock": "空间 {spaces} 的成员可以请求加入",
+  "@spaceMemberOfCanKnock": {
+    "type": "String",
+    "placeholders": {
+      "spaces": {
+        "type": "String"
+      }
+    }
+  },
+  "welcome": "欢迎！",
+  "logInToYourAccount": "登录你的 Matrix 账户以开始聊天。",
+  "approve": "批准",
+  "youHaveKnocked": "你已发送加入请求",
+  "pleaseWaitUntilInvited": "请等待受邀加入。",
+  "backToMainChat": "返回主聊天",
+  "saveChanges": "保存更改",
+  "createSticker": "创建贴纸或表情",
+  "newStickerPack": "新贴纸包",
+  "stickerPackNameAlreadyExists": "已存在同名的贴纸包",
+  "stickerPackName": "贴纸包名称",
+  "attribution": "归属",
+  "useAsSticker": "贴纸",
+  "useAsEmoji": "表情",
+  "mutualRooms": "共同群聊",
+  "matrixId": "Matrix ID",
+  "copyLink": "复制链接",
+  "aboutUser": "关于",
+  "editAbout": "编辑关于",
+  "editAboutDescription": "你可以写一些个人简介，所有人都可以看到。",
+  "aboutExample": "你好！我来自北京",
+  "notSet": "未设置",
+  "settingsStyleMessage1": "你知道方便面里的章鱼其实有时是鱿鱼吗？",
+  "settingsStyleMessage2": "你在说什么呢？",
+  "settingsStyleMessage3": "我只是突然好奇去查了查。",
+  "incomingCall": "来电",
+  "outgoingCall": "去电",
+  "heldTheCall": "{user} 保持了通话。",
+  "@heldTheCall": {
+    "type": "String",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "youHeldTheCall": "你保持了通话。",
+  "callConnected": "已连接",
+  "callConnecting": "连接中",
+  "callEnded": "通话结束",
+  "callEnding": "正在结束",
+  "callRinging": "响铃中",
+  "callInviteSent": "已发送邀请",
+  "readReceipts": "已读回执",
+  "translate": "翻译",
+  "nViews": "{count} 次浏览",
+  "@nViews": {
+    "type": "text",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "nEdits": "{count} 次编辑",
+  "@nEdits": {
+    "type": "text",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "backToCall": "返回通话",
+  "switchCamera": "切换摄像头",
+  "switchSpeaker": "切换扬声器",
+  "hangUp": "挂断",
+  "answerCall": "接听",
+  "muteMic": "静音麦克风",
+  "screenSharing": "屏幕共享",
+  "holdCall": "保持通话",
+  "muteCam": "关闭摄像头",
+  "ringtone": "铃声",
+  "ringtoneDescription": "选择收到来电时播放的铃声。",
+  "systemRingtone": "系统铃声",
+  "chooseRingtone": "选择铃声",
+  "ongoingCall": "正在通话",
+  "@ongoingCall": {},
+  "ongoingCallDetail": "你正在与 {name} 通话",
+  "@ongoingCallDetail": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatPrivacy": "隐私设置",
+  "chatPrivacyDescription": "此聊天的单独隐私设置",
+  "chatPrivacyTitle": "聊天隐私",
+  "skipChatBackup": "跳过密钥备份",
+  "skipChatBackupWarning": "是否在没有密钥备份的情况下继续？如果更换设备，你可能会丢失加密消息的访问权限。",
+  "loadingMessages": "正在加载消息",
+  "setupChatBackup": "设置密钥备份",
+  "individualChatPrivacySettings": "聊天设置",
+  "individualChatPrivacySettingsDescription": "为每个聊天单独设置不同的隐私选项。",
+  "updateAvailableTitle": "有可用更新",
+  "updateAvailable": "Extera {version} 已可供下载！新版本包含更多功能、修复及改进。",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadUpdateButton": "下载",
+  "changelogButton": "更新日志",
+  "updateCheckTitle": "检查更新",
+  "updateCheckSubtitle": "每次启动时检查是否有 Extera 新版本。",
+  "useTwemoji": "启用 Twemoji 表情",
+  "callAction": "通话",
+  "resetPrivacy": "重置为默认值",
+  "widgets": "小部件",
+  "widgetsDescription": "向此聊天室添加自定义小部件",
+  "widgetCreatorUser": "添加者",
+  "deleteWidget": "删除小部件",
+  "widgetType": "小部件类型",
+  "widget": "小部件",
+  "incomingCallsOnLockScreenTitle": "锁屏来电",
+  "incomingCallsOnLockScreenSubtitle": "在锁屏界面显示来电",
+  "pushToTalkHotkey": "按键说话",
+  "pushToTalkHotkeyDescription": "按下 Alt+X 切换麦克风状态",
+  "roomAddress": "聊天室地址",
+  "imageEditFailed": "编辑图片失败",
+  "autoMarkUnavailable": "离开时自动设为离开状态",
+  "autoMarkUnavailableDescription": "当应用失去焦点时自动将状态设为离开",
+  "colorPalette": "调色板",
+  "palette_tonalSpot": "色调斑点 (Tonal Spot)",
+  "palette_fidelity": "高保真 (Fidelity)",
+  "palette_monochrome": "单色 (Monochrome)",
+  "palette_neutral": "中性色 (Neutral)",
+  "palette_vibrant": "鲜艳 (Vibrant)",
+  "palette_expressive": "表现力 (Expressive)",
+  "palette_content": "内容取色 (Content)",
+  "palette_rainbow": "彩虹 (Rainbow)",
+  "palette_fruitSalad": "水果沙拉 (Fruit Salad)",
+  "listeningTo": "正在收听 {mediaPlayer}",
+  "@listeningTo": {
+    "placeholders": {
+      "mediaPlayer": {
+        "type": "String"
+      }
+    }
+  },
+  "listeningToSomeTunes": "正在听音乐",
+  "playing": "正在播放",
+  "editedAt": "编辑于 {when}",
+  "@editedAt": {
+    "type": "text",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "showSpaceRoomsInGlobalList": "在主聊天列表中同时显示空间内的聊天室",
+  "newInvitation": "新邀请",
+  "featureSwitches": "实验性功能",
+  "useLegacyAppBar": "传统搜索栏",
+  "useLegacyNavBar": "传统导航栏",
+  "appIntro": "欢迎使用 Extera。这是一个基于 [matrix] 的去中心化聊天应用。访问 https://matrix.org 了解更多。",
+  "signIn": "登录",
+  "createNewAccount": "注册",
+  "signUpGreeting": "Extera 是去中心化的。选择一个服务器以开始。",
+  "signInGreeting": "已有 Matrix 账户？欢迎回来！",
+  "theProcessWasCanceled": "操作已取消。",
+  "searchOrEnterHomeserverAddress": "搜索或输入主服务器地址",
+  "downloadFailed": "下载失败",
+  "downloadSuccess": "文件已成功保存",
+  "audioMessage": "音频消息",
+  "noCustomPrivacySettings": "无自定义隐私设置",
+  "noCustomPrivacySettingsDetails": "配置了自定义隐私选项的聊天室将显示在此处。你可以在聊天室详情页面中单独设置隐私选项。",
+  "selectPushDistributor": "选择推送服务分发器",
+  "@selectPushDistributor": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "joinRoomByLinkConfirmation": "是否加入聊天室 {room}？",
+  "@joinRoomByLinkConfirmation": {
+    "type": "String",
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "translating": "翻译中...",
+  "messageTranslations": "消息翻译",
+  "latexMath": "LaTeX 数学",
+  "setLowPriority": "设为低优先级",
+  "unsetLowPriority": "取消低优先级",
+  "setBanner": "上传横幅",
+  "clearBanner": "移除横幅",
+  "changeYourBanner": "更改你的横幅",
+  "removeYourBanner": "移除你的横幅",
+  "totalVotes": "总票数：{count}",
+  "@totalVotes": {
+    "type": "String",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "voteCount": "{count, plural, =1{1 票} other{{count} 票}}",
+  "@voteCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "peopleOnline": "在线 - {count}",
+  "@peopleOnline": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "peopleUnavailable": "离开 - {count}",
+  "@peopleUnavailable": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "pollResults": "投票结果",
+  "systemFont": "使用系统字体",
+  "jitsiFeatureFlag": "Jitsi 群组通话",
+  "removeCallFromChat": "从聊天中移除通话",
+  "removeCallFromChatDescription": "你确定要为所有成员从此聊天中移除该通话吗？",
+  "removeCallForEveryone": "为所有人移除通话",
+  "startVoiceCall": "发起语音通话",
+  "startVideoCall": "发起视频通话",
+  "joinVoiceCall": "加入语音通话",
+  "joinVideoCall": "加入视频通话",
+  "live": "直播",
+  "noThreadsYet": "暂无话题",
+  "noThreadsYetLong": "目前没有任何话题可供查看。",
+  "stickerScale": "贴纸缩放",
+  "videoNote": "视频笔记",
+  "videoNotes": "视频笔记",
+  "enableVideoNotes": "启用视频笔记",
+  "longPressToRecordVideoNote": "长按录制视频笔记。",
+  "tapToSwitchToVoice": "点击切换至语音消息",
+  "tapToSwitchToVideo": "点击切换至视频笔记",
+  "sendVideoNote": "发送视频笔记",
+  "enableAppBarCenterTitle": "居中显示聊天室标题",
+  "enableChatFrostedGlass": "毛玻璃/半透明效果",
+  "recentStickers": "最近",
+  "removeFromFavourites": "从收藏中移除",
+  "addToFavourites": "添加到收藏",
+  "removeFromRecents": "从最近使用中移除",
+  "favouriteStickers": "收藏",
+  "showCameraButton": "拍摄照片/视频",
+  "showCameraButtonDesc": "在消息输入框中显示拍照/录像按钮",
+  "loadImageNoSize": "加载图片",
+  "loadImage": "加载图片 ({size})",
+  "@loadImage": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadVideoNoSize": "下载视频",
+  "downloadVideo": "下载视频 ({size})",
+  "@downloadVideo": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "playVideoNoSize": "播放视频",
+  "playVideo": "播放视频 ({size})",
+  "@playVideo": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "autoLoadMedia": "预览媒体文件",
+  "autoLoadMediaLong": "如果禁用，媒体文件在点击前不会自动加载。",
+  "enablePeopleTab": "启用“联系人”标签页",
+  "noDownloadsYet": "暂无下载记录。",
+  "joinRoomShort": "加入",
+  "includeAttribution": "包含署名/归属信息",
+  "usernameAlreadyTaken": "用户名已被占用。",
+  "pleaseEnterUsername": "请输入用户名。",
+  "pleaseEnterPassword": "请输入密码。",
+  "passwordMinLengthMessage": "密码长度必须至少为 8 个字符。",
+  "registrationFailed": "注册失败：{message}",
+  "@registrationFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidUsername": "用户名无效",
+  "invalidEmail": "电子邮件无效",
+  "emailAlreadyUsed": "该电子邮件地址已被使用。",
+  "emailNotAllowed": "不允许使用此电子邮件地址。",
+  "captchaFailed": "人机验证失败，请重试。",
+  "requestAVerificationEmailFirst": "请先请求验证电子邮件。",
+  "phoneNumberAlreadyUsed": "该手机号码已被使用。",
+  "requestAVerificationCodeFirst": "请先请求验证码。",
+  "setupProfile": "设置个人资料",
+  "captcha": "您是人类吗？",
+  "termsOfService": "服务条款",
+  "verifyEmail": "验证电子邮件",
+  "verifyPhone": "验证手机号",
+  "pleaseWait": "请稍候…",
+  "verification": "验证",
+  "pleaseReviewAndAcceptPolicies": "请阅读并接受以下政策以继续：",
+  "noPolicies": "没有需要接受的特定政策。",
+  "readPolicy": "阅读政策",
+  "acceptAndContinue": "接受并继续",
+  "pleaseEnterEmailAddress": "请输入电子邮件地址。",
+  "emailVerification": "电子邮箱验证",
+  "verificationEmailSent": "验证邮件已发送。请检查收件箱，点击邮件中的链接，然后点击下方按钮继续。",
+  "emailAddress": "电子邮件地址",
+  "sendVerificationEmail": "发送验证邮件",
+  "iHaveVerifiedMyEmail": "我已验证电子邮件",
+  "useDifferentEmail": "使用其他邮箱",
+  "registerOn": "在 {homeserver} 上注册",
+  "@registerOn": {
+    "placeholders": {
+      "homeserver": {
+        "type": "String"
+      }
+    }
+  },
+  "yourAccountWasCreated": "你的账户已创建。请设置个人资料以开始使用。",
+  "displayname": "名称",
+  "displaynameHint": "他人看到你的称呼",
+  "completeSetup": "完成设置",
+  "additionalVerificationRequired": "需要额外验证",
+  "additionalVerificationText": "该服务器需要额外的验证步骤（{stageType}）。请在浏览器中完成验证。",
+  "@additionalVerificationText": {
+    "placeholders": {
+      "stageType": {
+        "type": "String"
+      }
+    }
+  },
+  "phoneNumber": "电话号码",
+  "sendVerificationCode": "发送验证码",
+  "verificationCodeSent": "我们已发送验证消息。请检查手机，然后点击下方按钮。",
+  "useDifferentNumber": "使用其他号码",
+  "phoneVerification": "手机号验证",
+  "pleaseEnterPhoneNumber": "请输入手机号码。",
+  "pleaseEnterCountryCode": "请输入国家代码。",
+  "invalidPhoneNumber": "手机号码无效。请包含国家代码（例如 +86 13800000000）。",
+  "invalidVerificationCode": "验证码无效。",
+  "verificationCode": "验证码",
+  "enterVerificationCode": "请输入发送到你手机的 6 位数验证码。",
+  "resendCode": "重新发送验证码",
+  "country": "国家",
+  "serverRequiresPhone": "该服务器注册需要提供手机号码。",
+  "verificationCodeSent2": "验证码已发送至你的手机号码。请在下方输入。",
+  "captchaLoadFailed": "无法加载人机验证。{message}",
+  "@captchaLoadFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseCompleteCaptcha": "请完成人机验证以继续。",
+  "completeCaptchaInBrowser": "需要进行人机验证，但在此平台上无法在应用内显示。请在浏览器中完成验证。",
+  "howWouldYouLikeToSignUp": "你想如何注册？",
+  "continueOIDC": "使用单点登录 (SSO) 继续",
+  "continueSSO": "使用 SSO 继续",
+  "registerWithPassword": "使用密码注册",
+  "translatedWith": "由 {engine} 翻译。仅供参考。",
+  "@translatedWith": {
+    "placeholder": {
+      "engine": {
+        "type": "String"
+      }
+    }
+  },
+  "discardEdits": "是否放弃更改？",
+  "owner": "拥有者",
+  "checkList": "清单",
+  "interactiveVerification": "交互式验证",
+  "interactiveVerificationDescription": "如果你们当面在一起或通过安全渠道沟通，可以一次性验证所有设备。",
+  "messageLayout": "消息布局",
+  "bubblesLayout": "新气泡",
+  "legacyBubblesLayout": "传统气泡",
+  "modernLayout": "现代",
+  "sendStickers": "发送贴纸",
+  "sendReactions": "发送回应",
+  "pinMessages": "置顶消息",
+  "otherMessageEvents": "其他消息事件",
+  "startOrJoinCalls": "发起或加入通话",
+  "moderation": "审核",
+  "kickUsers": "踢出用户",
+  "banUsers": "封禁用户",
+  "redactMessages": "删除任何消息",
+  "redactOwnMessages": "删除自己的消息",
+  "roomMetadata": "聊天室元数据",
+  "editRoomName": "编辑聊天室名称",
+  "editRoomTopic": "编辑聊天室话题",
+  "roomSettings": "聊天室设置",
+  "editWidgets": "编辑小部件",
+  "editRoomEmotes": "编辑表情包",
+  "editPermissions": "编辑权限",
+  "editJoinRules": "编辑加入规则",
+  "upgradeRoom": "升级聊天室",
+  "editOtherRoomSettings": "编辑其他设置",
+  "other": "其他",
+  "powerLevelMustBeANumber": "必须是数字",
+  "cannotExceedPowerLevel": "不能超过你的权限等级（{powerLevel}）",
+  "@cannotExceedPowerLevel": {
+    "placeholders": {
+      "powerLevel": {
+        "type": "int",
+        "example": "100"
+      }
+    }
+  },
+  "maxPowerLevel": "最大值：{powerLevel}",
+  "@maxPowerLevel": {
+    "placeholders": {
+      "powerLevel": {
+        "type": "int",
+        "example": "100"
+      }
+    }
+  },
+  "member": "成员",
+  "powerLevel": "权限等级",
+  "apply": "应用",
+  "showSeconds": "显示秒数",
+  "fonts": "字体",
+  "uiFont": "界面字体",
+  "monospaceFont": "等宽字体",
+  "uiFontFallback": "界面备用字体",
+  "monospaceFontFallback": "等宽备用字体",
+  "chatFont": "聊天字体",
+  "chatFontFallback": "聊天备用字体",
+  "openMessageSource": "查看原始消息",
+  "showProfileSource": "个人资料原始数据",
+  "restoreBootstrapEmptyDevicesDescription": "请输入你的密码短语或恢复密钥以验证此设备并访问加密消息备份。",
+  "@restoreBootstrapEmptyDevicesDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "restoreBootstrapDevicesDescription": "请选择你的另一台设备来验证此会话：",
+  "@restoreBootstrapDevicesDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "resetAccount": "重置账户",
+  "@resetAccount": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "restoreCryptoIdentity": "恢复加密身份",
+  "@restoreCryptoIdentity": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "resetCryptoIdentity": "重置加密身份",
+  "@resetCryptoIdentity": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "setUpCryptoIdentity": "设置加密身份",
+  "@setUpCryptoIdentity": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "waitingForKeys": "正在等待密钥…请保持另一台设备处于活跃状态。",
+  "@waitingForKeys": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "noKeysTransmitted": "未传输任何密钥。请重试。",
+  "@noKeysTransmitted": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "unlock": "解锁",
+  "@unlock": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "openFile": "打开文件",
+  "@openFile": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "resetAccountWarning": "重置账户后，你将永久失去对历史加密消息的访问权限，并且需要重新验证所有当前设备。请仅在没有其他设备可验证会话且已丢失恢复密钥和密码短语的情况下执行此操作！",
+  "@resetAccountWarning": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "newPassphraseDescription": "Extera 使用端到端加密。为了保护你的消息，请选择一个强密码短语来保护你的加密身份和加密消息备份。",
+  "@newPassphraseDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "newPassphrase": "新密码短语",
+  "@newPassphrase": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "repeatPassphrase": "重复密码短语",
+  "@repeatPassphrase": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "passphrasesMatch": "密码短语匹配",
+  "@passphrasesMatch": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "passphraseLengthRequirement": "至少 12 个字符长",
+  "@passphraseLengthRequirement": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "passphraseUpperAndLowerCaseRequirement": "包含大写和小写字母",
+  "@passphraseUpperAndLowerCaseRequirement": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "passphraseSpecialCharactersRequirement": "包含特殊字符",
+  "@passphraseSpecialCharactersRequirement": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "passphraseNumberRequirement": "包含数字",
+  "@passphraseNumberRequirement": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "storeRecoveryKeyDescription": "请记下你的恢复密钥，以便日后恢复你的加密消息和加密身份。",
+  "@storeRecoveryKeyDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "saveAsFile": "另存为文件",
+  "@saveAsFile": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "youAreReadyToStart": "一切就绪，可以开始了！",
+  "noUserKeyFound": "未找到用户密钥",
+  "@noUserKeyFound": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "knownSince": "首次已知时间：{date}",
+  "@knownSince": {
+    "type": "String",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "unsignedDevice": "未签名设备",
+  "@unsignedDevice": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "signedDevice": "已签名设备",
+  "@signedDevice": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "noCurve25519KeyFound": "未找到 Curve25519 密钥",
+  "@noCurve25519KeyFound": {
+    "type": "String",
+    "placeholders": {}
+  },
+  "supportDevelopment": "支持",
+  "nDevices": "{count, plural, =1{1 台设备} other{{count} 台设备}}",
+  "@nDevices": {
+    "type": "String",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "messageCanOnlyBeReadByUser": "你的消息已加密，仅可被该用户读取：",
+  "messageCanOnlyBeReadByUsers": "你的消息已加密，仅可被以下用户读取：",
+  "publicKey": "公钥：{key}",
+  "@publicKey": {
+    "type": "String",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "powerLevelReadOnly": "只读",
+  "elementCall": "Element 通话",
+  "@elementCall": {},
+  "elementCallExperimental": "Element 通话（实验性）",
+  "@elementCallExperimental": {},
+  "p2pCall": "传统通话",
+  "@p2pCall": {},
+  "chooseCallType": "选择通话类型",
+  "@chooseCallType": {},
+  "elementCallDescription": "使用 LiveKit 的群组通话",
+  "@elementCallDescription": {},
+  "ongoingElementCall": "Element Call",
+  "@ongoingElementCall": {},
+  "ongoingElementCallDetail": "你正在通话中：{name}",
+  "@ongoingElementCallDetail": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "elementCallLiveKit": "Element Call",
+  "@elementCallLiveKit": {},
+  "camera": "摄像头",
+  "@camera": {},
+  "connectingToCall": "正在连接通话",
+  "@connectingToCall": {},
+  "waitingForParticipants": "等待参与者",
+  "@waitingForParticipants": {},
+  "callSettings": "通话设置",
+  "@callSettings": {},
+  "microphone": "麦克风",
+  "@microphone": {},
+  "speaker": "扬声器",
+  "@speaker": {},
+  "audioProcessing": "音频处理",
+  "@audioProcessing": {},
+  "echoCancellation": "回声消除",
+  "@echoCancellation": {},
+  "noiseSuppression": "噪音抑制",
+  "@noiseSuppression": {},
+  "autoGainControl": "自动增益控制",
+  "@autoGainControl": {},
+  "noScreensAvailable": "无可用屏幕",
+  "@noScreensAvailable": {},
+  "allLiveKitUnavailable": "通话服务器不可用",
+  "@allLiveKitUnavailable": {},
+  "shareCallLink": "分享通话链接",
+  "@shareCallLink": {},
+  "couldNotFindCallServer": "你的主服务器不支持 Element 通话。",
+  "@couldNotFindCallServer": {},
+  "errorWithMessage": "错误：{error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "screenShareErrorWithMessage": "屏幕共享错误：{error}",
+  "@screenShareErrorWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "isScreenSharing": "{name} 正在共享屏幕",
+  "@isScreenSharing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "microphoneN": "麦克风 {n}",
+  "@microphoneN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "speakerN": "扬声器 {n}",
+  "@speakerN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cameraN": "摄像头 {n}",
+  "@cameraN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "screenShare": "屏幕共享",
+  "@screenShare": {},
+  "timezone": "时区",
+  "publishTimezone": "公开时区",
+  "removeTimezone": "移除时区",
+  "publishTimezoneConfirmation": "检测到你的时区是 {timezone}。是否要将其公开展示在你的个人资料中？",
+  "@publishTimezoneConfirmation": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "navigationAndLayout": "导航和布局",
+  "@navigationAndLayout": {},
+  "userNote": "备注",
+  "userNoteHint": "添加关于此用户的个人备注…",
+  "roomServerAcl": "服务器访问控制列表 (ACL)",
+  "roomServerAclDescription": "允许参与此聊天室的服务器",
+  "allowIpLiterals": "允许使用 IP 地址作为服务器名",
+  "allowedServers": "允许的服务器",
+  "bannedServers": "封禁的服务器",
+  "aclUserAtRiskWarning": "保存这些更改可能会导致你自身被此聊天室屏蔽。是否继续？",
+  "addAllowedServer": "添加允许的服务器",
+  "addBannedServer": "添加封禁的服务器",
+  "startPolls": "发起投票",
+  "voteInPolls": "参与投票",
+  "endPolls": "结束投票",
+  "contentWarning": "内容警告",
+  "contentWarningSpoiler": "剧透",
+  "contentWarningNsfw": "不适宜工作场所 (NSFW)",
+  "contentWarningGraphic": "血腥或令人不安",
+  "contentWarningMedical": "健康危害/医疗敏感",
+  "revealSpoiler": "显示剧透内容",
+  "revealMedia": "显示媒体内容",
+  "contentWarningReason": "{reason}",
+  "@contentWarningReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "loadAudio": "加载音频",
+  "quickAction": "快捷操作",
+  "quickActionDescription": "双击消息时执行的操作。",
+  "react": "回应"
 }
