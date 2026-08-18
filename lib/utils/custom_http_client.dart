@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
@@ -39,5 +40,13 @@ class CustomHttpClient {
     return client;
   }
 
-  static http.Client createHTTPClient() => IOClient(customHttpClient());
+  static http.Client createHTTPClient() {
+    // On web, IOClient(null) would create HttpClient() from dart:io which
+    // crashes on the web platform. Use the default http.Client() instead,
+    // which correctly resolves to BrowserClient on web via conditional imports.
+    if (kIsWeb) {
+      return http.Client();
+    }
+    return IOClient(customHttpClient());
+  }
 }

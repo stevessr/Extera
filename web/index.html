@@ -2,6 +2,22 @@
 <html>
 
 <head>
+  <!-- ============================================================ -->
+  <!-- COOP/COEP headers for SharedArrayBuffer (vodozemac/wasm)     -->
+  <!-- These MUST be set as HTTP response headers on your server:   -->
+  <!--   Cross-Origin-Opener-Policy: same-origin                     -->
+  <!--   Cross-Origin-Embedder-Policy: require-corp                  -->
+  <!--                                                               -->
+  <!-- For nginx:                                                    -->
+  <!--   add_header Cross-Origin-Opener-Policy "same-origin";        -->
+  <!--   add_header Cross-Origin-Embedder-Policy "require-corp";     -->
+  <!--                                                               -->
+  <!-- For Cloudflare Workers, add to the response:                  -->
+  <!--   response.headers.set('Cross-Origin-Opener-Policy','same-origin')  -->
+  <!--   response.headers.set('Cross-Origin-Embedder-Policy','require-corp') -->
+  <!--                                                               -->
+  <!-- For Flutter dev server, use a proxy or dhttpd with headers.   -->
+  <!-- ============================================================ -->
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
