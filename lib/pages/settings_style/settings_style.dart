@@ -26,7 +26,6 @@ import 'settings_style_view.dart';
 int get _wallpaperMaxDimension => wallpaperMaxDimension;
 int get _wallpaperJpegQuality => wallpaperJpegQuality;
 
-
 Future<Uint8List> _compressWallpaperBytes(Uint8List rawBytes) async {
   try {
     await native.init();
@@ -130,13 +129,13 @@ class SettingsStyleController extends State<SettingsStyle> {
         // Compress and resize the image before saving.
         final compressedBytes = await _compressWallpaperBytes(rawBytes);
 
-        // Web has no writable file system: keep the wallpaper inline in the
-        // settings store instead of pointing at a file on disk.
+        // Web has no writable file system: keep the wallpaper in IndexedDB
+        // instead of pointing at a file on disk.
         if (kIsWeb) {
-          final dataUrl = encodeWallpaperDataUrl(compressedBytes);
-          await AppSettings.wallpaperPath.setItem(dataUrl);
+          final marker = await setWebWallpaperBytes(compressedBytes);
+          await AppSettings.wallpaperPath.setItem(marker);
           setState(() {
-            _wallpaperPath = dataUrl;
+            _wallpaperPath = marker;
           });
           return;
         }
@@ -249,15 +248,17 @@ class SettingsStyleController extends State<SettingsStyle> {
   }
 
   void deleteChatWallpaper() async {
-    // Delete the local wallpaper file if it exists.
     final currentPath = _wallpaperPath;
-    if (currentPath != null && !kIsWeb && !currentPath.startsWith('data:')) {
-
+    if (kIsWeb) {
+      await clearWebWallpaperBytes();
+    } else if (currentPath != null && !currentPath.startsWith('data:')) {
+      // Delete the local wallpaper file if it exists.
       try {
         final file = File(currentPath);
         if (await file.exists()) await file.delete();
       } catch (_) {}
     }
+
     await AppSettings.wallpaperPath.setItem('');
     await AppSettings.wallpaperOpacity.setItem(0.5);
     await AppSettings.wallpaperBlur.setItem(0.0);

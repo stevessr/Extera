@@ -422,7 +422,6 @@ class _ChatViewState extends State<ChatView> {
       AppSettings.wallpaperPath.value,
     );
 
-
     if (screenWidth == null || screenHeight == null) {
       final view = View.of(context);
       screenWidth ??= view.physicalSize.width / view.devicePixelRatio;
@@ -549,7 +548,6 @@ class _ChatViewState extends State<ChatView> {
               child: Stack(
                 children: <Widget>[
                   if (wallpaperImage != null)
-
                     Positioned.fill(
                       child: Container(
                         color: Colors.black,

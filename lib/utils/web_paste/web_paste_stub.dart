@@ -7,4 +7,5 @@ typedef WebPasteImageCallback = void Function(Uint8List bytes, String mimeType);
 ///
 /// Returns a dispose callback, or `null` on platforms without a browser
 /// clipboard (everything but web).
-void Function()? registerWebPasteListener(WebPasteImageCallback onImage) => null;
+void Function()? registerWebPasteListener(WebPasteImageCallback onImage) =>
+    null;

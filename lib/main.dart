@@ -17,6 +17,7 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 import 'config/app_settings.dart';
 import 'utils/background_push.dart';
@@ -60,6 +61,8 @@ void main() async {
 
   Logs().nativeColors = !PlatformInfos.isIOS;
   final store = await AppSettings.init();
+  await initWallpaper();
+
   final clients = await ClientManager.getClients(store: store);
 
   // If the app starts in detached mode, we assume that it is in
