@@ -4135,5 +4135,7 @@
     "downloadFile": "Download file",
     "quickAction": "Quick action",
     "quickActionDescription": "Perform an action when double tapping a message.",
-    "react": "React"
+    "react": "React",
+    "hideIgnoredUsers": "Hide ignored users",
+    "showIgnoredUsers": "Show ignored users"
 }
