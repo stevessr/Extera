@@ -51,6 +51,9 @@ class ChatDetailsView extends StatelessWidget {
         var members = room.getParticipants().toList()
           ..sort((b, a) => a.powerLevel.level.compareTo(b.powerLevel.level));
         members = members.take(10).toList();
+        members.removeWhere(
+          (user) => room.client.ignoredUsers.contains(user.id),
+        );
         final actualMembersCount =
             (room.summary.mInvitedMemberCount ?? 0) +
             (room.summary.mJoinedMemberCount ?? 0);
