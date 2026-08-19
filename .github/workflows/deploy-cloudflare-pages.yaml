@@ -9,7 +9,7 @@ on:
         default: "main"
 
 concurrency:
-  group: cloudflare-pages-${{ github.workflow }}-${{ inputs.pages_branch }}
+  group: cloudflare-pages-${{ github.workflow }}-${{ inputs.ref }}
   cancel-in-progress: true
 
 permissions:
