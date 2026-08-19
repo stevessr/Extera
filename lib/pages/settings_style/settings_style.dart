@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:file_picker/file_picker.dart';
@@ -15,14 +16,16 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_list_choose_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 import 'settings_style_view.dart';
 
-const int _wallpaperMaxDimension = 1920;
-const int _wallpaperJpegQuality = 85;
+int get _wallpaperMaxDimension => wallpaperMaxDimension;
+int get _wallpaperJpegQuality => wallpaperJpegQuality;
+
 
 Future<Uint8List> _compressWallpaperBytes(Uint8List rawBytes) async {
   try {
@@ -126,6 +129,17 @@ class SettingsStyleController extends State<SettingsStyle> {
         final rawBytes = await pickedFile.readAsBytes();
         // Compress and resize the image before saving.
         final compressedBytes = await _compressWallpaperBytes(rawBytes);
+
+        // Web has no writable file system: keep the wallpaper inline in the
+        // settings store instead of pointing at a file on disk.
+        if (kIsWeb) {
+          final dataUrl = encodeWallpaperDataUrl(compressedBytes);
+          await AppSettings.wallpaperPath.setItem(dataUrl);
+          setState(() {
+            _wallpaperPath = dataUrl;
+          });
+          return;
+        }
 
         final dir = await getApplicationDocumentsDirectory();
         final fileName =
@@ -237,7 +251,8 @@ class SettingsStyleController extends State<SettingsStyle> {
   void deleteChatWallpaper() async {
     // Delete the local wallpaper file if it exists.
     final currentPath = _wallpaperPath;
-    if (currentPath != null) {
+    if (currentPath != null && !kIsWeb && !currentPath.startsWith('data:')) {
+
       try {
         final file = File(currentPath);
         if (await file.exists()) await file.delete();

@@ -2,6 +2,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
@@ -40,6 +41,12 @@ void main() async {
   // To make sure that the parts of flutter needed are started up already, we need to ensure that the
   // widget bindings are initialized already.
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (PlatformInfos.isWeb) {
+    // Disable the native browser context menu so that our own right click
+    // handlers (message context menu, image viewer, ...) can take over.
+    BrowserContextMenu.disableContextMenu();
+  }
 
   MediaKit.ensureInitialized();
 

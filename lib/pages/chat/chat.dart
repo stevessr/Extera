@@ -963,7 +963,10 @@ class ChatController extends State<ChatPageWithRoom>
     // replyEvent = null;
   }
 
-  void sendImageFromClipBoard(Uint8List? image) async {
+  void sendImageFromClipBoard(
+    Uint8List? image, {
+    String mimeType = 'image/png',
+  }) async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     Uint8List? pastedImage;
@@ -978,7 +981,15 @@ class ChatController extends State<ChatPageWithRoom>
     }
     if (pastedImage == null) return;
 
-    final files = [XFile.fromData(pastedImage, mimeType: 'image/png')];
+    final extension = mimeType.split('/').last.split('+').first;
+    final files = [
+      XFile.fromData(
+        pastedImage,
+        mimeType: mimeType,
+        name: 'clipboard.$extension',
+      ),
+    ];
+
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,

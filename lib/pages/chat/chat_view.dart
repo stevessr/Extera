@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -25,6 +24,7 @@ import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/chat_settings_popup_menu.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -418,7 +418,10 @@ class _ChatViewState extends State<ChatView> {
     final bottomSheetPadding = FluffyThemes.isColumnMode(context) ? 16.0 : 8.0;
     final scrollUpBannerEventId = controller.scrollUpBannerEventId;
 
-    final wallpaperPath = AppSettings.wallpaperPath.value;
+    final wallpaperImage = wallpaperImageProvider(
+      AppSettings.wallpaperPath.value,
+    );
+
 
     if (screenWidth == null || screenHeight == null) {
       final view = View.of(context);
@@ -545,7 +548,8 @@ class _ChatViewState extends State<ChatView> {
               onDragExited: controller.onDragExited,
               child: Stack(
                 children: <Widget>[
-                  if (wallpaperPath.isNotEmpty)
+                  if (wallpaperImage != null)
+
                     Positioned.fill(
                       child: Container(
                         color: Colors.black,
@@ -561,8 +565,9 @@ class _ChatViewState extends State<ChatView> {
                                   sigmaX: AppSettings.wallpaperBlur.value,
                                   sigmaY: AppSettings.wallpaperBlur.value,
                                 ),
-                                child: Image.file(
-                                  File(wallpaperPath),
+                                child: Image(
+                                  image: wallpaperImage,
+
                                   fit: BoxFit.cover,
                                   height: screenHeight,
                                   width: screenWidth,

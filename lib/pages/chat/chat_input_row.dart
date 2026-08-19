@@ -301,6 +301,12 @@ class ChatInputRow extends StatelessWidget {
                       onPaste: () {
                         controller.sendImageFromClipBoard(null);
                       },
+                      onPasteImage: (bytes, mimeType) {
+                        controller.sendImageFromClipBoard(
+                          bytes,
+                          mimeType: mimeType,
+                        );
+                      },
                       child: InputBar(
                         room: controller.room,
                         minLines: 1,

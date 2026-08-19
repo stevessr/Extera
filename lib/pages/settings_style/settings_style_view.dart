@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:matrix/matrix.dart';
@@ -14,6 +14,7 @@ import 'package:extera_next/pages/chat/events/state_message.dart';
 import 'package:extera_next/utils/color_value.dart';
 import 'package:extera_next/utils/dummy_timeline.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -47,7 +48,9 @@ class SettingsStyleView extends StatelessWidget {
       DynamicSchemeVariant.fruitSalad: L10n.of(context).palette_fruitSalad,
     };
 
-    final hasWallpaper = controller.wallpaperPath != null;
+    final wallpaperImage = wallpaperImageProvider(controller.wallpaperPath);
+    final hasWallpaper = wallpaperImage != null;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -235,8 +238,8 @@ class SettingsStyleView extends StatelessWidget {
                                           sigmaX: controller.wallpaperBlur,
                                           sigmaY: controller.wallpaperBlur,
                                         ),
-                                        child: Image.file(
-                                          File(controller.wallpaperPath!),
+                                        child: Image(
+                                          image: wallpaperImage,
                                           fit: BoxFit.cover,
                                           width: FluffyThemes.columnWidth * 2,
                                           height: 212,
