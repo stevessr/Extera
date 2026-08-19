@@ -11,3 +11,10 @@ Future Synth Ringtone_1.mp3 by LPHypeR
 -- https://freesound.org/s/505806/ 
 -- License: Creative Commons 0
 ```
+
+## Font: assets/font/NotoColorEmoji.ttf
+```
+Noto Color Emoji by Google Fonts
+-- https://github.com/googlefonts/noto-emoji
+-- License: SIL Open Font License 1.1
+```

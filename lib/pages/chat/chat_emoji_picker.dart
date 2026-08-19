@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:matrix/matrix.dart';
 
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/sticker_picker_dialog.dart';
@@ -78,7 +79,7 @@ class ChatEmojiPicker extends StatelessWidget {
 
                                 // Try to find a matching standard Emoji by char, name or shortName
                                 Emoji? found;
-                                final all = Emoji.all();
+                                final all = EmojiData.all();
                                 try {
                                   found = all.firstWhere(
                                     (e) =>

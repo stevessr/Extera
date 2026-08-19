@@ -899,7 +899,7 @@
 	"changelogButton": "¿Qué hay de nuevo?",
 	"updateCheckTitle": "Buscar actualizaciones",
 	"updateCheckSubtitle": "",
-	"useTwemoji": "Usar Twemoji",
+	"useNotoEmoji": "Usar Noto Emoji",
 	"callAction": "Llamada",
 	"resetPrivacy": "Restablecer a la configuración predeterminada",
 	"widgets": "Widgets",

@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
@@ -156,7 +157,7 @@ class SettingsChatController extends State<SettingsChat> {
 
               // Try to find a matching standard Emoji by char, name or shortName
               Emoji? found;
-              final all = Emoji.all();
+              final all = EmojiData.all();
               try {
                 found = all.firstWhere(
                   (e) =>

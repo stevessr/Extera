@@ -149,8 +149,11 @@ class _HtmlMessageState extends State<HtmlMessage> {
               ? 'SystemFont'
               : AppSettings.chatFont.value
         : null,
-    fontFamilyFallback: AppSettings.twemojiFont.value
-        ? ['Twemoji Mozilla', ...AppSettings.chatFallbackFonts.value.split(',')]
+    fontFamilyFallback: AppSettings.notoEmojiFont.value
+        ? [
+            'Noto Color Emoji',
+            ...AppSettings.chatFallbackFonts.value.split(','),
+          ]
         : AppSettings.chatFallbackFonts.value.split(','),
   );
 
@@ -376,9 +379,9 @@ class _HtmlMessageState extends State<HtmlMessage> {
                 text: node.text,
                 style: TextStyle(
                   fontFamily: AppSettings.monospaceFont.value,
-                  fontFamilyFallback: AppSettings.twemojiFont.value
+                  fontFamilyFallback: AppSettings.notoEmojiFont.value
                       ? [
-                          'Twemoji Mozilla',
+                          'Noto Color Emoji',
                           ...AppSettings.monospaceFallbackFonts.value.split(
                             ',',
                           ),
@@ -404,9 +407,9 @@ class _HtmlMessageState extends State<HtmlMessage> {
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   textStyle: TextStyle(
                     fontFamily: AppSettings.monospaceFont.value,
-                    fontFamilyFallback: AppSettings.twemojiFont.value
+                    fontFamilyFallback: AppSettings.notoEmojiFont.value
                         ? [
-                            'Twemoji Mozilla',
+                            'Noto Color Emoji',
                             ...AppSettings.monospaceFallbackFonts.value.split(
                               ',',
                             ),
@@ -766,9 +769,9 @@ class MatrixPill extends StatelessWidget {
                           ? 'SystemFont'
                           : AppSettings.chatFont.value
                     : null,
-                fontFamilyFallback: AppSettings.twemojiFont.value
+                fontFamilyFallback: AppSettings.notoEmojiFont.value
                     ? [
-                        'Twemoji Mozilla',
+                        'Noto Color Emoji',
                         ...AppSettings.chatFallbackFonts.value.split(','),
                       ]
                     : AppSettings.chatFallbackFonts.value.split(','),
@@ -788,9 +791,9 @@ class MatrixPill extends StatelessWidget {
                               ? 'SystemFont'
                               : AppSettings.chatFont.value
                         : null,
-                    fontFamilyFallback: AppSettings.twemojiFont.value
+                    fontFamilyFallback: AppSettings.notoEmojiFont.value
                         ? [
-                            'Twemoji Mozilla',
+                            'Noto Color Emoji',
                             ...AppSettings.chatFallbackFonts.value.split(','),
                           ]
                         : AppSettings.chatFallbackFonts.value.split(','),
@@ -845,9 +848,9 @@ class LatexSpan extends StatelessWidget {
                     ? 'SystemFont'
                     : AppSettings.chatFont.value
               : null,
-          fontFamilyFallback: AppSettings.twemojiFont.value
+          fontFamilyFallback: AppSettings.notoEmojiFont.value
               ? [
-                  'Twemoji Mozilla',
+                  'Noto Color Emoji',
                   ...AppSettings.chatFallbackFonts.value.split(','),
                 ]
               : AppSettings.chatFallbackFonts.value.split(','),

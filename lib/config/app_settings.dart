@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/utils/platform_infos.dart';
 
+const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
+
 abstract class SettingKeys {
   static const String appLockKey = 'chat.fluffy.app_lock';
 }
@@ -84,7 +86,7 @@ enum AppSettings<T> {
   unifiedPushRegistered<bool>('chat.fluffy.unifiedpush.registered', false),
   unifiedPushEndpoint<String>('chat.fluffy.unifiedpush.endpoint', ''),
   showNoGoogle<bool>('chat.fluffy.show_no_google', false),
-  twemojiFont<bool>('xyz.extera.next.twemojiFont', false),
+  notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
   checkForUpdates<bool>('xyz.extera.next.checkForUpdates', true),
   colorSchemeSeed<int>('xyz.extera.next.colorSchemeSeed', 0x5625BA),
   hideAvatarsInInvites<bool>('xyz.extera.next.hideAvatarsInInvites', true),
@@ -164,6 +166,16 @@ enum AppSettings<T> {
     if (AppSettings._store != null) return AppSettings.store;
 
     final store = AppSettings._store = await SharedPreferences.getInstance();
+
+    // Keep the old preference when upgrading from versions that used the
+    // previous emoji font. The setting itself is now named after the font.
+    if (store.getBool(AppSettings.notoEmojiFont.key) == null) {
+      final legacyEmojiFont = store.getBool(_legacyEmojiFontKey);
+      if (legacyEmojiFont != null) {
+        await store.setBool(AppSettings.notoEmojiFont.key, legacyEmojiFont);
+        await store.remove(_legacyEmojiFontKey);
+      }
+    }
 
     // Migrate wrong datatype for fontSizeFactor
     final fontSizeFactorString = Result(

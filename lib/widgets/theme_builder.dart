@@ -14,14 +14,14 @@ class ThemeBuilder extends StatefulWidget {
     Color? primaryColor,
     DynamicSchemeVariant schemeVariant,
     bool pureBlack,
-    bool twemoji,
+    bool notoEmoji,
   )
   builder;
 
   final String themeModeSettingsKey;
   final String primaryColorSettingsKey;
   final String pureBlackSettingsKey;
-  final String twemojiSettingsKey;
+  final String notoEmojiSettingsKey;
   final String schemeVariantSettingsKey;
 
   const ThemeBuilder({
@@ -29,7 +29,7 @@ class ThemeBuilder extends StatefulWidget {
     this.themeModeSettingsKey = 'xyz.extera.next.themeMode',
     this.primaryColorSettingsKey = 'xyz.extera.next.colorSchemeSeed',
     this.pureBlackSettingsKey = 'xyz.extera.next.pureBlack',
-    this.twemojiSettingsKey = 'xyz.extera.next.twemojiFont',
+    this.notoEmojiSettingsKey = 'xyz.extera.next.notoEmojiFont',
     this.schemeVariantSettingsKey = 'xyz.extera.next.schemeVariant',
     super.key,
   });
@@ -43,7 +43,7 @@ class ThemeController extends State<ThemeBuilder> {
   ThemeMode? _themeMode;
   Color? _primaryColor;
   bool? _pureBlack;
-  bool? _twemoji;
+  bool? _notoEmoji;
   DynamicSchemeVariant? _variant;
 
   ThemeMode get themeMode => _themeMode ?? ThemeMode.system;
@@ -52,7 +52,7 @@ class ThemeController extends State<ThemeBuilder> {
 
   bool get pureBlack => _pureBlack ?? false;
 
-  bool get twemoji => _twemoji ?? false;
+  bool get notoEmoji => _notoEmoji ?? false;
 
   DynamicSchemeVariant get variant =>
       _variant ?? DynamicSchemeVariant.tonalSpot;
@@ -67,7 +67,9 @@ class ThemeController extends State<ThemeBuilder> {
     final rawThemeMode = preferences.getString(widget.themeModeSettingsKey);
     final rawColor = preferences.getInt(widget.primaryColorSettingsKey);
     final rawPureBlack = preferences.getBool(widget.pureBlackSettingsKey);
-    final rawTwemoji = preferences.getBool(widget.twemojiSettingsKey);
+    final rawNotoEmoji =
+        preferences.getBool(widget.notoEmojiSettingsKey) ??
+        preferences.getBool('xyz.extera.next.twemojiFont');
     final rawVariant =
         preferences.getInt(widget.schemeVariantSettingsKey) ??
         DynamicSchemeVariant.values.indexOf(.tonalSpot);
@@ -78,7 +80,7 @@ class ThemeController extends State<ThemeBuilder> {
       );
       _primaryColor = rawColor == null ? null : Color(rawColor);
       _pureBlack = rawPureBlack;
-      _twemoji = rawTwemoji;
+      _notoEmoji = rawNotoEmoji;
       _variant = .values[rawVariant];
     });
   }
@@ -133,12 +135,13 @@ class ThemeController extends State<ThemeBuilder> {
     });
   }
 
-  Future<void> setTwemoji(bool newTwemoji) async {
+  Future<void> setNotoEmoji(bool newNotoEmoji) async {
     final preferences = _sharedPreferences ??=
         await SharedPreferences.getInstance();
-    await preferences.setBool(widget.twemojiSettingsKey, newTwemoji);
+    await preferences.setBool(widget.notoEmojiSettingsKey, newNotoEmoji);
+    await preferences.remove('xyz.extera.next.twemojiFont');
     setState(() {
-      _twemoji = newTwemoji;
+      _notoEmoji = newNotoEmoji;
     });
   }
 
@@ -159,7 +162,7 @@ class ThemeController extends State<ThemeBuilder> {
           primaryColor ?? light?.primary,
           variant,
           pureBlack,
-          twemoji,
+          notoEmoji,
         ),
       ),
     );

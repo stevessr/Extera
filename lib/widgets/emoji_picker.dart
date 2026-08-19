@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:emojis/emoji.dart';
 
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 
 // ==========================================
@@ -231,7 +232,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     final tempVariations = <String, List<PickerEmoji>>{};
 
     // 1. Load Standard
-    final rawStandard = Emoji.all();
+    final rawStandard = EmojiData.all();
     for (final emoji in rawStandard) {
       if (emoji.name.contains(':') && emoji.name.contains('skin tone')) {
         final baseName = emoji.name.split(':')[0].trim();

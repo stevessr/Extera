@@ -3638,7 +3638,7 @@
   "changelogButton": "更新日志",
   "updateCheckTitle": "检查更新",
   "updateCheckSubtitle": "每次启动时检查是否有 Extera 新版本。",
-  "useTwemoji": "启用 Twemoji 表情",
+  "useNotoEmoji": "启用 Noto Emoji 表情",
   "callAction": "通话",
   "resetPrivacy": "重置为默认值",
   "widgets": "小部件",

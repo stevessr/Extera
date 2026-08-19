@@ -899,7 +899,7 @@
 	"changelogButton": "新着情報",
 	"updateCheckTitle": "アップデートの確認",
 	"updateCheckSubtitle": "アップデートを確認しています",
-	"useTwemoji": "Twemojiを使用",
+	"useNotoEmoji": "Noto Emojiを使用",
 	"callAction": "通話",
 	"resetPrivacy": "デフォルトにリセット",
 	"widgets": "ウィジェット",

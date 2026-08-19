@@ -27,7 +27,7 @@ dependencies:
   desktop_notifications: ^0.6.3
   device_info_plus: ^12.3.0
   dynamic_color: ^1.8.1
-  emojis: ^0.9.9
+  emojis: ^3.2.0
   #fcm_shared_isolate: ^0.2.0
   file_picker: ^11.0.2
   file_selector: ^1.1.0
@@ -153,9 +153,9 @@ flutter:
     - assets/font/
     - assets/vodozemac/
   fonts:
-    - family: "Twemoji Mozilla"
+    - family: "Noto Color Emoji"
       fonts:
-        - asset: assets/font/Twemoji.ttf
+        - asset: assets/font/NotoColorEmoji.ttf
     - family: "Roboto"
       fonts:
         - asset: assets/font/RobotoVariable.ttf

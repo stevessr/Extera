@@ -7,6 +7,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/download_manager/download_manager.dart';
@@ -312,7 +313,7 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
 
                                             // Try to find a matching standard Emoji by char, name or shortName
                                             Emoji? found;
-                                            final all = Emoji.all();
+                                            final all = EmojiData.all();
                                             try {
                                               found = all.firstWhere(
                                                 (e) =>

@@ -40,7 +40,7 @@ abstract class FluffyThemes {
     Color? seed,
     DynamicSchemeVariant? variant,
     bool? pureBlack,
-    bool? twemoji,
+    bool? notoEmoji,
   ]) {
     final extraDarkColors = (brightness == Brightness.dark && pureBlack == true)
         ? {
@@ -92,8 +92,8 @@ abstract class FluffyThemes {
           : AppSettings.uiFont.value.isEmpty
           ? null
           : AppSettings.uiFont.value,
-      fontFamilyFallback: twemoji == true
-          ? ['Twemoji Mozilla', ...AppSettings.fallbackFonts.value.split(',')]
+      fontFamilyFallback: notoEmoji == true
+          ? ['Noto Color Emoji', ...AppSettings.fallbackFonts.value.split(',')]
           : AppSettings.fallbackFonts.value.isEmpty
           ? null
           : AppSettings.fallbackFonts.value.split(','),

@@ -3504,7 +3504,7 @@
     "changelogButton": "Changelog",
     "updateCheckTitle": "Check for updates",
     "updateCheckSubtitle": "Check whether a new version of Extera is out on every start.",
-    "useTwemoji": "Enable Twemoji",
+    "useNotoEmoji": "Enable Noto Emoji",
     "callAction": "Call",
     "resetPrivacy": "Reset to default",
     "widgets": "Widgets",

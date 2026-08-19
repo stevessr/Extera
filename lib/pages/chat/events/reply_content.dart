@@ -53,9 +53,9 @@ class ReplyContent extends StatelessWidget {
                 ? 'SystemFont'
                 : AppSettings.chatFont.value
           : null,
-      fontFamilyFallback: AppSettings.twemojiFont.value
+      fontFamilyFallback: AppSettings.notoEmojiFont.value
           ? [
-              'Twemoji Mozilla',
+              'Noto Color Emoji',
               ...AppSettings.chatFallbackFonts.value.split(','),
             ]
           : AppSettings.chatFallbackFonts.value.split(','),

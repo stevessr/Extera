@@ -100,7 +100,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
             primaryColor,
             schemeVariant,
             pureBlack,
-            twemoji,
+            notoEmoji,
           ) => MaterialApp.router(
             title: AppConfig.applicationName,
             themeMode: themeMode,
@@ -110,7 +110,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
               primaryColor,
               schemeVariant,
               pureBlack,
-              twemoji,
+              notoEmoji,
             ),
             darkTheme: FluffyThemes.buildTheme(
               context,
@@ -118,7 +118,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
               primaryColor,
               schemeVariant,
               pureBlack,
-              twemoji,
+              notoEmoji,
             ),
             scrollBehavior: CustomScrollBehavior(),
             localizationsDelegates: L10n.localizationsDelegates,

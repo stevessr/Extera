@@ -8,6 +8,7 @@ import 'package:slugify/slugify.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/markdown_context_builder.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -43,7 +44,7 @@ class InputBar extends StatelessWidget {
 
   static List<_CachedEmoji>? _cachedEmojis;
   static List<_CachedEmoji> get _allEmojis =>
-      _cachedEmojis ??= Emoji.all().map((e) => _CachedEmoji(e)).toList();
+      _cachedEmojis ??= EmojiData.all().map((e) => _CachedEmoji(e)).toList();
 
   const InputBar({
     required this.room,

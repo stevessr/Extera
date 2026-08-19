@@ -480,8 +480,8 @@ class SettingsStyleView extends StatelessWidget {
                         ),
                         const ListDivider(),
                         SettingsSwitchListTile.adaptive(
-                          title: L10n.of(context).useTwemoji,
-                          setting: AppSettings.twemojiFont,
+                          title: L10n.of(context).useNotoEmoji,
+                          setting: AppSettings.notoEmojiFont,
                         ),
                         const ListDivider(),
                         const SizedBox(height: 8),
