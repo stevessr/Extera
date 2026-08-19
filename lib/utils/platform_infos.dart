@@ -30,7 +30,9 @@ abstract class PlatformInfos {
 
   static bool get usesTouchscreen => !isMobile;
 
-  static bool get supportsVideoPlayer => !isWindows && !isLinux;
+  /// media_kit supports video playback on all platforms.
+  /// Kept as a flag in case some platform needs to be excluded in the future.
+  static bool get supportsVideoPlayer => true;
   static bool get supportsSpellCheck => isMobile;
 
   /// Web could also record in theory but currently only wav which is too large

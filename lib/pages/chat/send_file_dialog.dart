@@ -69,7 +69,6 @@ class SendFileDialogState extends State<SendFileDialog> {
       setState(() {
         isSending = true;
       });
-      scaffoldMessenger.showLoadingSnackBar(l10n.prepareSendingAttachment);
       final clientConfig = await widget.room.client.getConfig();
       final maxUploadSize = clientConfig.mUploadSize ?? 100 * 1000 * 1000;
 

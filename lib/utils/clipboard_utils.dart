@@ -3,6 +3,10 @@ import 'dart:typed_data';
 
 import 'package:pasteboard/pasteboard.dart';
 
+Future<void> writeImageToClipboard(Uint8List bytes) async {
+  await Pasteboard.writeImage(bytes);
+}
+
 Future<Uint8List?> getImageFromClipboardLinux() async {
   final cmds = [
     ['wl-paste', '-t', 'image/png'],

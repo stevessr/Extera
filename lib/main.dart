@@ -10,6 +10,7 @@ import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:media_kit/media_kit.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/client_manager.dart';
@@ -39,6 +40,8 @@ void main() async {
   // To make sure that the parts of flutter needed are started up already, we need to ensure that the
   // widget bindings are initialized already.
   WidgetsFlutterBinding.ensureInitialized();
+
+  MediaKit.ensureInitialized();
 
   tz.initializeTimeZones();
 
