@@ -28,12 +28,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # JS actions below can require node24 on newer releases.
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
+      - uses: actions/setup-node@v7
+        with:
+        # Version Spec of the version to use in SemVer notation.
+        # It also admits such aliases as lts/*, latest, nightly and canary builds
+        # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: '24'
 
       - uses: actions/checkout@v4
         with:
