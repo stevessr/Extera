@@ -5,7 +5,7 @@ Two workflows, both written for Forgejo Actions.
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `workflows/integrate.yaml` | pull requests, merge queue, manual | Analysis, tests, and debug builds for the platforms a change can affect |
-| `workflows/release.yaml` | `v*` tags, manual | Signed APK, Linux tarball, AppImage, web bundle, and the Forgejo release |
+| `workflows/release.yaml` | `v*` tags, manual | Three signed APKs (armv7, armv8, x86_64), Linux tarball, AppImage, web bundle, and the Forgejo release |
 
 ## Layout
 
@@ -25,7 +25,11 @@ No Android API level appears anywhere in CI. `compileSdk` follows
 build-tools that the pinned Flutter asks for; CI only accepts the licences and
 preinstalls the NDK revision it reads from `android/app/build.gradle.kts`. The
 Android SDK cache is keyed on the Flutter and NDK versions, so bumping Flutter
-rebuilds it.
+rebuilds it. Android APK jobs use a matrix so each release contains one
+ABI-specific APK: `android-arm` (armv7), `android-arm64` (armv8), and
+`android-x64` (x86_64). Gradle, pub, Rust, JDK, and Android SDK caches include
+the runner architecture; Gradle caches are additionally scoped per Android ABI
+so a warm armv7 build does not overwrite the cache used by armv8 or x86_64.
 
 Every job starts with a small inline step that installs Node 24 if the runner
 image only ships Node 20. It cannot be a script, because it has to run before

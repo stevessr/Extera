@@ -43,8 +43,8 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.pub-cache
-        key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-        restore-keys: pub-${{ runner.os }}-
+        key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}

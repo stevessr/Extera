@@ -69,10 +69,21 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
 
   build-apk:
-    name: Android APK
+    name: Android APK (${{ matrix.name }})
     needs: prepare
     if: ${{ github.event_name == 'push' || inputs.android }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - name: armv7
+            target_platform: android-arm
+          - name: armv8
+            target_platform: android-arm64
+          - name: x86_64
+            target_platform: android-x64
     steps:
       - name: Ensure Node 24
         run: |
@@ -83,6 +94,8 @@ jobs:
 
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-android
+        with:
+          cache_scope: android-${{ matrix.name }}
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
 
@@ -95,14 +108,14 @@ jobs:
         run: ./scripts/ci/write-android-signing.sh
 
       - name: Build signed release APK
-        run: flutter build apk --flavor fRelease --release --target-platform android-arm,android-arm64
+        run: flutter build apk --flavor fRelease --release --no-pub --target-platform ${{ matrix.target_platform }}
 
-      - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
+      - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}" "${{ matrix.name }}"
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: apk-${{ matrix.name }}
           path: artifacts/*.apk
           retention-days: 14
           if-no-files-found: error

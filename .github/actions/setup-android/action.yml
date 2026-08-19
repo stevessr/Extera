@@ -1,6 +1,12 @@
 name: Setup Android
 description: Installs the JDK and Android SDK components, and restores the Gradle cache.
 
+inputs:
+  cache_scope:
+    description: Optional scope for architecture-specific Gradle caches.
+    required: false
+    default: shared
+
 runs:
   using: composite
   steps:
@@ -20,7 +26,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ steps.toolcache.outputs.java }}
-        key: java-zulu-${{ runner.os }}-${{ env.JAVA_VERSION }}
+        key: java-zulu-${{ runner.os }}-${{ runner.arch }}-${{ env.JAVA_VERSION }}
 
     - name: Install JDK
       uses: actions/setup-java@v5
@@ -55,7 +61,8 @@ runs:
           ${{ steps.sdk.outputs.path }}/platform-tools
           ${{ steps.sdk.outputs.path }}/ndk
           ${{ steps.sdk.outputs.path }}/licenses
-        key: android-sdk-${{ runner.os }}-${{ steps.sdk.outputs.key }}
+        key: android-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.sdk.outputs.key }}
+        restore-keys: android-sdk-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Install Android SDK components
       shell: bash
@@ -65,7 +72,10 @@ runs:
       uses: actions/cache@v4
       with:
         path: |
+          android/.gradle
           ~/.gradle/caches
           ~/.gradle/wrapper
-        key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties', 'pubspec.lock') }}
-        restore-keys: gradle-${{ runner.os }}-
+        key: gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties', 'android/gradle.properties', 'pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: |
+          gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-
+          gradle-${{ runner.os }}-${{ runner.arch }}-

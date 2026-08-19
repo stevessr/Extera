@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Collects a built target into artifacts/ under its published release name.
 #
-#   package-artifacts.sh apk      <tag>
+#   package-artifacts.sh apk      <tag> [armv7|armv8|x86_64]
 #   package-artifacts.sh linux    <tag> [arch]
 #   package-artifacts.sh appimage <tag> [arch]
 #   package-artifacts.sh web      <tag>
@@ -35,7 +35,21 @@ find_apk() {
 
 case "$target" in
   apk)
-    cp "$(find_apk)" "artifacts/ExteraNext-$tag-android.apk"
+    case "$arch" in
+      armv7|armv8|x86_64)
+        artifact_name="ExteraNext-$tag-android-$arch.apk"
+        ;;
+      x64|universal)
+        # Keep the old name usable for local callers that do not request an
+        # architecture-specific artifact.
+        artifact_name="ExteraNext-$tag-android.apk"
+        ;;
+      *)
+        echo "Unknown Android ABI label: $arch" >&2
+        exit 1
+        ;;
+    esac
+    cp "$(find_apk)" "artifacts/$artifact_name"
     ;;
   linux)
     ./scripts/build-linux.sh "$arch"

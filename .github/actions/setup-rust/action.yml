@@ -30,8 +30,8 @@ runs:
           ~/.cargo/registry/index
           ~/.cargo/registry/cache
           ~/.cargo/git/db
-        key: cargo-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-        restore-keys: cargo-${{ runner.os }}-
+        key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: cargo-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Pin cargo target directory
       if: ${{ inputs.cache-target-dir == 'true' }}
@@ -43,5 +43,5 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.cargo-target
-        key: cargo-target-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-        restore-keys: cargo-target-${{ runner.os }}-
+        key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: cargo-target-${{ runner.os }}-${{ runner.arch }}-
