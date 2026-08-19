@@ -12,6 +12,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import '../../../utils/url_launcher.dart';
@@ -180,7 +181,9 @@ class _HtmlMessageState extends State<HtmlMessage> {
             ),
           );
         } else {
-          return TextSpan(text: element.text);
+          return TextSpan(
+            children: buildAnimatedEmojiSpans(element.text, fontSize: fontSize),
+          );
         }
       }).toList(),
     );
@@ -257,7 +260,9 @@ class _HtmlMessageState extends State<HtmlMessage> {
       if (text.isEmpty) return const TextSpan();
 
       return insideAnchor
-          ? TextSpan(text: text)
+          ? TextSpan(
+              children: buildAnimatedEmojiSpans(text, fontSize: fontSize),
+            )
           : _buildLinkifySpan(context, text: text);
     }
 

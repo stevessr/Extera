@@ -14,6 +14,7 @@ import 'package:extera_next/pages/chat/events/poll_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/chat/events/video_player.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/poll_events.dart';
@@ -419,15 +420,20 @@ class MessageContent extends StatelessWidget {
                   : AppSettings.chatFallbackFonts.value.split(','),
             );
             final spanChildren = <InlineSpan>[
-              ...?buildTextSpanChildren(
-                linkify(
-                  messageText,
-                  options: const LinkifyOptions(humanize: false),
-                ),
-                style: messageStyle,
-                linkStyle: messageStyle.merge(messageLinkStyle),
-                onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
-                useMouseRegion: !selectable,
+              ...?replaceEmojiInSpans(
+                buildTextSpanChildren(
+                      linkify(
+                        messageText,
+                        options: const LinkifyOptions(humanize: false),
+                      ),
+                      style: messageStyle,
+                      linkStyle: messageStyle.merge(messageLinkStyle),
+                      onOpen: (url) =>
+                          UrlLauncher(context, url.url).launchUrl(),
+                      useMouseRegion: !selectable,
+                    ) ??
+                    const [],
+                fontSize: bigEmotes ? fontSize * 2 : fontSize,
               ),
               ?trailingSpan,
             ];

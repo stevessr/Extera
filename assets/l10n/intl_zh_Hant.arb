@@ -3253,5 +3253,7 @@
   "editImage": "編輯圖片",
   "replaceImage": "替換圖片",
   "undoImageChange": "撤銷圖片變更",
+  "useAnimatedEmoji": "動態 Emoji",
+  "useAnimatedEmojiDescription": "在訊息中將 emoji 顯示為動圖，輸入框仍顯示靜態字形。",
   "@@locale": "zh_Hant"
 }

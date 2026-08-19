@@ -4144,5 +4144,7 @@
     "lkCallSettings": "Settings",
     "editImage": "Edit image",
     "replaceImage": "Replace image",
-    "undoImageChange": "Undo image change"
+    "undoImageChange": "Undo image change",
+    "useAnimatedEmoji": "Animated emoji",
+    "useAnimatedEmojiDescription": "Show emoji as animations in messages. The input field keeps the static glyphs."
 }

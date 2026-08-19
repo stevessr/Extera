@@ -288,6 +288,10 @@ class SettingsStyleController extends State<SettingsStyle> {
     setState(() {});
   }
 
+  /// Rebuilds the settings page after a setting changed the set of visible
+  /// options.
+  void refreshView(bool _) => setState(() {});
+
   void changeFontSizeFactor(double d) {
     AppSettings.fontSizeFactor.setItem(d);
     setState(() {});

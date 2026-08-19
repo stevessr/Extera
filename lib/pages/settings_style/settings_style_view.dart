@@ -483,7 +483,20 @@ class SettingsStyleView extends StatelessWidget {
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).useNotoEmoji,
                           setting: AppSettings.notoEmojiFont,
+                          // Rebuild so that the animated emoji switch below
+                          // appears or disappears right away.
+                          onChanged: controller.refreshView,
                         ),
+                        if (AppSettings.notoEmojiFont.value) ...[
+                          const ListDivider(),
+                          SettingsSwitchListTile.adaptive(
+                            title: L10n.of(context).useAnimatedEmoji,
+                            subtitle: L10n.of(
+                              context,
+                            ).useAnimatedEmojiDescription,
+                            setting: AppSettings.animatedEmoji,
+                          ),
+                        ],
                         const ListDivider(),
                         const SizedBox(height: 8),
                         ListTile(
