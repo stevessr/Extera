@@ -555,8 +555,8 @@ class _MessageBubbleState extends State<MessageBubble> {
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: (theme.brightness == Brightness.light
-                ? displayname.color
-                : displayname.lightColorText),
+                ? displayname.colorScheme.primary
+                : displayname.colorScheme.primaryContainer),
             shadows: !widget.wallpaperMode && !showSenderOverlay
                 ? null
                 : [
