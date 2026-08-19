@@ -70,7 +70,6 @@ class ImageBubble extends StatelessWidget {
   double get _effectiveImageWidth => imageWidth ?? width;
   double get _effectiveImageHeight {
     final infoMap = event.infoMap;
-    // final imageWidth = infoMap['w'] as int?;
     final imageHeight = infoMap['h'] as int?;
 
     if (imageHeight == null) return 512.0;
