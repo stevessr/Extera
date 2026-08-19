@@ -17,29 +17,29 @@ void main() {
     });
 
     test('resolves the codepoint of an emoji', () {
+      expect(animatedEmojiCodepoint('😀'), '1f600');
       expect(
-        animatedEmojiUrl('😀').toString(),
+        animatedEmojiUrl('1f600').toString(),
         'https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/lottie.json',
+      );
+      expect(
+        animatedEmojiAssetPath('1f600'),
+        'assets/animated_emoji/1f600.json',
       );
     });
 
     test('normalizes the variation selector in both directions', () {
-      const expected =
-          'https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/lottie.json';
-      expect(animatedEmojiUrl('❤️').toString(), expected);
-      expect(animatedEmojiUrl('❤').toString(), expected);
+      expect(animatedEmojiCodepoint('❤️'), '2764_fe0f');
+      expect(animatedEmojiCodepoint('❤'), '2764_fe0f');
     });
 
     test('keeps skin tone modifiers', () {
-      expect(
-        animatedEmojiUrl('👍🏽').toString(),
-        'https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d_1f3fd/lottie.json',
-      );
+      expect(animatedEmojiCodepoint('👍🏽'), '1f44d_1f3fd');
     });
 
     test('has no animation for flags or plain text', () {
-      expect(animatedEmojiUrl('🇨🇳'), null);
-      expect(animatedEmojiUrl('a'), null);
+      expect(animatedEmojiCodepoint('🇨🇳'), null);
+      expect(animatedEmojiCodepoint('a'), null);
     });
 
     test('splits text around animatable emoji', () {

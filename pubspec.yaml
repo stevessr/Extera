@@ -154,6 +154,8 @@ flutter:
     - assets/sounds/ringtones/
     - assets/font/
     - assets/vodozemac/
+    # Populated by tool/download_animated_emoji.dart, see .gitignore.
+    - assets/animated_emoji/
   fonts:
     - family: "Noto Color Emoji"
       fonts:

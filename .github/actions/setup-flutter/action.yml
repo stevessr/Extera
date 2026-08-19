@@ -50,3 +50,18 @@ runs:
       if: ${{ inputs.pub-get == 'true' }}
       shell: bash
       run: flutter pub get
+
+    # The animated emoji are shipped as assets but not checked in, so every
+    # build has to fetch them. The tool skips files it already has, which makes
+    # this a no-op on a cache hit.
+    - name: Restore animated emoji
+      if: ${{ inputs.pub-get == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: assets/animated_emoji
+        key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}
+
+    - name: Download animated emoji
+      if: ${{ inputs.pub-get == 'true' }}
+      shell: bash
+      run: dart run tool/download_animated_emoji.dart

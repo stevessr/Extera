@@ -75,3 +75,7 @@ lib/generated
 /release-notes.md
 /appimage/Extera_Next-*.AppImage
 .wrangler
+
+# Downloaded by tool/download_animated_emoji.dart, not checked in
+/assets/animated_emoji/*
+!/assets/animated_emoji/.gitkeep

@@ -42,16 +42,24 @@ String _codepointKey(String emoji) =>
 bool get animatedEmojiEnabled =>
     AppSettings.notoEmojiFont.value && AppSettings.animatedEmoji.value;
 
-/// The animation Google ships for [emoji], or `null` if there is none.
-Uri? animatedEmojiUrl(String emoji) {
+/// Directory the animations are downloaded into at build time.
+const String animatedEmojiAssetDirectory = 'assets/animated_emoji';
+
+/// The bundled animation of [codepoint].
+String animatedEmojiAssetPath(String codepoint) =>
+    '$animatedEmojiAssetDirectory/$codepoint.json';
+
+/// Where [codepoint] can be downloaded from when it was not bundled.
+Uri animatedEmojiUrl(String codepoint) => Uri.parse(
+  'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/lottie.json',
+);
+
+/// The codepoint of the animation Google ships for [emoji], or `null` if there
+/// is none.
+String? animatedEmojiCodepoint(String emoji) {
   final key = _codepointKey(emoji);
-  final codepoint = kAnimatedEmojiCodepoints.contains(key)
-      ? key
-      : _byStrippedCodepoint[_stripVariationSelectors(key)];
-  if (codepoint == null) return null;
-  return Uri.parse(
-    'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/lottie.json',
-  );
+  if (kAnimatedEmojiCodepoints.contains(key)) return key;
+  return _byStrippedCodepoint[_stripVariationSelectors(key)];
 }
 
 /// Splits [text] into plain text spans and animated emoji.
@@ -77,8 +85,8 @@ List<InlineSpan> buildAnimatedEmojiSpans(
 
   for (final match in _emojiPattern.allMatches(text)) {
     final emoji = match.group(0)!;
-    final url = animatedEmojiUrl(emoji);
-    if (url == null) continue;
+    final codepoint = animatedEmojiCodepoint(emoji);
+    if (codepoint == null) continue;
 
     addText(text.substring(index, match.start));
     spans.add(
@@ -86,7 +94,7 @@ List<InlineSpan> buildAnimatedEmojiSpans(
         alignment: PlaceholderAlignment.middle,
         child: AnimatedEmojiImage(
           emoji: emoji,
-          url: url,
+          codepoint: codepoint,
           fontSize: fontSize,
           style: style,
         ),
