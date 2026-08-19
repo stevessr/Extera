@@ -17,13 +17,13 @@ runs:
     # job container and is gone by the next run. Restoring it first turns the
     # ~200 MB Zulu download into a tool-cache hit.
     - name: Restore JDK
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: ${{ steps.toolcache.outputs.java }}
         key: java-zulu-${{ runner.os }}-${{ env.JAVA_VERSION }}
 
     - name: Install JDK
-      uses: https://github.com/actions/setup-java@v5
+      uses: actions/setup-java@v5
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: zulu
@@ -33,7 +33,7 @@ runs:
     # downloaded and unzipped on every run, for a headless APK build. Ask for
     # platform-tools only.
     - name: Install Android command line tools
-      uses: https://github.com/android-actions/setup-android@v4
+      uses: android-actions/setup-android@v4
       with:
         packages: platform-tools
         accept-android-sdk-licenses: true
@@ -47,7 +47,7 @@ runs:
       run: ./scripts/ci/android-sdk-cache-info.sh
 
     - name: Restore Android SDK components
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: |
           ${{ steps.sdk.outputs.path }}/platforms
@@ -62,7 +62,7 @@ runs:
       run: ./scripts/ci/setup-android-sdk.sh
 
     - name: Restore Gradle cache
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches

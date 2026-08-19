@@ -15,13 +15,13 @@ runs:
   using: composite
   steps:
     - name: Install Rust toolchain
-      uses: https://github.com/dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@stable
 
     # ~/.cargo/bin holds flutter_rust_bridge_codegen, which prepare-web.sh would
     # otherwise recompile every run. Its install tracker lives in .crates.toml /
     # .crates2.json, so those are cached alongside it.
     - name: Restore cargo cache
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin
@@ -40,7 +40,7 @@ runs:
 
     - name: Restore cargo target directory
       if: ${{ inputs.cache-target-dir == 'true' }}
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: ~/.cargo-target
         key: cargo-target-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}

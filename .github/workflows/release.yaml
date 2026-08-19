@@ -61,7 +61,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - id: meta
         run: ./scripts/ci/resolve-release-meta.sh
@@ -81,7 +81,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-android
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
@@ -100,7 +100,7 @@ jobs:
       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}"
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
 
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: apk
           path: artifacts/*.apk
@@ -121,7 +121,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-linux-deps
         with:
@@ -144,7 +144,7 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: '1'
         run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
 
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: |
@@ -166,7 +166,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
         with:
@@ -186,7 +186,7 @@ jobs:
 
       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
 
-      - uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: web
           path: artifacts/*.tar.gz
@@ -206,12 +206,9 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
 
-      # Forgejo's fork, not actions/download-artifact: upstream v4+ aborts on a
-      # hard "not running against GitHub.com" check that Forgejo cannot satisfy.
-      # The fork is that check removed, nothing else.
-      - uses: https://data.forgejo.org/forgejo/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: downloads
 

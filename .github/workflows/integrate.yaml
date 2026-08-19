@@ -54,7 +54,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -80,7 +80,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Check locale config is up to date
         run: |
@@ -122,7 +122,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-android
       - uses: ./.github/actions/setup-flutter
       # cargokit compiles the vodozemac Rust crate for Android, so this job
@@ -144,7 +144,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
         with:
@@ -169,7 +169,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-linux-deps
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
@@ -192,7 +192,7 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-linux-deps
 
       - name: Check cache service
@@ -205,13 +205,13 @@ jobs:
       # install-flutter-source.sh skips the clone when the directory is there,
       # so restoring it turns a full SDK clone into a cache hit.
       - name: Restore Flutter SDK
-        uses: https://github.com/actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ~/flutter
           key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
 
       - name: Restore pub cache
-        uses: https://github.com/actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
@@ -237,17 +237,17 @@ jobs:
           brew install node@24
           echo "$(brew --prefix node@24)/bin" >>"$GITHUB_PATH"
 
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Select Xcode
-        uses: https://github.com/maxim-lobanov/setup-xcode@v1.7.0
+        uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
           xcode-version: latest-stable
 
       - uses: ./.github/actions/setup-flutter
 
       - name: Restore CocoaPods specs
-        uses: https://github.com/actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ~/.cocoapods
           key: cocoapods-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}

@@ -13,7 +13,7 @@ runs:
     # Roughly 250 MB of -dev packages, otherwise re-fetched on every run.
     # The key covers the script, which is where the package list lives.
     - name: Restore apt archives
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: ~/.apt-cache
         key: apt-${{ runner.os }}-${{ inputs.appimage }}-${{ hashFiles('scripts/ci/install-linux-deps.sh') }}

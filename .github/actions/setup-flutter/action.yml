@@ -29,7 +29,7 @@ runs:
     # pub-cache is off because the step below already caches that directory,
     # with restore-keys that flutter-action's own pub cache does not have.
     - name: Install Flutter
-      uses: https://github.com/subosito/flutter-action@v2
+      uses: subosito/flutter-action@v2
       with:
         flutter-version-file: .tool_versions.yaml
         cache: true
@@ -40,7 +40,7 @@ runs:
       run: ./scripts/ci/verify-flutter-version.sh
 
     - name: Restore pub cache
-      uses: https://github.com/actions/cache@v6
+      uses: actions/cache@v4
       with:
         path: ~/.pub-cache
         key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
