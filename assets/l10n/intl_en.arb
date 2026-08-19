@@ -4137,5 +4137,9 @@
     "quickActionDescription": "Perform an action when double tapping a message.",
     "react": "React",
     "hideIgnoredUsers": "Hide ignored users",
-    "showIgnoredUsers": "Show ignored users"
+    "showIgnoredUsers": "Show ignored users",
+    "callVideocam": "Video",
+    "callMic": "Mic",
+    "callScreenShare": "Screen",
+    "lkCallSettings": "Settings"
 }

@@ -4224,5 +4224,9 @@
     "quickActionDescription": "Выполнить действие при двойном нажатии на сообщение.",
     "react": "Реакция",
     "hideIgnoredUsers": "Скрыть игнорируемых",
-    "showIgnoredUsers": "Показать игнорируемых"
+    "showIgnoredUsers": "Показать игнорируемых",
+    "callVideocam": "Видео",
+    "callMic": "Микрофон",
+    "callScreenShare": "Экран",
+    "lkCallSettings": "Настройки"
 }
