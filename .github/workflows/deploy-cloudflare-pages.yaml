@@ -7,6 +7,9 @@ on:
         description: "Git ref to deploy (branch, tag, or SHA)"
         required: true
         default: "main"
+  push:
+    branches:
+      - main
 
 concurrency:
   group: cloudflare-pages-${{ github.workflow }}-${{ inputs.ref }}
@@ -71,9 +74,15 @@ jobs:
       - name: Build release web
         run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy build/web
+          # The action defaults to wrangler 3.90.0, which predates the
+          # `assets` config used by wrangler.jsonc.
+          wranglerVersion: "4"
+          # The directory to upload comes from `assets.directory` in
+          # wrangler.jsonc. Passing it here would be read as the entry-point
+          # script instead.
+          command: deploy
