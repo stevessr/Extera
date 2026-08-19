@@ -61,8 +61,7 @@ job therefore runs `scripts/ci/check-cache.sh`, which reports both cases; set
 
 ## Secrets
 
-Only the release workflow reads secrets. All of them are optional except when
-building a release APK.
+Only the release workflow reads secrets.
 
 | Secret | Purpose |
 | --- | --- |
@@ -71,6 +70,11 @@ building a release APK.
 | `KEY_PASS` | Key password |
 | `KEY_ALIAS` | Key alias, defaults to `key` |
 | `RELEASE_TOKEN` | Forgejo token used to create the release and upload assets |
+
+If Android signing secrets are all missing, CI falls back to a generated debug
+keystore (`androiddebugkey` / `android`) so release-flavor APK builds still run
+for test workflows. If any one of `KEYSTORE_FILE`, `KEYSTORE_PASS`, `KEY_PASS`
+is set, all three must be set.
 
 ## Variables
 

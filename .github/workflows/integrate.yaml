@@ -150,7 +150,28 @@ jobs:
         with:
           cache-target-dir: 'true'
 
-      - run: ./scripts/ci/install-yq.sh
+      - name: Restore nightly rustup toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/toolchains/nightly-*
+            ~/.rustup/update-hashes
+          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
+
+      - run: rustup toolchain install nightly --component rust-src
+
+      - name: Restore yq binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/yq
+          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
+
+      - name: Install yq
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+
       - name: Prepare web
         run: ./scripts/prepare-web.sh
 

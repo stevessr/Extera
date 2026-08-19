@@ -1,0 +1,87 @@
+name: Deploy Cloudflare Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (branch, tag, or SHA)"
+        required: true
+        default: "main"
+      project_name:
+        description: "Cloudflare Pages project name"
+        required: true
+        default: "extera"
+      pages_branch:
+        description: "Cloudflare Pages branch (use production branch for prod deploy)"
+        required: true
+        default: "main"
+
+concurrency:
+  group: cloudflare-pages-${{ inputs.project_name }}-${{ inputs.pages_branch }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: Build and deploy web
+    runs-on: ubuntu-latest
+    steps:
+      # JS actions below can require node24 on newer releases.
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-target-dir: "true"
+
+      - name: Restore nightly rustup toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/toolchains/nightly-*
+            ~/.rustup/update-hashes
+          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Restore yq binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/yq
+          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
+
+      - name: Install yq
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+
+      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
+      # bindings.
+      - run: rustup toolchain install nightly --component rust-src
+
+      - name: Prepare web
+        run: ./scripts/prepare-web.sh
+
+      - name: Build release web
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=${{ inputs.project_name }} --branch=${{ inputs.pages_branch }}

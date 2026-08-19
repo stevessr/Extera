@@ -130,7 +130,17 @@ jobs:
       - uses: ./.github/actions/setup-flutter
       - uses: ./.github/actions/setup-rust
 
-      - run: ./scripts/ci/install-appimagetool.sh
+      - name: Restore appimagetool binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/appimagetool
+          key: appimagetool-${{ runner.os }}-${{ runner.arch }}-continuous
+
+      - name: Install appimagetool
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          APPIMAGETOOL_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-appimagetool.sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
 
       - name: Build Linux bundle
         run: flutter build linux --release --target-platform linux-x64
@@ -172,11 +182,29 @@ jobs:
         with:
           cache-target-dir: 'true'
 
+      - name: Restore nightly rustup toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/toolchains/nightly-*
+            ~/.rustup/update-hashes
+          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
+
       # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
       # bindings. Installing the toolchain by name avoids naming a host triple,
       # and works whether or not nightly is already present.
       - run: rustup toolchain install nightly --component rust-src
-      - run: ./scripts/ci/install-yq.sh
+      - name: Restore yq binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/yq
+          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
+
+      - name: Install yq
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
 
       - name: Prepare web
         run: ./scripts/prepare-web.sh
