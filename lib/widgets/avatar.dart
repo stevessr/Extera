@@ -50,10 +50,6 @@ class Avatar extends StatelessWidget {
 
     final fallbackLetters = _calcFallbackLetters();
 
-    final noPic =
-        mxContent == null ||
-        mxContent.toString().isEmpty ||
-        mxContent.toString() == 'null';
     final borderRadius = this.borderRadius ?? BorderRadius.circular(size / 2);
     final presenceUserId = this.presenceUserId;
     final container = Stack(
