@@ -65,6 +65,38 @@ class ChatDetailsController extends State<ChatDetails> {
     }
   }
 
+  Future<void> setOwnDisplaynameAction() async {
+    final room = Matrix.of(context).client.getRoomById(roomId!)!;
+    final userId = room.client.userID;
+    if (userId == null) return;
+
+    final ownUser = room.getState(EventTypes.RoomMember, userId)?.asUser(room);
+    final input = await showTextInputDialog(
+      context: context,
+      title: L10n.of(context).editDisplayname,
+      okLabel: L10n.of(context).ok,
+      cancelLabel: L10n.of(context).cancel,
+      hintText: L10n.of(context).displaynameHint,
+      initialText: ownUser?.displayName ?? '',
+    );
+    if (input == null) return;
+
+    final displayName = input.trim();
+    final result = await showFutureLoadingDialog(
+      context: context,
+      future: () => _setOwnRoomMemberProfile(
+        room,
+        displayName: displayName.isEmpty ? null : displayName,
+        clearDisplayName: displayName.isEmpty,
+      ),
+    );
+    if (result.error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context).displaynameHasBeenChanged)),
+      );
+    }
+  }
+
   void setTopicAction() async {
     final room = Matrix.of(context).client.getRoomById(roomId!)!;
     final input = await showTextInputDialog(
@@ -132,7 +164,77 @@ class ChatDetailsController extends State<ChatDetails> {
       );
       return;
     }
-    MatrixFile file;
+    final file = await _pickAvatarFile(action);
+    if (file == null) return;
+    await showFutureLoadingDialog(
+      context: context,
+      future: () => room!.setAvatar(file),
+    );
+  }
+
+  Future<void> setOwnAvatarAction() async {
+    final room = Matrix.of(context).client.getRoomById(roomId!);
+    final userId = room?.client.userID;
+    if (room == null || userId == null) return;
+
+    final ownUser = room.getState(EventTypes.RoomMember, userId)?.asUser(room);
+    final currentAvatar = ownUser?.avatarUrl;
+    final actions = [
+      if (PlatformInfos.isMobile)
+        AdaptiveModalAction(
+          value: AvatarAction.camera,
+          label: L10n.of(context).openCamera,
+          isDefaultAction: true,
+          icon: const Icon(Icons.camera_alt_outlined),
+        ),
+      AdaptiveModalAction(
+        value: AvatarAction.file,
+        label: L10n.of(context).openGallery,
+        icon: const Icon(Icons.photo_outlined),
+      ),
+      if (currentAvatar != null && currentAvatar.toString().isNotEmpty)
+        AdaptiveModalAction(
+          value: AvatarAction.remove,
+          label: L10n.of(context).removeYourAvatar,
+          isDestructive: true,
+          icon: const Icon(Icons.delete_outlined),
+        ),
+    ];
+    final action = actions.length == 1
+        ? actions.single.value
+        : await showModalActionPopup<AvatarAction>(
+            context: context,
+            title: L10n.of(context).changeYourAvatar,
+            cancelLabel: L10n.of(context).cancel,
+            actions: actions,
+          );
+    if (action == null) return;
+    if (action == AvatarAction.remove) {
+      await showFutureLoadingDialog(
+        context: context,
+        future: () => _setOwnRoomMemberProfile(room, clearAvatar: true),
+      );
+      return;
+    }
+
+    final file = await _pickAvatarFile(action);
+    if (file == null) return;
+    await showFutureLoadingDialog(
+      context: context,
+      future: () async {
+        final uploadResponse = await room.client.uploadContent(
+          file.bytes,
+          filename: file.name,
+        );
+        await _setOwnRoomMemberProfile(
+          room,
+          avatarUrl: uploadResponse.toString(),
+        );
+      },
+    );
+  }
+
+  Future<MatrixFile?> _pickAvatarFile(AvatarAction action) async {
     if (PlatformInfos.isMobile) {
       final result = await ImagePicker().pickImage(
         source: action == AvatarAction.camera
@@ -140,29 +242,57 @@ class ChatDetailsController extends State<ChatDetails> {
             : ImageSource.gallery,
         imageQuality: 50,
       );
-      if (result == null) return;
-      file = MatrixFile(
+      if (result == null) return null;
+      return MatrixFile(
         bytes: Uint8List.fromList(
           ExifCleaner.removeExifData(await result.readAsBytes()),
         ),
         name: result.path,
       );
-    } else {
-      final picked = await selectFiles(
-        context,
-        allowMultiple: false,
-        type: FileType.image,
-      );
-      final pickedFile = picked.firstOrNull;
-      if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(await pickedFile.readAsBytes()),
-        name: pickedFile.name,
-      );
     }
-    await showFutureLoadingDialog(
-      context: context,
-      future: () => room!.setAvatar(file),
+
+    final picked = await selectFiles(
+      context,
+      allowMultiple: false,
+      type: FileType.image,
+    );
+    final pickedFile = picked.firstOrNull;
+    if (pickedFile == null) return null;
+    return MatrixFile(
+      bytes: Uint8List.fromList(await pickedFile.readAsBytes()),
+      name: pickedFile.name,
+    );
+  }
+
+  Future<void> _setOwnRoomMemberProfile(
+    Room room, {
+    String? displayName,
+    bool clearDisplayName = false,
+    String? avatarUrl,
+    bool clearAvatar = false,
+  }) async {
+    final userId = room.client.userID;
+    if (userId == null) return;
+
+    final content =
+        room.getState(EventTypes.RoomMember, userId)?.content.copy() ??
+        <String, Object?>{'membership': room.membership.name};
+    if (clearDisplayName) {
+      content.remove('displayname');
+    } else if (displayName != null) {
+      content['displayname'] = displayName;
+    }
+    if (clearAvatar) {
+      content.remove('avatar_url');
+    } else if (avatarUrl != null) {
+      content['avatar_url'] = avatarUrl;
+    }
+
+    await room.client.setRoomStateWithKey(
+      room.id,
+      EventTypes.RoomMember,
+      userId,
+      content,
     );
   }
 

@@ -197,6 +197,11 @@ class ChatDetailsView extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (room.membership == Membership.join &&
+                      room.client.userID != null) ...[
+                    const SizedBox(height: 8),
+                    _OwnRoomProfileCard(room: room, controller: controller),
+                  ],
                   if (room.canChangeStateEvent(EventTypes.RoomTopic) ||
                       room.topic.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -451,6 +456,79 @@ class ChatDetailsView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _OwnRoomProfileCard extends StatelessWidget {
+  final Room room;
+  final ChatDetailsController controller;
+
+  const _OwnRoomProfileCard({required this.room, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final userId = room.client.userID!;
+    final ownUser = room.getState(EventTypes.RoomMember, userId)?.asUser(room);
+    final ownDisplayName = ownUser?.displayName?.isNotEmpty == true
+        ? ownUser!.displayName!
+        : userId.localpart ?? userId;
+
+    return Material(
+      clipBehavior: Clip.hardEdge,
+      color: theme.colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+      child: Column(
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: theme.colorScheme.secondary,
+              child: Icon(
+                Icons.person_outline,
+                color: theme.colorScheme.onSecondary,
+              ),
+            ),
+            title: Text(L10n.of(context).setupProfile),
+            subtitle: Text(L10n.of(context).commandHint_myroomnick),
+          ),
+          const ListDivider(),
+          ListTile(
+            leading: Avatar(
+              mxContent: ownUser?.avatarUrl,
+              name: ownDisplayName,
+              size: 48,
+              onTap: controller.setOwnAvatarAction,
+            ),
+            title: Text(
+              ownDisplayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              userId,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: controller.setOwnDisplaynameAction,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: L10n.of(context).editDisplayname,
+                  onPressed: controller.setOwnDisplaynameAction,
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+                IconButton(
+                  tooltip: L10n.of(context).changeYourAvatar,
+                  onPressed: controller.setOwnAvatarAction,
+                  icon: const Icon(Icons.camera_alt_outlined),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
