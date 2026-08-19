@@ -15,6 +15,7 @@ import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import '../../widgets/matrix.dart';
+import '../../utils/emote_shortcode.dart';
 import 'import_archive_dialog.dart';
 import 'settings_emotes_view.dart';
 
@@ -209,7 +210,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
       );
       return;
     }
-    if (!RegExp(r'^[-\w]+$').hasMatch(imageCode)) {
+    if (!emoteShortcodePattern.hasMatch(imageCode)) {
       controller.text = oldImageCode;
       showOkAlertDialog(
         useRootNavigator: false,

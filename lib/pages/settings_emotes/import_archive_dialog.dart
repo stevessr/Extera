@@ -10,6 +10,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/settings_emotes/settings_emotes.dart';
 import 'package:extera_next/utils/client_manager.dart';
+import 'package:extera_next/utils/emote_shortcode.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -271,7 +272,12 @@ class _EmojiImportPreviewState extends State<_EmojiImportPreview> {
                   child: TextField(
                     controller: controller,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^[-\w]+$')),
+                      // Filters out the characters that are not allowed
+                      // instead of clearing the whole field, which an anchored
+                      // pattern would do.
+                      FilteringTextInputFormatter.allow(
+                        emoteShortcodeAllowedCharacters,
+                      ),
                     ],
                     autocorrect: false,
                     minLines: 1,
@@ -340,8 +346,8 @@ class _ImageFileError extends StatelessWidget {
 }
 
 extension on String {
-  /// normalizes a file path into its name only replacing any special character
-  /// [^-\w] with an underscore and removing the extension
+  /// normalizes a file path into its name only replacing any character that is
+  /// not allowed in a shortcode with an underscore and removing the extension
   ///
   /// Used to compute emote name proposal based on file name
   String get emoteNameFromPath {
@@ -353,6 +359,6 @@ extension on String {
         // ... lowering
         .toLowerCase()
         // ... replacing unexpected characters
-        .replaceAll(RegExp(r'[^-\w]'), '_');
+        .replaceAll(emoteShortcodeForbiddenCharacter, '_');
   }
 }

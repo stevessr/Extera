@@ -10,6 +10,7 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/emote_shortcode.dart';
 import 'package:extera_next/utils/markdown_context_builder.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import '../../widgets/avatar.dart';
@@ -84,8 +85,8 @@ class InputBar extends StatelessWidget {
       }
     }
     final emojiMatch = RegExp(
-      r'(?:\s|^):(?:([-\w]+)~)?([-\w]+)$',
-      unicode: true,
+      '(?:\\s|^):(?:([$emoteShortcodeCharacters]+)~)?'
+      '([$emoteShortcodeCharacters]+)\$',
     ).firstMatch(searchText);
     if (emojiMatch != null) {
       final packSearch = emojiMatch[1];
@@ -394,7 +395,10 @@ class InputBar extends StatelessWidget {
       }
       insertText = ':${isUnique ? '' : '${insertPack!}~'}$insertEmote: ';
       startText = replaceText.replaceAllMapped(
-        RegExp(r'(\s|^)(:(?:[-\w]+~)?[-\w]+)$'),
+        RegExp(
+          '(\\s|^)(:(?:[$emoteShortcodeCharacters]+~)?'
+          '[$emoteShortcodeCharacters]+)\$',
+        ),
         (Match m) => '${m[1]}$insertText',
       );
     }
