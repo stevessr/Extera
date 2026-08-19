@@ -179,15 +179,13 @@ class MessageContent extends StatelessWidget {
             }
             // Ensure the bubble is wide enough for text content
             // when there's a file description below the image.
-            final hasDescription = event.fileDescription != null;
             const minBubbleWidth = 180.0;
-            final bubbleWidth = hasDescription
-                ? max(minBubbleWidth, imageWidth)
-                : imageWidth;
+            final bubbleWidth = max(minBubbleWidth, imageWidth);
             return ImageBubble(
               event,
               width: bubbleWidth,
               imageWidth: imageWidth,
+              height: h == null ? 512.0 : min(512, max(256.0, h.toDouble())),
               fit: fit,
               // borderRadius: borderRadius,
               timeline: timeline,

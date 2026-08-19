@@ -273,22 +273,25 @@ class ImageBubble extends StatelessWidget {
                   onTap: () => _onTap(context),
                   child: Hero(
                     tag: event.eventId,
-                    child: isHidden
-                        ? _buildHidden(context)
-                        : loadMedia
-                        ? MxcImage(
-                            event: event,
-                            width: _effectiveImageWidth,
-                            height: _effectiveImageHeight,
-                            fit: fit,
-                            animated: animated,
-                            isThumbnail: thumbnailOnly,
-                            placeholder:
-                                event.messageType == MessageTypes.Sticker
-                                ? null
-                                : _buildPlaceholder,
-                          )
-                        : _buildUnloaded(context),
+                    child: Align(
+                      alignment: .center,
+                      child: isHidden
+                          ? _buildHidden(context)
+                          : loadMedia
+                          ? MxcImage(
+                              event: event,
+                              width: _effectiveImageWidth,
+                              height: _effectiveImageHeight,
+                              fit: fit,
+                              animated: animated,
+                              isThumbnail: thumbnailOnly,
+                              placeholder:
+                                  event.messageType == MessageTypes.Sticker
+                                  ? null
+                                  : _buildPlaceholder,
+                            )
+                          : _buildUnloaded(context),
+                    ),
                   ),
                 ),
               ),
