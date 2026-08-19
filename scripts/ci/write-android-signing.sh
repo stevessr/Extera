@@ -48,18 +48,16 @@ if $has_keystore_file || $has_keystore_pass || $has_key_pass; then
 fi
 
 debug_keystore="android/debug-ci.keystore"
+debug_keystore_base64="scripts/ci/debug-signing-keystore.p12.base64"
+if [ ! -s "$debug_keystore_base64" ]; then
+  echo "Missing debug keystore fixture: $debug_keystore_base64" >&2
+  exit 1
+fi
+
+base64 --decode "$debug_keystore_base64" >"$debug_keystore"
 if [ ! -s "$debug_keystore" ]; then
-  keytool -genkeypair \
-    -keystore "$debug_keystore" \
-    -storepass android \
-    -alias androiddebugkey \
-    -keypass android \
-    -keyalg RSA \
-    -keysize 2048 \
-    -validity 10000 \
-    -storetype PKCS12 \
-    -dname "CN=Android Debug,O=Android,C=US" \
-    -noprompt
+  echo "Decoded debug keystore is empty: $debug_keystore_base64" >&2
+  exit 1
 fi
 
 {

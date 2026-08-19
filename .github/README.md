@@ -71,10 +71,11 @@ Only the release workflow reads secrets.
 | `KEY_ALIAS` | Key alias, defaults to `key` |
 | `RELEASE_TOKEN` | Forgejo token used to create the release and upload assets |
 
-If Android signing secrets are all missing, CI falls back to a generated debug
-keystore (`androiddebugkey` / `android`) so release-flavor APK builds still run
-for test workflows. If any one of `KEYSTORE_FILE`, `KEYSTORE_PASS`, `KEY_PASS`
-is set, all three must be set.
+If Android signing secrets are all missing, CI falls back to the repository
+fixture `scripts/ci/debug-signing-keystore.p12.base64` (`androiddebugkey` /
+`android`) so release-flavor APK builds still run for test workflows with a
+stable certificate across runs. If any one of `KEYSTORE_FILE`,
+`KEYSTORE_PASS`, `KEY_PASS` is set, all three must be set.
 
 ## Variables
 
