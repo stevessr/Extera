@@ -46,9 +46,36 @@ class ParticipantListItem extends StatelessWidget {
       title: Row(
         children: <Widget>[
           Expanded(
-            child: Text(
-              user.calcDisplayname(),
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              spacing: 4,
+              mainAxisSize: .min,
+              children: [
+                if (user.room.client.userDeviceKeys[user.id]?.verified ==
+                    .verified)
+                  Icon(
+                    Icons.shield,
+                    color: theme.colorScheme.primary,
+                    size: 18,
+                  ),
+                if (user.room.encrypted &&
+                    user.room.client.userDeviceKeys[user.id]?.verified ==
+                        .unknownDevice)
+                  Icon(Icons.shield, color: theme.colorScheme.error, size: 18),
+                if (user.room.encrypted &&
+                    user.room.client.userDeviceKeys[user.id]?.verified ==
+                        .unknown)
+                  Icon(
+                    Icons.shield_outlined,
+                    color: theme.colorScheme.error,
+                    size: 18,
+                  ),
+                Expanded(
+                  child: Text(
+                    user.calcDisplayname(),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
           if (permissionBatch.isNotEmpty)
