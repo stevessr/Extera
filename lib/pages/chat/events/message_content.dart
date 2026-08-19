@@ -152,17 +152,19 @@ class MessageContent extends StatelessWidget {
           case MessageTypes.Image:
           case MessageTypes.Sticker:
             if (event.redacted) continue textmessage;
-            final maxSize = event.messageType == MessageTypes.Sticker
-                ? 128.0 * AppSettings.stickerScale.value
-                : event.messageType == MessageTypes.Image
-                ? 512.0
-                : 256.0;
             final w = event.content
                 .tryGetMap<String, Object?>('info')
                 ?.tryGet<int>('w');
             final h = event.content
                 .tryGetMap<String, Object?>('info')
                 ?.tryGet<int>('h');
+            final maxSize = event.messageType == MessageTypes.Sticker
+                ? 128.0 * AppSettings.stickerScale.value
+                : event.messageType == MessageTypes.Image
+                ? h != null
+                      ? min(512.0, max(256.0, h.toDouble()))
+                      : 512.0
+                : 256.0;
             var imageWidth = maxSize;
             var fit = event.messageType == MessageTypes.Sticker
                 ? BoxFit.contain
