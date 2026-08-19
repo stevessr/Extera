@@ -48,6 +48,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
+import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
@@ -198,6 +199,17 @@ class ChatController extends State<ChatPageWithRoom>
   bool replyMention = true;
 
   Event? editEvent;
+
+  /// Replacement attachment for the image message currently being edited.
+  ///
+  /// Stays `null` as long as the user only edits the caption, in which case the
+  /// original attachment is reused instead of being uploaded again.
+  MatrixImageFile? editImageFile;
+
+  /// Whether the message currently being edited is an image message, so that
+  /// the attachment itself can be edited as well.
+  bool get isEditingImage =>
+      editEvent != null && editEvent!.messageType == MessageTypes.Image;
 
   final ValueNotifier<bool> _scrolledUp = ValueNotifier<bool>(false);
 
@@ -871,7 +883,16 @@ class ChatController extends State<ChatPageWithRoom>
   Future<void> send() async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
+
+    final editingEvent = editEvent;
+    if (editingEvent != null &&
+        editingEvent.messageType == MessageTypes.Image) {
+      await _sendImageEdit(editingEvent);
+      return;
+    }
+
     if (sendController.text.trim().isEmpty) return;
+
     if (inputFocus.hasFocus) {
       inputFocus.unfocus();
     }
@@ -924,6 +945,74 @@ class ChatController extends State<ChatPageWithRoom>
       _inputTextIsEmpty = pendingText.isEmpty;
       replyEvent = null;
       editEvent = null;
+      pendingText = '';
+    });
+  }
+
+  /// Sends the edit of an image message.
+  ///
+  /// The attachment is only uploaded again when the user actually replaced or
+  /// edited the image. Editing just the caption reuses the existing mxc uri,
+  /// encryption keys and image info of the original event.
+  Future<void> _sendImageEdit(Event event) async {
+    if (inputFocus.hasFocus) inputFocus.unfocus();
+    FocusScope.of(context).requestFocus(inputFocus);
+    _storeInputTimeoutTimer?.cancel();
+
+    final newImage = editImageFile;
+    final originalContent = _editEventDisplayContent ?? event.content;
+    final caption = sendController.text.trim();
+
+    final originalFilename = originalContent.tryGet<String>('filename');
+    final originalBody = originalContent.tryGet<String>('body');
+    final filename = originalFilename ?? originalBody ?? 'image';
+
+    // The input bar was prefilled with the body of the message, which is the
+    // file name itself when the image has no caption. Only treat the text as a
+    // caption if it actually differs from that file name, so that replacing an
+    // uncaptioned image does not turn the old file name into a caption.
+    final hasCaption =
+        caption.isNotEmpty &&
+        caption != filename &&
+        !(originalFilename == null && caption == originalBody);
+
+    if (newImage == null) {
+      final content = originalContent.copy()
+        // Relations of the original event must not be carried over into the
+        // replacement content.
+        ..remove('m.relates_to')
+        ..remove('m.new_content')
+        // The caption is plain text, so any previous formatting is stale.
+        ..remove('format')
+        ..remove('formatted_body')
+        ..['msgtype'] = MessageTypes.Image
+        ..['filename'] = filename
+        ..['body'] = hasCaption ? caption : filename;
+
+      // ignore: unawaited_futures
+      room.sendEvent(content, editEventId: event.eventId);
+    } else {
+      // ignore: unawaited_futures
+      room.sendFileEvent(
+        newImage,
+        editEventId: event.eventId,
+        extraContent: {
+          'filename': newImage.name,
+          'body': hasCaption ? caption : newImage.name,
+        },
+      );
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('draft_$roomId');
+    if (!mounted) return;
+
+    setState(() {
+      sendController.text = pendingText;
+      _inputTextIsEmpty = pendingText.isEmpty;
+      replyEvent = null;
+      editEvent = null;
+      editImageFile = null;
       pendingText = '';
     });
   }
@@ -1781,11 +1870,94 @@ class ChatController extends State<ChatPageWithRoom>
     setState(() {
       pendingText = sendController.text;
       editEvent = event;
+      editImageFile = null;
       sendController.text = event.getDisplayEvent(timeline).body;
       if (clearSelection) selectedEvents.clear();
     });
     inputFocus.requestFocus();
   }
+
+  /// The content of the message currently being edited, with all previous edits
+  /// already applied.
+  Map<String, dynamic>? get _editEventDisplayContent {
+    final event = editEvent;
+    final timeline = this.timeline;
+    if (event == null || timeline == null) return null;
+    return event.getDisplayEvent(timeline).content;
+  }
+
+  Future<Uint8List?> _currentEditImageBytes() async {
+    final pending = editImageFile;
+    if (pending != null) return pending.bytes;
+
+    final event = editEvent;
+    final timeline = this.timeline;
+    if (event == null || timeline == null) return null;
+
+    final result = await showFutureLoadingDialog(
+      context: context,
+      future: () =>
+          event.getDisplayEvent(timeline).downloadAndDecryptAttachment(),
+    );
+    return result.result?.bytes;
+  }
+
+  Future<void> _setEditImage(
+    Uint8List bytes,
+    String name,
+    String? mimeType,
+  ) async {
+    final file = await MatrixImageFile.create(
+      bytes: bytes,
+      name: name,
+      mimeType: mimeType,
+      nativeImplementations: sendingClient.nativeImplementations,
+    );
+    if (!mounted) return;
+    setState(() {
+      editImageFile = file;
+    });
+  }
+
+  /// Picks another image to replace the attachment of the message being edited.
+  void replaceEditImageAction() async {
+    final picked = await selectFiles(context, type: FileType.image);
+    final file = picked.firstOrNull;
+    if (file == null || !mounted) return;
+
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    await _setEditImage(
+      bytes,
+      file.name,
+      file.mimeType ?? lookupMimeType(file.name, headerBytes: bytes),
+    );
+  }
+
+  /// Opens the image editor on the attachment of the message being edited.
+  void editEditImageAction() async {
+    final bytes = await _currentEditImageBytes();
+    if (bytes == null || !mounted) return;
+
+    final edited = await showImageEditor(context: context, byteArray: bytes);
+    if (edited == null || !mounted) return;
+
+    // The image editor always renders to JPEG.
+    final currentName =
+        editImageFile?.name ??
+        _editEventDisplayContent?.tryGet<String>('filename') ??
+        _editEventDisplayContent?.tryGet<String>('body') ??
+        'image';
+    final baseName = currentName.contains('.')
+        ? currentName.substring(0, currentName.lastIndexOf('.'))
+        : currentName;
+    await _setEditImage(edited, '$baseName.jpg', 'image/jpeg');
+  }
+
+  /// Discards the replacement image and goes back to the original attachment.
+  void resetEditImageAction() => setState(() {
+    editImageFile = null;
+  });
 
   KeyEventResult _customKeyHandling(FocusNode node, KeyEvent evt) {
     if (evt is KeyDownEvent &&
@@ -1880,7 +2052,7 @@ class ChatController extends State<ChatPageWithRoom>
           hideReply: true,
         );
 
-    if (sendController.text != originalText) {
+    if (sendController.text != originalText || editImageFile != null) {
       final result = await showOkCancelAlertDialog(
         context: context,
         title: L10n.of(context).areYouSure,
@@ -2270,6 +2442,7 @@ class ChatController extends State<ChatPageWithRoom>
     }
     replyEvent = null;
     editEvent = null;
+    editImageFile = null;
   });
 
   late final ValueNotifier<bool> _displayChatDetailsColumn;

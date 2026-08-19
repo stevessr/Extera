@@ -4141,5 +4141,8 @@
     "callVideocam": "Video",
     "callMic": "Mic",
     "callScreenShare": "Screen",
-    "lkCallSettings": "Settings"
+    "lkCallSettings": "Settings",
+    "editImage": "Edit image",
+    "replaceImage": "Replace image",
+    "undoImageChange": "Undo image change"
 }

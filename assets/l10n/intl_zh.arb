@@ -4284,5 +4284,8 @@
   "loadAudio": "加载音频",
   "quickAction": "快捷操作",
   "quickActionDescription": "双击消息时执行的操作。",
-  "react": "回应"
+  "react": "回应",
+  "editImage": "编辑图片",
+  "replaceImage": "替换图片",
+  "undoImageChange": "撤销图片更改"
 }

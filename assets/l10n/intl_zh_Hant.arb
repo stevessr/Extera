@@ -3250,5 +3250,8 @@
   "@supportPage": {},
   "addLink": "插入連結",
   "@addLink": {},
+  "editImage": "編輯圖片",
+  "replaceImage": "替換圖片",
+  "undoImageChange": "撤銷圖片變更",
   "@@locale": "zh_Hant"
 }

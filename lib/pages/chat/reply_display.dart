@@ -5,9 +5,14 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat_input_row.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
+import 'package:extera_next/widgets/mxc_image.dart';
+import '../../config/app_config.dart';
 import '../../config/themes.dart';
 import 'chat.dart';
 import 'events/reply_content.dart';
+
+enum _EditImageAction { edit, replace, undo }
 
 class ReplyDisplay extends StatelessWidget {
   static const double height = 64.0;
@@ -37,6 +42,7 @@ class ReplyDisplay extends StatelessWidget {
               onPressed: controller.cancelReplyEventAction,
             ),
           ),
+          if (controller.isEditingImage) _EditImageButton(controller),
           Expanded(
             child: controller.replyEvent != null
                 ? Padding(
@@ -67,6 +73,109 @@ class ReplyDisplay extends StatelessWidget {
             ),
           const SizedBox(width: 4),
         ],
+      ),
+    );
+  }
+}
+
+/// Thumbnail of the attachment of the image message being edited.
+///
+/// Tapping it offers to edit or replace the image. As long as it is left
+/// untouched the original attachment is kept and nothing is uploaded on send.
+class _EditImageButton extends StatelessWidget {
+  final ChatController controller;
+
+  const _EditImageButton(this.controller);
+
+  void _showActions(BuildContext context) async {
+    final l10n = L10n.of(context);
+    final hasReplacement = controller.editImageFile != null;
+
+    final action = await showModalActionPopup<_EditImageAction>(
+      context: context,
+      actions: [
+        AdaptiveModalAction(
+          value: _EditImageAction.edit,
+          label: l10n.editImage,
+          icon: const Icon(Icons.brush_outlined),
+        ),
+        AdaptiveModalAction(
+          value: _EditImageAction.replace,
+          label: l10n.replaceImage,
+          icon: const Icon(Icons.photo_library_outlined),
+        ),
+        if (hasReplacement)
+          AdaptiveModalAction(
+            value: _EditImageAction.undo,
+            label: l10n.undoImageChange,
+            icon: const Icon(Icons.undo_outlined),
+          ),
+      ],
+    );
+
+    switch (action) {
+      case _EditImageAction.edit:
+        controller.editEditImageAction();
+      case _EditImageAction.replace:
+        controller.replaceEditImageAction();
+      case _EditImageAction.undo:
+        controller.resetEditImageAction();
+      case null:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(AppConfig.borderRadius / 2);
+    final replacement = controller.editImageFile;
+    final event = controller.editEvent;
+    final timeline = controller.timeline;
+    const size = 44.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: InkWell(
+        borderRadius: borderRadius,
+        onTap: () => _showActions(context),
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            ClipRRect(
+              borderRadius: borderRadius,
+              child: SizedBox.square(
+                dimension: size,
+                child: replacement != null
+                    ? Image.memory(
+                        replacement.bytes,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                      )
+                    : event == null || timeline == null
+                    ? const SizedBox.shrink()
+                    : MxcImage(
+                        event: event.getDisplayEvent(timeline),
+                        fit: BoxFit.cover,
+                        width: size,
+                        height: size,
+                      ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.edit,
+                size: 12,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

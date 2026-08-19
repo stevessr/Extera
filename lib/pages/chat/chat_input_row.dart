@@ -346,7 +346,10 @@ class ChatInputRow extends StatelessWidget {
                     alignment: Alignment.center,
                     child:
                         PlatformInfos.platformCanRecord &&
-                            controller.sendController.text.isEmpty
+                            controller.sendController.text.isEmpty &&
+                            // While editing, an empty input still has to be
+                            // sendable, e.g. to drop the caption of an image.
+                            controller.editEvent == null
                         ? IconButton(
                             tooltip:
                                 recordingViewModel.recordingMode ==
