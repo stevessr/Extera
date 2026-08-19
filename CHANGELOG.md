@@ -1,3 +1,10 @@
+## Extera 26.4.8
+- Hide ignored users from mention suggestions.
+- Hide ignored users from chat member list with option to show them.
+- Redesign livekit call controls.
+- Use avatar placeholder design as in FluffyChat.
+- Update image messages layout.
+
 ## Extera 26.4.7
 - Fix legacy bubbles and modern message layouts.
 - Support playing videos on desktop.
