@@ -1474,9 +1474,11 @@ packages:
   matrix:
     dependency: "direct main"
     description:
-      path: "../matrix-dart-sdk"
-      relative: true
-    source: path
+      path: "."
+      ref: Extera
+      resolved-ref: "789862965b17b2e2680052fe0c0a2f7319d5e15f"
+      url: "https://github.com/stevessr/matrix-dart-sdk.git"
+    source: git
     version: "9.0.0"
   media_kit:
     dependency: "direct main"
