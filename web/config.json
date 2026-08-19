@@ -2,7 +2,7 @@
 	"application_name": "Extera",
 	"application_welcome_message": null,
 	"default_homeserver": "extera.xyz",
-	"web_base_url": "https://fluffychat.im",
+	"web_base_url": "http://extera.aaca.eu.org",
 	"privacy_url": "https://fluffychat.im/en/privacy.html",
 	"render_html": true,
 	"hide_redacted_events": false,
