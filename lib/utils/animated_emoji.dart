@@ -50,7 +50,7 @@ Uri? animatedEmojiUrl(String emoji) {
       : _byStrippedCodepoint[_stripVariationSelectors(key)];
   if (codepoint == null) return null;
   return Uri.parse(
-    'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/512.webp',
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/lottie.json',
   );
 }
 

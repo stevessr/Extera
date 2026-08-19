@@ -67,6 +67,7 @@ dependencies:
   latext: ^0.5.1
   latlong2: ^0.9.1
   linkify: ^5.0.0
+  lottie: ^3.5.1
   material: ^1.0.1
   matrix:
     # path: ../matrix-dart-sdk

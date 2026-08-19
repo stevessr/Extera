@@ -4289,5 +4289,6 @@
   "replaceImage": "替换图片",
   "undoImageChange": "撤销图片更改",
   "useAnimatedEmoji": "动态 Emoji",
-  "useAnimatedEmojiDescription": "在消息中将 emoji 显示为动图，输入框仍显示静态字形。"
+  "useAnimatedEmojiDescription": "在消息中将 emoji 显示为动图，输入框仍显示静态字形。",
+  "unableToOpenThread": "无法打开该消息串。"
 }

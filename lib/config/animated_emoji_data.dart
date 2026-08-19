@@ -6,7 +6,7 @@
 // Regenerate with: dart run tool/generate_animated_emoji.dart
 
 /// Codepoints of every emoji available at
-/// `https://fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/512.webp`,
+/// `https://fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/lottie.json`,
 /// lowercase hex joined by `_`.
 const Set<String> kAnimatedEmojiCodepoints = {
   '1f192', '1f193', '1f195', '1f197', '1f198', '1f199', '1f300', '1f304',

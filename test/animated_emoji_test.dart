@@ -19,13 +19,13 @@ void main() {
     test('resolves the codepoint of an emoji', () {
       expect(
         animatedEmojiUrl('😀').toString(),
-        'https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/512.webp',
+        'https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/lottie.json',
       );
     });
 
     test('normalizes the variation selector in both directions', () {
       const expected =
-          'https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/512.webp';
+          'https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/lottie.json';
       expect(animatedEmojiUrl('❤️').toString(), expected);
       expect(animatedEmojiUrl('❤').toString(), expected);
     });
@@ -33,7 +33,7 @@ void main() {
     test('keeps skin tone modifiers', () {
       expect(
         animatedEmojiUrl('👍🏽').toString(),
-        'https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d_1f3fd/512.webp',
+        'https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d_1f3fd/lottie.json',
       );
     });
 

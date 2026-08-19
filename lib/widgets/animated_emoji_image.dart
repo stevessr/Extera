@@ -5,9 +5,10 @@ import 'package:flutter/widgets.dart';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
+import 'package:lottie/lottie.dart';
 import 'package:matrix/matrix.dart';
 
-/// Renders one emoji as the animated WebP Google ships for it.
+/// Renders one emoji as the Lottie animation Google ships for it.
 ///
 /// While the animation is loading, and whenever it cannot be loaded, the plain
 /// emoji glyph is rendered instead, so the text never jumps or goes blank.
@@ -30,14 +31,14 @@ class AnimatedEmojiImage extends StatefulWidget {
 }
 
 class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
-  /// Emoji repeat a lot within a chat, so hold on to the bytes we already
-  /// fetched for the lifetime of the process.
-  static final Map<String, Uint8List> _memoryCache = {};
+  /// Emoji repeat a lot within a chat, so hold on to the parsed animations for
+  /// the lifetime of the process.
+  static final Map<String, LottieComposition> _compositions = {};
 
-  /// Never request the same emoji twice at once.
-  static final Map<String, Future<Uint8List?>> _pending = {};
+  /// Never request and parse the same emoji twice at once.
+  static final Map<String, Future<LottieComposition?>> _pending = {};
 
-  Uint8List? _bytes;
+  LottieComposition? _composition;
 
   @override
   void initState() {
@@ -54,20 +55,22 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
   void _load() {
     final key = widget.url.toString();
 
-    final cached = _memoryCache[key];
+    final cached = _compositions[key];
     if (cached != null) {
-      _bytes = cached;
+      _composition = cached;
       return;
     }
 
-    _bytes = null;
-    (_pending[key] ??= _fetch(key)).then((bytes) {
-      if (bytes == null || !mounted || widget.url.toString() != key) return;
-      setState(() => _bytes = bytes);
+    _composition = null;
+    (_pending[key] ??= _fetch(key)).then((composition) {
+      if (composition == null || !mounted || widget.url.toString() != key) {
+        return;
+      }
+      setState(() => _composition = composition);
     });
   }
 
-  static Future<Uint8List?> _fetch(String key) async {
+  static Future<LottieComposition?> _fetch(String key) async {
     try {
       final Uint8List bytes;
       if (kIsWeb) {
@@ -82,8 +85,10 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
         final file = await DefaultCacheManager().getSingleFile(key);
         bytes = await file.readAsBytes();
       }
-      _memoryCache[key] = bytes;
-      return bytes;
+
+      final composition = await LottieComposition.fromBytes(bytes);
+      _compositions[key] = composition;
+      return composition;
     } catch (e, s) {
       Logs().d('Unable to load animated emoji $key', e, s);
       return null;
@@ -94,24 +99,21 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
 
   @override
   Widget build(BuildContext context) {
-    final bytes = _bytes;
-    // Emoji glyphs are drawn slightly larger than the font size.
-    final size = widget.fontSize * 1.3;
-
-    if (bytes == null) {
+    final composition = _composition;
+    if (composition == null) {
       return Text(widget.emoji, style: widget.style);
     }
 
-    return Image.memory(
-      bytes,
+    // Emoji glyphs are drawn slightly larger than the font size.
+    final size = widget.fontSize * 1.3;
+
+    return Lottie(
+      composition: composition,
       width: size,
       height: size,
-      // The source is 512px wide, far more than an inline emoji ever needs.
-      cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
-      gaplessPlayback: true,
-      filterQuality: FilterQuality.medium,
-      errorBuilder: (context, error, stackTrace) =>
-          Text(widget.emoji, style: widget.style),
+      // Emoji are tiny and repeat a lot, which is exactly the case the raster
+      // cache is meant for: every frame is rasterized once and then reused.
+      renderCache: RenderCache.raster,
     );
   }
 }

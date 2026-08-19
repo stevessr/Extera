@@ -564,7 +564,10 @@ class ChatController extends State<ChatPageWithRoom>
       var readMarkerEventIndex = readMarkerEventId.isEmpty || timeline == null
           ? -1
           : timeline!.events
-                .filterByVisibleInGui(exceptionEventId: readMarkerEventId)
+                .filterByVisibleInGui(
+                  exceptionEventId: readMarkerEventId,
+                  threadId: threadRootEventId,
+                )
                 .indexWhere((e) => e.eventId == readMarkerEventId);
 
       if (timeline != null &&
@@ -573,7 +576,10 @@ class ChatController extends State<ChatPageWithRoom>
           readMarkerEventIndex == -1) {
         await timeline?.requestHistory(historyCount: _loadHistoryCount);
         readMarkerEventIndex = timeline!.events
-            .filterByVisibleInGui(exceptionEventId: readMarkerEventId)
+            .filterByVisibleInGui(
+              exceptionEventId: readMarkerEventId,
+              threadId: threadRootEventId,
+            )
             .indexWhere((e) => e.eventId == readMarkerEventId);
       }
 
@@ -1645,6 +1651,47 @@ class ChatController extends State<ChatPageWithRoom>
     return widgetBottom > viewportTop && widgetTop < viewportBottom;
   }
 
+  /// The root of the thread [event] belongs to, or `null` if it is not a
+  /// thread reply.
+  String? _threadRootOf(Event event) =>
+      event.relationshipType == RelationshipTypes.thread
+      ? event.relationshipEventId
+      : null;
+
+  /// Navigates to the timeline that actually contains [event], if that is not
+  /// the one currently displayed.
+  ///
+  /// Thread replies are filtered out of the room timeline and room messages are
+  /// filtered out of thread timelines, so jumping between the two means
+  /// changing routes rather than scrolling.
+  bool _goToEventTimeline(Event event) {
+    final targetThreadRootId = _threadRootOf(event);
+    if (targetThreadRootId == threadRootEventId) return false;
+    if (!mounted) return false;
+
+    context.go(
+      '/${Uri(pathSegments: [
+        'rooms',
+        roomId,
+        if (targetThreadRootId != null) ...['threads', targetThreadRootId],
+      ], queryParameters: {'event': event.eventId})}',
+    );
+    return true;
+  }
+
+  /// Same as [_goToEventTimeline], but for an event that is not loaded in the
+  /// current timeline and therefore has to be fetched first.
+  Future<bool> _goToRemoteEventTimeline(String eventId) async {
+    try {
+      final event = await room.getEventById(eventId);
+      if (event == null) return false;
+      return _goToEventTimeline(event);
+    } catch (e, s) {
+      Logs().w('Unable to look up $eventId to jump to it', e, s);
+      return false;
+    }
+  }
+
   void scrollToEventId(
     String eventId,
     String? scrolledFromEventId, {
@@ -1673,7 +1720,15 @@ class ChatController extends State<ChatPageWithRoom>
     _cachedFilteredEvents = null;
 
     if (eventIndex == -1) {
+      // A thread reply is never part of the room timeline, and a room message
+      // is never part of a thread timeline. Before reloading anything, check
+      // whether the event we already have simply belongs somewhere else.
+      if (foundEvent != null && _goToEventTimeline(foundEvent)) return;
+
       if (isRetry) {
+        // The event is not in this timeline at all. It may still be a thread
+        // reply that was never loaded here, so ask the server about it.
+        if (await _goToRemoteEventTimeline(eventId)) return;
         _showScrollUpMaterialBanner(eventId);
         return;
       }

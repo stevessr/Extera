@@ -4146,5 +4146,6 @@
     "replaceImage": "Replace image",
     "undoImageChange": "Undo image change",
     "useAnimatedEmoji": "Animated emoji",
-    "useAnimatedEmojiDescription": "Show emoji as animations in messages. The input field keeps the static glyphs."
+    "useAnimatedEmojiDescription": "Show emoji as animations in messages. The input field keeps the static glyphs.",
+    "unableToOpenThread": "Unable to open this thread."
 }
