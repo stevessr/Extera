@@ -7,17 +7,13 @@ on:
         description: "Git ref to deploy (branch, tag, or SHA)"
         required: true
         default: "main"
-      project_name:
-        description: "Cloudflare Pages project name"
-        required: true
-        default: "extera"
       pages_branch:
         description: "Cloudflare Pages branch (use production branch for prod deploy)"
         required: true
         default: "main"
 
 concurrency:
-  group: cloudflare-pages-${{ inputs.project_name }}-${{ inputs.pages_branch }}
+  group: cloudflare-pages-${{ github.workflow }}-${{ inputs.pages_branch }}
   cancel-in-progress: true
 
 permissions:
