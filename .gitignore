@@ -74,3 +74,4 @@ lib/generated
 /release-assets
 /release-notes.md
 /appimage/Extera_Next-*.AppImage
+.wrangler

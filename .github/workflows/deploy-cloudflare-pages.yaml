@@ -7,10 +7,6 @@ on:
         description: "Git ref to deploy (branch, tag, or SHA)"
         required: true
         default: "main"
-      pages_branch:
-        description: "Cloudflare Pages branch (use production branch for prod deploy)"
-        required: true
-        default: "main"
 
 concurrency:
   group: cloudflare-pages-${{ github.workflow }}-${{ inputs.pages_branch }}
@@ -80,4 +76,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy build/web --project-name=${{ secrets.CLOUDFLARE_RPOJECT_NAME }} --branch=${{ inputs.pages_branch }}
+          command: deploy build/web
