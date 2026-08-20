@@ -46,6 +46,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/synapse_admin_extension.
 import 'package:extera_next/utils/neurogate.dart';
 import 'package:extera_next/utils/other_party_can_receive.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
@@ -156,6 +157,10 @@ class ChatController extends State<ChatPageWithRoom>
   bool currentlyTyping = false;
   bool dragging = false;
 
+  /// Dispose callback for the web-specific drag-and-drop DOM listeners.
+  /// Non-null only on web.
+  VoidCallback? _disposeWebDropListener;
+
   List<String> eventsToScrollBackTo = [];
 
   void onDragEntered(_) => setState(() => dragging = true);
@@ -164,13 +169,31 @@ class ChatController extends State<ChatPageWithRoom>
 
   void onDragDone(DropDoneDetails details) async {
     setState(() => dragging = false);
-    if (details.files.isEmpty) return;
+    await _showSendFileDialog(details.files);
+  }
+
+  // On web the `desktop_drop` package's `DropTarget` widget gates
+  // `onDragDone` on an internal drag-status that resets to idle on every
+  // spurious `dragleave` event (DOM bubbling fires one whenever the pointer
+  // crosses child elements).  The status is often idle when `drop` arrives,
+  // so the callback is silently skipped.  We bypass the widget entirely by
+  // registering our own DOM listeners with a proper enter/leave counter.
+  void _onWebDragState(bool isDragging) =>
+      setState(() => dragging = isDragging);
+
+  void _onWebDrop(List<XFile> files) async {
+    setState(() => dragging = false);
+    await _showSendFileDialog(files);
+  }
+
+  Future<void> _showSendFileDialog(List<XFile> files) async {
+    if (files.isEmpty) return;
 
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
       builder: (c) => SendFileDialog(
-        files: details.files,
+        files: files,
         room: room,
         thread: thread,
         replyEvent: replyEvent,
@@ -566,6 +589,12 @@ class ChatController extends State<ChatPageWithRoom>
     _tryLoadTimeline();
 
     _getThreads();
+    if (PlatformInfos.isWeb) {
+      _disposeWebDropListener = registerWebDropListener(
+        onDragStateChanged: _onWebDragState,
+        onDrop: _onWebDrop,
+      );
+    }
   }
 
   void _tryLoadTimeline() async {
@@ -862,6 +891,7 @@ class ChatController extends State<ChatPageWithRoom>
     scrollController.dispose();
     sendController.dispose();
     _displayChatDetailsColumn.dispose();
+    _disposeWebDropListener?.call();
 
     WidgetsBinding.instance.removeObserver(this);
 
