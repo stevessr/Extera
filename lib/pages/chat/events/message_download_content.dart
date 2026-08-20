@@ -24,6 +24,10 @@ class MessageDownloadContent extends StatefulWidget {
   final void Function()? onRevealHiddenMedia;
   final String? contentWarning;
 
+  /// Forwarded to the file description so that a right click there opens the
+  /// message context menu instead of the text selection toolbar.
+  final void Function(Offset globalPosition)? onSecondaryTap;
+
   const MessageDownloadContent(
     this.event, {
     required this.textColor,
@@ -34,6 +38,7 @@ class MessageDownloadContent extends StatefulWidget {
     this.onLoadMedia,
     this.onRevealHiddenMedia,
     this.contentWarning,
+    this.onSecondaryTap,
     super.key,
   });
 
@@ -271,6 +276,7 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
                 decoration: .none,
               ),
               selectable: true,
+              onSecondaryTap: widget.onSecondaryTap,
               onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
               onCopy: () {
                 Clipboard.setData(ClipboardData(text: event.body));

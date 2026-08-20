@@ -20,6 +20,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/message_selection_area.dart';
 import '../../../utils/platform_infos.dart';
 import '../../../utils/url_launcher.dart';
 import 'audio_player.dart';
@@ -54,6 +55,10 @@ class MessageContent extends StatelessWidget {
   /// (used to reserve space for the inline status row, Telegram-style).
   final InlineSpan? trailingSpan;
 
+  /// Called when the message text is right clicked, so that the message
+  /// context menu can be opened instead of the text selection toolbar.
+  final void Function(Offset globalPosition)? onSecondaryTap;
+
   const MessageContent(
     this.event, {
     this.onInfoTab,
@@ -73,6 +78,7 @@ class MessageContent extends StatelessWidget {
     this.onRevealHiddenMedia,
     this.contentWarning,
     this.trailingSpan,
+    this.onSecondaryTap,
   });
 
   void _verifyOrRequestKey(BuildContext context) async {
@@ -232,6 +238,7 @@ class MessageContent extends StatelessWidget {
               showHiddenMedia: showHiddenMedia,
               onLoadMedia: onLoadMedia,
               onRevealHiddenMedia: onRevealHiddenMedia,
+              onSecondaryTap: onSecondaryTap,
               contentWarning: contentWarning,
             );
           case MessageTypes.Video:
@@ -259,6 +266,7 @@ class MessageContent extends StatelessWidget {
               showHiddenMedia: showHiddenMedia,
               onLoadMedia: onLoadMedia,
               onRevealHiddenMedia: onRevealHiddenMedia,
+              onSecondaryTap: onSecondaryTap,
               contentWarning: contentWarning,
             );
 
@@ -284,6 +292,7 @@ class MessageContent extends StatelessWidget {
                   textColor: textColor,
                   room: event.room,
                   selectable: selectable,
+                  onSecondaryTap: onSecondaryTap,
                   trailingSpan: trailingSpan,
                   fontSize:
                       AppSettings.fontSizeFactor.value *
@@ -453,7 +462,8 @@ class MessageContent extends StatelessWidget {
               // while the underlying `RenderParagraph` still handles taps.
               // This is what the formatted message path already does.
               child: selectable
-                  ? SelectionArea(
+                  ? MessageSelectionArea(
+                      onSecondaryTap: onSecondaryTap,
                       child: Text.rich(richSpan, textScaler: textScaler),
                     )
                   : Text.rich(richSpan, textScaler: textScaler),

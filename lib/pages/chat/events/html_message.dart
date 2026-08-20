@@ -14,6 +14,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/widgets/avatar.dart';
+import 'package:extera_next/widgets/message_selection_area.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import '../../../utils/url_launcher.dart';
 
@@ -32,6 +33,10 @@ class HtmlMessage extends StatefulWidget {
 
   final InlineSpan? trailingSpan;
 
+  /// Called when the message text is right clicked, so that the message
+  /// context menu can be opened instead of the text selection toolbar.
+  final void Function(Offset globalPosition)? onSecondaryTap;
+
   const HtmlMessage({
     super.key,
     required this.html,
@@ -44,6 +49,7 @@ class HtmlMessage extends StatefulWidget {
     this.selectable = false,
     this.bigEmotes = false,
     this.trailingSpan,
+    this.onSecondaryTap,
   });
 
   /// Keep in sync with: https://spec.matrix.org/latest/client-server-api/#mroommessage-msgtypes
@@ -720,7 +726,10 @@ class _HtmlMessageState extends State<HtmlMessage> {
     final textStyle = _baseTextStyle;
 
     if (widget.selectable) {
-      return SelectionArea(child: Text.rich(textSpan, style: textStyle));
+      return MessageSelectionArea(
+        onSecondaryTap: widget.onSecondaryTap,
+        child: Text.rich(textSpan, style: textStyle),
+      );
     }
 
     return Text.rich(textSpan, style: textStyle);

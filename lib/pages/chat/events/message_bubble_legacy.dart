@@ -742,6 +742,13 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                                     PlatformInfos.isMobile
                                                     ? widget.longPressSelect
                                                     : true,
+                                                onSecondaryTap: (position) {
+                                                  _tapPosition = position;
+                                                  widget.onSelect(
+                                                    event,
+                                                    position,
+                                                  );
+                                                },
                                                 trailingSpan: useInlineStatus
                                                     ? inlineStatusPlaceholder
                                                     : null,

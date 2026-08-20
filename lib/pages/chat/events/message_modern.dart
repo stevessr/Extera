@@ -498,6 +498,10 @@ class _MessageModernState extends State<MessageModern> {
                                     selectable: PlatformInfos.isMobile
                                         ? widget.longPressSelect
                                         : true,
+                                    onSecondaryTap: (position) {
+                                      _tapPosition = position;
+                                      widget.onSelect(event, position);
+                                    },
                                   ),
                                 ],
                               ),
