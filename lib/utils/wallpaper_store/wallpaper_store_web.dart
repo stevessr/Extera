@@ -6,7 +6,13 @@ import 'package:web/web.dart' as web;
 
 const String _databaseName = 'extera_wallpaper';
 const String _storeName = 'wallpaper';
-const String _entryKey = 'chat_wallpaper';
+
+/// Key of the global wallpaper. Kept as it was before per room wallpapers
+/// existed so that already stored images are not orphaned.
+const String _globalEntryKey = 'chat_wallpaper';
+
+String _entryKey(String storageKey) =>
+    storageKey.isEmpty ? _globalEntryKey : 'room:$storageKey';
 const int _databaseVersion = 1;
 
 Future<T> _await<T extends JSAny?>(web.IDBRequest request) {
@@ -75,16 +81,16 @@ Future<void> _write(void Function(web.IDBObjectStore store) action) async {
 /// The settings store is backed by local storage on web, which is both tiny
 /// and synchronous, so the image itself lives here and the setting only keeps
 /// a marker.
-Future<void> saveWallpaperBytes(Uint8List bytes) =>
-    _write((store) => store.put(bytes.toJS, _entryKey.toJS));
+Future<void> saveWallpaperBytes(String storageKey, Uint8List bytes) =>
+    _write((store) => store.put(bytes.toJS, _entryKey(storageKey).toJS));
 
 /// Reads the wallpaper bytes persisted by [saveWallpaperBytes].
-Future<Uint8List?> loadWallpaperBytes() async {
+Future<Uint8List?> loadWallpaperBytes(String storageKey) async {
   final db = await _openDatabase();
   try {
     final transaction = db.transaction(_storeName.toJS, 'readonly');
     final result = await _await<JSAny?>(
-      transaction.objectStore(_storeName).get(_entryKey.toJS),
+      transaction.objectStore(_storeName).get(_entryKey(storageKey).toJS),
     );
     if (result == null) return null;
     if (result.isA<JSUint8Array>()) return (result as JSUint8Array).toDart;
@@ -98,5 +104,5 @@ Future<Uint8List?> loadWallpaperBytes() async {
 }
 
 /// Removes the persisted wallpaper bytes.
-Future<void> deleteWallpaperBytes() =>
-    _write((store) => store.delete(_entryKey.toJS));
+Future<void> deleteWallpaperBytes(String storageKey) =>
+    _write((store) => store.delete(_entryKey(storageKey).toJS));

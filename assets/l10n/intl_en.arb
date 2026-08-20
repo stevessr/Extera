@@ -4151,5 +4151,10 @@
     "biometricUnlock": "Unlock with fingerprint",
     "biometricUnlockDescription": "Use your fingerprint or face instead of typing the passcode.",
     "unlockWithBiometrics": "Unlock Extera",
-    "setAPasscodeFirst": "Set a passcode first."
+    "setAPasscodeFirst": "Set a passcode first.",
+    "chatWallpaper": "Chat wallpaper",
+    "chatWallpaperIsCustom": "This chat uses its own wallpaper.",
+    "chatWallpaperFollowsGlobal": "This chat follows the wallpaper from the appearance settings.",
+    "hideChatWallpaper": "Show no wallpaper here",
+    "useGlobalWallpaper": "Use the global wallpaper"
 }

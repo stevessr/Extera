@@ -3260,5 +3260,10 @@
   "biometricUnlockDescription": "使用指紋或臉部辨識代替輸入 PIN 碼。",
   "unlockWithBiometrics": "解鎖 Extera",
   "setAPasscodeFirst": "請先設定 PIN 碼。",
+  "chatWallpaper": "聊天桌布",
+  "chatWallpaperIsCustom": "此聊天使用單獨設定的桌布。",
+  "chatWallpaperFollowsGlobal": "此聊天跟隨外觀設定中的全域桌布。",
+  "hideChatWallpaper": "此聊天不顯示桌布",
+  "useGlobalWallpaper": "改用全域桌布",
   "@@locale": "zh_Hant"
 }

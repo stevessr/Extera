@@ -15,6 +15,7 @@ import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -123,6 +124,15 @@ class ChatDetailsController extends State<ChatDetails> {
 
   void goToEmoteSettings() async {
     context.push('/rooms/$roomId/details/emotes');
+  }
+
+  /// Whether this room overrides the global wallpaper, shown as the subtitle
+  /// of the wallpaper tile.
+  bool get hasCustomWallpaper => roomId != null && hasRoomWallpaper(roomId!);
+
+  void goToWallpaperSettings() async {
+    await context.push('/rooms/$roomId/details/wallpaper');
+    if (mounted) setState(() {});
   }
 
   void setAvatarAction() async {

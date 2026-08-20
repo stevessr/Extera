@@ -47,7 +47,7 @@ class SettingsStyleView extends StatelessWidget {
       DynamicSchemeVariant.fruitSalad: L10n.of(context).palette_fruitSalad,
     };
 
-    final wallpaperImage = wallpaperImageProvider(controller.wallpaperPath);
+    final wallpaperImage = globalWallpaper.image;
     final hasWallpaper = wallpaperImage != null;
 
     return Scaffold(

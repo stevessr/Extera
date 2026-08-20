@@ -418,10 +418,6 @@ class _ChatViewState extends State<ChatView> {
     final bottomSheetPadding = FluffyThemes.isColumnMode(context) ? 16.0 : 8.0;
     final scrollUpBannerEventId = controller.scrollUpBannerEventId;
 
-    final wallpaperImage = wallpaperImageProvider(
-      AppSettings.wallpaperPath.value,
-    );
-
     if (screenWidth == null || screenHeight == null) {
       final view = View.of(context);
       screenWidth ??= view.physicalSize.width / view.devicePixelRatio;
@@ -547,35 +543,43 @@ class _ChatViewState extends State<ChatView> {
               onDragExited: controller.onDragExited,
               child: Stack(
                 children: <Widget>[
-                  if (wallpaperImage != null)
-                    Positioned.fill(
-                      child: Container(
-                        color: Colors.black,
-                        child: ClipRect(
-                          child: OverflowBox(
-                            alignment: Alignment.topCenter,
-                            maxHeight: screenHeight,
-                            maxWidth: screenWidth,
-                            child: Opacity(
-                              opacity: AppSettings.wallpaperOpacity.value,
-                              child: ImageFiltered(
-                                imageFilter: ui.ImageFilter.blur(
-                                  sigmaX: AppSettings.wallpaperBlur.value,
-                                  sigmaY: AppSettings.wallpaperBlur.value,
-                                ),
-                                child: Image(
-                                  image: wallpaperImage,
-
-                                  fit: BoxFit.cover,
-                                  height: screenHeight,
-                                  width: screenWidth,
+                  // Rebuilt on its own so that changing the wallpaper of this
+                  // room takes effect as soon as the user comes back.
+                  Positioned.fill(
+                    child: ValueListenableBuilder<int>(
+                      valueListenable: wallpaperRevision,
+                      builder: (context, _, _) {
+                        final wallpaper = wallpaperConfigFor(controller.roomId);
+                        final image = wallpaper.image;
+                        if (image == null) return const SizedBox.shrink();
+                        return Container(
+                          color: Colors.black,
+                          child: ClipRect(
+                            child: OverflowBox(
+                              alignment: Alignment.topCenter,
+                              maxHeight: screenHeight,
+                              maxWidth: screenWidth,
+                              child: Opacity(
+                                opacity: wallpaper.opacity,
+                                child: ImageFiltered(
+                                  imageFilter: ui.ImageFilter.blur(
+                                    sigmaX: wallpaper.blur,
+                                    sigmaY: wallpaper.blur,
+                                  ),
+                                  child: Image(
+                                    image: image,
+                                    fit: BoxFit.cover,
+                                    height: screenHeight,
+                                    width: screenWidth,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
+                  ),
                   Positioned.fill(
                     child: GestureDetector(
                       onTap: controller.clearSingleSelectedEvent,

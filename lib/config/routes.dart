@@ -20,6 +20,7 @@ import 'package:extera_next/pages/chat_privacy/chat_privacy.dart';
 import 'package:extera_next/pages/chat_search/chat_search_page.dart';
 import 'package:extera_next/pages/chat_thread/thread.dart';
 import 'package:extera_next/pages/chat_threads/chat_threads.dart';
+import 'package:extera_next/pages/chat_wallpaper/chat_wallpaper.dart';
 import 'package:extera_next/pages/chat_widgets/chat_widgets.dart';
 import 'package:extera_next/pages/device_settings/device_settings.dart';
 import 'package:extera_next/pages/explore_rooms/explore_rooms.dart';
@@ -632,6 +633,17 @@ abstract class AppRoutes {
                         context,
                         state,
                         const MultipleEmotesSettings(),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
+                      path: 'wallpaper',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        ChatWallpaperPage(
+                          roomId: state.pathParameters['roomid']!,
+                        ),
                       ),
                       redirect: loggedOutRedirect,
                     ),

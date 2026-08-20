@@ -321,6 +321,24 @@ class ChatDetailsView extends StatelessWidget {
                           trailing: const Icon(Icons.chevron_right_outlined),
                         ),
                         const ListDivider(),
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: theme.colorScheme.secondary,
+                            child: Icon(
+                              Icons.wallpaper_outlined,
+                              color: theme.colorScheme.onSecondary,
+                            ),
+                          ),
+                          title: Text(L10n.of(context).chatWallpaper),
+                          subtitle: Text(
+                            controller.hasCustomWallpaper
+                                ? L10n.of(context).chatWallpaperIsCustom
+                                : L10n.of(context).chatWallpaperFollowsGlobal,
+                          ),
+                          onTap: controller.goToWallpaperSettings,
+                          trailing: const Icon(Icons.chevron_right_outlined),
+                        ),
+                        const ListDivider(),
                         if (!room.isDirectChat) ...[
                           ListTile(
                             leading: CircleAvatar(
