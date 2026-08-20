@@ -543,8 +543,10 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: (theme.brightness == Brightness.light
-                                        ? displayname.color
-                                        : displayname.lightColorText),
+                                        ? displayname.colorScheme.primary
+                                        : displayname
+                                              .colorScheme
+                                              .primaryContainer),
                                     shadows: !widget.wallpaperMode
                                         ? null
                                         : [

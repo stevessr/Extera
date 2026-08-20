@@ -386,8 +386,10 @@ class _MessageModernState extends State<MessageModern> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: (theme.brightness == Brightness.light
-                                      ? displayname.color
-                                      : displayname.lightColorText),
+                                      ? displayname.colorScheme.primary
+                                      : displayname
+                                            .colorScheme
+                                            .primaryContainer),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

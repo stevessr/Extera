@@ -10,6 +10,8 @@ import '../../widgets/matrix.dart';
 import '../chat_details/participant_list_item.dart';
 import 'chat_members.dart';
 
+enum _ChatMembersAction { showIgnoredUsers }
+
 class ChatMembersView extends StatelessWidget {
   final ChatMembersController controller;
 
@@ -48,6 +50,34 @@ class ChatMembersView extends StatelessWidget {
               onPressed: () => context.go('/rooms/${room.id}/invite'),
               icon: const Icon(Icons.person_add_outlined),
             ),
+          PopupMenuButton<_ChatMembersAction>(
+            onSelected: (action) {
+              if (action == .showIgnoredUsers) {
+                controller.setShowIgnoredUsers(!controller.showIgnoredUsers);
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: .showIgnoredUsers,
+                child: Row(
+                  mainAxisSize: .min,
+                  spacing: 12,
+                  children: [
+                    Icon(
+                      controller.showIgnoredUsers
+                          ? Icons.person_outline
+                          : Icons.person_remove_outlined,
+                    ),
+                    Text(
+                      controller.showIgnoredUsers
+                          ? "Hide ignored users"
+                          : "Show ignored users",
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: MaxWidthBody(
