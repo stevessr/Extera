@@ -70,12 +70,11 @@ class ImageBubble extends StatelessWidget {
   double get _effectiveImageWidth => imageWidth ?? width;
   double get _effectiveImageHeight {
     final infoMap = event.infoMap;
-    // final imageWidth = infoMap['w'] as int?;
     final imageHeight = infoMap['h'] as int?;
 
     if (imageHeight == null) return 512.0;
 
-    return min(512, imageHeight.toDouble());
+    return min(512, max(256.0, imageHeight.toDouble()));
   }
 
   double get _aspectRatio {
@@ -100,15 +99,11 @@ class ImageBubble extends StatelessWidget {
     final blurHashString = event.infoMap['xyz.amorgan.blurhash'] is String
         ? event.infoMap['xyz.amorgan.blurhash'] as String
         : 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return BlurHash(
-          blurhash: blurHashString,
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          fit: fit,
-        );
-      },
+    return BlurHash(
+      blurhash: blurHashString,
+      width: _effectiveImageWidth,
+      height: _effectiveImageHeight,
+      fit: fit,
     );
   }
 
@@ -135,36 +130,32 @@ class ImageBubble extends StatelessWidget {
     final size = event.infoMap['size'] is num
         ? event.infoMap['size'] as num
         : null;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: [
-            BlurHash(
-              blurhash: blurHashString,
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              fit: fit,
-            ),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: onLoadMedia,
-                child: Row(
-                  mainAxisSize: .min,
-                  children: [
-                    const Icon(Icons.image),
-                    const SizedBox(width: 12),
-                    Text(
-                      size != null
-                          ? size.sizeString
-                          : L10n.of(context).loadImageNoSize,
-                    ),
-                  ],
+    return Stack(
+      children: [
+        BlurHash(
+          blurhash: blurHashString,
+          width: _effectiveImageWidth,
+          height: _effectiveImageHeight,
+          fit: fit,
+        ),
+        Center(
+          child: FilledButton.tonal(
+            onPressed: onLoadMedia,
+            child: Row(
+              mainAxisSize: .min,
+              children: [
+                const Icon(Icons.image),
+                const SizedBox(width: 12),
+                Text(
+                  size != null
+                      ? size.sizeString
+                      : L10n.of(context).loadImageNoSize,
                 ),
-              ),
+              ],
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -173,32 +164,28 @@ class ImageBubble extends StatelessWidget {
         ? event.infoMap['xyz.amorgan.blurhash'] as String
         : 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
     final reason = _contentWarningReason(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: [
-            BlurHash(
-              blurhash: blurHashString,
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              fit: fit,
+    return Stack(
+      children: [
+        BlurHash(
+          blurhash: blurHashString,
+          width: _effectiveImageWidth,
+          height: _effectiveImageHeight,
+          fit: fit,
+        ),
+        Center(
+          child: FilledButton.tonal(
+            onPressed: onRevealHiddenMedia,
+            child: Row(
+              mainAxisSize: .min,
+              children: [
+                const Icon(Icons.visibility_off_outlined),
+                const SizedBox(width: 12),
+                Text(reason),
+              ],
             ),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: onRevealHiddenMedia,
-                child: Row(
-                  mainAxisSize: .min,
-                  children: [
-                    const Icon(Icons.visibility_off_outlined),
-                    const SizedBox(width: 12),
-                    Text(reason),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -282,28 +269,31 @@ class ImageBubble extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: width, maxHeight: height),
               child: AspectRatio(
                 aspectRatio: _aspectRatio,
-                  child: InkWell(
-                    onTap: () => _onTap(context),
-                    child: Hero(
-                      tag: event.eventId,
+                child: InkWell(
+                  onTap: () => _onTap(context),
+                  child: Hero(
+                    tag: event.eventId,
+                    child: Align(
+                      alignment: .center,
                       child: isHidden
                           ? _buildHidden(context)
                           : loadMedia
-                              ? MxcImage(
-                                  event: event,
-                                  width: _effectiveImageWidth,
-                                  height: _effectiveImageHeight,
-                                  fit: fit,
-                                  animated: animated,
-                                  isThumbnail: thumbnailOnly,
-                                  placeholder:
-                                      event.messageType == MessageTypes.Sticker
-                                      ? null
-                                      : _buildPlaceholder,
-                                )
-                              : _buildUnloaded(context),
+                          ? MxcImage(
+                              event: event,
+                              width: _effectiveImageWidth,
+                              height: _effectiveImageHeight,
+                              fit: fit,
+                              animated: animated,
+                              isThumbnail: thumbnailOnly,
+                              placeholder:
+                                  event.messageType == MessageTypes.Sticker
+                                  ? null
+                                  : _buildPlaceholder,
+                            )
+                          : _buildUnloaded(context),
                     ),
                   ),
+                ),
               ),
             ),
           ),

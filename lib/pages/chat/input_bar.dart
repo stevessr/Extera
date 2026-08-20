@@ -173,7 +173,11 @@ class InputBar extends StatelessWidget {
     ).firstMatch(searchText);
     if (userMatch != null) {
       final userSearch = userMatch[1]!.toLowerCase();
-      for (final user in room.getParticipants()) {
+      final participants = room.getParticipants();
+      participants.removeWhere(
+        (user) => room.client.ignoredUsers.contains(user.id),
+      );
+      for (final user in participants) {
         if ((user.displayName != null &&
                 (user.displayName!.toLowerCase().contains(userSearch) ||
                     slugify(
