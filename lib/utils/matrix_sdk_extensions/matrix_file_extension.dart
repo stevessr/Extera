@@ -6,12 +6,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:matrix/matrix.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 
 extension MatrixFileExtension on MatrixFile {
   void save(BuildContext context) async {
@@ -57,11 +57,7 @@ extension MatrixFileExtension on MatrixFile {
   }
 
   void _webDownload() {
-    html.AnchorElement(
-        href: html.Url.createObjectUrlFromBlob(html.Blob([bytes], mimeType)),
-      )
-      ..download = name
-      ..click();
+    downloadBytes(bytes, name: name, mimeType: mimeType);
   }
 
   void share(BuildContext context) async {

@@ -11,11 +11,11 @@ import 'package:matrix/matrix.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 import 'cipher.dart';
 
 Future<DatabaseApi> flutterMatrixSdkDatabaseBuilder(String clientName) async {
@@ -50,7 +50,7 @@ Future<DatabaseApi> flutterMatrixSdkDatabaseBuilder(String clientName) async {
 
 Future<MatrixSdkDatabase> _constructDatabase(String clientName) async {
   if (kIsWeb) {
-    html.window.navigator.storage?.persist();
+    requestPersistentStorage();
     return await MatrixSdkDatabase.init(clientName);
   }
 

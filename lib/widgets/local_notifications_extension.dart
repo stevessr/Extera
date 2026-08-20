@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:desktop_notifications/desktop_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -15,12 +14,9 @@ import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 
 extension LocalNotificationsExtension on MatrixState {
-  static final html.AudioElement _audioPlayer = html.AudioElement()
-    ..src = 'assets/assets/sounds/notification.ogg'
-    ..load();
-
   void showLocalNotification(Event event) async {
     final roomId = event.room.id;
     if (activeRoomId == roomId) {
@@ -70,9 +66,9 @@ extension LocalNotificationsExtension on MatrixState {
             );
       }
 
-      _audioPlayer.play();
+      playNotificationSound();
 
-      html.Notification(
+      showBrowserNotification(
         title,
         body: body,
         icon: thumbnailUri?.toString(),

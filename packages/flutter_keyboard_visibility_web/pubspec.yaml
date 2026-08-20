@@ -1,0 +1,25 @@
+name: flutter_keyboard_visibility_web
+description: >-
+  Drop-in replacement for the upstream web implementation of
+  flutter_keyboard_visibility, which still imports dart:html and therefore
+  cannot be compiled to WebAssembly.
+version: 2.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+flutter:
+  plugin:
+    platforms:
+      web:
+        pluginClass: FlutterKeyboardVisibilityPlugin
+        fileName: flutter_keyboard_visibility_web.dart
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_keyboard_visibility_platform_interface: ^2.0.0
+  flutter_web_plugins:
+    sdk: flutter

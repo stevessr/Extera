@@ -13,7 +13,6 @@ import 'package:matrix/encryption.dart';
 import 'package:matrix/matrix.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -27,6 +26,7 @@ import 'package:extera_next/utils/voip_plugin.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/fluffy_chat_app.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 import '../config/app_config.dart';
 import '../config/app_settings.dart';
 import '../pages/key_verification/key_verification_dialog.dart';
@@ -310,7 +310,7 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
     onUiaRequest[name] ??= c.onUiaRequest.stream.listen(uiaRequestHandler);
     if (PlatformInfos.isWeb || PlatformInfos.isLinux) {
       c.onSync.stream.first.then((s) {
-        html.Notification.requestPermission();
+        requestNotificationPermission();
         onNotification[name] ??= c.onNotification.stream.listen(
           showLocalNotification,
         );

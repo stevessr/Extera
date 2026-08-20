@@ -9,7 +9,6 @@ import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
 import 'package:matrix/encryption/utils/key_verification.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
@@ -19,6 +18,7 @@ import 'package:extera_next/utils/custom_image_resizer.dart';
 import 'package:extera_next/utils/init_with_restore.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/poll_events.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 import 'matrix_sdk_extensions/flutter_matrix_dart_sdk_database/builder.dart';
 
 abstract class ClientManager {
@@ -157,7 +157,7 @@ abstract class ClientManager {
 
   static void sendInitNotification(String title, String body) async {
     if (kIsWeb) {
-      html.Notification(title, body: body);
+      showBrowserNotification(title, body: body);
       return;
     }
     if (Platform.isLinux) {
