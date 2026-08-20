@@ -35,6 +35,7 @@ import 'package:extera_next/pages/chat_details/chat_details.dart';
 import 'package:extera_next/pages/dialer/livekit_call_screen.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/clipboard_utils.dart';
+import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/utils/error_reporter.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/loading_snackbar_extension.dart';
@@ -206,10 +207,24 @@ class ChatController extends State<ChatPageWithRoom>
   /// original attachment is reused instead of being uploaded again.
   MatrixImageFile? editImageFile;
 
+  /// Content warning to store with the image message currently being edited.
+  ///
+  /// Initialized from the message, so that editing only the caption keeps the
+  /// warning it already had.
+  String? editContentWarning;
+
+  /// The content warning the message had when the edit started, used to tell
+  /// whether the user actually changed something.
+  String? _originalContentWarning;
+
   /// Whether the message currently being edited is an image message, so that
-  /// the attachment itself can be edited as well.
+  /// the attachment and its content warning can be edited as well.
   bool get isEditingImage =>
       editEvent != null && editEvent!.messageType == MessageTypes.Image;
+
+  void setEditContentWarning(String? type) => setState(() {
+    editContentWarning = type;
+  });
 
   final ValueNotifier<bool> _scrolledUp = ValueNotifier<bool>(false);
 
@@ -994,18 +1009,22 @@ class ChatController extends State<ChatPageWithRoom>
         ..['msgtype'] = MessageTypes.Image
         ..['filename'] = filename
         ..['body'] = hasCaption ? caption : filename;
+      applyContentWarning(content, editContentWarning);
 
       // ignore: unawaited_futures
       room.sendEvent(content, editEventId: event.eventId);
     } else {
+      final extraContent = <String, dynamic>{
+        'filename': newImage.name,
+        'body': hasCaption ? caption : newImage.name,
+      };
+      applyContentWarning(extraContent, editContentWarning);
+
       // ignore: unawaited_futures
       room.sendFileEvent(
         newImage,
         editEventId: event.eventId,
-        extraContent: {
-          'filename': newImage.name,
-          'body': hasCaption ? caption : newImage.name,
-        },
+        extraContent: extraContent,
       );
     }
 
@@ -1019,6 +1038,7 @@ class ChatController extends State<ChatPageWithRoom>
       replyEvent = null;
       editEvent = null;
       editImageFile = null;
+      editContentWarning = _originalContentWarning = null;
       pendingText = '';
     });
   }
@@ -1926,6 +1946,9 @@ class ChatController extends State<ChatPageWithRoom>
       pendingText = sendController.text;
       editEvent = event;
       editImageFile = null;
+      editContentWarning = _originalContentWarning = contentWarningOf(
+        event.getDisplayEvent(timeline).content,
+      );
       sendController.text = event.getDisplayEvent(timeline).body;
       if (clearSelection) selectedEvents.clear();
     });
@@ -2107,7 +2130,9 @@ class ChatController extends State<ChatPageWithRoom>
           hideReply: true,
         );
 
-    if (sendController.text != originalText || editImageFile != null) {
+    if (sendController.text != originalText ||
+        editImageFile != null ||
+        editContentWarning != _originalContentWarning) {
       final result = await showOkCancelAlertDialog(
         context: context,
         title: L10n.of(context).areYouSure,
@@ -2498,6 +2523,7 @@ class ChatController extends State<ChatPageWithRoom>
     replyEvent = null;
     editEvent = null;
     editImageFile = null;
+    editContentWarning = _originalContentWarning = null;
   });
 
   late final ValueNotifier<bool> _displayChatDetailsColumn;

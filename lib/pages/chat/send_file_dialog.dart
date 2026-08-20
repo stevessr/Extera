@@ -11,6 +11,7 @@ import 'package:mime/mime.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/loading_snackbar_extension.dart';
@@ -155,12 +156,7 @@ class SendFileDialogState extends State<SendFileDialog> {
         final label = _labelTextController.text.trim();
         final extraContent = <String, dynamic>{};
 
-        if (contentWarning != null) {
-          extraContent['town.robin.msc3725.content_warning'] = {
-            'type': contentWarning,
-          };
-          extraContent['page.codeberg.everypizza.msc4193.spoiler'] = true;
-        }
+        applyContentWarning(extraContent, contentWarning);
 
         if (label.isNotEmpty) {
           extraContent['body'] = label;
@@ -507,28 +503,11 @@ class SendFileDialogState extends State<SendFileDialog> {
                               value: null,
                               child: Text(L10n.of(context).none),
                             ),
-                            PopupMenuItem(
-                              value: "town.robin.msc3725.spoiler",
-                              child: Text(
-                                L10n.of(context).contentWarningSpoiler,
+                            for (final type in ContentWarningType.values)
+                              PopupMenuItem(
+                                value: type.value,
+                                child: Text(type.label(L10n.of(context))),
                               ),
-                            ),
-                            PopupMenuItem(
-                              value: "town.robin.msc3725.nsfw",
-                              child: Text(L10n.of(context).contentWarningNsfw),
-                            ),
-                            PopupMenuItem(
-                              value: "town.robin.msc3725.graphic",
-                              child: Text(
-                                L10n.of(context).contentWarningGraphic,
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: "town.robin.msc3725.medical",
-                              child: Text(
-                                L10n.of(context).contentWarningMedical,
-                              ),
-                            ),
                           ],
                         ),
                       ),

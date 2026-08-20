@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat_input_row.dart';
+import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -57,6 +58,12 @@ class ReplyDisplay extends StatelessWidget {
                     controller.editEvent?.getDisplayEvent(controller.timeline!),
                   ),
           ),
+          if (controller.isEditingImage)
+            SizedBox(
+              width: ChatInputRow.height,
+              height: ChatInputRow.height,
+              child: _ContentWarningButton(controller),
+            ),
           if (controller.replyEvent != null && controller.editEvent == null)
             SizedBox(
               width: ChatInputRow.height,
@@ -177,6 +184,39 @@ class _EditImageButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Lets the user change the content warning of the image being edited.
+///
+/// Mirrors the picker of the send dialog, so that setting a warning afterwards
+/// looks the same as setting it while sending.
+class _ContentWarningButton extends StatelessWidget {
+  final ChatController controller;
+
+  const _ContentWarningButton(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context);
+    final current = controller.editContentWarning;
+
+    return PopupMenuButton<String?>(
+      initialValue: current,
+      onSelected: controller.setEditContentWarning,
+      tooltip: '${l10n.contentWarning}: ${contentWarningLabel(l10n, current)}',
+      icon: Icon(
+        current == null
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
+        color: current == null ? null : Theme.of(context).colorScheme.primary,
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem(value: null, child: Text(l10n.none)),
+        for (final type in ContentWarningType.values)
+          PopupMenuItem(value: type.value, child: Text(type.label(l10n))),
+      ],
     );
   }
 }

@@ -24,6 +24,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 
 enum AddRoomType { chat, subspace }
 
@@ -368,12 +369,15 @@ class _SpaceViewState extends State<SpaceView> {
         if (!mounted) return;
         if (confirmed != OkCancelResult.ok) return;
 
+        final spaceId = space?.id;
         final success = await showFutureLoadingDialog(
           context: context,
           future: () async => await space?.leave(),
         );
         if (!mounted) return;
         if (success.error != null) return;
+        if (spaceId != null) await deleteWallpaper(roomId: spaceId);
+        if (!mounted) return;
         widget.onBack();
     }
   }

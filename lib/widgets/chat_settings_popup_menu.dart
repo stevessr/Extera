@@ -8,6 +8,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'matrix.dart';
 
 enum ChatPopupMenuActions { details, mute, unmute, emote, leave, search }
@@ -64,11 +65,16 @@ class ChatSettingsPopupMenuState extends State<ChatSettingsPopupMenu> {
                   isDestructive: true,
                 );
                 if (confirmed == OkCancelResult.ok) {
+                  final roomId = widget.room.id;
                   final success = await showFutureLoadingDialog(
                     context: context,
                     future: () => widget.room.leave(),
                   );
                   if (success.error == null) {
+                    // The chat is gone, so its wallpaper would only linger in
+                    // the settings and in IndexedDB.
+                    await deleteWallpaper(roomId: roomId);
+                    if (!context.mounted) return;
                     context.go('/rooms');
                   }
                 }

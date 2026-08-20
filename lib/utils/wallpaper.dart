@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -115,68 +116,86 @@ WallpaperConfig wallpaperConfigFor(String? roomId) {
   );
 }
 
-/// Loads every stored wallpaper into memory. Call once during startup.
+/// Loads the global wallpaper into memory. Call once during startup.
+///
+/// Room wallpapers are loaded on demand instead, see [_bytesFor], so that a
+/// user with a wallpaper in many chats does not pay for all of them at every
+/// start.
 ///
 /// Also migrates wallpapers of older versions, which were stored inline in the
 /// settings as a base64 data URL, into IndexedDB.
 Future<void> initWallpaper() async {
   if (!kIsWeb) return;
 
-  await _loadInto('', AppSettings.wallpaperPath.value, isGlobal: true);
-
-  final prefix = '${AppSettings.wallpaperPath.key}.';
-  for (final key in AppSettings.store.getKeys()) {
-    if (!key.startsWith(prefix)) continue;
-    final roomId = key.substring(prefix.length);
-    await _loadInto(roomId, _roomSource(roomId) ?? '', isGlobal: false);
-  }
-}
-
-Future<void> _loadInto(
-  String storageKey,
-  String source, {
-  required bool isGlobal,
-}) async {
+  final source = AppSettings.wallpaperPath.value;
   if (source.isEmpty || source == wallpaperNone) return;
-
-  Future<void> clearSource() async {
-    if (isGlobal) {
-      await AppSettings.wallpaperPath.setItem('');
-    } else {
-      await AppSettings.store.remove(_sourceKey(storageKey));
-    }
-  }
 
   try {
     if (source.startsWith('data:')) {
       final bytes = _decodeDataUrl(source);
       if (bytes == null) {
-        await clearSource();
+        await AppSettings.wallpaperPath.setItem('');
         return;
       }
-      await saveWallpaperBytes(storageKey, bytes);
-      if (isGlobal) {
-        await AppSettings.wallpaperPath.setItem(wallpaperIndexedDbMarker);
-      } else {
-        await AppSettings.store.setString(
-          _sourceKey(storageKey),
-          wallpaperIndexedDbMarker,
-        );
-      }
-      _wallpaperBytes[storageKey] = bytes;
+      await saveWallpaperBytes('', bytes);
+      await AppSettings.wallpaperPath.setItem(wallpaperIndexedDbMarker);
+      _wallpaperBytes[''] = bytes;
       return;
     }
 
-    final bytes = await loadWallpaperBytes(storageKey);
+    final bytes = await loadWallpaperBytes('');
     if (bytes == null) {
       // The setting points at something we cannot restore, e.g. a file path
       // from a native installation of a synced account.
-      await clearSource();
+      await AppSettings.wallpaperPath.setItem('');
       return;
     }
-    _wallpaperBytes[storageKey] = bytes;
+    _wallpaperBytes[''] = bytes;
+  } catch (e, s) {
+    Logs().w('Unable to load the global chat wallpaper', e, s);
+  } finally {
+    _resolved.add('');
+  }
+}
+
+/// Storage keys whose bytes were looked up already, so that a wallpaper which
+/// is not in IndexedDB is not requested over and over from `build`.
+final Set<String> _resolved = {};
+final Set<String> _loading = {};
+
+/// The bytes of a wallpaper, kicking off a load the first time they are asked
+/// for.
+///
+/// Returns `null` while the load is still running; [wallpaperRevision] fires
+/// once it finished, which repaints the chats.
+Uint8List? _bytesFor(String storageKey, String source) {
+  final cached = _wallpaperBytes[storageKey];
+  if (cached != null) return cached;
+  if (_resolved.contains(storageKey) || _loading.contains(storageKey)) {
+    return null;
+  }
+
+  _loading.add(storageKey);
+  unawaited(_load(storageKey, source));
+  return null;
+}
+
+Future<void> _load(String storageKey, String source) async {
+  try {
+    final bytes = await loadWallpaperBytes(storageKey);
+    if (bytes != null) {
+      _wallpaperBytes[storageKey] = bytes;
+    } else if (storageKey.isNotEmpty) {
+      // Nothing stored under this key, so the setting points at something we
+      // cannot restore. Drop it rather than claiming the room has a wallpaper.
+      await AppSettings.store.remove(_sourceKey(storageKey));
+    }
   } catch (e, s) {
     Logs().w('Unable to load the chat wallpaper of "$storageKey"', e, s);
+  } finally {
+    _loading.remove(storageKey);
+    _resolved.add(storageKey);
+    _notifyWallpaperChanged();
   }
 }
 
@@ -194,6 +213,7 @@ Future<void> saveWallpaper({
     // the setting only remembers that there is one.
     await saveWallpaperBytes(storageKey, bytes);
     _wallpaperBytes[storageKey] = bytes;
+    _resolved.add(storageKey);
     source = wallpaperIndexedDbMarker;
   } else {
     final directory = (await getApplicationDocumentsDirectory()).path;
@@ -222,6 +242,7 @@ Future<void> deleteWallpaper({required String? roomId}) async {
   final storageKey = roomId ?? '';
 
   _wallpaperBytes.remove(storageKey);
+  _resolved.remove(storageKey);
   if (kIsWeb) {
     try {
       await deleteWallpaperBytes(storageKey);
@@ -248,6 +269,7 @@ Future<void> deleteWallpaper({required String? roomId}) async {
 /// Makes [roomId] show no wallpaper at all, even when a global one is set.
 Future<void> setRoomWallpaperToNone(String roomId) async {
   _wallpaperBytes.remove(roomId);
+  _resolved.remove(roomId);
   if (kIsWeb) {
     try {
       await deleteWallpaperBytes(roomId);
@@ -316,14 +338,14 @@ ImageProvider? _imageProviderFor(String storageKey, String? source) {
   if (source == null || source.isEmpty || source == wallpaperNone) return null;
 
   if (kIsWeb) {
-    final bytes = _wallpaperBytes[storageKey];
-    if (bytes != null) return MemoryImage(bytes);
     // Not migrated yet, e.g. when `initWallpaper` has not run.
     if (source.startsWith('data:')) {
       final decoded = _decodeDataUrl(source);
       if (decoded != null) return MemoryImage(decoded);
+      return null;
     }
-    return null;
+    final bytes = _bytesFor(storageKey, source);
+    return bytes == null ? null : MemoryImage(bytes);
   }
 
   // A marker or data URL is meaningless on native platforms.
@@ -331,6 +353,39 @@ ImageProvider? _imageProviderFor(String storageKey, String? source) {
     return null;
   }
   return FileImage(File(source));
+}
+
+/// Drops every stored wallpaper of a room the user is no longer in.
+///
+/// Leaving a chat from this device cleans up right away, but a chat can also
+/// be left from another client, so the leftovers are swept on every start.
+Future<void> pruneWallpapersOfLeftRooms(List<Client> clients) async {
+  final prefix = '${AppSettings.wallpaperPath.key}.';
+  final storedRoomIds = AppSettings.store
+      .getKeys()
+      .where((key) => key.startsWith(prefix))
+      .map((key) => key.substring(prefix.length))
+      .toSet();
+  if (storedRoomIds.isEmpty) return;
+
+  final loggedIn = clients.where((client) => client.isLogged()).toList();
+  // Without a logged in client every room would look gone, which would wipe
+  // the settings of somebody who is merely signed out.
+  if (loggedIn.isEmpty) return;
+
+  for (final client in loggedIn) {
+    await client.roomsLoading;
+  }
+  final knownRoomIds = {
+    for (final client in loggedIn)
+      for (final room in client.rooms) room.id,
+  };
+
+  for (final roomId in storedRoomIds) {
+    if (knownRoomIds.contains(roomId)) continue;
+    Logs().v('Removing the wallpaper of the left room $roomId');
+    await deleteWallpaper(roomId: roomId);
+  }
 }
 
 /// Shrinks and re-encodes a picked image so that a wallpaper never costs more

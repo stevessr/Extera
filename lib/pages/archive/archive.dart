@@ -7,6 +7,7 @@ import 'package:extera_next/pages/archive/archive_view.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 
 class Archive extends StatefulWidget {
   const Archive({super.key});
@@ -28,6 +29,7 @@ class ArchiveController extends State<Archive> {
       context: context,
       future: () async {
         Logs().v('Forget room ${archive.last.getLocalizedDisplayname()}');
+        await deleteWallpaper(roomId: archive[i].id);
         await archive[i].forget();
         archive.removeAt(i);
       },
@@ -55,6 +57,7 @@ class ArchiveController extends State<Archive> {
       future: () async {
         while (archive.isNotEmpty) {
           Logs().v('Forget room ${archive.last.getLocalizedDisplayname()}');
+          await deleteWallpaper(roomId: archive.last.id);
           await archive.last.forget();
           archive.removeLast();
         }
