@@ -148,3 +148,62 @@ InlineSpan _replaceEmojiInSpan(InlineSpan span, double fontSize) {
     children: newChildren,
   );
 }
+
+/// A [Text] that renders its emoji as animations when the setting is on.
+///
+/// Meant for the short, emoji heavy places outside of the message body:
+/// reactions, reply previews and the emoji picker.
+class AnimatedEmojiText extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final TextScaler? textScaler;
+
+  /// Font size used to size the animations.
+  ///
+  /// Defaults to the font size of [style] or of the surrounding text style.
+  final double? fontSize;
+
+  const AnimatedEmojiText(
+    this.text, {
+    this.style,
+    this.maxLines,
+    this.overflow,
+    this.textScaler,
+    this.fontSize,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!animatedEmojiEnabled) {
+      return Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
+        textScaler: textScaler,
+      );
+    }
+
+    final effectiveStyle = DefaultTextStyle.of(context).style.merge(style);
+    final effectiveFontSize =
+        fontSize ?? effectiveStyle.fontSize ?? kDefaultFontSize;
+
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: buildAnimatedEmojiSpans(
+          text,
+          fontSize: (textScaler ?? TextScaler.noScaling).scale(
+            effectiveFontSize,
+          ),
+        ),
+      ),
+      maxLines: maxLines,
+      overflow: overflow ?? TextOverflow.clip,
+      textScaler: textScaler,
+    );
+  }
+}

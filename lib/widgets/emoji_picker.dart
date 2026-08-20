@@ -4,6 +4,7 @@ import 'package:emojis/emoji.dart';
 
 import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
 
 // ==========================================
 // 1. Data Models
@@ -394,7 +395,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.all(4.0),
-                      child: Text(
+                      child: AnimatedEmojiText(
                         v.displayName,
                         style: const TextStyle(fontSize: 28),
                       ),
@@ -514,7 +515,10 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         content = const Icon(Icons.error_outline, size: 20);
       }
     } else {
-      content = Text(emoji.displayName, style: const TextStyle(fontSize: 28));
+      content = AnimatedEmojiText(
+        emoji.displayName,
+        style: const TextStyle(fontSize: 28),
+      );
     }
 
     final hasVariations =

@@ -8,6 +8,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -147,7 +148,7 @@ class _Reaction extends StatelessWidget {
             animated: true,
             isThumbnail: false,
           )
-        : Text(
+        : AnimatedEmojiText(
             renderKey.toString(),
             style: TextStyle(
               color: reacted == true ? theme.onBubbleColor : textColor,
@@ -254,7 +255,7 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
 
     final title = reactionEntry!.key.startsWith('mxc://')
         ? MxcImage(uri: Uri.parse(reactionEntry!.key), width: 32, height: 32)
-        : Text(reactionEntry!.key);
+        : AnimatedEmojiText(reactionEntry!.key);
 
     return Scaffold(
       appBar: AppBar(title: title),

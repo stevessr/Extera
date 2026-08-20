@@ -447,8 +447,15 @@ class MessageContent extends StatelessWidget {
                 horizontal: useBubbleLayout ? 16 : 0,
                 vertical: 2,
               ),
+              // `SelectableText` renders through `RenderEditable`, which never
+              // dispatches taps to `TextSpan.recognizer`, so links inside it
+              // are dead on web. `SelectionArea` keeps the text selectable
+              // while the underlying `RenderParagraph` still handles taps.
+              // This is what the formatted message path already does.
               child: selectable
-                  ? SelectableText.rich(richSpan, textScaler: textScaler)
+                  ? SelectionArea(
+                      child: Text.rich(richSpan, textScaler: textScaler),
+                    )
                   : Text.rich(richSpan, textScaler: textScaler),
             );
         }

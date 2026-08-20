@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/widgets/animated_emoji_image.dart';
 
 void main() {
   group('animated emoji', () {
@@ -14,6 +15,9 @@ void main() {
         AppSettings.animatedEmoji.key: true,
       });
       await AppSettings.init(loadWebConfigFile: false);
+      // `init` keeps the store it created for the first test, so the new mock
+      // values only take effect after an explicit reload.
+      await AppSettings.store.reload();
     });
 
     test('resolves the codepoint of an emoji', () {
@@ -102,6 +106,36 @@ void main() {
       final spans = buildAnimatedEmojiSpans('hi 😀', fontSize: 14);
       expect(spans.length, 1);
       expect((spans.single as TextSpan).text, 'hi 😀');
+    });
+
+    testWidgets('AnimatedEmojiText animates a reaction key', (tester) async {
+      await tester.pumpWidget(
+        const Directionality(
+          textDirection: TextDirection.ltr,
+          child: AnimatedEmojiText('😀'),
+        ),
+      );
+      // The animation itself is loaded asynchronously, so the glyph is the
+      // placeholder. What matters here is that the emoji became a widget span.
+      expect(find.byType(AnimatedEmojiImage), findsOneWidget);
+    });
+
+    testWidgets('AnimatedEmojiText stays plain while the setting is off', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({
+        AppSettings.notoEmojiFont.key: false,
+        AppSettings.animatedEmoji.key: true,
+      });
+      await AppSettings.store.reload();
+
+      await tester.pumpWidget(
+        const Directionality(
+          textDirection: TextDirection.ltr,
+          child: AnimatedEmojiText('😀'),
+        ),
+      );
+      expect(find.byType(AnimatedEmojiImage), findsNothing);
     });
   });
 }

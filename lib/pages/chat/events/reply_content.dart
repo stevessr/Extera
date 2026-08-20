@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 
 class ReplyContent extends StatelessWidget {
@@ -99,7 +100,7 @@ class ReplyContent extends StatelessWidget {
                     );
                   },
                 ),
-                Text(
+                AnimatedEmojiText(
                   displayEvent
                       .calcLocalizedBodyFallback(
                         MatrixLocals(L10n.of(context)),
@@ -112,6 +113,7 @@ class ReplyContent extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                   style: textStyle,
+                  fontSize: fontSize,
                 ),
               ],
             ),
