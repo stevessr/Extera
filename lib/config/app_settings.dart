@@ -88,6 +88,8 @@ enum AppSettings<T> {
   showNoGoogle<bool>('chat.fluffy.show_no_google', false),
   notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
   animatedEmoji<bool>('xyz.extera.next.animatedEmoji', false),
+  biometricUnlock<bool>('xyz.extera.next.biometricUnlock', false),
+
 
   checkForUpdates<bool>('xyz.extera.next.checkForUpdates', true),
   colorSchemeSeed<int>('xyz.extera.next.colorSchemeSeed', 0x5625BA),

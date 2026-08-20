@@ -27,11 +27,14 @@ class AppLock extends State<AppLockWidget> with WidgetsBindingObserver {
   String? _pincode;
   bool _isLocked = false;
   bool _paused = false;
-  bool get isActive =>
+
+  /// Whether a passcode is configured at all.
+  bool get hasPincode =>
       _pincode != null &&
       int.tryParse(_pincode!) != null &&
-      _pincode!.length == 4 &&
-      !_paused;
+      _pincode!.length == 4;
+
+  bool get isActive => hasPincode && !_paused;
 
   @override
   void initState() {
@@ -84,6 +87,12 @@ class AppLock extends State<AppLockWidget> with WidgetsBindingObserver {
 
   void showLockScreen() => setState(() {
     _isLocked = true;
+  });
+
+  /// Opens the lock without a passcode, after the user was authenticated
+  /// biometrically.
+  void unlockWithBiometrics() => setState(() {
+    _isLocked = false;
   });
 
   Future<T> pauseWhile<T>(Future<T> future) async {

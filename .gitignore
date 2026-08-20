@@ -55,6 +55,7 @@ docs/tailwind.css
 android/key.jks
 android/keys.json
 android/Gemfile.lock
+android/.kotlin/sessions
 lib/l10n_old
 ios/Flutter/.last_build_id
 ios/Podfile.lock
@@ -79,3 +80,5 @@ lib/generated
 # Downloaded by tool/download_animated_emoji.dart, not checked in
 /assets/animated_emoji/*
 !/assets/animated_emoji/.gitkeep
+
+

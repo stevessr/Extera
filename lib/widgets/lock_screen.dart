@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/biometrics.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 
 const int _pinLength = 4;
@@ -28,6 +30,9 @@ class _LockScreenState extends State<LockScreen>
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
 
+  bool _biometricsAvailable = false;
+  bool _biometricsRunning = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +43,32 @@ class _LockScreenState extends State<LockScreen>
     _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
     );
+    _initBiometrics();
+  }
+
+  Future<void> _initBiometrics() async {
+    if (!AppSettings.biometricUnlock.value) return;
+    final available = await Biometrics.isAvailable;
+    if (!mounted || !available) return;
+    setState(() {
+      _biometricsAvailable = true;
+    });
+    // Ask right away, so that unlocking usually takes a single touch.
+    await _authenticateBiometrically();
+  }
+
+  Future<void> _authenticateBiometrically() async {
+    if (_biometricsRunning) return;
+    setState(() {
+      _biometricsRunning = true;
+    });
+    final reason = L10n.of(context).unlockWithBiometrics;
+    final success = await Biometrics.authenticate(reason);
+    if (!mounted) return;
+    setState(() {
+      _biometricsRunning = false;
+    });
+    if (success) AppLock.of(context).unlockWithBiometrics();
   }
 
   @override
@@ -258,6 +289,10 @@ class _LockScreenState extends State<LockScreen>
                     onBackspace: _onBackspacePressed,
                     backspaceEnabled: _pin.isNotEmpty && !_inputBlocked,
                     disabled: _inputBlocked,
+                    onBiometrics: _biometricsAvailable
+                        ? _authenticateBiometrically
+                        : null,
+                    biometricsEnabled: !_inputBlocked && !_biometricsRunning,
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -276,12 +311,18 @@ class _Numpad extends StatelessWidget {
     required this.onBackspace,
     required this.backspaceEnabled,
     required this.disabled,
+    this.onBiometrics,
+    this.biometricsEnabled = false,
   });
 
   final ValueChanged<String> onDigit;
   final VoidCallback onBackspace;
   final bool backspaceEnabled;
   final bool disabled;
+
+  /// Fills the otherwise empty key next to the zero. `null` hides it.
+  final VoidCallback? onBiometrics;
+  final bool biometricsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +366,19 @@ class _Numpad extends StatelessWidget {
             buildRow([digit('4'), digit('5'), digit('6')]),
             buildRow([digit('7'), digit('8'), digit('9')]),
             buildRow([
-              SizedBox(width: buttonSize, height: buttonSize),
+              if (onBiometrics == null)
+                SizedBox(width: buttonSize, height: buttonSize)
+              else
+                _NumpadKey(
+                  size: buttonSize,
+                  onPressed: biometricsEnabled ? onBiometrics : null,
+                  tonal: true,
+                  child: Icon(
+                    Icons.fingerprint,
+                    size: buttonSize * 0.42,
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  ),
+                ),
               digit('0'),
               _NumpadKey(
                 size: buttonSize,

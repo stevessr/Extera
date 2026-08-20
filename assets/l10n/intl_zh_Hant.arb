@@ -3256,5 +3256,9 @@
   "useAnimatedEmoji": "動態 Emoji",
   "useAnimatedEmojiDescription": "在訊息中將 emoji 顯示為動圖，輸入框仍顯示靜態字形。",
   "unableToOpenThread": "無法開啟該訊息串。",
+  "biometricUnlock": "指紋解鎖",
+  "biometricUnlockDescription": "使用指紋或臉部辨識代替輸入 PIN 碼。",
+  "unlockWithBiometrics": "解鎖 Extera",
+  "setAPasscodeFirst": "請先設定 PIN 碼。",
   "@@locale": "zh_Hant"
 }

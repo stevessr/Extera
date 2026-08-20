@@ -4147,5 +4147,9 @@
     "undoImageChange": "Undo image change",
     "useAnimatedEmoji": "Animated emoji",
     "useAnimatedEmojiDescription": "Show emoji as animations in messages. The input field keeps the static glyphs.",
-    "unableToOpenThread": "Unable to open this thread."
+    "unableToOpenThread": "Unable to open this thread.",
+    "biometricUnlock": "Unlock with fingerprint",
+    "biometricUnlockDescription": "Use your fingerprint or face instead of typing the passcode.",
+    "unlockWithBiometrics": "Unlock Extera",
+    "setAPasscodeFirst": "Set a passcode first."
 }

@@ -4290,5 +4290,9 @@
   "undoImageChange": "撤销图片更改",
   "useAnimatedEmoji": "动态 Emoji",
   "useAnimatedEmojiDescription": "在消息中将 emoji 显示为动图，输入框仍显示静态字形。",
-  "unableToOpenThread": "无法打开该消息串。"
+  "unableToOpenThread": "无法打开该消息串。",
+  "biometricUnlock": "指纹解锁",
+  "biometricUnlockDescription": "使用指纹或人脸代替输入 PIN 码。",
+  "unlockWithBiometrics": "解锁 Extera",
+  "setAPasscodeFirst": "请先设置 PIN 码。"
 }

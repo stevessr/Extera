@@ -1,11 +1,13 @@
 package xyz.extera.next
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 
 import android.content.Context
 
-class MainActivity : FlutterActivity() {
+// FlutterFragmentActivity rather than FlutterActivity: local_auth drives
+// androidx BiometricPrompt, which requires a FragmentActivity host.
+class MainActivity : FlutterFragmentActivity() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)

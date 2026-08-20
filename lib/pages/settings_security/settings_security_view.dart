@@ -198,6 +198,17 @@ class SettingsSecurityView extends StatelessWidget {
                                 ),
                                 onTap: controller.setAppLockAction,
                               ),
+                              if (controller.biometricsAvailable) ...[
+                                const ListDivider(),
+                                SettingsSwitchListTile.adaptive(
+                                  title: L10n.of(context).biometricUnlock,
+                                  subtitle: L10n.of(
+                                    context,
+                                  ).biometricUnlockDescription,
+                                  setting: AppSettings.biometricUnlock,
+                                  onChanged: controller.setBiometricUnlock,
+                                ),
+                              ],
                             ],
                           ],
                         ],

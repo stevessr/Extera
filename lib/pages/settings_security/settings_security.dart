@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/biometrics.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/app_lock.dart';
@@ -19,7 +20,39 @@ class SettingsSecurity extends StatefulWidget {
 }
 
 class SettingsSecurityController extends State<SettingsSecurity> {
+  /// Whether this device has a fingerprint or face enrolled, so that the
+  /// biometric unlock switch is worth showing at all.
+  bool biometricsAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final available = await Biometrics.isAvailable;
+    if (!mounted || !available) return;
+    setState(() {
+      biometricsAvailable = true;
+    });
+  }
+
+  /// Biometrics replace the passcode prompt, so they are pointless without a
+  /// passcode to begin with.
+  void setBiometricUnlock(bool enabled) async {
+    if (!enabled || AppLock.of(context).hasPincode) return;
+
+    await AppSettings.biometricUnlock.setItem(false);
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(L10n.of(context).setAPasscodeFirst)),
+    );
+  }
+
   void setAppLockAction() async {
+
     if (AppLock.of(context).isActive) {
       AppLock.of(context).showLockScreen();
     }
@@ -43,6 +76,12 @@ class SettingsSecurityController extends State<SettingsSecurity> {
     );
     if (newLock != null) {
       await AppLock.of(context).changePincode(newLock);
+      // Dropping the passcode also disables the biometric unlock that was
+      // guarding it.
+      if (newLock.isEmpty && AppSettings.biometricUnlock.value) {
+        await AppSettings.biometricUnlock.setItem(false);
+      }
+      if (mounted) setState(() {});
     }
   }
 
