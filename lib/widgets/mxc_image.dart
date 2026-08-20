@@ -1,15 +1,12 @@
-import 'dart:collection';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
-
-import 'package:matrix/matrix.dart';
-
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:flutter/material.dart';
+import 'package:matrix/matrix.dart';
 
 class MxcImage extends StatefulWidget {
   final Uri? uri;
@@ -20,9 +17,12 @@ class MxcImage extends StatefulWidget {
   final bool isThumbnail;
   final bool animated;
   final Duration retryDuration;
+  final Duration animationDuration;
+  final Curve animationCurve;
   final ThumbnailMethod thumbnailMethod;
   final Widget Function(BuildContext context)? placeholder;
   final String? cacheKey;
+  final String? cacheName;
   final Client? client;
   final BorderRadius borderRadius;
 
@@ -35,284 +35,183 @@ class MxcImage extends StatefulWidget {
     this.placeholder,
     this.isThumbnail = true,
     this.animated = false,
+    this.animationDuration = FluffyThemes.animationDuration,
     this.retryDuration = const Duration(seconds: 2),
+    this.animationCurve = FluffyThemes.animationCurve,
     this.thumbnailMethod = ThumbnailMethod.scale,
     this.cacheKey,
     this.client,
     this.borderRadius = BorderRadius.zero,
+    this.cacheName,
     super.key,
   });
 
   @override
   State<MxcImage> createState() => _MxcImageState();
+
+  static void clearCache(String cacheName) =>
+      _MxcImageState._imageDataCaches.remove(cacheName);
+}
+
+class _MxcImagePlaceholder extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final Widget Function(BuildContext context)? placeholder;
+
+  const _MxcImagePlaceholder({
+    required this.width,
+    required this.height,
+    required this.placeholder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return placeholder?.call(context) ??
+        Container(
+          width: width,
+          height: height,
+          alignment: Alignment.center,
+          child: const CircularProgressIndicator.adaptive(strokeWidth: 2),
+        );
+  }
 }
 
 class _MxcImageState extends State<MxcImage> {
-  static const int _maxCacheSize = 100;
-  static final LinkedHashMap<String, Uint8List> _imageDataCache =
-      LinkedHashMap<String, Uint8List>();
+  static final Map<String?, Map<String, Uint8List>> _imageDataCaches = {};
+  Uint8List? _imageDataNoCache;
 
-  Uint8List? _currentData;
-  bool _isLoading = false;
+  Uint8List? get _imageData => widget.cacheKey == null
+      ? _imageDataNoCache
+      : _imageDataCache[widget.cacheKey];
 
-  // Track retry attempts to prevent infinite loops
-  int _retryCount = 0;
-  static const int _maxRetries = 3;
+  set _imageData(Uint8List? data) {
+    if (data == null) return;
+    final cacheKey = widget.cacheKey;
+    cacheKey == null
+        ? _imageDataNoCache = data
+        : _imageDataCache[cacheKey] = data;
+  }
 
-  String? get _effectiveCacheKey {
-    if (widget.cacheKey != null) return widget.cacheKey;
-    if (widget.event != null) {
-      final suffix = widget.isThumbnail ? '_thumb' : '';
-      return '${widget.event!.eventId}$suffix';
-    }
-    if (widget.uri != null) {
-      final suffix = widget.isThumbnail ? '_thumb' : '';
-      return '${widget.uri}$suffix';
-    }
-    return null;
+  Map<String, Uint8List> get _imageDataCache =>
+      _imageDataCaches[widget.cacheName ?? ''] ??= {};
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _imageData;
+    final hasData = data != null && data.isNotEmpty;
+
+    return AnimatedCrossFade(
+      duration: FluffyThemes.animationDuration,
+      firstChild: ClipRRect(
+        borderRadius: widget.borderRadius,
+        child: data == null
+            ? _MxcImagePlaceholder(
+                width: widget.width,
+                height: widget.height,
+                placeholder: widget.placeholder,
+              )
+            : Image.memory(
+                data,
+                width: widget.width,
+                height: widget.height,
+                fit: widget.fit,
+                filterQuality: widget.isThumbnail
+                    ? FilterQuality.low
+                    : FilterQuality.medium,
+                errorBuilder: (context, e, s) {
+                  Logs().d('Unable to render mxc image', e, s);
+                  return SizedBox(
+                    width: widget.width,
+                    height: widget.height,
+                    child: Material(
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+      secondChild: _MxcImagePlaceholder(
+        width: widget.width,
+        height: widget.height,
+        placeholder: widget.placeholder,
+      ),
+      crossFadeState: hasData
+          ? CrossFadeState.showFirst
+          : CrossFadeState.showSecond,
+    );
   }
 
   @override
   void initState() {
     super.initState();
-    _currentData = _getFromCache();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_currentData == null && !_isLoading) {
-      _load();
-    }
-  }
-
-  @override
-  void didUpdateWidget(MxcImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.uri != widget.uri ||
-        oldWidget.event != widget.event ||
-        oldWidget.cacheKey != widget.cacheKey) {
-      _retryCount = 0;
-
-      final cached = _getFromCache();
-      if (cached != null) {
-        setState(() {
-          _currentData = cached;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _currentData = null;
-          _isLoading = false;
-        });
-        _load();
-      }
-    }
-  }
-
-  Uint8List? _getFromCache() {
-    final key = _effectiveCacheKey;
-    if (key != null) {
-      final data = _imageDataCache.remove(key);
-      if (data != null) {
-        _imageDataCache[key] = data;
-      }
-      return data;
-    }
-    return null;
-  }
-
-  void _saveToCache(Uint8List data) {
-    final key = _effectiveCacheKey;
-    if (key != null) {
-      _imageDataCache.remove(key);
-      _imageDataCache[key] = data;
-
-      while (_imageDataCache.length > _maxCacheSize) {
-        _imageDataCache.remove(_imageDataCache.keys.first);
-      }
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoad());
   }
 
   Future<void> _load() async {
-    if (_isLoading || !mounted) return;
+    if (!mounted) return;
+    final client =
+        widget.client ?? widget.event?.room.client ?? Matrix.of(context).client;
+    final uri = widget.uri;
+    final event = widget.event;
 
-    if (_retryCount >= _maxRetries) {
-      Logs().w(
-        'MxcImage failed to load after $_maxRetries attempts: ${widget.uri}',
+    if (uri != null) {
+      final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+      final width = widget.width;
+      final realWidth = width == null ? null : width * devicePixelRatio;
+      final height = widget.height;
+      final realHeight = height == null ? null : height * devicePixelRatio;
+
+      final remoteData = await client.downloadMxcCached(
+        uri,
+        width: realWidth,
+        height: realHeight,
+        thumbnailMethod: widget.thumbnailMethod,
+        isThumbnail: widget.isThumbnail,
+        animated: widget.animated,
       );
-      return;
+      if (!mounted) return;
+      setState(() {
+        _imageData = remoteData;
+      });
     }
 
-    final originalUri = widget.uri;
-    final originalEvent = widget.event;
-    final originalCacheKey = widget.cacheKey;
-    final originalIsThumbnail = widget.isThumbnail;
-    final originalAnimated = widget.animated;
-    final originalWidth = widget.width;
-    final originalHeight = widget.height;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final client =
-          widget.client ??
-          widget.event?.room.client ??
-          Matrix.of(context).client;
-      final uri = originalUri;
-      final event = originalEvent;
-
-      Uint8List? loadedBytes;
-
-      if (uri != null) {
-        final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-        final realWidth = originalWidth != null
-            ? originalWidth * devicePixelRatio
-            : null;
-        final realHeight = originalHeight != null
-            ? originalHeight * devicePixelRatio
-            : null;
-
-        loadedBytes = await client.downloadMxcCached(
-          uri,
-          width: realWidth,
-          height: realHeight,
-          thumbnailMethod: widget.thumbnailMethod,
-          isThumbnail: originalIsThumbnail,
-          animated: originalAnimated,
-        );
-      } else if (event != null) {
-        final useThumbnail = originalIsThumbnail && event.hasThumbnail;
-        if (!useThumbnail &&
-            !{
-              MessageTypes.Image,
-              MessageTypes.Sticker,
-            }.contains(event.messageType)) {
-          throw Exception(
-            'Event of type ${event.messageType} has no thumbnail!',
-          );
-        }
-        final data = await event.downloadAndDecryptAttachment(
-          getThumbnail: useThumbnail,
-        );
-        if (data.detectFileType is MatrixImageFile) {
-          loadedBytes = data.bytes;
-        }
+    if (event != null) {
+      final useThumbnail = widget.isThumbnail && event.hasThumbnail;
+      if (!useThumbnail &&
+          !{
+            MessageTypes.Image,
+            MessageTypes.Sticker,
+          }.contains(event.messageType)) {
+        Logs().e('Event of type ${event.messageType} has no thumbnail!');
       }
-
-      if (!mounted) return;
-
-      if (originalUri != widget.uri ||
-          originalEvent != widget.event ||
-          originalCacheKey != widget.cacheKey) {
+      final data = await event.downloadAndDecryptAttachment(
+        getThumbnail: useThumbnail,
+      );
+      if (data.detectFileType is MatrixImageFile) {
+        if (!mounted) return;
+        setState(() {
+          _imageData = data.bytes;
+        });
         return;
       }
+    }
+  }
 
-      if (loadedBytes != null && loadedBytes.isNotEmpty) {
-        _saveToCache(loadedBytes);
-        setState(() {
-          _currentData = loadedBytes;
-          _isLoading = false;
-          _retryCount = 0;
-        });
-      } else {
-        _scheduleRetry();
-      }
+  Future<void> _tryLoad() async {
+    if (_imageData != null) {
+      return;
+    }
+    try {
+      await _load();
     } on IOException catch (_) {
-      _scheduleRetry();
-    } catch (e, s) {
-      Logs().d('Unexpected error loading mxc image', e, s);
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (!mounted) return;
+      await Future.delayed(widget.retryDuration);
+      _tryLoad();
     }
-  }
-
-  void _scheduleRetry() {
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-
-    _retryCount++;
-
-    // Exponential backoff: 2s, 4s, 8s, 16s...
-    final delay = widget.retryDuration * pow(2, _retryCount - 1);
-
-    Future.delayed(delay, () {
-      if (mounted && _currentData == null) {
-        _load();
-      }
-    });
-  }
-
-  Widget _buildPlaceholder(BuildContext context) =>
-      widget.placeholder?.call(context) ??
-      SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: const Center(
-          child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-        ),
-      );
-
-  Widget _buildError(BuildContext context) =>
-      widget.placeholder?.call(context) ??
-      SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Material(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-          child: Icon(
-            Icons.broken_image_outlined,
-            size: min(widget.height ?? 64, 64),
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final data = _currentData;
-
-    if (data == null || data.isEmpty) {
-      if (_retryCount >= _maxRetries && !_isLoading) {
-        return _buildError(context);
-      }
-
-      return KeyedSubtree(
-        key: const ValueKey('placeholder'),
-        child: _buildPlaceholder(context),
-      );
-    }
-
-    final repaintKey = ValueKey([
-      _effectiveCacheKey ?? widget.uri,
-      widget.width,
-      widget.height,
-      widget.isThumbnail,
-      widget.fit,
-    ]);
-
-    final imageWidget = Image.memory(
-      data,
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      gaplessPlayback: true,
-      filterQuality: widget.isThumbnail
-          ? FilterQuality.low
-          : FilterQuality.medium,
-      errorBuilder: (context, e, s) {
-        Logs().d('Unable to render mxc image bytes', e, s);
-        return _buildError(context);
-      },
-    );
-
-    return RepaintBoundary(
-      key: repaintKey,
-      child: ClipRRect(borderRadius: widget.borderRadius, child: imageWidget),
-    );
   }
 }

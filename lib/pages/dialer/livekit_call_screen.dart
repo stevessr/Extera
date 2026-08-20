@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:extera_next/config/themes.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
@@ -7,7 +8,6 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:matrix/matrix.dart' show Client, Logs;
 
-import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/dialer/dialer.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
@@ -417,12 +417,13 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
       ),
       body: _connecting
           ? Center(
@@ -1041,6 +1042,50 @@ class _CallControls extends StatelessWidget {
     this.screenShareActive = false,
   });
 
+  Widget _buildCallButton(
+    BuildContext context,
+    IconData icon,
+    String label,
+    bool enabled,
+    void Function() onPressed,
+  ) {
+    final theme = Theme.of(context);
+
+    if (!FluffyThemes.isColumnMode(context)) {
+      return IconButton.filledTonal(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          elevation: 0,
+          backgroundColor: enabled
+              ? theme.colorScheme.secondaryContainer
+              : Colors.transparent,
+          foregroundColor: enabled
+              ? theme.colorScheme.onSecondaryContainer
+              : theme.colorScheme.onSurface,
+        ),
+        icon: Icon(icon),
+      );
+    }
+
+    return FilledButton.tonal(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        elevation: 0,
+        backgroundColor: enabled
+            ? theme.colorScheme.secondaryContainer
+            : Colors.transparent,
+        foregroundColor: enabled
+            ? theme.colorScheme.onSecondaryContainer
+            : theme.colorScheme.onSurface,
+      ),
+      child: Row(
+        mainAxisSize: .min,
+        spacing: 12,
+        children: [Icon(icon), Text(label)],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1052,82 +1097,84 @@ class _CallControls extends StatelessWidget {
       top: false,
       child: Padding(
         padding: const .all(16),
-        child: Container(
-          padding: const .symmetric(vertical: 16, horizontal: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-          ),
+        child: Align(
+          alignment: .center,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: .min,
+            spacing: 12,
             children: [
-              FloatingActionButton(
-                onPressed: () {
-                  final manager = LiveKitCallManager();
-                  lp?.setMicrophoneEnabled(
-                    !micOn,
-                    audioCaptureOptions: lk.AudioCaptureOptions(
-                      deviceId: manager.selectedAudioInput,
-                      echoCancellation: manager.echoCancellation,
-                      noiseSuppression: manager.noiseSuppression,
-                      autoGainControl: manager.autoGainControl,
-                      highPassFilter: true,
-                      typingNoiseDetection: true,
+              Container(
+                padding: const .symmetric(vertical: 8, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  spacing: 8,
+                  children: [
+                    _buildCallButton(
+                      context,
+                      camOn ? Icons.videocam : Icons.videocam_off,
+                      L10n.of(context).callVideocam,
+                      camOn,
+                      () {
+                        final manager = LiveKitCallManager();
+                        lp?.setCameraEnabled(
+                          !camOn,
+                          cameraCaptureOptions: lk.CameraCaptureOptions(
+                            deviceId: manager.selectedVideoInput,
+                            maxFrameRate: 30,
+                            params: lk.VideoParametersPresets.h720_169,
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-                backgroundColor: micOn
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.surfaceContainerHighest,
-                foregroundColor: micOn
-                    ? theme.colorScheme.surfaceContainerHighest
-                    : theme.colorScheme.onSurface,
-                child: Icon(micOn ? Icons.mic : Icons.mic_off),
-              ),
-              FloatingActionButton(
-                onPressed: () {
-                  final manager = LiveKitCallManager();
-                  lp?.setCameraEnabled(
-                    !camOn,
-                    cameraCaptureOptions: lk.CameraCaptureOptions(
-                      deviceId: manager.selectedVideoInput,
-                      maxFrameRate: 30,
-                      params: lk.VideoParametersPresets.h720_169,
+                    _buildCallButton(
+                      context,
+                      micOn ? Icons.mic : Icons.mic_off,
+                      L10n.of(context).callMic,
+                      micOn,
+                      () {
+                        final manager = LiveKitCallManager();
+                        lp?.setMicrophoneEnabled(
+                          !micOn,
+                          audioCaptureOptions: lk.AudioCaptureOptions(
+                            deviceId: manager.selectedAudioInput,
+                            echoCancellation: manager.echoCancellation,
+                            noiseSuppression: manager.noiseSuppression,
+                            autoGainControl: manager.autoGainControl,
+                            highPassFilter: true,
+                            typingNoiseDetection: true,
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-                backgroundColor: camOn
-                    ? theme.colorScheme.onSurfaceVariant
-                    : theme.colorScheme.surfaceContainerHighest,
-                foregroundColor: camOn
-                    ? theme.colorScheme.surfaceContainerHighest
-                    : theme.colorScheme.onSurfaceVariant,
-                child: Icon(camOn ? Icons.videocam : Icons.videocam_off),
-              ),
-              FloatingActionButton(
-                onPressed: onHangup,
-                backgroundColor: theme.colorScheme.errorContainer,
-                foregroundColor: theme.colorScheme.onErrorContainer,
-                child: Icon(Icons.call_end),
+                    _buildCallButton(
+                      context,
+                      screenShareActive
+                          ? Icons.screen_share
+                          : Icons.screen_share_outlined,
+                      L10n.of(context).callScreenShare,
+                      screenShareActive,
+                      onScreenShare,
+                    ),
+                    _buildCallButton(
+                      context,
+                      Icons.settings,
+                      L10n.of(context).lkCallSettings,
+                      false,
+                      () => _showSettingsSheet(context, room),
+                    ),
+                  ],
+                ),
               ),
 
               FloatingActionButton(
-                onPressed: onScreenShare,
-                backgroundColor: screenShareActive
-                    ? theme.colorScheme.onSurfaceVariant
-                    : theme.colorScheme.surfaceContainerHighest,
-                foregroundColor: screenShareActive
-                    ? theme.colorScheme.surfaceContainerHighest
-                    : theme.colorScheme.onSurfaceVariant,
-                child: Icon(
-                  screenShareActive
-                      ? Icons.screen_share
-                      : Icons.screen_share_outlined,
-                ),
-              ),
-              FloatingActionButton(
-                onPressed: () => _showSettingsSheet(context, room),
-                child: Icon(Icons.settings),
+                onPressed: onHangup,
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                child: Icon(Icons.call_end_outlined),
               ),
             ],
           ),

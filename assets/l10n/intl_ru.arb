@@ -4222,5 +4222,11 @@
     "downloadFile": "Скачать файл",
     "quickAction": "Быстрое действие",
     "quickActionDescription": "Выполнить действие при двойном нажатии на сообщение.",
-    "react": "Реакция"
+    "react": "Реакция",
+    "hideIgnoredUsers": "Скрыть игнорируемых",
+    "showIgnoredUsers": "Показать игнорируемых",
+    "callVideocam": "Видео",
+    "callMic": "Микрофон",
+    "callScreenShare": "Экран",
+    "lkCallSettings": "Настройки"
 }

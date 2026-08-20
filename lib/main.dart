@@ -104,7 +104,9 @@ Future<void> startGui(List<Client> clients, SharedPreferences store) async {
 
   // Preload first client
   final firstClient = clients.firstOrNull;
+  Logs().i("Loading rooms...");
   await firstClient?.roomsLoading;
+  Logs().i("Loading account data...");
   await firstClient?.accountDataLoading;
 
   ErrorWidget.builder = (details) => FluffyChatErrorWidget(details);

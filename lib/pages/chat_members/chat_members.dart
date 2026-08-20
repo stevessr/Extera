@@ -21,6 +21,16 @@ class ChatMembersController extends State<ChatMembersPage> {
   List<User>? filteredMembers;
   Object? error;
   Membership membershipFilter = Membership.join;
+  bool _showIgnoredUsers = false;
+
+  bool get showIgnoredUsers => _showIgnoredUsers;
+
+  void setShowIgnoredUsers(bool value) {
+    setState(() {
+      _showIgnoredUsers = value;
+      setFilter();
+    });
+  }
 
   final TextEditingController filterController = TextEditingController();
 
@@ -30,6 +40,7 @@ class ChatMembersController extends State<ChatMembersPage> {
   }
 
   Future<void> setFilter([_]) async {
+    final client = Matrix.of(context).client;
     final filter = filterController.text.toLowerCase().trim();
 
     final members = this.members
@@ -38,8 +49,17 @@ class ChatMembersController extends State<ChatMembersPage> {
 
     if (filter.isEmpty) {
       setState(() {
-        filteredMembers = members
-          ?..sort((b, a) => a.powerLevel.level.compareTo(b.powerLevel.level));
+        filteredMembers =
+            members
+                ?.where(
+                  (user) =>
+                      showIgnoredUsers ||
+                      !client.ignoredUsers.contains(user.id),
+                )
+                .toList()
+              ?..sort(
+                (b, a) => a.powerLevel.level.compareTo(b.powerLevel.level),
+              );
       });
       return;
     }
@@ -48,8 +68,13 @@ class ChatMembersController extends State<ChatMembersPage> {
           members
               ?.where(
                 (user) =>
-                    user.displayName?.toLowerCase().contains(filter) ??
+                    (user.displayName?.toLowerCase().contains(filter) ??
+                        false) ||
                     user.id.toLowerCase().contains(filter),
+              )
+              .where(
+                (user) =>
+                    showIgnoredUsers || !client.ignoredUsers.contains(user.id),
               )
               .toList()
             ?..sort((b, a) => a.powerLevel.level.compareTo(b.powerLevel.level));
@@ -72,8 +97,8 @@ class ChatMembersController extends State<ChatMembersPage> {
 
       setState(() {
         members = participants;
+        setFilter();
       });
-      setFilter();
     } catch (e, s) {
       Logs().d(
         'Unable to request participants. Try again in 3 seconds...',

@@ -35,6 +35,8 @@ class ParticipantListItem extends StatelessWidget {
         user.powerLevel.role == PowerLevelRole.admin ||
         user.powerLevel.role == PowerLevelRole.owner;
 
+    final ignored = user.room.client.ignoredUsers.contains(user.id);
+
     var statusMsg = user.presence?.presence.statusMsg;
 
     if (statusMsg != null && statusMsg.trimLeft().startsWith('@')) {
@@ -50,8 +52,15 @@ class ParticipantListItem extends StatelessWidget {
               spacing: 4,
               mainAxisSize: .min,
               children: [
-                if (user.room.client.userDeviceKeys[user.id]?.verified ==
-                    .verified)
+                if (ignored)
+                  Icon(
+                    Icons.block_outlined,
+                    color: theme.colorScheme.error,
+                    size: 18,
+                  ),
+                if (user.room.encrypted &&
+                    user.room.client.userDeviceKeys[user.id]?.verified ==
+                        .verified)
                   Icon(
                     Icons.shield,
                     color: theme.colorScheme.primary,
@@ -126,7 +135,7 @@ class ParticipantListItem extends StatelessWidget {
         style: TextStyle(fontStyle: statusMsg != null ? .italic : .normal),
       ),
       leading: Opacity(
-        opacity: user.membership == Membership.join ? 1 : 0.5,
+        opacity: user.membership == Membership.join && !ignored ? 1 : 0.5,
         child: Avatar(
           mxContent: user.avatarUrl,
           name: user.calcDisplayname(),
