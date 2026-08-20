@@ -46,13 +46,12 @@ class SettingsSecurityController extends State<SettingsSecurity> {
     await AppSettings.biometricUnlock.setItem(false);
     if (!mounted) return;
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(L10n.of(context).setAPasscodeFirst)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(L10n.of(context).setAPasscodeFirst)));
   }
 
   void setAppLockAction() async {
-
     if (AppLock.of(context).isActive) {
       AppLock.of(context).showLockScreen();
     }
