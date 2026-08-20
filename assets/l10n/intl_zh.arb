@@ -4294,5 +4294,11 @@
   "biometricUnlock": "指纹解锁",
   "biometricUnlockDescription": "使用指纹或人脸代替输入 PIN 码。",
   "unlockWithBiometrics": "解锁 Extera",
-  "setAPasscodeFirst": "请先设置 PIN 码。"
+  "setAPasscodeFirst": "请先设置 PIN 码。",
+  "hideIgnoredUsers": "隐藏被忽略的用户",
+  "showIgnoredUsers": "显示被忽略的用户",
+  "callVideocam": "视频通话",
+  "callMic": "语音通话",
+  "callScreenShare": "屏幕共享",
+  "lkCallSettings": "通话设置"
 }
