@@ -100,13 +100,16 @@ install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
 
-# Ensure libsqlcipher.dll exists alongside sqlite3.dll
+# Copy native assets (sqlcipher.dll, webcrypto.dll, etc.) to the output directory
 install(CODE "
-  if(EXISTS \"${CMAKE_INSTALL_PREFIX}/sqlite3.dll\")
-    file(COPY_FILE
-      \"${CMAKE_INSTALL_PREFIX}/sqlite3.dll\"
-      \"${CMAKE_INSTALL_PREFIX}/libsqlcipher.dll\"
-    )
+  set(_native_dir \"${PROJECT_BUILD_DIR}/native_assets/windows\")
+  if(EXISTS \"\${_native_dir}\")
+    file(GLOB _native_dlls \"\${_native_dir}/*.dll\")
+    foreach(_dll IN LISTS _native_dlls)
+      get_filename_component(_dll_name \"\${_dll}\" NAME)
+      message(STATUS \"Installing native asset: \${_dll_name}\")
+      file(COPY_FILE \"\${_dll}\" \"${CMAKE_INSTALL_PREFIX}/\${_dll_name}\")
+    endforeach()
   endif()
 " COMPONENT Runtime)
 target_compile_options(${BINARY_NAME} PRIVATE /W0)
