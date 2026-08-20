@@ -47,7 +47,7 @@ void main() async {
   if (PlatformInfos.isWeb) {
     // Disable the native browser context menu so that our own right click
     // handlers (message context menu, image viewer, ...) can take over.
-    BrowserContextMenu.disableContextMenu();
+    await BrowserContextMenu.disableContextMenu();
   }
 
   MediaKit.ensureInitialized();
