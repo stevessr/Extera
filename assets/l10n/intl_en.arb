@@ -252,6 +252,16 @@
             }
         }
     },
+    "allowAnimatedAvatars": "Allow animated avatars",
+    "@allowAnimatedAvatars": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "allowAnimatedAvatarsDescription": "Play animated WebP, APNG and GIF profile pictures",
+    "@allowAnimatedAvatarsDescription": {
+        "type": "String",
+        "placeholder": {}
+    },
     "autoplayImages": "Automatically play animated stickers and emotes",
     "@autoplayImages": {
         "type": "String",
