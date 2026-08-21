@@ -315,7 +315,11 @@ abstract class AppRoutes {
               redirect: loggedOutRedirect,
             ),
             ShellRoute(
-              pageBuilder: (context, state, child) => defaultPageBuilder(
+              // A ShellRoute owns a nested Navigator. Letting this page use
+              // the regular MaterialPage transition briefly mounts the old
+              // and new shell at the same time, which gives go_router's
+              // nested Navigator the same GlobalObjectKey twice.
+              pageBuilder: (context, state, child) => noTransitionPageBuilder(
                 context,
                 state,
                 FluffyThemes.isColumnMode(context)

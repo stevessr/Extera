@@ -15,6 +15,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/crypto_backup_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -465,13 +466,13 @@ class SettingsController extends State<Settings> {
     if (client.prevBatch == null) {
       await client.onSync.stream.first;
     }
-    final crossSigning =
-        await client.encryption?.crossSigning.isCached() ?? false;
+    final crossSigning = await client.hasCachedCrossSigningKeys();
     final needsBootstrap =
         await client.encryption?.keyManager.isCached() == false ||
         client.encryption?.crossSigning.enabled == false ||
         crossSigning == false;
     final isUnknownSession = client.isUnknownSession;
+    if (!mounted) return;
     setState(() {
       showChatBackupBanner = needsBootstrap || isUnknownSession;
     });

@@ -7,6 +7,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/device_settings/device_settings_view.dart';
 import 'package:extera_next/pages/key_verification/key_verification_dialog.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/crypto_backup_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -41,8 +42,9 @@ class DevicesSettingsController extends State<DevicesSettings> {
     final client = Matrix.of(context).client;
     if (client.encryption?.keyManager.enabled == true) {
       if (await client.encryption?.keyManager.isCached() == false ||
-          await client.encryption?.crossSigning.isCached() == false ||
-          client.isUnknownSession && !mounted) {
+          await client.hasCachedCrossSigningKeys() == false ||
+          client.isUnknownSession) {
+        if (!mounted) return;
         setState(() {
           chatBackupEnabled = false;
         });
