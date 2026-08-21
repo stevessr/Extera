@@ -10,7 +10,13 @@ class BootstrapViewModelState {
   String? recoveryKey;
   bool isLoading = false;
   Object? unlockWithError;
-  ({bool connected, bool initialized})? cryptoIdentityState;
+  ({
+    bool keyBackupEnabled,
+    bool crossSigningEnabled,
+    bool initialized,
+    bool connected,
+  })?
+  cryptoIdentityState;
   bool reset = false;
   KeyVerification? keyVerification;
   List<DeviceKeys>? connectedDevices;
