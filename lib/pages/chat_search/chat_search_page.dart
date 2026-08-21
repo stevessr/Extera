@@ -64,7 +64,7 @@ class ChatSearchController extends State<ChatSearchPage>
           .map(
             (result) => (
               [
-                if (previousSearchResult != null) ...previousSearchResult,
+                ...?previousSearchResult,
                 ...result.$1,
               ],
               result.$2,
@@ -94,7 +94,7 @@ class ChatSearchController extends State<ChatSearchPage>
           .map(
             (result) => (
               [
-                if (previousSearchResult != null) ...previousSearchResult,
+                ...?previousSearchResult,
                 ...result.$1,
               ],
               result.$2,
@@ -124,7 +124,7 @@ class ChatSearchController extends State<ChatSearchPage>
           .map(
             (result) => (
               [
-                if (previousSearchResult != null) ...previousSearchResult,
+                ...?previousSearchResult,
                 ...result.$1,
               ],
               result.$2,

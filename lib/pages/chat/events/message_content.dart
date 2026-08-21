@@ -427,7 +427,7 @@ class MessageContent extends StatelessWidget {
               ),
             );
             final spanChildren = <InlineSpan>[
-              ...?replaceEmojiInSpans(
+              ...replaceEmojiInSpans(
                 buildTextSpanChildren(
                       linkify(
                         messageText,
