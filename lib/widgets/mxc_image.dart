@@ -6,6 +6,7 @@ import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' show ClientException;
 import 'package:matrix/matrix.dart';
 
 class MxcImage extends StatefulWidget {
@@ -208,10 +209,24 @@ class _MxcImageState extends State<MxcImage> {
     }
     try {
       await _load();
-    } on IOException catch (_) {
-      if (!mounted) return;
-      await Future.delayed(widget.retryDuration);
-      _tryLoad();
+    } on IOException {
+      _retryAfterDelay();
+    } on ClientException {
+      // On the web, transport failures ("Failed to fetch") surface as
+      // package:http's ClientException, which implements Exception but not
+      // IOException. Same recoverable error class: retrying may succeed.
+      _retryAfterDelay();
+    } catch (e, s) {
+      // Deterministic failure (e.g. HTTP error status): retrying cannot
+      // succeed. Keep the placeholder instead of crashing the app.
+      Logs().e('Failed to load image', e, s);
     }
+  }
+
+  void _retryAfterDelay() {
+    if (!mounted) return;
+    Future.delayed(widget.retryDuration, () {
+      if (mounted) _tryLoad();
+    });
   }
 }
