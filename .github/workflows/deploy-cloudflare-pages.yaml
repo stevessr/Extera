@@ -10,9 +10,12 @@ on:
   push:
     branches:
       - main
+      # wasm branch: build the dart2wasm bundle and publish it as the
+      # development (preview) Worker instead of touching production.
+      - wasm
 
 concurrency:
-  group: cloudflare-pages-${{ github.workflow }}-${{ inputs.ref }}
+  group: cloudflare-pages-${{ github.workflow }}-${{ inputs.ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
@@ -23,8 +26,31 @@ defaults:
     shell: bash
 
 jobs:
-  deploy:
-    name: Build and deploy web
+  variant:
+    name: Resolve deploy variant
+    runs-on: ubuntu-latest
+    outputs:
+      wasm: ${{ steps.resolve.outputs.wasm }}
+    steps:
+      - name: Resolve deploy variant
+        id: resolve
+        env:
+          DISPATCH_REF: ${{ inputs.ref }}
+        run: |
+          # Push events provide GITHUB_REF_NAME; workflow_dispatch refs may be
+          # written either way ("wasm" or "refs/heads/wasm").
+          ref="$DISPATCH_REF"
+          if [ -z "$ref" ]; then ref="$GITHUB_REF_NAME"; fi
+          case "$ref" in
+            wasm|refs/heads/wasm) echo "wasm=true" >>"$GITHUB_OUTPUT" ;;
+            *) echo "wasm=false" >>"$GITHUB_OUTPUT" ;;
+          esac
+
+  # Production pipeline: JS-only bundle deployed as the "extera" Worker.
+  deploy-js:
+    name: Build and deploy web (JS, production)
+    needs: variant
+    if: needs.variant.outputs.wasm == 'false'
     runs-on: ubuntu-latest
     steps:
       # JS actions below can require node24 on newer releases.
@@ -52,6 +78,10 @@ jobs:
             ~/.rustup/update-hashes
           key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
 
+      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
+      # bindings.
+      - run: rustup toolchain install nightly --component rust-src
+
       - name: Restore yq binary
         uses: actions/cache@v4
         with:
@@ -63,10 +93,6 @@ jobs:
           mkdir -p "$HOME/.local/bin"
           YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
           echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
-      # bindings.
-      - run: rustup toolchain install nightly --component rust-src
 
       - name: Prepare web
         run: ./scripts/prepare-web.sh
@@ -86,3 +112,77 @@ jobs:
           # wrangler.jsonc. Passing it here would be read as the entry-point
           # script instead.
           command: deploy
+
+  # Development pipeline: dart2wasm bundle deployed as a separate worker so
+  # production traffic and config are untouched.
+  deploy-wasm-dev:
+    name: Build and deploy web (wasm, development)
+    needs: variant
+    if: needs.variant.outputs.wasm == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # JS actions below can require node24 on newer releases.
+      - uses: actions/setup-node@v7
+        with:
+        # Version Spec of the version to use in SemVer notation.
+        # It also admits such aliases as lts/*, latest, nightly and canary builds
+        # Examples: 12.x, 10.15.1, >=10.15.0, lts/Hydrogen, 16-nightly, latest, node
+          node-version: '24'
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-target-dir: "true"
+
+      - name: Restore nightly rustup toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/toolchains/nightly-*
+            ~/.rustup/update-hashes
+          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
+
+      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
+      # bindings.
+      - run: rustup toolchain install nightly --component rust-src
+
+      - name: Restore yq binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/yq
+          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
+
+      - name: Install yq
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+
+      - name: Prepare web
+        run: ./scripts/prepare-web.sh
+
+      - name: Build release web (dart2wasm + JS fallback)
+        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --wasm
+
+      # dart2wasm requires cross-origin isolation. Workers assets honor the
+      # Pages-style _headers file, so ship COOP/COEP with the dev bundle.
+      - name: Add COOP/COEP headers
+        run: |
+          printf '%s\n' \
+            '/*' \
+            '  Cross-Origin-Opener-Policy: same-origin' \
+            '  Cross-Origin-Embedder-Policy: require-corp' >build/web/_headers
+
+      # Same static assets under a separate worker name (--name overrides
+      # "extera" from wrangler.jsonc). Serves at
+      # https://extera-dev.<account-subdomain>.workers.dev.
+      - name: Deploy to Cloudflare (development)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --name extera-dev
