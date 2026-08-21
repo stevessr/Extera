@@ -50,7 +50,6 @@ import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
-import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -587,29 +586,6 @@ class ChatController extends State<ChatPageWithRoom>
     sendingClient = Matrix.of(context).client;
     readMarkerEventId = room.hasNewMessages ? room.fullyRead : '';
     WidgetsBinding.instance.addObserver(this);
-    if (kIsWeb) {
-      registerWebDrop(
-        onDragStateChanged: (dragging) {
-          if (mounted) setState(() => this.dragging = dragging);
-        },
-        onDrop: (files) async {
-          if (!mounted) return;
-          setState(() => dragging = false);
-          if (files.isEmpty) return;
-          await showAdaptiveDialog(
-            context: context,
-            useRootNavigator: false,
-            builder: (c) => SendFileDialog(
-              files: files,
-              room: room,
-              thread: thread,
-              replyEvent: replyEvent,
-              outerContext: context,
-            ),
-          );
-        },
-      );
-    }
     _tryLoadTimeline();
 
     _getThreads();
@@ -918,9 +894,6 @@ class ChatController extends State<ChatPageWithRoom>
     _disposeWebDropListener?.call();
 
     WidgetsBinding.instance.removeObserver(this);
-    if (kIsWeb) {
-      unregisterWebDrop();
-    }
 
     typingCoolDown?.cancel();
     typingTimeout?.cancel();
