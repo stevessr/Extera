@@ -54,12 +54,10 @@ class ReplyContent extends StatelessWidget {
                 ? 'SystemFont'
                 : AppSettings.chatFont.value
           : null,
-      fontFamilyFallback: AppSettings.notoEmojiFont.value
-          ? [
-              'Noto Color Emoji',
-              ...AppSettings.chatFallbackFonts.value.split(','),
-            ]
-          : AppSettings.chatFallbackFonts.value.split(','),
+      fontFamilyFallback: AppSettings.fontFallback(
+        AppSettings.chatFallbackFonts,
+        colorEmojiFirst: true,
+      ),
     );
 
     return Row(

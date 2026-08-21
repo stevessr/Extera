@@ -19,7 +19,9 @@ class ProfileSourceDataDialog extends StatelessWidget {
     final json = encoder.convert(data);
     final style = TextStyle(
       fontFamily: AppSettings.monospaceFont.value,
-      fontFamilyFallback: AppSettings.monospaceFallbackFonts.value.split(','),
+      fontFamilyFallback: AppSettings.fontFallback(
+        AppSettings.monospaceFallbackFonts,
+      ),
     );
     return Scaffold(
       appBar: AppBar(title: Text(L10n.of(context).showProfileSource)),

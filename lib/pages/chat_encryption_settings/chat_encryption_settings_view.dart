@@ -303,11 +303,10 @@ class _ChatEncryptionSettingsViewState
                                                               AppSettings
                                                                   .monospaceFont
                                                                   .value,
-                                                          fontFamilyFallback:
-                                                              AppSettings
-                                                                  .monospaceFallbackFonts
-                                                                  .value
-                                                                  .split(','),
+                                                          fontFamilyFallback: AppSettings.fontFallback(
+                                                            AppSettings
+                                                                .monospaceFallbackFonts,
+                                                          ),
                                                         ),
                                                       ),
                                                       leading: CircleAvatar(

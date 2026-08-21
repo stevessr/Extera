@@ -295,10 +295,9 @@ class SettingsSecurityView extends StatelessWidget {
                                 publicMasterKey.beautified,
                                 style: TextStyle(
                                   fontFamily: AppSettings.monospaceFont.value,
-                                  fontFamilyFallback: AppSettings
-                                      .monospaceFallbackFonts
-                                      .value
-                                      .split(','),
+                                  fontFamilyFallback: AppSettings.fontFallback(
+                                    AppSettings.monospaceFallbackFonts,
+                                  ),
                                 ),
                               ),
                             ),
@@ -313,10 +312,9 @@ class SettingsSecurityView extends StatelessWidget {
                               ).client.fingerprintKey.beautified,
                               style: TextStyle(
                                 fontFamily: AppSettings.monospaceFont.value,
-                                fontFamilyFallback: AppSettings
-                                    .monospaceFallbackFonts
-                                    .value
-                                    .split(','),
+                                fontFamilyFallback: AppSettings.fontFallback(
+                                  AppSettings.monospaceFallbackFonts,
+                                ),
                               ),
                             ),
                           ),

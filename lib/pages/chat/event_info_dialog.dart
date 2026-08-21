@@ -88,10 +88,9 @@ class EventInfoDialog extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontFamily: AppSettings.monospaceFont.value,
-                        fontFamilyFallback: AppSettings
-                            .monospaceFallbackFonts
-                            .value
-                            .split(','),
+                        fontFamilyFallback: AppSettings.fontFallback(
+                          AppSettings.monospaceFallbackFonts,
+                        ),
                       ),
                     ),
                   ),
@@ -112,10 +111,9 @@ class EventInfoDialog extends StatelessWidget {
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontFamily: AppSettings.monospaceFont.value,
-                          fontFamilyFallback: AppSettings
-                              .monospaceFallbackFonts
-                              .value
-                              .split(','),
+                          fontFamilyFallback: AppSettings.fontFallback(
+                            AppSettings.monospaceFallbackFonts,
+                          ),
                         ),
                       ),
                     ),

@@ -498,6 +498,14 @@ class SettingsStyleView extends StatelessWidget {
                           ),
                         ],
                         const ListDivider(),
+                        SettingsSwitchListTile.adaptive(
+                          title: L10n.of(context).unicodeFallbackFonts,
+                          subtitle: L10n.of(
+                            context,
+                          ).unicodeFallbackFontsDescription,
+                          setting: AppSettings.unicode18Fallback,
+                        ),
+                        const ListDivider(),
                         const SizedBox(height: 8),
                         ListTile(
                           title: TextButton.icon(

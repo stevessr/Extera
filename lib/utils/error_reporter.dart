@@ -44,8 +44,9 @@ class ErrorReporter {
               style: TextStyle(
                 fontSize: 14,
                 fontFamily: AppSettings.monospaceFont.value,
-                fontFamilyFallback: AppSettings.monospaceFallbackFonts.value
-                    .split(','),
+                fontFamilyFallback: AppSettings.fontFallback(
+                  AppSettings.monospaceFallbackFonts,
+                ),
               ),
             ),
           ),

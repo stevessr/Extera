@@ -37,8 +37,9 @@ class StoreRecoveryKeyView extends StatelessWidget {
                 maxLines: 4,
                 style: TextStyle(
                   fontFamily: AppSettings.monospaceFont.value,
-                  fontFamilyFallback: AppSettings.monospaceFallbackFonts.value
-                      .split(','),
+                  fontFamilyFallback: AppSettings.fontFallback(
+                    AppSettings.monospaceFallbackFonts,
+                  ),
                 ),
                 decoration: InputDecoration(
                   suffixIcon: IconButton(

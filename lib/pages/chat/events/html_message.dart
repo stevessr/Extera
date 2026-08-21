@@ -156,12 +156,10 @@ class _HtmlMessageState extends State<HtmlMessage> {
               ? 'SystemFont'
               : AppSettings.chatFont.value
         : null,
-    fontFamilyFallback: AppSettings.notoEmojiFont.value
-        ? [
-            'Noto Color Emoji',
-            ...AppSettings.chatFallbackFonts.value.split(','),
-          ]
-        : AppSettings.chatFallbackFonts.value.split(','),
+    fontFamilyFallback: AppSettings.fontFallback(
+      AppSettings.chatFallbackFonts,
+      colorEmojiFirst: true,
+    ),
   );
 
   // to fix issue 7
@@ -390,14 +388,10 @@ class _HtmlMessageState extends State<HtmlMessage> {
                 text: node.text,
                 style: TextStyle(
                   fontFamily: AppSettings.monospaceFont.value,
-                  fontFamilyFallback: AppSettings.notoEmojiFont.value
-                      ? [
-                          'Noto Color Emoji',
-                          ...AppSettings.monospaceFallbackFonts.value.split(
-                            ',',
-                          ),
-                        ]
-                      : AppSettings.monospaceFallbackFonts.value.split(','),
+                  fontFamilyFallback: AppSettings.fontFallback(
+                    AppSettings.monospaceFallbackFonts,
+                    colorEmojiFirst: true,
+                  ),
                 ),
               )
             : WidgetSpan(
@@ -418,14 +412,10 @@ class _HtmlMessageState extends State<HtmlMessage> {
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   textStyle: TextStyle(
                     fontFamily: AppSettings.monospaceFont.value,
-                    fontFamilyFallback: AppSettings.notoEmojiFont.value
-                        ? [
-                            'Noto Color Emoji',
-                            ...AppSettings.monospaceFallbackFonts.value.split(
-                              ',',
-                            ),
-                          ]
-                        : AppSettings.monospaceFallbackFonts.value.split(','),
+                    fontFamilyFallback: AppSettings.fontFallback(
+                      AppSettings.monospaceFallbackFonts,
+                      colorEmojiFirst: true,
+                    ),
                   ),
                 ),
               );
@@ -783,12 +773,10 @@ class MatrixPill extends StatelessWidget {
                           ? 'SystemFont'
                           : AppSettings.chatFont.value
                     : null,
-                fontFamilyFallback: AppSettings.notoEmojiFont.value
-                    ? [
-                        'Noto Color Emoji',
-                        ...AppSettings.chatFallbackFonts.value.split(','),
-                      ]
-                    : AppSettings.chatFallbackFonts.value.split(','),
+                fontFamilyFallback: AppSettings.fontFallback(
+                  AppSettings.chatFallbackFonts,
+                  colorEmojiFirst: true,
+                ),
               ),
               children: [
                 TextSpan(
@@ -805,12 +793,10 @@ class MatrixPill extends StatelessWidget {
                               ? 'SystemFont'
                               : AppSettings.chatFont.value
                         : null,
-                    fontFamilyFallback: AppSettings.notoEmojiFont.value
-                        ? [
-                            'Noto Color Emoji',
-                            ...AppSettings.chatFallbackFonts.value.split(','),
-                          ]
-                        : AppSettings.chatFallbackFonts.value.split(','),
+                    fontFamilyFallback: AppSettings.fontFallback(
+                      AppSettings.chatFallbackFonts,
+                      colorEmojiFirst: true,
+                    ),
                   ),
                 ),
                 if (withEventLink)
@@ -862,12 +848,10 @@ class LatexSpan extends StatelessWidget {
                     ? 'SystemFont'
                     : AppSettings.chatFont.value
               : null,
-          fontFamilyFallback: AppSettings.notoEmojiFont.value
-              ? [
-                  'Noto Color Emoji',
-                  ...AppSettings.chatFallbackFonts.value.split(','),
-                ]
-              : AppSettings.chatFallbackFonts.value.split(','),
+          fontFamilyFallback: AppSettings.fontFallback(
+            AppSettings.chatFallbackFonts,
+            colorEmojiFirst: true,
+          ),
         ),
       ),
       onErrorFallback: (text) {

@@ -315,12 +315,10 @@ class MessageContent extends StatelessWidget {
                               ? 'SystemFont'
                               : AppSettings.chatFont.value
                         : null,
-                    fontFamilyFallback: AppSettings.notoEmojiFont.value
-                        ? [
-                            'Noto Color Emoji',
-                            ...AppSettings.chatFallbackFonts.value.split(','),
-                          ]
-                        : AppSettings.chatFallbackFonts.value.split(','),
+                    fontFamilyFallback: AppSettings.fontFallback(
+                      AppSettings.chatFallbackFonts,
+                      colorEmojiFirst: true,
+                    ),
                   ),
                   onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
                   onCopy: () {
@@ -407,12 +405,10 @@ class MessageContent extends StatelessWidget {
                         ? 'SystemFont'
                         : AppSettings.chatFont.value
                   : null,
-              fontFamilyFallback: AppSettings.notoEmojiFont.value
-                  ? [
-                      'Noto Color Emoji',
-                      ...AppSettings.chatFallbackFonts.value.split(','),
-                    ]
-                  : AppSettings.chatFallbackFonts.value.split(','),
+              fontFamilyFallback: AppSettings.fontFallback(
+                AppSettings.chatFallbackFonts,
+                colorEmojiFirst: true,
+              ),
             );
             final messageLinkStyle = TextStyle(
               color: linkColor,
@@ -425,12 +421,10 @@ class MessageContent extends StatelessWidget {
                         ? 'SystemFont'
                         : AppSettings.chatFont.value
                   : null,
-              fontFamilyFallback: AppSettings.notoEmojiFont.value
-                  ? [
-                      'Noto Color Emoji',
-                      ...AppSettings.chatFallbackFonts.value.split(','),
-                    ]
-                  : AppSettings.chatFallbackFonts.value.split(','),
+              fontFamilyFallback: AppSettings.fontFallback(
+                AppSettings.chatFallbackFonts,
+                colorEmojiFirst: true,
+              ),
             );
             final spanChildren = <InlineSpan>[
               ...?replaceEmojiInSpans(

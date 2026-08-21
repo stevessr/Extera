@@ -31,7 +31,7 @@ class EventUndecryptableContent extends StatelessWidget {
                 ? 'SystemFont'
                 : AppSettings.chatFont.value
           : null,
-      fontFamilyFallback: AppSettings.chatFallbackFonts.value.split(','),
+      fontFamilyFallback: AppSettings.fontFallback(AppSettings.chatFallbackFonts),
     );
 
     return InkWell(

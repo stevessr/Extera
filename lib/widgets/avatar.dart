@@ -91,8 +91,9 @@ class Avatar extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppSettings.monospaceFont.value,
-                    fontFamilyFallback: AppSettings.monospaceFallbackFonts.value
-                        .split(','),
+                    fontFamilyFallback: AppSettings.fontFallback(
+                      AppSettings.monospaceFallbackFonts,
+                    ),
                     color:
                         textColor ??
                         fallbackLetters.colorScheme.onPrimaryContainer,

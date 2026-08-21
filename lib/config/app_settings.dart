@@ -87,6 +87,10 @@ enum AppSettings<T> {
   unifiedPushEndpoint<String>('chat.fluffy.unifiedpush.endpoint', ''),
   showNoGoogle<bool>('chat.fluffy.show_no_google', false),
   notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
+  // Append the Unicode Font Set families (Unicode 18 beta coverage) to every
+  // font fallback chain. Unknown families are skipped on devices where the
+  // UFS Magisk module is not installed.
+  unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', true),
   animatedEmoji<bool>('xyz.extera.next.animatedEmoji', false),
   biometricUnlock<bool>('xyz.extera.next.biometricUnlock', false),
 
@@ -163,6 +167,48 @@ enum AppSettings<T> {
   final T defaultValue;
 
   const AppSettings(this.key, this.defaultValue);
+
+  /// Font families installed by the Unicode Font Set Magisk module
+  /// (https://github.com/Losketch/UnicodeFontSet-magisk-module), targeting
+  /// Unicode 18.0 coverage.
+  ///
+  /// The order mirrors the module's `font-policy.tsv` fallback chain and ends
+  /// with Last Resort as the terminal fallback. Family names are resolved by
+  /// the platform font manager; on devices without the module they simply
+  /// never match and are ignored.
+  static const unicodeFallbackFonts = <String>[
+    'Noto Emoji',
+    'Plangothic P1',
+    'Plangothic P2',
+    'Source Han Sans SC',
+    'Noto Unicode',
+    'Noto Sans Living',
+    'Noto Sans Historical',
+    'Kreative Square',
+    'UFSTemp Alpha',
+    'UFSZero Ext',
+    'UnicodiaFunky',
+    'UnicodiaSesh',
+    'NewGardiner',
+    'Xdareg(darage)v1(RL)',
+    'TempSeal',
+    'Last Resort',
+  ];
+
+  /// Builds a `fontFamilyFallback` chain from a comma-separated fallback font
+  /// setting, optionally prefixed with Noto Color Emoji and suffixed with the
+  /// [unicodeFallbackFonts] provided by the UFS Magisk module.
+  static List<String>? fontFallback(
+    AppSettings<String> setting, {
+    bool colorEmojiFirst = false,
+  }) {
+    final chain = <String>[
+      if (colorEmojiFirst && notoEmojiFont.value) 'Noto Color Emoji',
+      ...setting.value.split(',').where((font) => font.isNotEmpty),
+      if (unicode18Fallback.value) ...unicodeFallbackFonts,
+    ];
+    return chain.isEmpty ? null : chain;
+  }
 
   static SharedPreferences get store => _store!;
   static SharedPreferences? _store;

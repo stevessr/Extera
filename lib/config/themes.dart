@@ -92,11 +92,10 @@ abstract class FluffyThemes {
           : AppSettings.uiFont.value.isEmpty
           ? null
           : AppSettings.uiFont.value,
-      fontFamilyFallback: notoEmoji == true
-          ? ['Noto Color Emoji', ...AppSettings.fallbackFonts.value.split(',')]
-          : AppSettings.fallbackFonts.value.isEmpty
-          ? null
-          : AppSettings.fallbackFonts.value.split(','),
+      fontFamilyFallback: AppSettings.fontFallback(
+        AppSettings.fallbackFonts,
+        colorEmojiFirst: true,
+      ),
       dividerColor: dividerColor,
       popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(

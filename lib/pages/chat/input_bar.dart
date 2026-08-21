@@ -259,8 +259,9 @@ class InputBar extends StatelessWidget {
             commandExample(command),
             style: TextStyle(
               fontFamily: AppSettings.monospaceFont.value,
-              fontFamilyFallback: AppSettings.monospaceFallbackFonts.value
-                  .split(','),
+              fontFamilyFallback: AppSettings.fontFallback(
+                AppSettings.monospaceFallbackFonts,
+              ),
             ),
           ),
           subtitle: Text(

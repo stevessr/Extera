@@ -44,8 +44,8 @@ class ChatAclSettingsView extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontFamily: AppSettings.monospaceFont.value,
-            fontFamilyFallback: AppSettings.monospaceFallbackFonts.value.split(
-              ',',
+            fontFamilyFallback: AppSettings.fontFallback(
+              AppSettings.monospaceFallbackFonts,
             ),
           ),
         ),
