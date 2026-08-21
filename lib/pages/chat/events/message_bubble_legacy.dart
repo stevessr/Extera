@@ -22,6 +22,7 @@ import 'package:extera_next/utils/string_color.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/member_actions_popup_menu_button.dart';
+
 import '../../../config/app_config.dart';
 import 'message_content.dart';
 import 'message_reactions.dart';
@@ -700,6 +701,7 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                                 displayEvent,
                                                 textColor: textColor,
                                                 linkColor: linkColor,
+                                                backgroundColor: color,
                                                 onInfoTab: widget.onInfoTab,
                                                 borderRadius: borderRadius,
                                                 timeline: timeline,

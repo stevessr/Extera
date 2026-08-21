@@ -248,14 +248,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
-          key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
+          key: pub-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-v2-${{ runner.os }}-${{ runner.arch }}-
 
       # No prebuilt Flutter archive exists for Linux arm64, so clone the SDK at
       # the version pinned in .tool_versions.yaml.
       - run: ./scripts/ci/install-flutter-source.sh
 
-      - run: flutter pub get
+      - run: flutter pub get --no-example
       - run: flutter build linux --target-platform linux-arm64
 
   # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true".

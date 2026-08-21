@@ -20,30 +20,34 @@ extension MatrixFileExtension on MatrixFile {
       return;
     }
 
-    final downloadPath = !PlatformInfos.isMobile
-        ? (await getSaveLocation(
-            suggestedName: name,
-            confirmButtonText: L10n.of(context).saveFile,
-          ))?.path
-        : await FilePicker.saveFile(
-            dialogTitle: L10n.of(context).saveFile,
-            fileName: name,
-            type: filePickerFileType,
-            bytes: bytes,
-          );
-    if (downloadPath == null) return;
+    final String? downloadPath;
+    if (!PlatformInfos.isMobile) {
+      downloadPath = (await getSaveLocation(
+        suggestedName: name,
+        confirmButtonText: L10n.of(context).saveFile,
+      ))?.path;
+    } else {
+      downloadPath = (await FilePicker.saveFile(
+        dialogTitle: L10n.of(context).saveFile,
+        fileName: name,
+        type: filePickerFileType,
+        bytes: bytes,
+      ))?.toString();
+    }
+    final savedPath = downloadPath;
+    if (savedPath == null) return;
 
     if (PlatformInfos.isDesktop) {
       final result = await showFutureLoadingDialog(
         context: context,
-        future: () => File(downloadPath).writeAsBytes(bytes),
+        future: () => File(savedPath).writeAsBytes(bytes),
       );
       if (result.error != null) return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(L10n.of(context).fileHasBeenSavedAt(downloadPath)),
+        content: Text(L10n.of(context).fileHasBeenSavedAt(savedPath)),
         showCloseIcon: true,
       ),
     );

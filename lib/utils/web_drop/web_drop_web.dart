@@ -3,108 +3,91 @@ import 'dart:js_interop';
 import 'package:cross_file/cross_file.dart';
 import 'package:web/web.dart' as web;
 
-/// Counter to distinguish genuine drag-leave from bubbling across child
-/// elements. The desktop_drop web plugin uses DOM0
-/// ``window.ondragleave`` which fires whenever the pointer crosses *any*
-/// child element, not just when leaving the window. A counter correctly
-/// detects the real leave (counter reaches 0).
-int _dragCounter = 0;
+import 'web_drop_stub.dart' show WebDropFilesCallback, WebDragStateCallback;
+export 'web_drop_stub.dart' show WebDropFilesCallback, WebDragStateCallback;
 
-/// Callbacks set by the current chat controller.
-void Function(bool)? _onDragStateChanged;
-void Function(List<XFile>)? _onDrop;
-
-/// JS interop event listeners (kept so they can be removed).
-JSFunction? _onDragEnter;
-JSFunction? _onDragOver;
-JSFunction? _onDragLeave;
-JSFunction? _onDropHandler;
-
-void registerWebDrop({
-  required void Function(bool dragging) onDragStateChanged,
-  required void Function(List<XFile> files) onDrop,
+/// Registers listeners for browser drag-and-drop events.
+///
+/// The standard `dragleave` event fires spuriously whenever the pointer moves
+/// between child elements (due to DOM event bubbling). A counter
+/// (dragenter → +1, dragleave → −1) is used so that [onDragStateChanged] is
+/// only toggled when the pointer truly enters or leaves the window.
+///
+/// On `drop`, files are read from `dataTransfer.files` and wrapped in [XFile]
+/// objects backed by object URLs, avoiding the `webkitGetAsEntry`-based
+/// serialisation that the `desktop_drop` package uses on web (which can drop
+/// events silently when its `DropTarget` status-gating rejects the drop).
+void Function()? registerWebDropListener({
+  required WebDragStateCallback onDragStateChanged,
+  required WebDropFilesCallback onDrop,
 }) {
-  _onDragStateChanged = onDragStateChanged;
-  _onDrop = onDrop;
+  var dragCounter = 0;
 
-  _onDragEnter = (() {
-    _dragCounter++;
-    if (_dragCounter == 1) _onDragStateChanged?.call(true);
-  }).toJS;
-
-  _onDragOver = ((web.Event event) {
-    // Calling preventDefault on dragover is required so that the
-    // subsequent drop event fires.
+  void handleDragEnter(web.Event event) {
     event.preventDefault();
-  }).toJS;
-
-  _onDragLeave = (() {
-    _dragCounter--;
-    if (_dragCounter <= 0) {
-      _dragCounter = 0;
-      _onDragStateChanged?.call(false);
+    dragCounter++;
+    if (dragCounter == 1) {
+      onDragStateChanged(true);
     }
-  }).toJS;
+  }
 
-  _onDropHandler = ((web.DragEvent event) {
+  void handleDragOver(web.Event event) {
+    // preventDefault on dragover is required for the drop event to fire.
     event.preventDefault();
-    _dragCounter = 0;
-    _onDragStateChanged?.call(false);
+  }
 
-    final dt = event.dataTransfer;
+  void handleDragLeave(web.Event event) {
+    event.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      onDragStateChanged(false);
+    }
+  }
+
+  void handleDrop(web.Event event) {
+    final dragEvent = event as web.DragEvent;
+    dragEvent.preventDefault();
+    dragCounter = 0;
+    onDragStateChanged(false);
+
+    final dt = dragEvent.dataTransfer;
     if (dt == null) return;
-    final files = dt.files;
-    if (files.length == 0) return;
+    final fileList = dt.files;
+    if (fileList.length == 0) return;
 
     final xfiles = <XFile>[];
-    for (var i = 0; i < files.length; i++) {
-      final file = files.item(i);
+    for (var i = 0; i < fileList.length; i++) {
+      final file = fileList.item(i);
       if (file == null) continue;
-
-      // Create a blob URL so XFile.readAsBytes() works via XMLHttpRequest,
-      // which is the reliable path on web.
-      final blob = web.Blob([file].toJS, web.BlobPropertyBag(type: file.type));
-      final url = web.URL.createObjectURL(blob);
-
+      final url = web.URL.createObjectURL(file);
       xfiles.add(
         XFile(
           url,
           name: file.name,
-          mimeType: file.type.isEmpty ? null : file.type,
           length: file.size,
+          mimeType: file.type.isEmpty ? null : file.type,
+          lastModified: DateTime.fromMillisecondsSinceEpoch(file.lastModified),
         ),
       );
     }
+    if (xfiles.isNotEmpty) onDrop(xfiles);
+  }
 
-    if (xfiles.isNotEmpty) _onDrop?.call(xfiles);
-  }).toJS;
+  final enter = handleDragEnter.toJS;
+  final over = handleDragOver.toJS;
+  final leave = handleDragLeave.toJS;
+  final drop = handleDrop.toJS;
 
-  final window = web.window;
-  window.addEventListener('dragenter', _onDragEnter);
-  window.addEventListener('dragover', _onDragOver);
-  window.addEventListener('dragleave', _onDragLeave);
-  window.addEventListener('drop', _onDropHandler);
-}
+  web.window.addEventListener('dragenter', enter);
+  web.window.addEventListener('dragover', over);
+  web.window.addEventListener('dragleave', leave);
+  web.window.addEventListener('drop', drop);
 
-void unregisterWebDrop() {
-  final window = web.window;
-  if (_onDragEnter != null) {
-    window.removeEventListener('dragenter', _onDragEnter);
-    _onDragEnter = null;
-  }
-  if (_onDragOver != null) {
-    window.removeEventListener('dragover', _onDragOver);
-    _onDragOver = null;
-  }
-  if (_onDragLeave != null) {
-    window.removeEventListener('dragleave', _onDragLeave);
-    _onDragLeave = null;
-  }
-  if (_onDropHandler != null) {
-    window.removeEventListener('drop', _onDropHandler);
-    _onDropHandler = null;
-  }
-  _onDragStateChanged = null;
-  _onDrop = null;
-  _dragCounter = 0;
+  return () {
+    web.window.removeEventListener('dragenter', enter);
+    web.window.removeEventListener('dragover', over);
+    web.window.removeEventListener('dragleave', leave);
+    web.window.removeEventListener('drop', drop);
+  };
 }

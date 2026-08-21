@@ -358,7 +358,7 @@ class SendFileDialogState extends State<SendFileDialog> {
                                 borderRadius: BorderRadius.circular(
                                   AppConfig.borderRadius / 2,
                                 ),
-                                color: Colors.black,
+                                color: Colors.transparent,
                                 clipBehavior: Clip.hardEdge,
                                 child: FutureBuilder(
                                   future: widget.files[i].readAsBytes(),

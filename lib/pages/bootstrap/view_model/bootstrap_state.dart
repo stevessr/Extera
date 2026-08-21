@@ -11,10 +11,10 @@ class BootstrapViewModelState {
   bool isLoading = false;
   Object? unlockWithError;
   ({
-    bool keyBackupEnabled,
+    bool connected,
     bool crossSigningEnabled,
     bool initialized,
-    bool connected,
+    bool keyBackupEnabled,
   })?
   cryptoIdentityState;
   bool reset = false;

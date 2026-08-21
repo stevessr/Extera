@@ -140,7 +140,9 @@ abstract class ClientManager {
         AuthenticationTypes.sso,
       },
       nativeImplementations: nativeImplementations,
-      customImageResizer: PlatformInfos.isMobile || kIsWeb
+      // The Android native imaging backend can abort while resizing some images.
+      // Use the SDK's isolate-based Dart resizer on Android instead.
+      customImageResizer: PlatformInfos.isIOS || kIsWeb
           ? customImageResizer
           : null,
       defaultNetworkRequestTimeout: const Duration(minutes: 30),

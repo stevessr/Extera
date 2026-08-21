@@ -253,14 +253,13 @@ class BootstrapViewModel extends ValueNotifier<BootstrapViewModelState> {
   String get _secureStorageKey => 'ssss_recovery_key_${client.userID}';
 
   Future<void> openRecoveryKeyFile(BuildContext context) async {
-    final result = await FilePicker.pickFiles(
+    final file = await FilePicker.pickFile(
       allowedExtensions: ['txt'],
       type: FileType.custom,
     );
-    final file = result?.xFiles.firstOrNull;
     if (file == null) return;
     try {
-      final key = await file.readAsString();
+      final key = await file.xFile.readAsString();
       enterPassphraseOrRecovController.text = key;
     } catch (e, s) {
       Logs().d('Unable to read recovery key file', e, s);

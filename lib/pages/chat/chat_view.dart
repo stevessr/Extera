@@ -25,6 +25,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.d
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/chat_settings_popup_menu.dart';

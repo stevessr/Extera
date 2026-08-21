@@ -35,7 +35,13 @@ class MessageSelectionArea extends StatelessWidget {
       // even though the selection region claims it.
       onPointerDown: (event) {
         if (event.buttons == kSecondaryButton) {
-          onSecondaryTap?.call(event.position);
+          // SelectionArea handles the same secondary pointer and replaces the
+          // current ContextMenuController entry with its own toolbar. Queue
+          // our callback until the frame completes so the message menu is
+          // installed last.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            onSecondaryTap?.call(event.position);
+          });
         }
       },
       child: SelectionArea(
