@@ -255,7 +255,7 @@ jobs:
       # the version pinned in .tool_versions.yaml.
       - run: ./scripts/ci/install-flutter-source.sh
 
-      - run: flutter pub get
+      - run: flutter pub get --no-example
       - run: flutter build linux --target-platform linux-arm64
 
   # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true".

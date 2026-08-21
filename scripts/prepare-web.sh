@@ -20,7 +20,9 @@ mkdir -p ./assets/vodozemac
 rm -f ./assets/vodozemac/vodozemac_bindings_dart*
 mv .vodozemac/dart/web/pkg/vodozemac_bindings_dart* ./assets/vodozemac/
 rm -rf .vodozemac
-flutter pub get
+# Keep the generated package graph valid with the Pub version bundled by the
+# CI Flutter SDK; web preparation does not need dependency examples.
+flutter pub get --no-example
 
 # Download native_imaging for web:
 version=$(yq ".dependencies.native_imaging" < pubspec.yaml)

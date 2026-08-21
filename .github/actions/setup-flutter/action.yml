@@ -49,7 +49,10 @@ runs:
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}
       shell: bash
-      run: flutter pub get
+      # Flutter 3.44.x bundles a Pub version whose default example traversal
+      # can leave package_graph.json incomplete for transitive packages such
+      # as random_string. CI never needs package examples, so skip them.
+      run: flutter pub get --no-example
 
     # The animated emoji are shipped as assets but not checked in, so every
     # build has to fetch them. The tool skips files it already has, which makes
