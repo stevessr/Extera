@@ -71,10 +71,10 @@ dependencies:
   lottie: ^3.5.1
   material: ^1.0.1
   matrix:
-    # path: ../matrix-dart-sdk
-    git:
-      url: https://github.com/stevessr/matrix-dart-sdk.git
-      ref: Extera
+     path: ../matrix-dart-sdk
+    #git:
+    #  url: https://github.com/stevessr/matrix-dart-sdk.git
+    #  ref: Extera
   mime: ^2.0.0
   native_imaging: ^0.5.0
   opus_caf_converter_dart: ^1.0.1
@@ -187,22 +187,24 @@ dependency_overrides:
   # Upstream still imports dart:html, which dart2wasm cannot compile.
   flutter_keyboard_visibility_web:
     path: packages/flutter_keyboard_visibility_web
-  record_linux: 1.3.0
 # Published FRB 2.11/vodozemac 0.5 bindings are not dart2wasm-safe yet.
 # Keep the entire bridge stack on the matching upstream Wasm fix until it is
 # released; vodozemac's generated Dart code and Rust/Wasm artifacts must agree.
-  flutter_rust_bridge:
-    git:
-      url: https://github.com/fzyzcjy/flutter_rust_bridge.git
-      ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
-      path: frb_dart
   flutter_vodozemac:
-    git:
-      url: https://github.com/famedly/dart-vodozemac.git
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
-      path: flutter
+    #git:
+    #  url: https://github.com/famedly/dart-vodozemac.git
+    #  ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+    #  path: flutter
+    path: ../dart-vodozemac/flutter
+  flutter_rust_bridge:
+    #git:
+    #  url: https://github.com/fzyzcjy/flutter_rust_bridge.git
+    #  ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
+    #  path: frb_dart
+    path: ../flutter_rust_bridge/frb_dart
   vodozemac:
-    git:
-      url: https://github.com/famedly/dart-vodozemac.git
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
-      path: dart
+    #git:
+    #  url: https://github.com/famedly/dart-vodozemac.git
+    #  ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+    #  path: dart
+    path: ../dart-vodozemac/dart
