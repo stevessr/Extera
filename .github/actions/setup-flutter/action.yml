@@ -43,8 +43,11 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.pub-cache
-        key: pub-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
-        restore-keys: pub-${{ runner.os }}-${{ runner.arch }}-
+        # v2 avoids reusing the cache created by the failed Dart 3.12/Pub
+        # resolution, which left package_graph.json inconsistent with the
+        # checked-out dependency graph.
+        key: pub-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: pub-v2-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}
