@@ -3650,7 +3650,7 @@
   "updateCheckSubtitle": "每次启动时检查是否有 Extera 新版本。",
   "useNotoEmoji": "启用 Noto Emoji 表情",
   "unicodeFallbackFonts": "启用扩展 Unicode 回退",
-  "unicodeFallbackFontsDescription": "启用后，应用会在所有字体回退链末尾追加 Unicode Font Set 字体（Unicode 18 覆盖，来自 UFS Magisk 模块）；未安装对应字体时会被自动忽略。",
+  "unicodeFallbackFontsDescription": "启用后，应用会在所有字体回退链末尾追加内置的 Unicode Font Set 字体（覆盖 Unicode 18）。",
   "callAction": "通话",
   "resetPrivacy": "重置为默认值",
   "widgets": "小部件",

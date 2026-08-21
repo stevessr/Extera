@@ -3516,7 +3516,7 @@
     "updateCheckSubtitle": "Check whether a new version of Extera is out on every start.",
     "useNotoEmoji": "Enable Noto Emoji",
     "unicodeFallbackFonts": "Extended Unicode fallback",
-    "unicodeFallbackFontsDescription": "Append the Unicode Font Set families (Unicode 18 coverage, UFS Magisk module) to all font fallback chains. Fonts are ignored when not installed.",
+    "unicodeFallbackFontsDescription": "Append the bundled Unicode Font Set fonts (Unicode 18 coverage) to all font fallback chains.",
     "callAction": "Call",
     "resetPrivacy": "Reset to default",
     "widgets": "Widgets",

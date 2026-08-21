@@ -1,5 +1,5 @@
 ## Extera 26.4.8
-- Add extended Unicode fallback: the Unicode Font Set families (Unicode 18 coverage, UFS Magisk module) are appended to all font fallback chains, toggle in **settings** -> **style**.
+- Add extended Unicode fallback: the bundled Unicode Font Set fonts (Unicode 18 coverage) are appended to all font fallback chains, toggle in **settings** -> **style**. Fonts are tree-shaken per fallback priority and split into lazily-loaded chunks.
 - Hide ignored users from mention suggestions.
 - Hide ignored users from chat member list with option to show them.
 - Redesign livekit call controls.

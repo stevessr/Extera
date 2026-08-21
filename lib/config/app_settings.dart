@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:matrix/matrix_api_lite/utils/logs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:extera_next/config/unicode_fallback_fonts.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 
 const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
@@ -87,9 +88,8 @@ enum AppSettings<T> {
   unifiedPushEndpoint<String>('chat.fluffy.unifiedpush.endpoint', ''),
   showNoGoogle<bool>('chat.fluffy.show_no_google', false),
   notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
-  // Append the Unicode Font Set families (Unicode 18 beta coverage) to every
-  // font fallback chain. Unknown families are skipped on devices where the
-  // UFS Magisk module is not installed.
+  // Append the bundled Unicode Font Set families (Unicode 18 coverage) to
+  // every font fallback chain.
   unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', true),
   animatedEmoji<bool>('xyz.extera.next.animatedEmoji', false),
   biometricUnlock<bool>('xyz.extera.next.biometricUnlock', false),
@@ -168,36 +168,16 @@ enum AppSettings<T> {
 
   const AppSettings(this.key, this.defaultValue);
 
-  /// Font families installed by the Unicode Font Set Magisk module
-  /// (https://github.com/Losketch/UnicodeFontSet-magisk-module), targeting
-  /// Unicode 18.0 coverage.
-  ///
-  /// The order mirrors the module's `font-policy.tsv` fallback chain and ends
-  /// with Last Resort as the terminal fallback. Family names are resolved by
-  /// the platform font manager; on devices without the module they simply
-  /// never match and are ignored.
-  static const unicodeFallbackFonts = <String>[
-    'Noto Emoji',
-    'Plangothic P1',
-    'Plangothic P2',
-    'Source Han Sans SC',
-    'Noto Unicode',
-    'Noto Sans Living',
-    'Noto Sans Historical',
-    'Kreative Square',
-    'UFSTemp Alpha',
-    'UFSZero Ext',
-    'UnicodiaFunky',
-    'UnicodiaSesh',
-    'NewGardiner',
-    'Xdareg(darage)v1(RL)',
-    'TempSeal',
-    'Last Resort',
-  ];
+  /// Font families bundled with the app, generated from the Unicode Font Set
+  /// release v2.0.0-beta.1 (Unicode 18.0 coverage) by
+  /// `tool/build_unicode_fallback_fonts.py`. Each font is tree-shaken against
+  /// the earlier entries of the chain and split into lazily-loaded chunks, so
+  /// the list is ordered exactly like the fallback priority.
+  static const unicodeFallbackFonts = kUnicodeFallbackFontFamilies;
 
   /// Builds a `fontFamilyFallback` chain from a comma-separated fallback font
   /// setting, optionally prefixed with Noto Color Emoji and suffixed with the
-  /// [unicodeFallbackFonts] provided by the UFS Magisk module.
+  /// bundled [unicodeFallbackFonts] (Unicode Font Set).
   static List<String>? fontFallback(
     AppSettings<String> setting, {
     bool colorEmojiFirst = false,

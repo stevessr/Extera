@@ -169,6 +169,540 @@ flutter:
     - family: "Roboto Mono"
       fonts:
         - asset: assets/font/RobotoMonoVariable.ttf
+    # Unicode Font Set release v2.0.0-beta.1, tree-shaken per fallback-chain
+    # priority and split into lazily-loaded chunks.
+    # Regenerate with: python3 tool/build_unicode_fallback_fonts.py
+    - family: "Noto Emoji"
+      fonts:
+        - asset: assets/font/ufs/NotoEmoji-Regular.ttf
+    - family: "Plangothic P1 u00001"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u00001.otf
+    - family: "Plangothic P1 u0E001"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u0E001.otf
+    - family: "Plangothic P1 u18800"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u18800.otf
+    - family: "Plangothic P1 u20000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u20000.otf
+    - family: "Plangothic P1 u20741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u20741.otf
+    - family: "Plangothic P1 u20E82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u20E82.otf
+    - family: "Plangothic P1 u215C3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u215C3.otf
+    - family: "Plangothic P1 u21D04"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u21D04.otf
+    - family: "Plangothic P1 u22000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u22000.otf
+    - family: "Plangothic P1 u22741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u22741.otf
+    - family: "Plangothic P1 u22E82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u22E82.otf
+    - family: "Plangothic P1 u235C3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u235C3.otf
+    - family: "Plangothic P1 u23D04"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u23D04.otf
+    - family: "Plangothic P1 u24000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u24000.otf
+    - family: "Plangothic P1 u24741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u24741.otf
+    - family: "Plangothic P1 u24E82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u24E82.otf
+    - family: "Plangothic P1 u255C3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u255C3.otf
+    - family: "Plangothic P1 u25D04"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u25D04.otf
+    - family: "Plangothic P1 u26000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u26000.otf
+    - family: "Plangothic P1 u26741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u26741.otf
+    - family: "Plangothic P1 u26E82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u26E82.otf
+    - family: "Plangothic P1 u275C3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u275C3.otf
+    - family: "Plangothic P1 u27D04"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u27D04.otf
+    - family: "Plangothic P1 u28000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u28000.otf
+    - family: "Plangothic P1 u28741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u28741.otf
+    - family: "Plangothic P1 u28E82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u28E82.otf
+    - family: "Plangothic P1 u295C3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u295C3.otf
+    - family: "Plangothic P1 u29D04"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u29D04.otf
+    - family: "Plangothic P1 u2A000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2A000.otf
+    - family: "Plangothic P1 u2A761"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2A761.otf
+    - family: "Plangothic P1 u2AEA2"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2AEA2.otf
+    - family: "Plangothic P1 u2B5E3"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2B5E3.otf
+    - family: "Plangothic P1 u2BD25"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2BD25.otf
+    - family: "Plangothic P1 u2C000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2C000.otf
+    - family: "Plangothic P1 u2C741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2C741.otf
+    - family: "Plangothic P1 u2CE82"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2CE82.otf
+    - family: "Plangothic P1 u2D5C5"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2D5C5.otf
+    - family: "Plangothic P1 u2DD06"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2DD06.otf
+    - family: "Plangothic P1 u2E000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2E000.otf
+    - family: "Plangothic P1 u2E741"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2E741.otf
+    - family: "Plangothic P1 u2F833"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP1_u2F833.otf
+    - family: "Plangothic P2 u00295"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u00295.otf
+    - family: "Plangothic P2 u0A66E"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0A66E.otf
+    - family: "Plangothic P2 u0B39C"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0B39C.otf
+    - family: "Plangothic P2 u0BB9F"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0BB9F.otf
+    - family: "Plangothic P2 u0C000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0C000.otf
+    - family: "Plangothic P2 u0C803"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0C803.otf
+    - family: "Plangothic P2 u0D006"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0D006.otf
+    - family: "Plangothic P2 u0E21D"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u0E21D.otf
+    - family: "Plangothic P2 u1236F"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u1236F.otf
+    - family: "Plangothic P2 u16100"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u16100.otf
+    - family: "Plangothic P2 u176F8"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u176F8.otf
+    - family: "Plangothic P2 u17EFB"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u17EFB.otf
+    - family: "Plangothic P2 u18000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u18000.otf
+    - family: "Plangothic P2 u18806"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u18806.otf
+    - family: "Plangothic P2 u1AFF0"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u1AFF0.otf
+    - family: "Plangothic P2 u1CC00"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u1CC00.otf
+    - family: "Plangothic P2 u1E000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u1E000.otf
+    - family: "Plangothic P2 u30000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u30000.otf
+    - family: "Plangothic P2 u30803"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u30803.otf
+    - family: "Plangothic P2 u31006"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u31006.otf
+    - family: "Plangothic P2 u3180F"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u3180F.otf
+    - family: "Plangothic P2 u32000"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u32000.otf
+    - family: "Plangothic P2 u32803"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u32803.otf
+    - family: "Plangothic P2 u33007"
+      fonts:
+        - asset: assets/font/ufs/PlangothicP2_u33007.otf
+    - family: "Source Han Sans SC u00100"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u00100.otf
+    - family: "Source Han Sans SC u02012"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u02012.otf
+    - family: "Source Han Sans SC u03697"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u03697.otf
+    - family: "Source Han Sans SC u03EC6"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u03EC6.otf
+    - family: "Source Han Sans SC u04000"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u04000.otf
+    - family: "Source Han Sans SC u04834"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u04834.otf
+    - family: "Source Han Sans SC u05100"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u05100.otf
+    - family: "Source Han Sans SC u059BD"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u059BD.otf
+    - family: "Source Han Sans SC u06000"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u06000.otf
+    - family: "Source Han Sans SC u06883"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u06883.otf
+    - family: "Source Han Sans SC u07114"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u07114.otf
+    - family: "Source Han Sans SC u079B1"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u079B1.otf
+    - family: "Source Han Sans SC u08000"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u08000.otf
+    - family: "Source Han Sans SC u088A6"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u088A6.otf
+    - family: "Source Han Sans SC u09114"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u09114.otf
+    - family: "Source Han Sans SC u09998"
+      fonts:
+        - asset: assets/font/ufs/SourceHanSansSC_u09998.otf
+    - family: "Noto Unicode u00008"
+      fonts:
+        - asset: assets/font/ufs/NotoUnicode_u00008.otf
+    - family: "Noto Unicode u0200B"
+      fonts:
+        - asset: assets/font/ufs/NotoUnicode_u0200B.otf
+    - family: "Noto Unicode u10000"
+      fonts:
+        - asset: assets/font/ufs/NotoUnicode_u10000.otf
+    - family: "Noto Unicode u12000"
+      fonts:
+        - asset: assets/font/ufs/NotoUnicode_u12000.otf
+    - family: "Noto Unicode u1D000"
+      fonts:
+        - asset: assets/font/ufs/NotoUnicode_u1D000.otf
+    - family: "Noto Sans Living u00700"
+      fonts:
+        - asset: assets/font/ufs/NotoSansLiving_u00700.ttf
+    - family: "Noto Sans Living u0219A"
+      fonts:
+        - asset: assets/font/ufs/NotoSansLiving_u0219A.ttf
+    - family: "Noto Sans Living u0A000"
+      fonts:
+        - asset: assets/font/ufs/NotoSansLiving_u0A000.ttf
+    - family: "Noto Sans Living u1D400"
+      fonts:
+        - asset: assets/font/ufs/NotoSansLiving_u1D400.ttf
+    - family: "Noto Sans Historical u01680"
+      fonts:
+        - asset: assets/font/ufs/NotoSansHistorical_u01680.ttf
+    - family: "Kreative Square u02072"
+      fonts:
+        - asset: assets/font/ufs/KreativeSquare_u02072.ttf
+    - family: "UFSTemp Alpha u16D80"
+      fonts:
+        - asset: assets/font/ufs/UFSTempAlpha_u16D80.otf
+    - family: "UFSZero Ext u02800"
+      fonts:
+        - asset: assets/font/ufs/UFSZeroExt_u02800.otf
+    - family: "UnicodiaFunky u0E003"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaFunky_u0E003.ttf
+    - family: "UnicodiaSesh u13460"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u13460.ttf
+    - family: "UnicodiaSesh u135AD"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u135AD.ttf
+    - family: "UnicodiaSesh u136FA"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u136FA.ttf
+    - family: "UnicodiaSesh u1385A"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u1385A.ttf
+    - family: "UnicodiaSesh u139C8"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u139C8.ttf
+    - family: "UnicodiaSesh u13B4C"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u13B4C.ttf
+    - family: "UnicodiaSesh u13CCB"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u13CCB.ttf
+    - family: "UnicodiaSesh u13E53"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u13E53.ttf
+    - family: "UnicodiaSesh u13FD0"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u13FD0.ttf
+    - family: "UnicodiaSesh u14000"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u14000.ttf
+    - family: "UnicodiaSesh u1416F"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u1416F.ttf
+    - family: "UnicodiaSesh u142F5"
+      fonts:
+        - asset: assets/font/ufs/UnicodiaSesh_u142F5.ttf
+    - family: "NewGardiner u0E45B"
+      fonts:
+        - asset: assets/font/ufs/NewGardiner_u0E45B.ttf
+    - family: "Xdareg(darage)v1(RL) u11380"
+      fonts:
+        - asset: assets/font/ufs/Xdaregdaragev1RL_u11380.otf
+    - family: "TempSeal u3D000"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D000.ttf
+    - family: "TempSeal u3D0AB"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D0AB.ttf
+    - family: "TempSeal u3D156"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D156.ttf
+    - family: "TempSeal u3D201"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D201.ttf
+    - family: "TempSeal u3D2AC"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D2AC.ttf
+    - family: "TempSeal u3D357"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D357.ttf
+    - family: "TempSeal u3D402"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D402.ttf
+    - family: "TempSeal u3D4AD"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D4AD.ttf
+    - family: "TempSeal u3D558"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D558.ttf
+    - family: "TempSeal u3D603"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D603.ttf
+    - family: "TempSeal u3D6AE"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D6AE.ttf
+    - family: "TempSeal u3D759"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D759.ttf
+    - family: "TempSeal u3D804"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D804.ttf
+    - family: "TempSeal u3D8AF"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D8AF.ttf
+    - family: "TempSeal u3D95A"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3D95A.ttf
+    - family: "TempSeal u3DA05"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DA05.ttf
+    - family: "TempSeal u3DAB0"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DAB0.ttf
+    - family: "TempSeal u3DB5B"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DB5B.ttf
+    - family: "TempSeal u3DC06"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DC06.ttf
+    - family: "TempSeal u3DCB1"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DCB1.ttf
+    - family: "TempSeal u3DD5C"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DD5C.ttf
+    - family: "TempSeal u3DE07"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DE07.ttf
+    - family: "TempSeal u3DEB2"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DEB2.ttf
+    - family: "TempSeal u3DF5D"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3DF5D.ttf
+    - family: "TempSeal u3E000"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E000.ttf
+    - family: "TempSeal u3E0AB"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E0AB.ttf
+    - family: "TempSeal u3E156"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E156.ttf
+    - family: "TempSeal u3E201"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E201.ttf
+    - family: "TempSeal u3E2AC"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E2AC.ttf
+    - family: "TempSeal u3E357"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E357.ttf
+    - family: "TempSeal u3E402"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E402.ttf
+    - family: "TempSeal u3E4AD"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E4AD.ttf
+    - family: "TempSeal u3E558"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E558.ttf
+    - family: "TempSeal u3E603"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E603.ttf
+    - family: "TempSeal u3E6AE"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E6AE.ttf
+    - family: "TempSeal u3E759"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E759.ttf
+    - family: "TempSeal u3E804"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E804.ttf
+    - family: "TempSeal u3E8AF"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E8AF.ttf
+    - family: "TempSeal u3E95A"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3E95A.ttf
+    - family: "TempSeal u3EA05"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EA05.ttf
+    - family: "TempSeal u3EAB0"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EAB0.ttf
+    - family: "TempSeal u3EB5B"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EB5B.ttf
+    - family: "TempSeal u3EC06"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EC06.ttf
+    - family: "TempSeal u3ECB1"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3ECB1.ttf
+    - family: "TempSeal u3ED5C"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3ED5C.ttf
+    - family: "TempSeal u3EE07"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EE07.ttf
+    - family: "TempSeal u3EEB2"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EEB2.ttf
+    - family: "TempSeal u3EF5D"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3EF5D.ttf
+    - family: "TempSeal u3F008"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F008.ttf
+    - family: "TempSeal u3F0B3"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F0B3.ttf
+    - family: "TempSeal u3F15E"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F15E.ttf
+    - family: "TempSeal u3F209"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F209.ttf
+    - family: "TempSeal u3F2B4"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F2B4.ttf
+    - family: "TempSeal u3F35F"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F35F.ttf
+    - family: "TempSeal u3F40A"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F40A.ttf
+    - family: "TempSeal u3F4B5"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F4B5.ttf
+    - family: "TempSeal u3F560"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F560.ttf
+    - family: "TempSeal u3F60B"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F60B.ttf
+    - family: "TempSeal u3F6B6"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F6B6.ttf
+    - family: "TempSeal u3F761"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F761.ttf
+    - family: "TempSeal u3F80C"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F80C.ttf
+    - family: "TempSeal u3F8B7"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F8B7.ttf
+    - family: "TempSeal u3F962"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3F962.ttf
+    - family: "TempSeal u3FA0D"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3FA0D.ttf
+    - family: "TempSeal u3FAB8"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3FAB8.ttf
+    - family: "TempSeal u3FB63"
+      fonts:
+        - asset: assets/font/ufs/TempSeal_u3FB63.ttf
+    - family: "Last Resort"
+      fonts:
+        - asset: assets/font/ufs/LastResort-Regular.ttf
 
 msix_config:
   display_name: Extera Next
