@@ -838,9 +838,11 @@ packages:
   flutter_rust_bridge:
     dependency: "direct main"
     description:
-      path: "../flutter_rust_bridge/frb_dart"
-      relative: true
-    source: path
+      path: frb_dart
+      ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
+      resolved-ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
+      url: "https://github.com/fzyzcjy/flutter_rust_bridge.git"
+    source: git
     version: "2.13.0-beta.4"
   flutter_secure_storage:
     dependency: "direct main"
@@ -923,9 +925,11 @@ packages:
   flutter_vodozemac:
     dependency: "direct main"
     description:
-      path: "../dart-vodozemac/flutter"
-      relative: true
-    source: path
+      path: flutter
+      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      resolved-ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      url: "https://github.com/famedly/dart-vodozemac.git"
+    source: git
     version: "0.7.0"
   flutter_web_auth_2:
     dependency: "direct main"
@@ -1511,9 +1515,11 @@ packages:
   matrix:
     dependency: "direct main"
     description:
-      path: "../matrix-dart-sdk"
-      relative: true
-    source: path
+      path: "."
+      ref: Extera
+      resolved-ref: "406b9250132e2a2748eb7de99c495bcf948064dc"
+      url: "https://github.com/stevessr/matrix-dart-sdk.git"
+    source: git
     version: "10.2.1"
   media_kit:
     dependency: "direct main"
@@ -2811,9 +2817,11 @@ packages:
   vodozemac:
     dependency: "direct main"
     description:
-      path: "../dart-vodozemac/dart"
-      relative: true
-    source: path
+      path: dart
+      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      resolved-ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      url: "https://github.com/famedly/dart-vodozemac.git"
+    source: git
     version: "0.7.0"
   wakelock_plus:
     dependency: "direct main"
