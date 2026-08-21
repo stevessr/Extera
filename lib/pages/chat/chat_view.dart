@@ -22,6 +22,7 @@ import 'package:extera_next/pages/dialer/back_to_call_button.dart';
 import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/utils/wallpaper.dart';
@@ -538,6 +539,7 @@ class _ChatViewState extends State<ChatView> {
               },
             ),
             body: DropTarget(
+              enable: !PlatformInfos.isWeb,
               onDragDone: controller.onDragDone,
               onDragEntered: controller.onDragEntered,
               onDragExited: controller.onDragExited,

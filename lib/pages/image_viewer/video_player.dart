@@ -1,11 +1,12 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
@@ -54,16 +55,22 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
                   });
                 },
         );
-
-        final tempDir = await getTemporaryDirectory();
-        final fileName = Uri.encodeComponent(
-          widget.event.attachmentOrThumbnailMxcUrl()!.pathSegments.last,
-        );
-        final file = File('${tempDir.path}/${fileName}_${videoFile.name}');
-        if (!await file.exists()) {
-          await file.writeAsBytes(videoFile.bytes);
+        if (kIsWeb) {
+          // Web has no writable file system; play decrypted bytes from a
+          // Blob URL created by MediaKit.
+          final media = await Media.memory(videoFile.bytes);
+          await player.open(media);
+        } else {
+          final tempDir = await getTemporaryDirectory();
+          final fileName = Uri.encodeComponent(
+            widget.event.attachmentOrThumbnailMxcUrl()!.pathSegments.last,
+          );
+          final file = File('${tempDir.path}/${fileName}_${videoFile.name}');
+          if (!await file.exists()) {
+            await file.writeAsBytes(videoFile.bytes);
+          }
+          await player.open(Media(file.path));
         }
-        await player.open(Media(file.path));
       } else {
         final videoUrl = await widget.event.attachmentMxcUrl!.getDownloadUri(
           widget.event.room.client,
@@ -123,13 +130,12 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     final event = widget.event;
 
     final videoHeight =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('h') ??
-            1;
+        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('h') ?? 1;
     final videoWidth =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('w') ??
-            1;
-    final blurHash =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<String>('xyz.amorgan.blurhash');
+        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('w') ?? 1;
+    final blurHash = event.content
+        .tryGetMap<String, dynamic>('info')
+        ?.tryGet<String>('xyz.amorgan.blurhash');
     final hasThumbnail = event.hasThumbnail;
 
     // Calculate the maximum dimensions that the video can have.
@@ -170,17 +176,11 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
                       fit: BoxFit.cover,
                     ),
                   )
-                : BlurHash(
-                    blurhash: blurHash,
-                    width: width,
-                    height: height,
-                  ),
+                : BlurHash(blurhash: blurHash, width: width, height: height),
           ),
         ),
         Center(
-          child: CircularProgressIndicator.adaptive(
-            value: _downloadProgress,
-          ),
+          child: CircularProgressIndicator.adaptive(value: _downloadProgress),
         ),
       ],
     );

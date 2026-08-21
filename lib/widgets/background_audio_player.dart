@@ -251,6 +251,13 @@ class BackgroundAudioPlayerState extends State<BackgroundAudioPlayer>
         await audioPlayer.play(
           DeviceFileSource(file.path, mimeType: matrixFile.mimeType),
         );
+      } else if (event.room.encrypted) {
+        // Web has no writable file system; for encrypted audio, download and
+        // decrypt the bytes, then play via a data-URI BytesSource.
+        final matrixFile = await event.downloadAndDecryptAttachment();
+        await audioPlayer.play(
+          BytesSource(matrixFile.bytes, mimeType: matrixFile.mimeType),
+        );
       } else {
         final downloadUrl = (await event.attachmentMxcUrl?.getDownloadUri(
           effectiveClient,
