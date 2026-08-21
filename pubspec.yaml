@@ -183,6 +183,3 @@ msix_config:
   execution_alias: exteranext
   sign_msix: false
   install_certificate: false
-
-dependency_overrides:
-  record_linux: 1.3.0
