@@ -184,6 +184,10 @@ msix_config:
   install_certificate: false
 
 dependency_overrides:
+  # The published package schedules a post-frame callback without checking
+  # whether a dismissed message is still mounted.
+  swipe_to_action:
+    path: packages/swipe_to_action
   # Upstream still imports dart:html, which dart2wasm cannot compile.
   flutter_keyboard_visibility_web:
     path: packages/flutter_keyboard_visibility_web

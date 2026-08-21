@@ -40,7 +40,12 @@ class MessageSelectionArea extends StatelessWidget {
           // our callback until the frame completes so the message menu is
           // installed last.
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            onSecondaryTap?.call(event.position);
+            // The message can be removed while the selection machinery is
+            // finishing the pointer event (for example during navigation).
+            // Do not dispatch a context-menu action from a stale subtree.
+            if (context.mounted) {
+              onSecondaryTap?.call(event.position);
+            }
           });
         }
       },

@@ -1097,6 +1097,7 @@ class __AnimateInState extends State<_AnimateIn> {
     }
     if (!_animationFinished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         setState(() {
           _animationFinished = true;
         });
