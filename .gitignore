@@ -82,3 +82,4 @@ lib/generated
 !/assets/animated_emoji/.gitkeep
 
 
+packages/flutter_keyboard_visibility_web/pubspec.lock
