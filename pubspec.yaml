@@ -72,9 +72,9 @@ dependencies:
   material: ^1.0.1
   matrix:
     # path: ../matrix-dart-sdk
-    git:
-      url: https://github.com/stevessr/matrix-dart-sdk.git
-      ref: Extera
+     git:
+       url: https://github.com/stevessr/matrix-dart-sdk.git
+       ref: Extera
   mime: ^2.0.0
   native_imaging: ^0.5.0
   opus_caf_converter_dart: ^1.0.1

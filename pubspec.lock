@@ -1596,7 +1596,7 @@ packages:
     description:
       path: "."
       ref: Extera
-      resolved-ref: "9f92a6781b79738072fd1dbda72c21c289bc9530"
+      resolved-ref: "406b9250132e2a2748eb7de99c495bcf948064dc"
       url: "https://github.com/stevessr/matrix-dart-sdk.git"
     source: git
     version: "10.2.1"
