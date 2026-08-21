@@ -21,6 +21,7 @@ import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
+
 import '../../../utils/platform_infos.dart';
 import '../../../utils/url_launcher.dart';
 import 'audio_player.dart';
@@ -35,6 +36,7 @@ class MessageContent extends StatelessWidget {
   final Event event;
   final Color textColor;
   final Color linkColor;
+  final Color? backgroundColor;
   final void Function(Event)? onInfoTab;
   final BorderRadius borderRadius;
   final Timeline timeline;
@@ -66,6 +68,7 @@ class MessageContent extends StatelessWidget {
     required this.timeline,
     required this.textColor,
     required this.linkColor,
+    this.backgroundColor,
     required this.borderRadius,
     this.ownMessage = false,
     this.previousEventSameSender = false,
@@ -196,6 +199,7 @@ class MessageContent extends StatelessWidget {
               fit: fit,
               // borderRadius: borderRadius,
               timeline: timeline,
+              backgroundColor: backgroundColor,
               textColor: textColor,
               linkColor: linkColor,
               loadMedia: loadMedia,

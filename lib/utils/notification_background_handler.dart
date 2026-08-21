@@ -137,6 +137,9 @@ Future<void> notificationTap(
       clients.first;
 
   switch (notificationResponse.notificationResponseType) {
+    case NotificationResponseType.notificationDismissed:
+      Logs().v('Notification dismissed, ignoring');
+      return;
     case NotificationResponseType.selectedNotification:
       final roomId = payload.roomId;
       if (roomId == null) return;

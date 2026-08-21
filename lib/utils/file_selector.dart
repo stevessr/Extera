@@ -24,5 +24,5 @@ Future<List<XFile>> selectFiles(
       ),
     ),
   );
-  return result.result?.xFiles ?? [];
+  return result.result?.map((file) => file.xFile).toList() ?? [];
 }
