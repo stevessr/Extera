@@ -10,6 +10,7 @@ import 'package:lottie/lottie.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 
 /// Renders one emoji as the Lottie animation Google ships for it.
 ///
@@ -133,9 +134,18 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
       composition: composition,
       width: size,
       height: size,
-      // Emoji are tiny and repeat a lot, which is exactly the case the raster
-      // cache is meant for: every frame is rasterized once and then reused.
-      renderCache: RenderCache.raster,
+      // Emoji are tiny and repeat a lot, which is exactly the case a render
+      // cache is meant for: every frame is rasterized/recorded once and reused.
+      //
+      // The raster cache keys frames by their on-screen size, which it derives
+      // from `RenderBox.localToGlobal` × device pixel ratio. For these inline
+      // emoji (WidgetSpan children) that size is non-finite on the Web engine,
+      // and dart2wasm throws `Infinity or NaN toInt` while building the cache
+      // key. The drawing-commands cache keys on `Size.zero` instead, so it is
+      // safe on Web while still sparing the per-frame composition walk.
+      renderCache: PlatformInfos.isWeb
+          ? RenderCache.drawingCommands
+          : RenderCache.raster,
     );
   }
 }
