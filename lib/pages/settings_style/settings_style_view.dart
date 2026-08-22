@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -14,7 +12,6 @@ import 'package:extera_next/pages/chat/events/state_message.dart';
 import 'package:extera_next/utils/color_value.dart';
 import 'package:extera_next/utils/dummy_timeline.dart';
 import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/unicode_font_loader.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
@@ -506,9 +503,9 @@ class SettingsStyleView extends StatelessWidget {
                             context,
                           ).unicodeFallbackFontsDescription,
                           setting: AppSettings.unicode18Fallback,
-                          onChanged: (value) {
-                            if (value) unawaited(loadUnicodeFallbackFonts());
-                          },
+                          onChanged: (value) => ThemeController.of(
+                            context,
+                          ).setUnicodeFallback(value),
                         ),
                         const ListDivider(),
                         const SizedBox(height: 8),

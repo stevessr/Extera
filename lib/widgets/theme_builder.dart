@@ -15,6 +15,7 @@ class ThemeBuilder extends StatefulWidget {
     DynamicSchemeVariant schemeVariant,
     bool pureBlack,
     bool notoEmoji,
+    bool unicodeFallback,
   )
   builder;
 
@@ -22,6 +23,7 @@ class ThemeBuilder extends StatefulWidget {
   final String primaryColorSettingsKey;
   final String pureBlackSettingsKey;
   final String notoEmojiSettingsKey;
+  final String unicodeFallbackSettingsKey;
   final String schemeVariantSettingsKey;
 
   const ThemeBuilder({
@@ -30,6 +32,7 @@ class ThemeBuilder extends StatefulWidget {
     this.primaryColorSettingsKey = 'xyz.extera.next.colorSchemeSeed',
     this.pureBlackSettingsKey = 'xyz.extera.next.pureBlack',
     this.notoEmojiSettingsKey = 'xyz.extera.next.notoEmojiFont',
+    this.unicodeFallbackSettingsKey = 'xyz.extera.next.unicode18Fallback',
     this.schemeVariantSettingsKey = 'xyz.extera.next.schemeVariant',
     super.key,
   });
@@ -44,6 +47,7 @@ class ThemeController extends State<ThemeBuilder> {
   Color? _primaryColor;
   bool? _pureBlack;
   bool? _notoEmoji;
+  bool? _unicodeFallback;
   DynamicSchemeVariant? _variant;
 
   ThemeMode get themeMode => _themeMode ?? ThemeMode.system;
@@ -53,6 +57,10 @@ class ThemeController extends State<ThemeBuilder> {
   bool get pureBlack => _pureBlack ?? false;
 
   bool get notoEmoji => _notoEmoji ?? false;
+
+  // Stay disabled until the persisted preference has been read. This avoids a
+  // one-frame font probe for users who explicitly turned fallback off.
+  bool get unicodeFallback => _unicodeFallback ?? false;
 
   DynamicSchemeVariant get variant =>
       _variant ?? DynamicSchemeVariant.tonalSpot;
@@ -70,6 +78,8 @@ class ThemeController extends State<ThemeBuilder> {
     final rawNotoEmoji =
         preferences.getBool(widget.notoEmojiSettingsKey) ??
         preferences.getBool('xyz.extera.next.twemojiFont');
+    final rawUnicodeFallback =
+        preferences.getBool(widget.unicodeFallbackSettingsKey) ?? true;
     final rawVariant =
         preferences.getInt(widget.schemeVariantSettingsKey) ??
         DynamicSchemeVariant.values.indexOf(.tonalSpot);
@@ -81,6 +91,7 @@ class ThemeController extends State<ThemeBuilder> {
       _primaryColor = rawColor == null ? null : Color(rawColor);
       _pureBlack = rawPureBlack;
       _notoEmoji = rawNotoEmoji;
+      _unicodeFallback = rawUnicodeFallback;
       _variant = .values[rawVariant];
     });
   }
@@ -145,6 +156,16 @@ class ThemeController extends State<ThemeBuilder> {
     });
   }
 
+  Future<void> setUnicodeFallback(bool enabled) async {
+    final preferences = _sharedPreferences ??=
+        await SharedPreferences.getInstance();
+    await preferences.setBool(widget.unicodeFallbackSettingsKey, enabled);
+    if (!mounted) return;
+    setState(() {
+      _unicodeFallback = enabled;
+    });
+  }
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback(_loadData);
@@ -163,6 +184,7 @@ class ThemeController extends State<ThemeBuilder> {
           variant,
           pureBlack,
           notoEmoji,
+          unicodeFallback,
         ),
       ),
     );

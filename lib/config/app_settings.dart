@@ -90,7 +90,7 @@ enum AppSettings<T> {
   notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
   // Append the bundled Unicode Font Set families (Unicode 18 coverage) to
   // every font fallback chain.
-  unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', false),
+  unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', true),
   animatedEmoji<bool>('xyz.extera.next.animatedEmoji', false),
   biometricUnlock<bool>('xyz.extera.next.biometricUnlock', false),
 
@@ -185,7 +185,7 @@ enum AppSettings<T> {
       if (colorEmojiFirst && notoEmojiFont.value) 'Noto Color Emoji',
       ...setting.value.split(',').where((font) => font.isNotEmpty),
       if (unicode18Fallback.value)
-        ...unicodeFallbackFonts.map((asset) => asset.$1),
+        ...unicodeFallbackFonts.map((asset) => asset.family),
     ];
     return chain.isEmpty ? null : chain;
   }

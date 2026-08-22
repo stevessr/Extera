@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build tree-shaken, lazily-loadable Unicode fallback fonts.
+"""Build tree-shaken, on-demand Unicode fallback fonts.
 
 Takes the bundled Unicode Font Set release fonts, removes every glyph that is
 already covered by an earlier font in the fallback chain (mirroring the UFS
@@ -7,11 +7,13 @@ cmap cleaner), splits each remaining "exclusive" coverage into size-bounded
 chunks emitted as separate font families, and generates:
 
   * assets/font/ufs/*.{otf,ttf}            - the chunked subset fonts
-  * lib/config/unicode_fallback_fonts.dart - the ordered family list
+  * lib/config/unicode_fallback_fonts.dart - family and code-point index
 
-Flutter loads asset font families lazily on first use, so chunks that are never
-hit are never decoded. WOFF2 is intentionally NOT used: the Flutter engine does
-not support it outside the web renderer (flutter/flutter#109108).
+The generated fonts are plain Flutter assets, not ``FontManifest`` entries.
+At runtime the visible-text scanner probes the current platform font fallback
+first, then registers only the chunk that contains a still-missing code point.
+WOFF2 is intentionally NOT used: the Flutter engine does not support it outside
+the web renderer (flutter/flutter#109108).
 
 Usage: python3 tool/build_unicode_fallback_fonts.py [--src DIR] [--out DIR]
 """
@@ -19,9 +21,11 @@ Usage: python3 tool/build_unicode_fallback_fonts.py [--src DIR] [--out DIR]
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 from fontTools import subset
@@ -46,11 +50,14 @@ CHAIN = [
     ("NewGardiner", "NewGardiner.ttf"),
     ("Xdareg(darage)v1(RL)", "UnicodiaDaarage.otf"),
     ("TempSeal", "TempSeal.ttf"),
-    # Terminal catch-all: covers everything by design, never subsetted.
-    ("Last Resort", "LastResort-Regular.ttf"),
+    # Last Resort is deliberately omitted. It maps every Unicode scalar to a
+    # diagnostic box rather than a real glyph and costs ~9MB, so loading it for
+    # an unsupported character would defeat the on-demand fallback policy.
 ]
 
-KEEP_WHOLE = {"Noto Emoji", "Last Resort"}
+# Emoji shaping relies on GSUB sequences that can cross Unicode blocks. Keep
+# this relatively small font whole; every other family is safe to split.
+KEEP_WHOLE = {"Noto Emoji"}
 SUPERBLOCK_BITS = 13  # 8192 codepoints per superblock
 TARGET_CHUNK_BYTES = 512 * 1024
 MIN_THRESHOLD = 256
@@ -63,6 +70,29 @@ def sanitize(name: str) -> str:
 
 def codepoints(font: TTFont) -> set[int]:
     return set(font.getBestCmap().keys())
+
+
+def contiguous_ranges(cps: list[int]) -> list[tuple[int, int]]:
+    """Compress sorted code points into inclusive, contiguous ranges."""
+    if not cps:
+        return []
+    ranges: list[tuple[int, int]] = []
+    start = previous = cps[0]
+    for cp in cps[1:]:
+        if cp != previous + 1:
+            ranges.append((start, previous))
+            start = cp
+        previous = cp
+    ranges.append((start, previous))
+    return ranges
+
+
+def append_varint(buffer: bytearray, value: int) -> None:
+    """Append an unsigned LEB128 integer."""
+    while value >= 0x80:
+        buffer.append((value & 0x7F) | 0x80)
+        value >>= 7
+    buffer.append(value)
 
 
 def make_subset(src_path: Path, unicodes: list[int], out_path: Path) -> None:
@@ -85,14 +115,21 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--src", default=str(REPO / "assets" / "font" / "ufs-src"))
     parser.add_argument("--out", default=str(REPO / "assets" / "font" / "ufs-stage"))
+    parser.add_argument(
+        "--metadata-only",
+        action="store_true",
+        help="reuse already-generated files in --out and rebuild only the Dart index",
+    )
     args = parser.parse_args()
     src_dir, out_dir = Path(args.src), Path(args.out)
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
+    if not args.metadata_only:
+        if out_dir.exists():
+            shutil.rmtree(out_dir)
+        out_dir.mkdir(parents=True)
 
     covered: set[int] = set()
     families: list[dict] = []  # {family, file} in strict chain order
+    family_ranges: list[list[tuple[int, int]]] = []
     stats: list[dict] = []
 
     for base, filename in CHAIN:
@@ -109,10 +146,12 @@ def main() -> None:
 
         if base in KEEP_WHOLE:
             covered |= cps
-            shutil.copyfile(src_path, out_dir / filename)
+            if not args.metadata_only:
+                shutil.copyfile(src_path, out_dir / filename)
             families.append(
                 {"family": base, "file": f"assets/font/ufs/{filename}"}
             )
+            family_ranges.append(contiguous_ranges(sorted(cps)))
             entry.update(kind="whole", out_size=orig_size, exclusive=len(cps), chunks=1)
             stats.append(entry)
             print(f"{base}: kept whole ({orig_size >> 10}KB)", flush=True)
@@ -174,7 +213,8 @@ def main() -> None:
             start_cp = chunk_cps[0]
             family_name = f"{base} u{start_cp:05X}"
             file_name = f"{stem}_u{start_cp:05X}{ext}"
-            make_subset(src_path, chunk_cps, out_dir / file_name)
+            if not args.metadata_only:
+                make_subset(src_path, chunk_cps, out_dir / file_name)
             size = (out_dir / file_name).stat().st_size
             total_out += size
             families.append(
@@ -185,6 +225,7 @@ def main() -> None:
                     "last_cp": chunk_cps[-1],
                 }
             )
+            family_ranges.append(contiguous_ranges(chunk_cps))
 
         entry.update(kind="split", out_size=total_out, chunks=len(chunks))
         stats.append(entry)
@@ -194,19 +235,67 @@ def main() -> None:
             flush=True,
         )
 
+    # The tree-shaken families have disjoint cmaps. Flatten their coverage into
+    # a globally sorted range table so Dart can find an asset with one binary
+    # search without opening or downloading any font file.
+    indexed_ranges = sorted(
+        (start, end, family_index)
+        for family_index, ranges in enumerate(family_ranges)
+        for start, end in ranges
+    )
+    for previous, current in zip(indexed_ranges, indexed_ranges[1:]):
+        if current[0] <= previous[1]:
+            raise RuntimeError(
+                "generated fallback cmaps overlap: "
+                f"U+{previous[0]:04X}-U+{previous[1]:04X} and "
+                f"U+{current[0]:04X}-U+{current[1]:04X}"
+            )
+
+    packed_ranges = bytearray()
+    previous_end = -1
+    for start, end, family_index in indexed_ranges:
+        append_varint(packed_ranges, start - previous_end - 1)
+        append_varint(packed_ranges, end - start)
+        append_varint(packed_ranges, family_index)
+        previous_end = end
+    encoded_ranges = base64.b64encode(packed_ranges).decode("ascii")
+
     dart_lines = [
         "// GENERATED by tool/build_unicode_fallback_fonts.py - do not edit.",
         "// Ordered exactly like the fallback chain: earlier entries win.",
         "// Regenerate with: python3 tool/build_unicode_fallback_fonts.py",
         "// Families are NOT declared in pubspec.yaml: the web/wasm engine preloads",
-        "// every FontManifest entry at startup, so these load on demand via",
-        "// loadUnicodeFallbackFonts() instead.",
-        "const List<(String, String)> kUnicodeFallbackFontAssets = <(String, String)>[",
+        "// every FontManifest entry at startup. Runtime code probes system",
+        "// fallback coverage, then loads only the matching plain asset.",
+        "class UnicodeFallbackFontAsset {",
+        "  const UnicodeFallbackFontAsset(this.family, this.asset);",
+        "",
+        "  final String family;",
+        "  final String asset;",
+        "}",
+        "",
+        "const List<UnicodeFallbackFontAsset> kUnicodeFallbackFontAssets =",
+        "    <UnicodeFallbackFontAsset>[",
     ]
-    dart_lines += [f"  ('{f['family']}', '{f['file']}')," for f in families]
-    dart_lines += ["];", ""]
+    dart_lines += [
+        f"  UnicodeFallbackFontAsset('{f['family']}', '{f['file']}'),"
+        for f in families
+    ]
+    dart_lines += [
+        "];",
+        "",
+        "// Delta/length/asset-index triples encoded as unsigned LEB128, then",
+        "// base64. Decoded lazily on the first non-ASCII text scan.",
+        "const String kUnicodeFallbackFontRangeIndexBase64 =",
+    ]
+    dart_lines += [
+        f"  '{encoded_ranges[offset : offset + 80]}'"
+        for offset in range(0, len(encoded_ranges), 80)
+    ]
+    dart_lines += [";", ""]
     dart_path = REPO / "lib" / "config" / "unicode_fallback_fonts.dart"
     dart_path.write_text("\n".join(dart_lines) + "\n", encoding="utf-8")
+    subprocess.run(["dart", "format", str(dart_path)], check=True)
 
     manifest = {
         "chain": families,
@@ -214,7 +303,8 @@ def main() -> None:
         "total_in": sum(s["orig_size"] for s in stats),
         "total_out": sum(s["out_size"] for s in stats),
     }
-    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    if not args.metadata_only:
+        (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=1))
 
     print(
         f"\nTOTAL: {manifest['total_in'] / 1048576:.1f}MB -> "

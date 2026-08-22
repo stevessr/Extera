@@ -2,190 +2,970 @@
 // Ordered exactly like the fallback chain: earlier entries win.
 // Regenerate with: python3 tool/build_unicode_fallback_fonts.py
 // Families are NOT declared in pubspec.yaml: the web/wasm engine preloads
-// every FontManifest entry at startup, so these load on demand via
-// loadUnicodeFallbackFonts() instead.
-const List<(String, String)> kUnicodeFallbackFontAssets = <(String, String)>[
-  ('Noto Emoji', 'assets/font/ufs/NotoEmoji-Regular.ttf'),
-  ('Plangothic P1 u00001', 'assets/font/ufs/PlangothicP1_u00001.otf'),
-  ('Plangothic P1 u0E001', 'assets/font/ufs/PlangothicP1_u0E001.otf'),
-  ('Plangothic P1 u18800', 'assets/font/ufs/PlangothicP1_u18800.otf'),
-  ('Plangothic P1 u20000', 'assets/font/ufs/PlangothicP1_u20000.otf'),
-  ('Plangothic P1 u20741', 'assets/font/ufs/PlangothicP1_u20741.otf'),
-  ('Plangothic P1 u20E82', 'assets/font/ufs/PlangothicP1_u20E82.otf'),
-  ('Plangothic P1 u215C3', 'assets/font/ufs/PlangothicP1_u215C3.otf'),
-  ('Plangothic P1 u21D04', 'assets/font/ufs/PlangothicP1_u21D04.otf'),
-  ('Plangothic P1 u22000', 'assets/font/ufs/PlangothicP1_u22000.otf'),
-  ('Plangothic P1 u22741', 'assets/font/ufs/PlangothicP1_u22741.otf'),
-  ('Plangothic P1 u22E82', 'assets/font/ufs/PlangothicP1_u22E82.otf'),
-  ('Plangothic P1 u235C3', 'assets/font/ufs/PlangothicP1_u235C3.otf'),
-  ('Plangothic P1 u23D04', 'assets/font/ufs/PlangothicP1_u23D04.otf'),
-  ('Plangothic P1 u24000', 'assets/font/ufs/PlangothicP1_u24000.otf'),
-  ('Plangothic P1 u24741', 'assets/font/ufs/PlangothicP1_u24741.otf'),
-  ('Plangothic P1 u24E82', 'assets/font/ufs/PlangothicP1_u24E82.otf'),
-  ('Plangothic P1 u255C3', 'assets/font/ufs/PlangothicP1_u255C3.otf'),
-  ('Plangothic P1 u25D04', 'assets/font/ufs/PlangothicP1_u25D04.otf'),
-  ('Plangothic P1 u26000', 'assets/font/ufs/PlangothicP1_u26000.otf'),
-  ('Plangothic P1 u26741', 'assets/font/ufs/PlangothicP1_u26741.otf'),
-  ('Plangothic P1 u26E82', 'assets/font/ufs/PlangothicP1_u26E82.otf'),
-  ('Plangothic P1 u275C3', 'assets/font/ufs/PlangothicP1_u275C3.otf'),
-  ('Plangothic P1 u27D04', 'assets/font/ufs/PlangothicP1_u27D04.otf'),
-  ('Plangothic P1 u28000', 'assets/font/ufs/PlangothicP1_u28000.otf'),
-  ('Plangothic P1 u28741', 'assets/font/ufs/PlangothicP1_u28741.otf'),
-  ('Plangothic P1 u28E82', 'assets/font/ufs/PlangothicP1_u28E82.otf'),
-  ('Plangothic P1 u295C3', 'assets/font/ufs/PlangothicP1_u295C3.otf'),
-  ('Plangothic P1 u29D04', 'assets/font/ufs/PlangothicP1_u29D04.otf'),
-  ('Plangothic P1 u2A000', 'assets/font/ufs/PlangothicP1_u2A000.otf'),
-  ('Plangothic P1 u2A761', 'assets/font/ufs/PlangothicP1_u2A761.otf'),
-  ('Plangothic P1 u2AEA2', 'assets/font/ufs/PlangothicP1_u2AEA2.otf'),
-  ('Plangothic P1 u2B5E3', 'assets/font/ufs/PlangothicP1_u2B5E3.otf'),
-  ('Plangothic P1 u2BD25', 'assets/font/ufs/PlangothicP1_u2BD25.otf'),
-  ('Plangothic P1 u2C000', 'assets/font/ufs/PlangothicP1_u2C000.otf'),
-  ('Plangothic P1 u2C741', 'assets/font/ufs/PlangothicP1_u2C741.otf'),
-  ('Plangothic P1 u2CE82', 'assets/font/ufs/PlangothicP1_u2CE82.otf'),
-  ('Plangothic P1 u2D5C5', 'assets/font/ufs/PlangothicP1_u2D5C5.otf'),
-  ('Plangothic P1 u2DD06', 'assets/font/ufs/PlangothicP1_u2DD06.otf'),
-  ('Plangothic P1 u2E000', 'assets/font/ufs/PlangothicP1_u2E000.otf'),
-  ('Plangothic P1 u2E741', 'assets/font/ufs/PlangothicP1_u2E741.otf'),
-  ('Plangothic P1 u2F833', 'assets/font/ufs/PlangothicP1_u2F833.otf'),
-  ('Plangothic P2 u00295', 'assets/font/ufs/PlangothicP2_u00295.otf'),
-  ('Plangothic P2 u0A66E', 'assets/font/ufs/PlangothicP2_u0A66E.otf'),
-  ('Plangothic P2 u0B39C', 'assets/font/ufs/PlangothicP2_u0B39C.otf'),
-  ('Plangothic P2 u0BB9F', 'assets/font/ufs/PlangothicP2_u0BB9F.otf'),
-  ('Plangothic P2 u0C000', 'assets/font/ufs/PlangothicP2_u0C000.otf'),
-  ('Plangothic P2 u0C803', 'assets/font/ufs/PlangothicP2_u0C803.otf'),
-  ('Plangothic P2 u0D006', 'assets/font/ufs/PlangothicP2_u0D006.otf'),
-  ('Plangothic P2 u0E21D', 'assets/font/ufs/PlangothicP2_u0E21D.otf'),
-  ('Plangothic P2 u1236F', 'assets/font/ufs/PlangothicP2_u1236F.otf'),
-  ('Plangothic P2 u16100', 'assets/font/ufs/PlangothicP2_u16100.otf'),
-  ('Plangothic P2 u176F8', 'assets/font/ufs/PlangothicP2_u176F8.otf'),
-  ('Plangothic P2 u17EFB', 'assets/font/ufs/PlangothicP2_u17EFB.otf'),
-  ('Plangothic P2 u18000', 'assets/font/ufs/PlangothicP2_u18000.otf'),
-  ('Plangothic P2 u18806', 'assets/font/ufs/PlangothicP2_u18806.otf'),
-  ('Plangothic P2 u1AFF0', 'assets/font/ufs/PlangothicP2_u1AFF0.otf'),
-  ('Plangothic P2 u1CC00', 'assets/font/ufs/PlangothicP2_u1CC00.otf'),
-  ('Plangothic P2 u1E000', 'assets/font/ufs/PlangothicP2_u1E000.otf'),
-  ('Plangothic P2 u30000', 'assets/font/ufs/PlangothicP2_u30000.otf'),
-  ('Plangothic P2 u30803', 'assets/font/ufs/PlangothicP2_u30803.otf'),
-  ('Plangothic P2 u31006', 'assets/font/ufs/PlangothicP2_u31006.otf'),
-  ('Plangothic P2 u3180F', 'assets/font/ufs/PlangothicP2_u3180F.otf'),
-  ('Plangothic P2 u32000', 'assets/font/ufs/PlangothicP2_u32000.otf'),
-  ('Plangothic P2 u32803', 'assets/font/ufs/PlangothicP2_u32803.otf'),
-  ('Plangothic P2 u33007', 'assets/font/ufs/PlangothicP2_u33007.otf'),
-  ('Source Han Sans SC u00100', 'assets/font/ufs/SourceHanSansSC_u00100.otf'),
-  ('Source Han Sans SC u02012', 'assets/font/ufs/SourceHanSansSC_u02012.otf'),
-  ('Source Han Sans SC u03697', 'assets/font/ufs/SourceHanSansSC_u03697.otf'),
-  ('Source Han Sans SC u03EC6', 'assets/font/ufs/SourceHanSansSC_u03EC6.otf'),
-  ('Source Han Sans SC u04000', 'assets/font/ufs/SourceHanSansSC_u04000.otf'),
-  ('Source Han Sans SC u04834', 'assets/font/ufs/SourceHanSansSC_u04834.otf'),
-  ('Source Han Sans SC u05100', 'assets/font/ufs/SourceHanSansSC_u05100.otf'),
-  ('Source Han Sans SC u059BD', 'assets/font/ufs/SourceHanSansSC_u059BD.otf'),
-  ('Source Han Sans SC u06000', 'assets/font/ufs/SourceHanSansSC_u06000.otf'),
-  ('Source Han Sans SC u06883', 'assets/font/ufs/SourceHanSansSC_u06883.otf'),
-  ('Source Han Sans SC u07114', 'assets/font/ufs/SourceHanSansSC_u07114.otf'),
-  ('Source Han Sans SC u079B1', 'assets/font/ufs/SourceHanSansSC_u079B1.otf'),
-  ('Source Han Sans SC u08000', 'assets/font/ufs/SourceHanSansSC_u08000.otf'),
-  ('Source Han Sans SC u088A6', 'assets/font/ufs/SourceHanSansSC_u088A6.otf'),
-  ('Source Han Sans SC u09114', 'assets/font/ufs/SourceHanSansSC_u09114.otf'),
-  ('Source Han Sans SC u09998', 'assets/font/ufs/SourceHanSansSC_u09998.otf'),
-  ('Noto Unicode u00008', 'assets/font/ufs/NotoUnicode_u00008.otf'),
-  ('Noto Unicode u0200B', 'assets/font/ufs/NotoUnicode_u0200B.otf'),
-  ('Noto Unicode u10000', 'assets/font/ufs/NotoUnicode_u10000.otf'),
-  ('Noto Unicode u12000', 'assets/font/ufs/NotoUnicode_u12000.otf'),
-  ('Noto Unicode u1D000', 'assets/font/ufs/NotoUnicode_u1D000.otf'),
-  ('Noto Sans Living u00700', 'assets/font/ufs/NotoSansLiving_u00700.ttf'),
-  ('Noto Sans Living u0219A', 'assets/font/ufs/NotoSansLiving_u0219A.ttf'),
-  ('Noto Sans Living u0A000', 'assets/font/ufs/NotoSansLiving_u0A000.ttf'),
-  ('Noto Sans Living u1D400', 'assets/font/ufs/NotoSansLiving_u1D400.ttf'),
-  (
-    'Noto Sans Historical u01680',
-    'assets/font/ufs/NotoSansHistorical_u01680.ttf',
-  ),
-  ('Kreative Square u02072', 'assets/font/ufs/KreativeSquare_u02072.ttf'),
-  ('UFSTemp Alpha u16D80', 'assets/font/ufs/UFSTempAlpha_u16D80.otf'),
-  ('UFSZero Ext u02800', 'assets/font/ufs/UFSZeroExt_u02800.otf'),
-  ('UnicodiaFunky u0E003', 'assets/font/ufs/UnicodiaFunky_u0E003.ttf'),
-  ('UnicodiaSesh u13460', 'assets/font/ufs/UnicodiaSesh_u13460.ttf'),
-  ('UnicodiaSesh u135AD', 'assets/font/ufs/UnicodiaSesh_u135AD.ttf'),
-  ('UnicodiaSesh u136FA', 'assets/font/ufs/UnicodiaSesh_u136FA.ttf'),
-  ('UnicodiaSesh u1385A', 'assets/font/ufs/UnicodiaSesh_u1385A.ttf'),
-  ('UnicodiaSesh u139C8', 'assets/font/ufs/UnicodiaSesh_u139C8.ttf'),
-  ('UnicodiaSesh u13B4C', 'assets/font/ufs/UnicodiaSesh_u13B4C.ttf'),
-  ('UnicodiaSesh u13CCB', 'assets/font/ufs/UnicodiaSesh_u13CCB.ttf'),
-  ('UnicodiaSesh u13E53', 'assets/font/ufs/UnicodiaSesh_u13E53.ttf'),
-  ('UnicodiaSesh u13FD0', 'assets/font/ufs/UnicodiaSesh_u13FD0.ttf'),
-  ('UnicodiaSesh u14000', 'assets/font/ufs/UnicodiaSesh_u14000.ttf'),
-  ('UnicodiaSesh u1416F', 'assets/font/ufs/UnicodiaSesh_u1416F.ttf'),
-  ('UnicodiaSesh u142F5', 'assets/font/ufs/UnicodiaSesh_u142F5.ttf'),
-  ('NewGardiner u0E45B', 'assets/font/ufs/NewGardiner_u0E45B.ttf'),
-  (
-    'Xdareg(darage)v1(RL) u11380',
-    'assets/font/ufs/Xdaregdaragev1RL_u11380.otf',
-  ),
-  ('TempSeal u3D000', 'assets/font/ufs/TempSeal_u3D000.ttf'),
-  ('TempSeal u3D0AB', 'assets/font/ufs/TempSeal_u3D0AB.ttf'),
-  ('TempSeal u3D156', 'assets/font/ufs/TempSeal_u3D156.ttf'),
-  ('TempSeal u3D201', 'assets/font/ufs/TempSeal_u3D201.ttf'),
-  ('TempSeal u3D2AC', 'assets/font/ufs/TempSeal_u3D2AC.ttf'),
-  ('TempSeal u3D357', 'assets/font/ufs/TempSeal_u3D357.ttf'),
-  ('TempSeal u3D402', 'assets/font/ufs/TempSeal_u3D402.ttf'),
-  ('TempSeal u3D4AD', 'assets/font/ufs/TempSeal_u3D4AD.ttf'),
-  ('TempSeal u3D558', 'assets/font/ufs/TempSeal_u3D558.ttf'),
-  ('TempSeal u3D603', 'assets/font/ufs/TempSeal_u3D603.ttf'),
-  ('TempSeal u3D6AE', 'assets/font/ufs/TempSeal_u3D6AE.ttf'),
-  ('TempSeal u3D759', 'assets/font/ufs/TempSeal_u3D759.ttf'),
-  ('TempSeal u3D804', 'assets/font/ufs/TempSeal_u3D804.ttf'),
-  ('TempSeal u3D8AF', 'assets/font/ufs/TempSeal_u3D8AF.ttf'),
-  ('TempSeal u3D95A', 'assets/font/ufs/TempSeal_u3D95A.ttf'),
-  ('TempSeal u3DA05', 'assets/font/ufs/TempSeal_u3DA05.ttf'),
-  ('TempSeal u3DAB0', 'assets/font/ufs/TempSeal_u3DAB0.ttf'),
-  ('TempSeal u3DB5B', 'assets/font/ufs/TempSeal_u3DB5B.ttf'),
-  ('TempSeal u3DC06', 'assets/font/ufs/TempSeal_u3DC06.ttf'),
-  ('TempSeal u3DCB1', 'assets/font/ufs/TempSeal_u3DCB1.ttf'),
-  ('TempSeal u3DD5C', 'assets/font/ufs/TempSeal_u3DD5C.ttf'),
-  ('TempSeal u3DE07', 'assets/font/ufs/TempSeal_u3DE07.ttf'),
-  ('TempSeal u3DEB2', 'assets/font/ufs/TempSeal_u3DEB2.ttf'),
-  ('TempSeal u3DF5D', 'assets/font/ufs/TempSeal_u3DF5D.ttf'),
-  ('TempSeal u3E000', 'assets/font/ufs/TempSeal_u3E000.ttf'),
-  ('TempSeal u3E0AB', 'assets/font/ufs/TempSeal_u3E0AB.ttf'),
-  ('TempSeal u3E156', 'assets/font/ufs/TempSeal_u3E156.ttf'),
-  ('TempSeal u3E201', 'assets/font/ufs/TempSeal_u3E201.ttf'),
-  ('TempSeal u3E2AC', 'assets/font/ufs/TempSeal_u3E2AC.ttf'),
-  ('TempSeal u3E357', 'assets/font/ufs/TempSeal_u3E357.ttf'),
-  ('TempSeal u3E402', 'assets/font/ufs/TempSeal_u3E402.ttf'),
-  ('TempSeal u3E4AD', 'assets/font/ufs/TempSeal_u3E4AD.ttf'),
-  ('TempSeal u3E558', 'assets/font/ufs/TempSeal_u3E558.ttf'),
-  ('TempSeal u3E603', 'assets/font/ufs/TempSeal_u3E603.ttf'),
-  ('TempSeal u3E6AE', 'assets/font/ufs/TempSeal_u3E6AE.ttf'),
-  ('TempSeal u3E759', 'assets/font/ufs/TempSeal_u3E759.ttf'),
-  ('TempSeal u3E804', 'assets/font/ufs/TempSeal_u3E804.ttf'),
-  ('TempSeal u3E8AF', 'assets/font/ufs/TempSeal_u3E8AF.ttf'),
-  ('TempSeal u3E95A', 'assets/font/ufs/TempSeal_u3E95A.ttf'),
-  ('TempSeal u3EA05', 'assets/font/ufs/TempSeal_u3EA05.ttf'),
-  ('TempSeal u3EAB0', 'assets/font/ufs/TempSeal_u3EAB0.ttf'),
-  ('TempSeal u3EB5B', 'assets/font/ufs/TempSeal_u3EB5B.ttf'),
-  ('TempSeal u3EC06', 'assets/font/ufs/TempSeal_u3EC06.ttf'),
-  ('TempSeal u3ECB1', 'assets/font/ufs/TempSeal_u3ECB1.ttf'),
-  ('TempSeal u3ED5C', 'assets/font/ufs/TempSeal_u3ED5C.ttf'),
-  ('TempSeal u3EE07', 'assets/font/ufs/TempSeal_u3EE07.ttf'),
-  ('TempSeal u3EEB2', 'assets/font/ufs/TempSeal_u3EEB2.ttf'),
-  ('TempSeal u3EF5D', 'assets/font/ufs/TempSeal_u3EF5D.ttf'),
-  ('TempSeal u3F008', 'assets/font/ufs/TempSeal_u3F008.ttf'),
-  ('TempSeal u3F0B3', 'assets/font/ufs/TempSeal_u3F0B3.ttf'),
-  ('TempSeal u3F15E', 'assets/font/ufs/TempSeal_u3F15E.ttf'),
-  ('TempSeal u3F209', 'assets/font/ufs/TempSeal_u3F209.ttf'),
-  ('TempSeal u3F2B4', 'assets/font/ufs/TempSeal_u3F2B4.ttf'),
-  ('TempSeal u3F35F', 'assets/font/ufs/TempSeal_u3F35F.ttf'),
-  ('TempSeal u3F40A', 'assets/font/ufs/TempSeal_u3F40A.ttf'),
-  ('TempSeal u3F4B5', 'assets/font/ufs/TempSeal_u3F4B5.ttf'),
-  ('TempSeal u3F560', 'assets/font/ufs/TempSeal_u3F560.ttf'),
-  ('TempSeal u3F60B', 'assets/font/ufs/TempSeal_u3F60B.ttf'),
-  ('TempSeal u3F6B6', 'assets/font/ufs/TempSeal_u3F6B6.ttf'),
-  ('TempSeal u3F761', 'assets/font/ufs/TempSeal_u3F761.ttf'),
-  ('TempSeal u3F80C', 'assets/font/ufs/TempSeal_u3F80C.ttf'),
-  ('TempSeal u3F8B7', 'assets/font/ufs/TempSeal_u3F8B7.ttf'),
-  ('TempSeal u3F962', 'assets/font/ufs/TempSeal_u3F962.ttf'),
-  ('TempSeal u3FA0D', 'assets/font/ufs/TempSeal_u3FA0D.ttf'),
-  ('TempSeal u3FAB8', 'assets/font/ufs/TempSeal_u3FAB8.ttf'),
-  ('TempSeal u3FB63', 'assets/font/ufs/TempSeal_u3FB63.ttf'),
-  ('Last Resort', 'assets/font/ufs/LastResort-Regular.ttf'),
-];
+// every FontManifest entry at startup. Runtime code probes system
+// fallback coverage, then loads only the matching plain asset.
+class UnicodeFallbackFontAsset {
+  const UnicodeFallbackFontAsset(this.family, this.asset);
+
+  final String family;
+  final String asset;
+}
+
+const List<UnicodeFallbackFontAsset> kUnicodeFallbackFontAssets =
+    <UnicodeFallbackFontAsset>[
+      UnicodeFallbackFontAsset(
+        'Noto Emoji',
+        'assets/font/ufs/NotoEmoji-Regular.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u00001',
+        'assets/font/ufs/PlangothicP1_u00001.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u0E001',
+        'assets/font/ufs/PlangothicP1_u0E001.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u18800',
+        'assets/font/ufs/PlangothicP1_u18800.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u20000',
+        'assets/font/ufs/PlangothicP1_u20000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u20741',
+        'assets/font/ufs/PlangothicP1_u20741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u20E82',
+        'assets/font/ufs/PlangothicP1_u20E82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u215C3',
+        'assets/font/ufs/PlangothicP1_u215C3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u21D04',
+        'assets/font/ufs/PlangothicP1_u21D04.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u22000',
+        'assets/font/ufs/PlangothicP1_u22000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u22741',
+        'assets/font/ufs/PlangothicP1_u22741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u22E82',
+        'assets/font/ufs/PlangothicP1_u22E82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u235C3',
+        'assets/font/ufs/PlangothicP1_u235C3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u23D04',
+        'assets/font/ufs/PlangothicP1_u23D04.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u24000',
+        'assets/font/ufs/PlangothicP1_u24000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u24741',
+        'assets/font/ufs/PlangothicP1_u24741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u24E82',
+        'assets/font/ufs/PlangothicP1_u24E82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u255C3',
+        'assets/font/ufs/PlangothicP1_u255C3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u25D04',
+        'assets/font/ufs/PlangothicP1_u25D04.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u26000',
+        'assets/font/ufs/PlangothicP1_u26000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u26741',
+        'assets/font/ufs/PlangothicP1_u26741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u26E82',
+        'assets/font/ufs/PlangothicP1_u26E82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u275C3',
+        'assets/font/ufs/PlangothicP1_u275C3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u27D04',
+        'assets/font/ufs/PlangothicP1_u27D04.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u28000',
+        'assets/font/ufs/PlangothicP1_u28000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u28741',
+        'assets/font/ufs/PlangothicP1_u28741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u28E82',
+        'assets/font/ufs/PlangothicP1_u28E82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u295C3',
+        'assets/font/ufs/PlangothicP1_u295C3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u29D04',
+        'assets/font/ufs/PlangothicP1_u29D04.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2A000',
+        'assets/font/ufs/PlangothicP1_u2A000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2A761',
+        'assets/font/ufs/PlangothicP1_u2A761.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2AEA2',
+        'assets/font/ufs/PlangothicP1_u2AEA2.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2B5E3',
+        'assets/font/ufs/PlangothicP1_u2B5E3.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2BD25',
+        'assets/font/ufs/PlangothicP1_u2BD25.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2C000',
+        'assets/font/ufs/PlangothicP1_u2C000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2C741',
+        'assets/font/ufs/PlangothicP1_u2C741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2CE82',
+        'assets/font/ufs/PlangothicP1_u2CE82.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2D5C5',
+        'assets/font/ufs/PlangothicP1_u2D5C5.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2DD06',
+        'assets/font/ufs/PlangothicP1_u2DD06.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2E000',
+        'assets/font/ufs/PlangothicP1_u2E000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2E741',
+        'assets/font/ufs/PlangothicP1_u2E741.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P1 u2F833',
+        'assets/font/ufs/PlangothicP1_u2F833.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u00295',
+        'assets/font/ufs/PlangothicP2_u00295.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0A66E',
+        'assets/font/ufs/PlangothicP2_u0A66E.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0B39C',
+        'assets/font/ufs/PlangothicP2_u0B39C.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0BB9F',
+        'assets/font/ufs/PlangothicP2_u0BB9F.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0C000',
+        'assets/font/ufs/PlangothicP2_u0C000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0C803',
+        'assets/font/ufs/PlangothicP2_u0C803.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0D006',
+        'assets/font/ufs/PlangothicP2_u0D006.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u0E21D',
+        'assets/font/ufs/PlangothicP2_u0E21D.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u1236F',
+        'assets/font/ufs/PlangothicP2_u1236F.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u16100',
+        'assets/font/ufs/PlangothicP2_u16100.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u176F8',
+        'assets/font/ufs/PlangothicP2_u176F8.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u17EFB',
+        'assets/font/ufs/PlangothicP2_u17EFB.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u18000',
+        'assets/font/ufs/PlangothicP2_u18000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u18806',
+        'assets/font/ufs/PlangothicP2_u18806.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u1AFF0',
+        'assets/font/ufs/PlangothicP2_u1AFF0.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u1CC00',
+        'assets/font/ufs/PlangothicP2_u1CC00.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u1E000',
+        'assets/font/ufs/PlangothicP2_u1E000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u30000',
+        'assets/font/ufs/PlangothicP2_u30000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u30803',
+        'assets/font/ufs/PlangothicP2_u30803.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u31006',
+        'assets/font/ufs/PlangothicP2_u31006.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u3180F',
+        'assets/font/ufs/PlangothicP2_u3180F.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u32000',
+        'assets/font/ufs/PlangothicP2_u32000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u32803',
+        'assets/font/ufs/PlangothicP2_u32803.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Plangothic P2 u33007',
+        'assets/font/ufs/PlangothicP2_u33007.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u00100',
+        'assets/font/ufs/SourceHanSansSC_u00100.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u02012',
+        'assets/font/ufs/SourceHanSansSC_u02012.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u03697',
+        'assets/font/ufs/SourceHanSansSC_u03697.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u03EC6',
+        'assets/font/ufs/SourceHanSansSC_u03EC6.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u04000',
+        'assets/font/ufs/SourceHanSansSC_u04000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u04834',
+        'assets/font/ufs/SourceHanSansSC_u04834.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u05100',
+        'assets/font/ufs/SourceHanSansSC_u05100.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u059BD',
+        'assets/font/ufs/SourceHanSansSC_u059BD.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u06000',
+        'assets/font/ufs/SourceHanSansSC_u06000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u06883',
+        'assets/font/ufs/SourceHanSansSC_u06883.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u07114',
+        'assets/font/ufs/SourceHanSansSC_u07114.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u079B1',
+        'assets/font/ufs/SourceHanSansSC_u079B1.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u08000',
+        'assets/font/ufs/SourceHanSansSC_u08000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u088A6',
+        'assets/font/ufs/SourceHanSansSC_u088A6.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u09114',
+        'assets/font/ufs/SourceHanSansSC_u09114.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Source Han Sans SC u09998',
+        'assets/font/ufs/SourceHanSansSC_u09998.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Unicode u00008',
+        'assets/font/ufs/NotoUnicode_u00008.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Unicode u0200B',
+        'assets/font/ufs/NotoUnicode_u0200B.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Unicode u10000',
+        'assets/font/ufs/NotoUnicode_u10000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Unicode u12000',
+        'assets/font/ufs/NotoUnicode_u12000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Unicode u1D000',
+        'assets/font/ufs/NotoUnicode_u1D000.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Sans Living u00700',
+        'assets/font/ufs/NotoSansLiving_u00700.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Sans Living u0219A',
+        'assets/font/ufs/NotoSansLiving_u0219A.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Sans Living u0A000',
+        'assets/font/ufs/NotoSansLiving_u0A000.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Sans Living u1D400',
+        'assets/font/ufs/NotoSansLiving_u1D400.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Noto Sans Historical u01680',
+        'assets/font/ufs/NotoSansHistorical_u01680.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Kreative Square u02072',
+        'assets/font/ufs/KreativeSquare_u02072.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UFSTemp Alpha u16D80',
+        'assets/font/ufs/UFSTempAlpha_u16D80.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UFSZero Ext u02800',
+        'assets/font/ufs/UFSZeroExt_u02800.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaFunky u0E003',
+        'assets/font/ufs/UnicodiaFunky_u0E003.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u13460',
+        'assets/font/ufs/UnicodiaSesh_u13460.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u135AD',
+        'assets/font/ufs/UnicodiaSesh_u135AD.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u136FA',
+        'assets/font/ufs/UnicodiaSesh_u136FA.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u1385A',
+        'assets/font/ufs/UnicodiaSesh_u1385A.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u139C8',
+        'assets/font/ufs/UnicodiaSesh_u139C8.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u13B4C',
+        'assets/font/ufs/UnicodiaSesh_u13B4C.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u13CCB',
+        'assets/font/ufs/UnicodiaSesh_u13CCB.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u13E53',
+        'assets/font/ufs/UnicodiaSesh_u13E53.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u13FD0',
+        'assets/font/ufs/UnicodiaSesh_u13FD0.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u14000',
+        'assets/font/ufs/UnicodiaSesh_u14000.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u1416F',
+        'assets/font/ufs/UnicodiaSesh_u1416F.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'UnicodiaSesh u142F5',
+        'assets/font/ufs/UnicodiaSesh_u142F5.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'NewGardiner u0E45B',
+        'assets/font/ufs/NewGardiner_u0E45B.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'Xdareg(darage)v1(RL) u11380',
+        'assets/font/ufs/Xdaregdaragev1RL_u11380.otf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D000',
+        'assets/font/ufs/TempSeal_u3D000.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D0AB',
+        'assets/font/ufs/TempSeal_u3D0AB.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D156',
+        'assets/font/ufs/TempSeal_u3D156.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D201',
+        'assets/font/ufs/TempSeal_u3D201.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D2AC',
+        'assets/font/ufs/TempSeal_u3D2AC.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D357',
+        'assets/font/ufs/TempSeal_u3D357.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D402',
+        'assets/font/ufs/TempSeal_u3D402.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D4AD',
+        'assets/font/ufs/TempSeal_u3D4AD.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D558',
+        'assets/font/ufs/TempSeal_u3D558.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D603',
+        'assets/font/ufs/TempSeal_u3D603.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D6AE',
+        'assets/font/ufs/TempSeal_u3D6AE.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D759',
+        'assets/font/ufs/TempSeal_u3D759.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D804',
+        'assets/font/ufs/TempSeal_u3D804.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D8AF',
+        'assets/font/ufs/TempSeal_u3D8AF.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3D95A',
+        'assets/font/ufs/TempSeal_u3D95A.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DA05',
+        'assets/font/ufs/TempSeal_u3DA05.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DAB0',
+        'assets/font/ufs/TempSeal_u3DAB0.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DB5B',
+        'assets/font/ufs/TempSeal_u3DB5B.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DC06',
+        'assets/font/ufs/TempSeal_u3DC06.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DCB1',
+        'assets/font/ufs/TempSeal_u3DCB1.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DD5C',
+        'assets/font/ufs/TempSeal_u3DD5C.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DE07',
+        'assets/font/ufs/TempSeal_u3DE07.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DEB2',
+        'assets/font/ufs/TempSeal_u3DEB2.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3DF5D',
+        'assets/font/ufs/TempSeal_u3DF5D.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E000',
+        'assets/font/ufs/TempSeal_u3E000.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E0AB',
+        'assets/font/ufs/TempSeal_u3E0AB.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E156',
+        'assets/font/ufs/TempSeal_u3E156.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E201',
+        'assets/font/ufs/TempSeal_u3E201.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E2AC',
+        'assets/font/ufs/TempSeal_u3E2AC.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E357',
+        'assets/font/ufs/TempSeal_u3E357.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E402',
+        'assets/font/ufs/TempSeal_u3E402.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E4AD',
+        'assets/font/ufs/TempSeal_u3E4AD.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E558',
+        'assets/font/ufs/TempSeal_u3E558.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E603',
+        'assets/font/ufs/TempSeal_u3E603.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E6AE',
+        'assets/font/ufs/TempSeal_u3E6AE.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E759',
+        'assets/font/ufs/TempSeal_u3E759.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E804',
+        'assets/font/ufs/TempSeal_u3E804.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E8AF',
+        'assets/font/ufs/TempSeal_u3E8AF.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3E95A',
+        'assets/font/ufs/TempSeal_u3E95A.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EA05',
+        'assets/font/ufs/TempSeal_u3EA05.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EAB0',
+        'assets/font/ufs/TempSeal_u3EAB0.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EB5B',
+        'assets/font/ufs/TempSeal_u3EB5B.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EC06',
+        'assets/font/ufs/TempSeal_u3EC06.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3ECB1',
+        'assets/font/ufs/TempSeal_u3ECB1.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3ED5C',
+        'assets/font/ufs/TempSeal_u3ED5C.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EE07',
+        'assets/font/ufs/TempSeal_u3EE07.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EEB2',
+        'assets/font/ufs/TempSeal_u3EEB2.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3EF5D',
+        'assets/font/ufs/TempSeal_u3EF5D.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F008',
+        'assets/font/ufs/TempSeal_u3F008.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F0B3',
+        'assets/font/ufs/TempSeal_u3F0B3.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F15E',
+        'assets/font/ufs/TempSeal_u3F15E.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F209',
+        'assets/font/ufs/TempSeal_u3F209.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F2B4',
+        'assets/font/ufs/TempSeal_u3F2B4.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F35F',
+        'assets/font/ufs/TempSeal_u3F35F.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F40A',
+        'assets/font/ufs/TempSeal_u3F40A.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F4B5',
+        'assets/font/ufs/TempSeal_u3F4B5.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F560',
+        'assets/font/ufs/TempSeal_u3F560.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F60B',
+        'assets/font/ufs/TempSeal_u3F60B.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F6B6',
+        'assets/font/ufs/TempSeal_u3F6B6.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F761',
+        'assets/font/ufs/TempSeal_u3F761.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F80C',
+        'assets/font/ufs/TempSeal_u3F80C.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F8B7',
+        'assets/font/ufs/TempSeal_u3F8B7.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3F962',
+        'assets/font/ufs/TempSeal_u3F962.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3FA0D',
+        'assets/font/ufs/TempSeal_u3FA0D.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3FAB8',
+        'assets/font/ufs/TempSeal_u3FAB8.ttf',
+      ),
+      UnicodeFallbackFontAsset(
+        'TempSeal u3FB63',
+        'assets/font/ufs/TempSeal_u3FB63.ttf',
+      ),
+    ];
+
+// Delta/length/asset-index triples encoded as unsigned LEB128, then
+// base64. Decoded lazily on the first non-ASCII text scan.
+const String kUnicodeFallbackFontRangeIndexBase64 =
+    'AAAAAAYBAAFSAAIBAAAAABEBAAAAAAEBAAAAAAUBAAAAAAQBAAkAAG4BAAAAAAMBAAAAAFABAANCAAtS'
+    'AANCAAVSAAFCAAtSAAABAABCAAABAABCAAABAABSAAABAABSAAABAABSAAABAA9SAAFCAAFSAAFCAAJS'
+    'AANCAAFSAAFCABNSAAVCACNSAABCAANSAAABAAdSAAFCAAxSAAFCABtSAAFCAAABAAxCABpSAAFCAA1S'
+    'AAABAABSAAABAEVSAABCAA5SAABCADJSAAAqABtSAAAqAARSAAAqAAFSAABCAApSAABCAABSAAJCAAxS'
+    'AABCAAZSAAAqAABSAAAqAAVSAAFCABNSAAFCAAFSAABCAAFSAAAqAANSAABCABVSAAAqACpSAAAqACdS'
+    'AgVSBAVSAAABAQBSAQJSAAdCAAABAAdCAQZCAAABAAVSAABCAAAqAAdCAAAqAA1CACpSAAAqAApSAABC'
+    'AAFSAAAqAABSAAEBAAdSAD9CAABSAABCAG1SAAABAA1SAAABAF9SASVSAQAqAAZSAAABAClSAAEqAAJS'
+    'ATZSAAEqBhpSBAVSCwRSAAAqABZSAAAqAAhSAAEqAABSAAEqAANSAAAqAAVSAAEqAAdSAAAqAABSAAEq'
+    'AChSAAAqADFSAAAqAF1SAA1XATtXAgJXAC9SADFXDjpXAgIqAC1SAg5SARtSAgBSAQoqBSEqBQgqAABS'
+    'AAAqAApSADYqABpSAAAqAIMBUgAAKgAHUgIBUgIVUgEGUgEAUgMDUgIIUgIBUgIDUggAUgQBUgEEUgIY'
+    'UgAAKgECUgEFUgQBUgIVUgEGUgEBUgEBUgEBUgIAUgEEUgQBUgICUgMAUgcDUgEAUgcQUgoCUgEIUgEC'
+    'UgEVUgEGUgEBUgEEUgIJUgECUgECUgIAUg8DUgILUgcEKgAAUgAAKgECUgEHUgIBUgIVUgEGUgEBUgEE'
+    'UgIIUgIBUgICUgUBKgACUgQBUgEEUgIRUgoBVwEFVwMCVwEDVwMBVwEAVwEBVwMBVwMCVwMLVwQEVwMC'
+    'VwEDVwIAVwYAVw4UVwUMUgECUgEWUgEPUgIAKgAHUgECUgEDUgcBUgECUgEBKgIDUgIJUgcVUgECUgEW'
+    'UgEJUgEEUgIIUgECUgEDUgcBUgUBKgAAUgEDUgIJUgECUgwMUgECUgEyUgECUgEFUgQPUgIZUgECUgER'
+    'UgMXUgEIUgEAUgIGUgMAUgQFUgEAUgEHUgYJUgICUgw5VwQcVyUBUgEAUgEAKgABUgAAKgAAUgEAKgAA'
+    'UgAFKgADUgAAKgAGUgAAKgACUgEAUgEAUgABKgABUgAAKgAMUgAAKgACUgIEUgEAUgEFUgAAKgEJUgID'
+    'UiAKUgAAKgAAUgAAKgAqUgAAKgAFUgAHKgEjKgQMKgABUgAAKgAOUgAAKgAGUgEYUgABKgAIUgEOUgEM'
+    'UiXFAVcBAFcFAFcCL1cA/wEqAEhXAQNXAgZXAQBXAQNXAihXAQNXAiBXAQNXAgZXAQBXAQNXAg5XAThX'
+    'AQNXAkJXAh9XAxlXBlVXAgVXAv8EVwAcWwNQUgAHKgcMUgAAKgAGUgAAKgkAKgAWUgkTUgwMUgECUgEB'
+    'UgwzVwABKgAnVwIJVwYJVwYOUgAAKgAJUgZXUgABKgYqUgVFVwocUgABKgELUgQLUgQAUgMLUgAdVwIE'
+    'VwsrVwQZVwYKVwM9VwIBVwA+UgEcUgIKUgYJUgYNUgIOUgAxKg9LUgAAKgEBKgAsUgACKgBzUgg7UgMO'
+    'UgMCUgAvVwAKKgUqVwICVwAHUggpUgAAKgU0UgAAAQAMUgAAKgAEUgABKgAGUgAAKgACUgAAKgAKUgAA'
+    'KgA4UgAAKgABUgAAKgAFUgABAQAIUgABKgBCUgAFKgAvUgAAAQAAUgAAAQAOUgABQgBfUgAnQgAAAQAA'
+    'QgAAAQAuQgAbUgIFUgIXUgAHAQAFUgIFUgIHUgEAUgEAUgEAUgEeUgI0UgEOUgENUgIBUgADAQESUgIC'
+    'UgEIUgEKKgAAUwAAKgAAAAADKgAAQwABKgABQwAAUwABAQAAQwAAUwABAQAAQwAAUwABKgAAQwABUwAA'
+    'QwAAKgAAQwAHKgAAQwAAUwABQwAAUwAAQwACUwACQwAAAAAEUwAAQwADUwABQwAAAAAGUwAAQwAMUwAF'
+    'KgEJKgABUwABXAAAQwAZUwAEKgAGUwAAKgAAUwACKgAIUwAAQwAAUwABQwASUwAEKgsMUwABQwADUwAA'
+    'AAAMUw8AQwABUwAAQwAAUwAAQwACUwABQwADUwAAQwACUwAAQwABUwAAQwAJUwAAQwAAAAACUwABQwAC'
+    'UwAAQwABUwAAQwAFUwAAQwACUwAAAAAAUwAAQwAHUwAAKgAaUwALQwADUwALQwANUwABKgQDQwAFAAAO'
+    'WAABAAAMWAABQwAJWAACQwADWAABQwACWAAAQwAAWAAAQwAAWAAAQwAQWAADQwAKWAAAQwAJWAAAQwAA'
+    'WAABQwAAWAAGQwACWAAAQwAAWAACQwAAWAAAQwADWAAAQwABWAADQwABWAAAQwAAWAAJQwAEWAADQwAE'
+    'WAAAQwAEWAAAQwAAWAAAQwABWAAAQwACWAAAQwAEWAAAQwAMWAACQwAAWAADQwABWAABQwABWAABQwAB'
+    'WAABQwABWAABQwAJWAAFQwABWAABQwAIWAAEQwAFWAAAQwADWAAAQwAYWAAAQwAZWAABQwASWAAAQwAP'
+    'WAAEUwACQwAJUwAAQwAEUwAAQwAAUwABAAALUwAAAAABQwCEAVMAAUMAC1MADkMAAFMAAEMAAAAACVMA'
+    'AUMADFMACgAAAyoAAgAABCoAIQEAByoWClwVYUMAAAAA5gFDAAEAAARYAAJDAAFYAAAAAABDAANYAAFD'
+    'AAFYAAAAAABDAANYAAZDAABYAAVDAA1YAARDAAdYAABDAApYAAMAAABYAAQAAAFDAgBDAANYAAAAAABD'
+    'AABcAAAAAABcAABYAAEAAAFDAAAAAwBDAAAAAAFDAAAAAABYAAEAAAFYAAAAAAJYAAAAAAJYAAEAAAdc'
+    'AAIAAARYAAAAAABDAAAAAARYAAsAAAoBAAEAAAFDAAAAAABDAAEAAABDAAAAAAZDAAFYAAhDAAAAAAFD'
+    'AAEAAAlYAAVcAAFYAAUAAABYAAAAAABYAAEAAABYAgEAAARYAAAAAAFYAAEAAANYAAEAAApYAAEABQEA'
+    'AgAABQEAAQAAAQEADQZYAAEAAARYAAUAAABYAAMAAAFYAAAAAAFYAAAqAQAAAgAAAgUAAABcAAAAAABc'
+    'AQAAAABDAAAAAABcAAAAAABcAgBDAgAAAAJYAAAABgAAAQBYCAEAAQBYAgBYAwBDAQFDAwAAAgAABAAA'
+    'AQAAAANcAAIAAABDAAAACwEADQFYAh1DAQIAAwBYBQAAAAJcCwAADgAAAD9YAABe/wEzWAABAACIAVgA'
+    'AEMAOVgAAUMAgwJYAARTAAIAABFTAABDAAEAAC9TAAAqAAFTAAAAAANTAAAAAAlTABMqAokBKgAuUwAA'
+    'KgAuUwAAKgAfUwBzWAUsWAEAWAUAWAI3WAcBWA4XWAkGWAEGWAEGWAEGWAEGWAEGWAEGWAEGWAFZUwAB'
+    'QwAGUwAaKgIDKhwZAQFYAQzVAQEaCyoAAwEAAUMAACoAA0MACioAAUMAByoADUMAAyoAAUMAAAAAC0MA'
+    'AAAAAUMBVUMCZkMFKkMBXSoBK0MAAwEAEUMAAAEAEEMAAQEJAAEAD0MAHioBP0MAHioAF0MAAAAAAEMA'
+    'AAAAkQFDAAAqAIQCQwAAKgACQwAAKgCJAUMAAAEAHEMAAAEAD0MAAAEAFEMAAAEAC0MAAAEACUMAAAEA'
+    'HkMAAAEArwJDAAABACZDAJcDRAAAAQBLRAAAAQC8AUQAAAEAsAJEAAABACVEAAABACxEAAABAEJEAAAB'
+    'AElEAAABAEtEAAABAPUBRAAAAQBnRAAAAQAeRAAAAQAURAAAAQA5RAAAAQAmRAAAAQCnAUQAAAEAa0QA'
+    'AAEAGEQAuQJFADhGAAABAKgBRgAAAQDCAkYAAAEAPUYAAAEAmQFGAAABAFZGAAABAHpGAAABAAJGAAAB'
+    'ADBGAAABAENGAAABABxGAAABAENGAAABAHZGAAABABtGAAABAARGAAABAA1GAAABAAJGAAABALICRgAA'
+    'AQAnRgAAAQAHRgAAAQB/RgAAAQBnRgAAAQCBAUYAU0cAAAEAVUcAAAEA5wFHAAABAKwBRwAAAQAnRwAA'
+    'AQARRwAAAQA4RwAAAQC5AUcAAAEAJUcAAAEAcUcAAAEAYEcAAAEASEcAAAEAxwFHAAkBQAABAAAqAAFH'
+    'AAAqAAFHAAEqAANHAAABAAAqAAJHAAABAAVHAAAqAABHAAAqAAtHAAABAANHAAAqAANHAAABAAJHAAAB'
+    'AAAqAAEBAABHAAAqAAJHAAABAABHAAABAAEqAABHAAAqAABHAAAqAAxHAAABAAJHAAIBAABHAAAqAANH'
+    'AAABABBHAAEBAABHAAABAAdHAAABAABHAAABAAFHAAEBAARHAAABAAJHAAABAApHAAABAAhHAAAqAAFH'
+    'AAAqAANHAAABAApHAAEBAANHAAABAANHAAAqAAJHAAAqAAJHAAAqAAFHAAABAABHAAAqAABHAAEqAABH'
+    'AAEqAABHAAAqAARHAAAqAAJHAAABAANHAAAqABNHAAABAA9HAAAqAA1HAAAqAA5HAAABAAFHAAABAD5H'
+    'AAABABNHAAABAANHAAABACFHAAABAAtHAAABAAJHAAABABVHAAABAApHAAABABNHAAABABdHAAABABJH'
+    'AAABAAVHAAABAAxHAAABACJHAAABABJHAAABAAdHAAABAABHAAABAAlHAAABADNHAAABAANHAAABABdH'
+    'AAABAARHAAABAAVHAAABABRHAAABAAFHABVIAAABABBIAAABABVIAAEBAANIAAABAAhIAAABABdIAAEB'
+    'AABIAAEqAAABAARIAAAqAA1IAAABAABIAAAqABBIAAABAAtIAAABAARIAAABAABIAAABAABIAAABAAhI'
+    'AAABABBIAAABAAFIAAABAA5IAAABAAJIAAABAAAqAA9IAAABAAZIAAAqAARIAAABAABIAAABAANIAAAB'
+    'AA5IAAABABBIAAABAA9IAAABABJIAAABABJIAAEBAAFIAAABAAlIAAABAARIAAABABBIAAABAAdIAAAB'
+    'AAdIAAABAAZIAAABABFIAAEBAAtIAAABAAFIAAABAABIAAABAAdIAAABAApIAAABAARIAAABAA9IAAAB'
+    'AAJIAAEBAAdIAAABAAJIAAABAAxIAAABAABIAAABAAJIAAABAAFIAAABAAhIAAEBABRIAAABAABIAAAB'
+    'AAVIAAAqAARIAAAqAAFIAAABAAlIAAABAAZIAAABAANIAAABAApIAAABAAtIAAABADJIAAAqAAJIAAAq'
+    'AAdIAAABAANIAAAqAABIAAABABdIAAABAABIAAABAAxIAAAqAA9IAAAqAAlIAAABAANIAAABAANIAAAB'
+    'AAJIAAABABhIAAEBAAhIAAABAABIAAABAAJIAAEBAFNIAAABAB1IAAABAAxIAAABADNIAAABABBIAAAB'
+    'AD9IAAABAAtIAAABACJIAAABAAFIAAABAANIAAABAA9IAAABACFIAAABAABIAAABABxIAAABAABIAAAB'
+    'ACJIAAABAFNIAAABAAtIAAABACZIAAABAA5IAAABACRIAAABAA9IAAABABpIAAABAARIAAABABRIAAAB'
+    'AAVIAAABAAdIAAABAAAqAAJIAAEqAABIAAAqAA1IAAAqAABIAAABAH9IAAABAJ8BSAAAAQACSAAAAQAQ'
+    'SAAAAQAJSAAAAQArSAAAAQAuSAAAAQAFSAAAAQAASAAAAQAISAAAAQAGSAAAAQAASAAAAQAESAAAAQAC'
+    'SAAAAQABSAAAAQARSAAAAQABSAAAAQABSAAAAQAFSAAAAQADSAAAAQAASAABKgAASAAAKgABSAAAKgAA'
+    'SAAAKgADSAAAAQACSAABKgABSAAAKgAISAAAAQAHSAAAAQAdSAAAAQABSAAAAQAgSAAAAQAESAAAAQAg'
+    'SABpSQAAAQAGSQAAAQAOSQAAAQAlSQAAAQAKSQAAAQAZSQAAAQCnAUkAAAEABkkAAAEAEEkAAAEAAEkA'
+    'AAEACkkAAAEAD0kAAAEADUkAAAEABUkAAAEAYEkAAAEABUkAAAEAA0kAAAEAA0kAAAEABUkAAAEADkkA'
+    'AAEAEUkAAQEACUkAAAEABkkAAAEAAEkAAAEABUkAAAEAGkkAAAEABUkAAAEAAEkAAQEAB0kAAAEAAUkA'
+    'ACoAP0kAAAEADEkAAAEAV0kAAAEAKEkAAQEACkkAAAEAKkkAAAEABUkAAAEANUkAAAEAHUkAAAEAAEkA'
+    'AAEACEkAAAEACkkAAAEAAEkAAAEABkkAAAEAAEkAAQEAASoAJkkAAAEACEkAAAEAJUkAAAEABUkAAAEA'
+    'EEkAAAEAACoAAAEAAUkAAAEAAUkAAAEAKkkAAAEAIUkAAAEAB0kAAQEAF0kAAAEAD0kAAQEAACoAA0kA'
+    'AAEAA0kAAAEAAEkAAAEACUkAAAEAE0kAAQEAEEkAAAEAAUkAAAEAAkkAAAEACUkAAQEADkkAAAEAD0kA'
+    'AQEAFkkAAAEAAkkAAAEAGEkAAAEACkkAAAEADEkAAQEAL0kAAAEAAkkAAAEABUkAEUoAAAEACEoAAAEA'
+    'G0oAAAEAVUoAAAEAAkoAAAEAE0oAAAEANkoAAAEAAkoAAAEAXUoAAAEADkoAAAEAOEoAAAEAAEoAAAEA'
+    'DkoAAAEAT0oAAAEAA0oAAAEACEoAAAEABkoAAAEAJEoAAAEABkoAAAEAE0oAAQEAOUoAAAEAJ0oAAAEA'
+    'F0oAAAEABEoAAAEAAkoAAQEAKEoAAAEAFUoAAAEAZEoAAAEABkoAAAEAG0oAAAEAE0oAAAEAQEoAAAEA'
+    'AUoAAAEAJkoAAQEAREoAAAEAE0oAAAEAGkoAAAEAAUoAAAEAJUoAAAEACUoAAAEAGkoAAAEAIUoAAAEA'
+    'AEoAAAEAHUoAAAEAA0oAAQEAGEoAAAEABUoAAAEADUoAAAEABUoAAAEACkoAAQEABkoAAAEABEoAACoA'
+    'AEoAAAEADEoAAgEACUoAAAEAH0oAAAEAGUoAAQEAAkoAAAEAF0oAAAEAE0oAAAEABkoAAAEAVEoAAAEA'
+    'AUoAAAEAEkoAAAEAJUoAAAEAA0oAAAEAEEoAAAEAFkoAAAEAEEoAAAEAAkoAAAEABUoAAAEAA0oAAAEA'
+    'BUoAAQEADUoAAAEAAkoAAAEABEoAAAEABUoAAAEAJEoAAAEAACoAEkoAAAEAFEoAAAEAAEoAAAEAGkoA'
+    'AAEAAkoAAAEAVkoAAAEAIkoAAAEAB0oAAAEABEoAAAEAEkoAAAEAG0oAAAEAA0oAAAEAI0oAAAEAAEoA'
+    'AUsAAAEACksAAAEAFUsAAAEAEUsAAAEAX0sAAAEASUsAAAEAOksAAAEAEEsAAAEAJksAAAEACksAAAEA'
+    'F0sAAQEADksAAAEAGUsAAAEAAEsAAAEABUsAAAEAHksAAAEAGksAAAEAM0sAAAEAJUsAAAEAAksAAAEA'
+    'L0sAAAEAGksAAQEAAksAAAEABEsAAAEAJ0sAAAEABEsAAAEABksAAAEAACoABEsAAAEABEsAAAEABUsA'
+    'AQEAAEsAAQEAAUsAAAEAIEsAAAEAC0sAAAEAAEsAAAEAAUsAAAEAAEsAAAEABUsAAAEAEUsAAQEAC0sA'
+    'AAEAAksAAAEADUsAAAEAG0sAAAEAAUsAAAEAAUsAAAEAAUsAAAEAHksAAQEACksAACoAG0sAACoAKEsA'
+    'AAEABEsAAAEAJ0sAAAEAE0sAAAEAF0sAAAEANEsAAAEAAUsAAAEAIUsAAQEAJksAAAEAC0sAAQEAUUsA'
+    'AAEADUsAAAEADksAAAEAF0sAAAEABEsAAAEAH0sAAAEAFksAAAEAHUsAAAEAC0sAAAEAEEsAAAEAE0sA'
+    'AAEABUsAAAEAHEsAAAEAFUsAAAEAPEsAAAEAEUsAAQEAMEsAAAEAIksAAAEAMEsAAAEAEksAAAEAKksA'
+    'AAEABUsAAAEABUsAAAEAA0sAAQEADUsAAAEADksAAAEAEUsAAAEAFEsAAAEAIksAAQEAA0sAAAEAAUsA'
+    'AAEAFUsAAAEABksAAAEABEsAAAEACEsAAAEACEsAAAEAFksAAQEAAEsAAAEAAksAAQEAA0sAAAEABUsA'
+    'AAEANEsAAAEAA0sACkwAAAEAB0wAAAEAAkwAAAEADEwAAQEABUwAAAEAAEwAAAEAA0wAAAEAAkwAAAEA'
+    'AEwAAAEAA0wAAAEAAkwAAAEABUwAAAEADUwAAAEAAEwAAAEAB0wAAAEAAUwAAAEAA0wAAQEAGEwAAAEA'
+    'HkwAAQEAB0wAAAEABkwAAAEAAEwAAAEAEkwAAAEAAkwAAAEAGUwAAAEAAEwAAAEACEwAAQEACUwAAAEA'
+    'AUwAAAEAA0wAAAEAAkwAAQEAAEwAAQEAB0wAAQEACEwAAAEABkwAAAEAAUwAAAEAD0wAAAEABUwAAAEA'
+    'PUwAAAEACUwAAQEAAkwAAAEADUwAAAEAA0wAAAEANUwAAAEALEwAAAEAEEwAAAEAHUwAAAEAFkwAAAEA'
+    'AEwAAAEAEEwAAAEAAEwAAAEAAEwAACoAAEwAACoAFUwAAAEABUwAACoABUwAAAEAKkwAAAEAEUwAAAEA'
+    'E0wAAAEAAUwAAAEAF0wAAAEAEkwAAAEAFEwAAAEAEUwAAAEAB0wAAQEAHkwAAAEADUwAAAEAfkwAAAEA'
+    'BUwAAAEAB0wAAAEABkwAAAEAACoAJkwAAAEACkwAAAEACUwAAAEAA0wAAAEAFEwAAAEAVUwAAAEAO0wA'
+    'AAEAIUwAAAEAJUwAAAEAC0wAAAEABUwAAAEAL0wAAAEAD0wAAAEAAEwAAAEAB0wAAAEADkwAAAEAC0wA'
+    'AAEABUwAAAEABEwAAAEAC0wAAAEADEwAAAEAL0wAAAEAP0wAAAEAE0wAAAEANkwAAAEAC0wAAAEABUwA'
+    'AAEABkwAAAEAB0wAAAEAAEwAACoAWEwAAAEAGkwAAAEABUwAAAEAGEwAAAEAA0wAAAEAN0wAAAEAAEwA'
+    'AAEAIkwAAAEACUwAAAEAGUwAAAEABUwAAAEABEwAAAEABUwAAAEAD0wAAAEAQkwAAAEALUwAAAEAAUwA'
+    'DE0AAAEAAk0AAAEAA00AAAEAAU0AAAEAH00AAAEAL00AAAEADE0AAAEAAE0AAAEAEk0AAAEAG00AAAEA'
+    'FU0AACoAC00AAAEALk0AAAEAGE0AAAEAD00AAAEAG00AAAEAAU0AAAEAA00AAAEAF00AAAEAAU0AAAEA'
+    'AU0AAAEAIE0AAAEAAE0AAAEADU0AAAEADk0AAAEABU0AAAEADE0AAAEAAE0AAAEABk0AAAEAH00AAAEA'
+    'FU0AAAEABE0AAAEAFk0AAAEACE0AAAEAEk0AAAEAA00AAAEAAE0AAAEAAE0AAAEACU0AAAEAEU0AAAEA'
+    'Fk0AAAEAB00AAAEAIE0AAAEAEU0AAAEADU0AAAEACk0AAAEAAk0AAAEAGU0AAAEAIU0AAAEABE0AAAEA'
+    'Ak0AAAEAC00AAgEADk0AAAEAFU0AAAEAEE0AAAEAC00AAAEAKk0AAAEAQ00AAAEAHE0AAAEANE0AAAEA'
+    'E00AAAEALE0AAAEACE0AAAEAXE0AAAEAmwFNAAABABVNAAABAA9NAAABABNNAAABAApNAAABAAFNAAAB'
+    'AABNAAABAA5NAAABAGRNAABOAAEBAAFOAAABAAJOAAABAAFOAAABAAVOAAABAB5OAAABAAtOAAABAARO'
+    'AAABABhOAAABAA1OAAEBAAJOAAABAAhOAAIBAAdOAAIBAANOAAABAANOAAABAAdOAAABAA1OAAABAAFO'
+    'AAAqAABOAAABABVOAAABAAZOAAABABBOAAABABJOAAABAAZOAAAqAAJOAAABABBOAAABAAJOAAABAA9O'
+    'AAABAAdOAAEBAAZOAAABAANOAAEBAABOAAABABBOAAABAAROAAABAAROAAABAAhOAAABADZOAAEBAARO'
+    'AAABAB5OAAABAANOAAABAAFOAAABAANOAAABAA5OAAABAABOAAABAAFOAAABAA1OAAABABBOAAABAAVO'
+    'AAABAABOAAABAFZOAAABAAFOAAABAAVOAAABAAFOAAABAABOAAAqAAJOAAAqAAFOAAABAAJOAAAqAABO'
+    'AAABAAlOAAAqAAVOAAEBABFOAAABAAJOAAABAAxOAAABAAFOAAABAA5OAAABAA1OAAEBAApOAAABAAFO'
+    'AAABAAFOAAABAAJOAAABAAxOAAABAA1OAAABAAVOAAABAAFOAAABAAFOAAABAA5OAAABAAdOAAABAABO'
+    'AAABAAhOAAABACdOAAABAAtOAAABAAhOAAABAANOAAABAAVOAAABAAtOAAABAAhOAAEBAAROAAABAA1O'
+    'AAABAANOAAMBAAlOAAABAANOAAABABNOAAABAEpOAAABAApOAAABAAxOAAABAJUBTgAAAQAMTgAAAQBS'
+    'TgAAAQB7TgAAAQAATgAAAQApTgAAAQAKTgAAAQAlTgAAAQAQTgAAAQAMTgABAQAHTgAAAQADTgABAQAM'
+    'TgAAAQDYAU4AAAEAMk4AAAEAC04AAAEAMk4AAAEAJU4AAAEAE04AAAEAAE4AAAEAJU4AAAEAH04AAAEA'
+    'Ck4AAAEAFk4AAAEAQE4AG08AAAEAC08AAAEABk8AAAEABU8AAAEAAU8AAAEAFU8AAAEAFk8AAAEAC08A'
+    'AAEAEU8AAAEAMk8AAAEAGU8AAAEACk8AAAEAA08AAAEABE8AAAEAEE8AAAEAF08AAAEAD08AAAEA1gFP'
+    'AAABABNPAAABAApPAAABAAVPAAABAAJPAAABACBPAAABAARPAAABAAFPAAABADZPAAABAB1PAAABACZP'
+    'AAABAB5PAAABAAFPAAAqAJIBTwAAAQANTwAAAQAATwAAAQALTwAAAQAMTwAAAQATTwAAAQAjTwAAAQAj'
+    'TwAAAQAETwAAAQAJTwAAAQAzTwAAAQATTwAAAQBFTwAAAQAKTwABAQAETwAAAQA6TwAAAQAWTwAAAQAY'
+    'TwAAAQAITwAAAQCpAU8AAAEAD08AACoABE8AAAEAAk8AAAEAB08AAAEABk8AAQEAAU8AAAEAQE8AAAEA'
+    'GE8AAAEAAk8AAAEAD08AAAEAD08AAAEAFE8AAAEAAk8AAAEASE8AAAEAA08AAQEABE8AAAEAWk8AAAEA'
+    'CU8AAAEAE08AAAEAPU8AAAEAA08AAAEAEU8AAAEAAE8AAAEAAU8AAAEAM08AAAEAE08AAAEAMU8AAAEA'
+    'AU8AIlAAAAEACVAAAAEAA1AAAQEADVAAAAEAEVAAAAEASFAAAAEAEFAAAAEABFAAAAEAAVAAAAEAAFAA'
+    'AAEACFAAAAEABFAAAAEAGFAAAQEAH1AAAAEAAFAAAAEAC1AAAAEABlAAAAEAAlAAAAEACVAAAAEAAlAA'
+    'AAEAEFAAAAEADVAAAAEAKFAAAAEAC1AAAAEADFAAAAEAVVAAAAEAMVAAAAEAAlAAAAEADVAAAAEAI1AA'
+    'AAEADlAAAAEAeFAAAAEAB1AAAAEAFlAAAAEABVAAAAEAN1AAAAEAAFAAAAEAJlAAAQEA8AFQAAEBAAVQ'
+    'AAEBAAhQAAABACFQAAABAAhQAAABAC9QAAABADJQAAEBAA9QAAABABtQAAABAABQAAABACZQAAABAAFQ'
+    'AAABAABQAAABAABQAAABAAFQAAABAAVQAAABABtQAAABAA1QAAABAAJQAAEBAClQAAEBAANQAAABAAxQ'
+    'AAEBADlQAAABABRQAAABAARQAAABAAFQAAEBAAJQAAABAApQAAABAAVQAAABAApQAAABAE9QAAABAA9Q'
+    'AAABAAJQAAABAAlQAAABAAVQAAABABJQAAABABVQAAABAABQAAABAAlQAAABABRQAAABACFQAAABABVQ'
+    'AAABADNQAAEBACFQAAABAAtQAAABAAFQAAIBAAxQAAABABpQAAABABRQAAABAEFQAAABADFQAAABAABQ'
+    'AABRAAABAAxRAAABAANRAAABABhRAAABAABRAAABACdRAAABAAtRAAABAAhRAAABAAlRAAABAFVRAAAB'
+    'AABRAAABADpRAAABAGhRAAABABFRAAABAAhRAAABAAtRAAABAAdRAAABABNRAAABABNRAAABACNRAAAB'
+    'ACZRAAABABBRAAABADRRAAABAFFRAAABACNRAAABAGdRAAABACdRAAABAAFRAAABAE9RAAABAAFRAAAB'
+    'AJMBUQAAAQAhUQACAQBUUQAAAQABUQAAAQAFUQAAAQAWUQAAAQAGUQAAAQADUQACAQAbUQABAQAHUQAB'
+    'AQABUQAAAQAqUQABAQAOUQAAAQADUQAAAQA7UQAAAQAtUQAAAQAMUQAAAQAKUQAAAQABUQAAAQABUQAB'
+    'AQAEUQAAAQAAUQABAQABUQAAAQAAUQAAAQADUQAAAQAHUQAAAQACUQAAAQABUQABAQACUQAAAQAAUQAA'
+    'AQAaUQABAQABUQAAAQACUQARAQCMCVkDNlkJ2wJZFC1TAAArAC5TAAArAFhTCB9ZAI0BUwAvKwQAKw4F'
+    'KwA0UwAAKwMJUwY3WwhEUwAAKwgLUwYdUwABKwBTUwsAUwAcKwNNWQEKWQQRWQAAKwANWQE2UwkNUwIJ'
+    'UwIDUwAfWQBCUxgbUwoFWQIFWQIFWQkGWQEGWQEvUwADKwABUwAHKwJ9WQIJWQabDysAghAsACAtAAAB'
+    'AL4ILQCCEC4AghAvAJ0PMAwWMAQwMIUQAQIAAF8ADgIBDgJBAQLIAQICDQECAQICEwACBgACqgEAAgEB'
+    'AgQAAgsAMQKpAgICAwIBDAIBHQIBBQIBJQIBCAIBBQIBPgIBAAIBAQIBBQIBBQIBBwIBJwIBAgIBAAIB'
+    'AgIBAQIBAgIBBwIABGwAJQIAAGwADAIAAGwAcwIBDQIBCAIBKwIBTwIBBAICNgICBAIBFgIBAAKAAl8C'
+    'BCQCAQwCAVICAhICHQAx4gsFXAAFMQABXAAAMQATXAABMQAEXAAAMQAEXAAAMQAIXAAAMQAAXAAAMQAa'
+    'XAAAMQADXAAAMQDhAVwAMQIAAFwAbAIAAFwAMQIAAFwAAAIAAFwAIgIAAFwAAQIAtQFcDlVcqgGDA1wA'
+    'AFMAngFcugIBXGBfXGAfXGCfA1wwGVwGDlwAAFMA7QICAmkCJgRRAAFTAABcCwRTBRlTAQRTAQBTAQFT'
+    'AQFTAXtTABAxAGNTAAAxANcCUwABMQA1UwAGMQAAUyANUwAPMQABAAAJUQYNUwABMQAiUQESUQEDUQQE'
+    'UwEWUwAAMQAAUwAAMQAEUwAAMQACUwAAMQAQUwAAMQAUUwAAMQACUwAAMQAKUwAAMQAGUwAAMQACUwAA'
+    'MQAeUwIAUwGeAVEAHjEDBTECBTECBTECAjEDBlEBBlEBA1wFAjEAAVMCC1QBGVQBElQBAVQBDlQCDVQi'
+    'elQFAlQELFQDU1QAAzEBDFQDAFQvLVSCARxbAzBbDxsxBB5UAAAxAANUCQJUABpbBSpUBR1bASRbBA1b'
+    'Kn9bAB1ZAglZBiNZBCNZBCdUCDMxCwsxAQ4xAQYxAQExAQoxAQ4xAQYxAQExAzMxDLYCVAkVVAoHVBgF'
+    'MQEpMQENMUAFWwIAWwErWwEBWwMAWwIWWwEIWwA+VAgIVDASVAEBVAUEVAAbWwMaWwUAWwAcMSM3VAQT'
+    'VAIxVAEBVAUHVAECVAEaVAABMQICVAQIVAAAMQcIVAcfWwAfVCAmVAQLVAk1VAMGVAAVWwIaWwUHWwAR'
+    'MQcDMQwGMVBGWwAAMQAAWzcyMQ0yMQcFMQAnVAgJVAYYXwAAMQALXwMAXwAFMQAVXwgBMdABHjEBKVQB'
+    'AlQCAVQQBTEBJTEBNzEIKTEWGTEmGzEUFjEJTVQEHVQABTEJADEAQVQAADEKADECGFkHCVkGNFQBEFQA'
+    'ADEIJjEJTVQAATEAD1QBE1QLEVQBK1QAAjE+BlQBAFQBA1QBDlQBClQGOjEFCTEGA1QBB1QCAVQCFVQB'
+    'BlQBAVQBBFQBCVQCAVQCAlQCAFQGAFQFBlQCBlQDBFQLCW0BAG0CAG0BJW0BCW0BAG0CAG0BA20BCW0B'
+    'AW0IAW0dWVQAADEAAFQBAFQAAzEeRzEICTGmATUxAiUxIkQxCwkxBgwxEzhUAAAxBglUBhMxHBlUAAAx'
+    'Ag5UBA9UAAYxuQE7VGRSVAwAVAAGMQIAMQIHMQEBMQEdMQEBMQILMQkJMUYHMQItMQIKMRtGMQAAVAhS'
+    'VA1IVAcKMVUHMVghMQ4JMQYIVAEsVAENVAocVAMfVAIVVAENVEkGVAEBVAErVAMAVAEBVAEIVAgJVAYF'
+    'VAEBVAEkVAEBVAEFVAcJVAYrMQQJMfYBGDEHEDEBKDEBADEBHDFVADEPMTENADEA7gZVACoyZmJbAAwy'
+    'AANbAM8BMgy2AjKJEmIyDa4IVQAmMgrMAmAAzAJhAFdiAABsAABiAABsAAdiAABsAAFiAABsACJiAABs'
+    'AAViAABsAD5iAABsACliAABsAARiAAJsAAFiAAJsAAJiAABsAABiAABsAA9iAABsAA5iAABsAAFiAABs'
+    'ACtiAAhjAABsACljAAFsABhjAABsAAJjAABsABdjAAFsAAVjAABsAAFjAABsAAZjAABsAAZjAABsAABj'
+    'AAFsAAJjAABsAA9jAABsAA1jAABsAANjAAJsABpjAAFsAB9jAABsAEJjAABsAARjAAFsAABjAABsABdj'
+    'AANsAARjAABsAANjAABsAAJjAABsAAFjAAFkAABsAANkAABsAABkAABsAAJkAAJsAAVkAABsAApkAABs'
+    'AA1kAABsAAJkAABsAABkAABsAAVkAABsAABkAAFsAAlkAABsAANkAAFsAAJkAAFsAABkAABsABRkAABs'
+    'AC1kAABsAAxkAABsAAZkAABsAANkAABsAABkAAFsAAdkAABsAAJkAAJsAAhkAABsABlkAAFsABZkAABs'
+    'AAJkAAFsAAJkAABsAAZkAAFsAAFkAAFsAAZkAABsAA5kAABsAA1kAABsAAJkAABsAApkAABsAABkAAFs'
+    'AANkAABsAAlkAABsAAFkAAFsAARkAABsAA1kAABsAABkAABlAABsAABlAABsABBlAABsAAtlAABsAAFl'
+    'AABsAARlAABsACplAABsAAllAABsAAllAABsAAJlAABsAABlAAFsAAdlAABsAAdlAABsAABlAAFsAANl'
+    'AABsAAxlAABsAABlAABsAAhlAABsAA1lAAFsAA1lAAFsAARlAABsACNlAABsABllAABsAAFlAABsABNl'
+    'AAFsAABlAAJsAAJlAABsAAJlAABsAANlAABsAAhlAAFsAAJlAAFsAAFlAABsAARlAABsAABlAABsAABl'
+    'AAFsAA9lAABsAANlAABsAABlAABsAAxlAABsAABlAABsAAVmAABsAAdmAABsAARmAABsABFmAABsAARm'
+    'AABsABBmAABsAAJmAABsAABmAAJsABtmAANsAABmAAJsAARmAABsAANmAAFsAANmAABsABpmAABsAAxm'
+    'AABsAAhmAABsABBmAABsAAhmAABsAA5mAABsAABmAABsAAVmAAJsABhmAANsAABmAABsAAlmAABsAABm'
+    'AABsAAFmAABsABFmAAFsAAFmAABsAANmAABsAABmAABsAARmAAFsAAJmAABsAANmAABsAANmAABsAAVm'
+    'AABsAAFmAABsAAFmAABsAANmAABsAAtmAABsAABmAABsAABmAABsAAVmAABsAANmAAFsAAxmAAZnAABs'
+    'ABtnAABsAAhnAABsAABnAABsAAFnAABsAAJnAAFsABVnAABsAAxnAABsAA5nAABsAAFnAABsAAZnAABs'
+    'AABnAABsAA5nAABsAAVnAAJsAAFnAABsAAdnAABsAARnAABsAAhnAABsABVnAABsAAlnAABsAAJnAAJs'
+    'AANnAAFsAAlnAABsACFnAAFsAAJnAAFsAABnAABsAAZnAABsAAVnAABsAA1nAANsAAhnAABsAAdnAABs'
+    'AAJnAABsABFnAABsAAJnAAFsAAFnAABsABJnAABsAAFnAA9oAABsAAloAABsAARoAABsAA1oAAxpAAJs'
+    'ADtpAABsAB9pAABsAAJpAABsACZpAABsAABpAABsAAJpAABsAAJpAABsAAppAABsAAJpAABsAAdpAABs'
+    'AA5pAABsAABpAABsAA5pAABsAAFpAAFsAAJpAABsAAZpAABsAABpAABsAAFpAABsAA9pAABsAAVpAANs'
+    'AABpAABsABhpAABsAAVpAAFsAAJpAABsAARpAABsAAdpAABsAChpADVqAANsAABqAABsAAFqAABsAAJq'
+    'AABsAAVqAAFsAARqAABsAABqAABsABpqAABsAAdqAAFsAAVqAABsAABqAABsAAlqAABsAAFqAAFsAApq'
+    'AABsAARqAABsAAJqAAFsAAlqAAJsAAhqAABsAAFqAABsAABqAAFsAA1qAABsAAFqAABsAANqAABsAARq'
+    'AAFsAAtqAABsAAJqAABsAAZqAABsAAFqAABsAANqAABsAAFqAABsAAZqAABsAABqAAFsAABqAABsAAFq'
+    'AABsABJqAABsAA5qAABsAAFqAABsAAtqAABsAANqAABsAAZqAABsAANqAABsAAZqAAJsAAJqAABsABpq'
+    'AAJrAABsAAVrAAFsAAZrAABsAANrAABsABZrAABsABRrAANsAAJrAABsAAdrAABsAANrAABsAAZrAABs'
+    'AAprAABsAAFrAABsABZrAAFsAAdrAABsAAxrAABsAARrAABsABFrAABsAAtrAABsABlrAABsAABrAAJs'
+    'ABhrAABsAABrAABsAAFrBcYEVbk1OTPGDbgEVQceVQEJVQQBVQBOMwEJMwYdVQIFVQpFVQoJVQEGVQEU'
+    'VQUSVbADOTMGHV0CCV2WAVpVBRgzAhgzLEpVBDhVBxBVQAQzCwYzCfcNMwCCEDQAhAI1AP8PNgABAwEC'
+    'NgAENwAAAwA0NwABAwC9BTcAAAMAADcAAAMAMTcAAAMADjcAAAMADDcAAAMAHDcAAAMAAjcAAAMAHDcA'
+    'AAMAATcAAAMADTcAAAMABTcAAAMAEzcAAAMAAzcAAAMABjcAAAMAAzcAAQMABTcAAAMABzcAAQMAGzcA'
+    'AAMABzcAAAMAWjcAAAMAADcAAAMANTcAAAMAATcAAAMACjcAAAMABDcAAAMAFTcAAAMABzcABF0kITdf'
+    'cjcNADcACl0AADcAQV0AAAMAAl0AAAMAF10AAAMACl0AADcAGF0AAAMANV0AATcADl0AAjcAAV0AAAMA'
+    'BV0AADcAA10AATcAEl0AADcAB10AADcAAF0AADcABV0AADcAAV0AAjcAOF0AADcAF10AAAMAEF0AAAMA'
+    'Bl0AAAMAFl0AADcAB10AADcAEV0AAAMAhwFdAAADAAA3AAddAAA3ACFdAAA3AABdAAM3AAxdAAEDAC9d'
+    'AAADAEpdAAA3AANdAAA3AENdAAA3AEddDgADAAFdAAIDAAA3AABdAAA3AAIDAAI3AAIDAAA3AAEDAAA3'
+    'AAEDAAE3AAEDAAA3AAMDAAJdAAA3AAEDAAE3AAADAAA3AABdAAADAAA3AAFdAAADAAA3AAADnTwDOAEG'
+    'OAEBOAGiAjgAAV0AATgAAV0JADgdAjgCADgOAzgAAF0HiwM4hBJqOAUMOAMIOAcJOAIHONwe/AE5A7MD'
+    'OQYWOQECOQggOQItOQIWOQlzOTz1AVYKJlYAATkAtAFWACE5AEVWCjE5PhM5DBM5bBFWAAY5hwFUWgFG'
+    'WgEBWgIAWgIBWgIDWgELWgEAWgEGWgFAWgEDWgIHWgEGWgEbWgEDWgEEWgEAWgMGWgHTAloAADkBowJa'
+    'AjFaAIsFOQ8EOQEOOVAbOQAAXeMHgQE5DgY5NjI5AAY6ARA6AgY6AQE6AQQ6BT06IQA6cCxWAw1WAglW'
+    'BAFWwAIeOhE5VgUAVtADKTrWASo6BAA6wAEeOgEVOggBOuABBjoBAzoBAToBDjoBxAE6Ag86KUtaBAla'
+    'BAFakQZDOkw8VsIBAzoBGjoBAToBADoCADoBCToBAzoBADoBADoGADoEADoBADoBADoBAjoBAToBADoC'
+    'ADoBADoBADoBADoBADoBAToBADoCAzoBBjoBAzoBAzoBADoBCToBEDoFAjoBBDoBEDo0ATqOAgMDAAAA'
+    'ACYDBGNcDA46Ag46AQ06AAAAASQ6CgxRAAI6AFxRAAI6AAEAAAtRAAEAAA1RAAAAAAFRAAkAABFRAAE6'
+    'NxkAAABRAAEADQlRAAAAABNRAAAAAAFRAAgAAABRBAhRBwEADgU6mgEhAAABOgBvAAABOgABAAAAOgAC'
+    'AAABOgBSAAABOgACAAAAOgCGAgAAADoAPgAACjoABQAAAFYAFwAABjoAAQAAAToABwAACzoAAAAAAToA'
+    'AwAAAToAAAAAAzoAAQAADDoAAQAAAToAAAAAADoAAgMAAzoAAQAACDoAAAAABDoAAgAACzoAAgAABzoA'
+    'AgAAAToAAAAAADoAAAAAAzoAAAAABToAAAAAAjoAAAAABToAVQAALzoARQAABDoABwAAAToAAwAAAF0C'
+    'CQAAAjoAAAAAADoAAQADAAAAAToACQADc1YAZzoECwAEAAAAGjoENzoICToGJzoIHToCCzoEAToOCDon'
+    'CzoALgAAAFYACQAAAFYAuAEAAFc6CA06AgwAAwoAAAJdADgAAQAAAwBdAA8AAABdAQsAAABdAwkAAAFd'
+    'BZIBOgAAXABmOoUIwA4EAMAOBQDADgYAwA4HAPsFCADADgkAwA4KAMAOCwDADgwA+wUNAMAODgDADg8A'
+    'wA4QAMAOEQD7BRIAwA4TAMAOFADADhUAwA4WAPsFFwDADhgAwA4ZAMAOGgDADhsA+wUcAN8NHSBgHQDA'
+    'Dh4AwA4fALsEIAGECiAA2gUhAMAOIgDADiMAKyQClA4kAMAOJQD5BSYAwA4nAJ8JKA/tBCiiEzIoAOoD'
+    'KeILghA7AIIQPADEBj0F2gg9AAApAGI9AJ0IPgAAKQDNBD4AACkAggM+AIIQPwDYAkAAACkAqQ1AAPII'
+    'QYa3AqoBbgCqAW8AqgFwAKoBcQCqAXIAqgFzAKoBdACqAXUAqgF2AKoBdwCqAXgAqgF5AKoBegCqAXsA'
+    'qgF8AKoBfQCqAX4AqgF/AKoBgAEAqgGBAQCqAYIBAKoBgwEAqgGEAQCiAYUBAKoBhgEAqgGHAQCqAYgB'
+    'AKoBiQEAqgGKAQCqAYsBAKoBjAEAqgGNAQCqAY4BAKoBjwEAqgGQAQCqAZEBAKoBkgEAqgGTAQCqAZQB'
+    'AKoBlQEAqgGWAQCqAZcBAKoBmAEAqgGZAQCqAZoBAKoBmwEAqgGcAQCqAZ0BAKoBngEAqgGfAQCqAaAB'
+    'AKoBoQEAqgGiAQCqAaMBAKoBpAEAqgGlAQCqAaYBAKoBpwEAqgGoAQCqAakBAKoBqgEAqgGrAQCqAawB'
+    'AKoBrQEAqgGuAQDcAa8BwYcoAEEeD0EACQAAJkEAGQAAA0EAAACAAe8BQZncBgBc22kJALwGAFYAAAAB'
+    'CQDID5UBXAoDXAwlXAplXDoFXBoBXB4AXB8AXA8AXI8K/wFcgAgUXAEAXAERXAIDXAEEXAa1AVwGB1yA'
+    'Bn9cAwBcAgpcAQFcAwFcAeUBXLiMAxlBBAVBAQVBAwhBARhB';

@@ -15,6 +15,7 @@ import 'package:extera_next/pages/download_manager/download_manager.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/background_audio_player.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
+import 'package:extera_next/widgets/unicode_font_fallback_scope.dart';
 import '../config/app_config.dart';
 import '../utils/custom_scroll_behaviour.dart';
 import '../utils/platform_infos.dart';
@@ -101,6 +102,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
             schemeVariant,
             pureBlack,
             notoEmoji,
+            unicodeFallback,
           ) => MaterialApp.router(
             title: AppConfig.applicationName,
             themeMode: themeMode,
@@ -124,17 +126,20 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
             localizationsDelegates: L10n.localizationsDelegates,
             supportedLocales: L10n.supportedLocales,
             routerConfig: FluffyChatApp.router,
-            builder: (context, child) => AppLockWidget(
-              pincode: widget.pincode,
-              clients: widget.clients,
-              // Need a navigator above the Matrix widget for
-              // displaying dialogs
-              child: DownloadManager(
-                child: BackgroundAudioPlayer(
-                  child: Matrix(
-                    clients: widget.clients,
-                    store: widget.store,
-                    child: widget.testWidget ?? child,
+            builder: (context, child) => UnicodeFontFallbackScope(
+              enabled: unicodeFallback,
+              child: AppLockWidget(
+                pincode: widget.pincode,
+                clients: widget.clients,
+                // Need a navigator above the Matrix widget for
+                // displaying dialogs
+                child: DownloadManager(
+                  child: BackgroundAudioPlayer(
+                    child: Matrix(
+                      clients: widget.clients,
+                      store: widget.store,
+                      child: widget.testWidget ?? child,
+                    ),
                   ),
                 ),
               ),
