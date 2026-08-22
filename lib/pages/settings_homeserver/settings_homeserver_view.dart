@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:matrix/matrix.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
@@ -189,7 +189,7 @@ class SettingsHomeserverView extends StatelessWidget {
                                   color: theme.colorScheme.primary,
                                   decorationColor: theme.colorScheme.primary,
                                 ),
-                                onOpen: (link) => launchUrlString(link.url),
+                                onOpen: (link) => openLink(link.url),
                               ),
                             ),
                           ],
@@ -256,7 +256,7 @@ class SettingsHomeserverView extends StatelessWidget {
                               color: theme.colorScheme.primary,
                               decorationColor: theme.colorScheme.primary,
                             ),
-                            onOpen: (link) => launchUrlString(link.url),
+                            onOpen: (link) => openLink(link.url),
                           ),
                         ),
                         if (identityServer != null)
@@ -272,7 +272,7 @@ class SettingsHomeserverView extends StatelessWidget {
                                 color: theme.colorScheme.primary,
                                 decorationColor: theme.colorScheme.primary,
                               ),
-                              onOpen: (link) => launchUrlString(link.url),
+                              onOpen: (link) => openLink(link.url),
                             ),
                           ),
                         ...wellKnown.additionalProperties.entries.map(

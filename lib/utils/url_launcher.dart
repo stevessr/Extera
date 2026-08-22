@@ -16,6 +16,13 @@ import 'package:extera_next/widgets/matrix.dart';
 import '../widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'platform_infos.dart';
 
+/// Opens a link outside of the app, letting the operating system resolve the
+/// appropriate handler. On Android this means installed apps which registered
+/// themselves for a URL (App Links / deep links) are launched directly instead
+/// of a web browser.
+Future<void> openLink(String url) =>
+    launchUrlString(url, mode: LaunchMode.externalApplication);
+
 class UrlLauncher {
   /// The url to open.
   final String? url;
@@ -79,18 +86,18 @@ class UrlLauncher {
             // to an apple maps thingy
             // https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html
             final ll = '${latlong.first},${latlong.last}';
-            launchUrlString('https://maps.apple.com/?q=$ll&sll=$ll');
+            openLink('https://maps.apple.com/?q=$ll&sll=$ll');
           } else {
             // transmute geo URIs on desktop to openstreetmap links, as those usually can't handle
             // geo URIs
-            launchUrlString(
+            openLink(
               'https://www.openstreetmap.org/?mlat=${latlong.first}&mlon=${latlong.last}#map=16/${latlong.first}/${latlong.last}',
             );
           }
           return;
         }
       }
-      launchUrlString(url!);
+      openLink(url!);
       return;
     }
     if (uri.host.isEmpty) {
@@ -112,12 +119,7 @@ class UrlLauncher {
               : hostPart;
         })
         .join('.');
-    // Force LaunchMode.externalApplication, otherwise url_launcher will default
-    // to opening links in a webview on mobile platforms.
-    launchUrlString(
-      url!.replaceFirst(uri.host, newHost),
-      mode: LaunchMode.externalApplication,
-    );
+    openLink(url!.replaceFirst(uri.host, newHost));
   }
 
   void openMatrixUrl() async {

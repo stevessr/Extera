@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
@@ -122,8 +122,7 @@ class SignInPage extends StatelessWidget {
                                           Icons.open_in_new_outlined,
                                           size: 16,
                                         ),
-                                        onPressed: () =>
-                                            launchUrlString(website),
+                                        onPressed: () => openLink(website),
                                       ),
                                     ),
                                 ],

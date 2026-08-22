@@ -10,6 +10,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/fluffy_share.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/drawer.dart';
 import 'package:extera_next/widgets/list_divider.dart';
@@ -581,7 +582,7 @@ class SettingsView extends StatelessWidget {
                               ),
                             ),
                             title: Text(L10n.of(context).privacy),
-                            onTap: () => launchUrlString(AppConfig.privacyUrl),
+                            onTap: () => openLink(AppConfig.privacyUrl),
                           ),
                           const ListDivider(),
                           ListTile(
