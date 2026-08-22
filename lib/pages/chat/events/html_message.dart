@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +14,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/katex_fonts.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -835,30 +837,45 @@ class LatexSpan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LaTexT(
-      laTeXCode: Text(
-        '\$$math\$',
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontFamily: AppSettings.systemFont.value
-              ? 'SystemFont'
-              : AppSettings.chatFont.value.isNotEmpty
-              ? AppSettings.systemFont.value
-                    ? 'SystemFont'
-                    : AppSettings.chatFont.value
-              : null,
-          fontFamilyFallback: AppSettings.fontFallback(
-            AppSettings.chatFallbackFonts,
-            colorEmojiFirst: true,
-          ),
-        ),
+    final style = TextStyle(
+      color: color,
+      fontSize: fontSize,
+      fontFamily: AppSettings.systemFont.value
+          ? 'SystemFont'
+          : AppSettings.chatFont.value.isNotEmpty
+          ? AppSettings.systemFont.value
+                ? 'SystemFont'
+                : AppSettings.chatFont.value
+          : null,
+      fontFamilyFallback: AppSettings.fontFallback(
+        AppSettings.chatFallbackFonts,
+        colorEmojiFirst: true,
       ),
-      onErrorFallback: (text) {
-        return Text(text);
+    );
+
+    // Native builds already register package fonts through Flutter's font
+    // manifest. Keeping LaTexT synchronous there is important because this
+    // widget sits inside a WidgetSpan: swapping a raw Text placeholder for a
+    // nested rich-text layout on the next frame breaks Android line metrics.
+    if (!kIsWeb) return _buildLatex(style);
+
+    return FutureBuilder<void>(
+      future: ensureKaTeXFontsLoaded(),
+      builder: (context, snapshot) {
+        // KaTeX fonts register lazily on first render; until they arrive the
+        // equation glyphs would show up as tofu, so show the raw code.
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Text(math, style: style);
+        }
+        return _buildLatex(style);
       },
     );
   }
+
+  Widget _buildLatex(TextStyle style) => LaTexT(
+    laTeXCode: Text('\$$math\$', style: style),
+    onErrorFallback: (text) => Text(text, style: style),
+  );
 }
 
 extension on String {

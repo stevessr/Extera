@@ -10,14 +10,14 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
 import 'package:matrix/matrix.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:media_kit/media_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/timezone_initializer.dart' as tz;
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 import 'config/app_settings.dart';
@@ -52,22 +52,21 @@ void main() async {
 
   MediaKit.ensureInitialized();
 
+  // IndexedDB/config loading and the vodozemac WebAssembly download are
+  // independent. Start both before parsing timezone data so browser I/O can
+  // overlap the remaining synchronous startup work.
+  final storeFuture = AppSettings.init();
+  final vodozemacFuture = vod.init(wasmPath: './assets/assets/vodozemac/');
+
   tz.initializeTimeZones();
 
   if (!PlatformInfos.isWeb) {
     FlutterForegroundTask.initCommunicationPort();
   }
 
-  // Startup concurrency: vodozemac wasm loading is network/compile bound and
-  // independent of settings and wallpaper IO, so run them in parallel instead
-  // of serializing three awaits before the first frame.
-  final vodInit = vod.init(wasmPath: './assets/assets/vodozemac/');
   Logs().nativeColors = !PlatformInfos.isIOS;
-  final store = await AppSettings.init();
-  await initWallpaper();
-  // client.init() unpickles the olm account (vod.Account) inside
-  // ClientManager.getClients, so vodozemac must be ready beforehand.
-  await vodInit;
+  final store = await storeFuture;
+  await Future.wait([vodozemacFuture, initWallpaper()]);
 
   final clients = await ClientManager.getClients(store: store);
 

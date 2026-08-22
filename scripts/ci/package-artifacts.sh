@@ -4,7 +4,7 @@
 #   package-artifacts.sh apk      <tag> [armv7|armv8|x86_64]
 #   package-artifacts.sh linux    <tag> [arch]
 #   package-artifacts.sh appimage <tag> [arch]
-#   package-artifacts.sh web      <tag>
+#   package-artifacts.sh web      <tag> [js|wasm]
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -67,7 +67,11 @@ case "$target" in
       "artifacts/ExteraNext-$tag-$appimage_arch.AppImage"
     ;;
   web)
-    tar -czf "artifacts/ExteraNext-$tag-web.tar.gz" -C build/web .
+    case "$arch" in
+      ''|js|x64|universal) suffix='' ;;
+      *) suffix="-$arch" ;;
+    esac
+    tar -czf "artifacts/ExteraNext-$tag-web$suffix.tar.gz" -C build/web .
     ;;
   *)
     echo "Unknown target: $target" >&2

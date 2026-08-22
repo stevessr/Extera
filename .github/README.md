@@ -5,14 +5,16 @@ Two workflows, both written for Forgejo Actions.
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `workflows/integrate.yaml` | pull requests, merge queue, manual | Analysis, tests, and debug builds for the platforms a change can affect |
-| `workflows/release.yaml` | `v*` tags, manual | Three signed APKs (armv7, armv8, x86_64), Linux tarball, AppImage, web bundle, and the Forgejo release |
+| `workflows/release.yaml` | `v*` tags, manual | Signed APKs, Linux tarballs and AppImages, web bundle, and the Forgejo release. Tag pushes build the full spread (every Android ABI, amd64 Linux, JS web); manual runs pick presets |
 
 ## Layout
 
 Workflows stay thin. Everything they do lives in one of two places:
 
-- `.github/actions/*/action.yml` — composite actions for shared setup. Each
-  third-party action version is pinned in exactly one of these files.
+- `.github/actions/*/action.yml` — composite actions for shared setup and the
+  platform builds themselves (`build-android-apk`, `build-linux-app`,
+  `build-web-app`, plus their `setup-*` dependencies). Each third-party action
+  version is pinned in exactly one of these files.
 - `scripts/ci/*.sh` — the actual logic, runnable outside CI.
 
 The Flutter version is pinned in `.tool_versions.yaml`, which
@@ -103,3 +105,24 @@ uploaded to a draft, which is only published once every upload succeeded, and
 
 Use the manual trigger to rehearse: it builds artifacts without publishing
 unless `publish` is checked, and `draft` keeps the result unpublished.
+
+### Manual release options
+
+The manual trigger accepts three presets in addition to the toggles:
+
+| Input | Choices (default first) |
+| --- | --- |
+| `android_arch` | `armv8`; `armv7 & armv8`; `arm & x86_64` |
+| `linux_arch` | `amd64`; `arm64`; `amd64 & arm64` |
+| `web_target` | `js`; `wasm` |
+
+- The `android_arch` presets map onto the same ABI labels as a tag push
+  (`arm` is the 32-bit ABI published as `android-armv7`).
+- `linux_arch=arm64` requires the same opt-in infrastructure as CI: a
+  registered self-hosted Linux arm64 runner with `ENABLE_ARM64_RUNNER=true`.
+  Without it the job skips silently, so check the run before publishing.
+  There is no prebuilt Flutter archive for Linux arm64; the SDK is cloned at
+  the pinned version instead.
+- `web_target=wasm` builds dart2wasm plus the automatic JS fallback and ships
+  COOP/COEP headers (`_headers`) inside the bundle, since dart2wasm needs
+  cross-origin isolation.

@@ -65,40 +65,11 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
+      # Served from the site root, so no base-href.
+      - uses: ./.github/actions/build-web-app
         with:
-          cache-target-dir: "true"
-
-      - name: Restore nightly rustup toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.rustup/toolchains/nightly-*
-            ~/.rustup/update-hashes
-          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
-
-      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
-      # bindings.
-      - run: rustup toolchain install nightly --component rust-src
-
-      - name: Restore yq binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/yq
-          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
-
-      - name: Install yq
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
-          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      - name: Prepare web
-        run: ./scripts/prepare-web.sh
-
-      - name: Build release web
-        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps
+          target: js
+          mode: release
 
       - name: Deploy to Cloudflare
         # v4 runs on node24 and installs wrangler 4 by default. The action's v3
@@ -133,49 +104,11 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
+      # The action ships the COOP/COEP _headers file required by dart2wasm.
+      - uses: ./.github/actions/build-web-app
         with:
-          cache-target-dir: "true"
-
-      - name: Restore nightly rustup toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.rustup/toolchains/nightly-*
-            ~/.rustup/update-hashes
-          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
-
-      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
-      # bindings.
-      - run: rustup toolchain install nightly --component rust-src
-
-      - name: Restore yq binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/yq
-          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
-
-      - name: Install yq
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
-          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      - name: Prepare web
-        run: ./scripts/prepare-web.sh
-
-      - name: Build release web (dart2wasm + JS fallback)
-        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --wasm
-
-      # dart2wasm requires cross-origin isolation. Workers assets honor the
-      # Pages-style _headers file, so ship COOP/COEP with the dev bundle.
-      - name: Add COOP/COEP headers
-        run: |
-          printf '%s\n' \
-            '/*' \
-            '  Cross-Origin-Opener-Policy: same-origin' \
-            '  Cross-Origin-Embedder-Policy: require-corp' >build/web/_headers
+          target: wasm
+          mode: release
 
       # Same static assets under a separate worker name (--name overrides
       # "extera" from wrangler.jsonc). Serves at

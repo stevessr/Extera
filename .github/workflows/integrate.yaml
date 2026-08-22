@@ -134,15 +134,11 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-android
+      - uses: ./.github/actions/build-android-apk
         with:
-          cache_scope: android-${{ matrix.name }}
-      - uses: ./.github/actions/setup-flutter
-      # cargokit compiles the vodozemac Rust crate for Android, so this job
-      # needs the toolchain and its cache as much as the release build does.
-      - uses: ./.github/actions/setup-rust
-
-      - run: flutter build apk --flavor fDebug --debug --no-pub --target-platform ${{ matrix.target_platform }}
+          target-platform: ${{ matrix.target_platform }}
+          flavor: fDebug
+          mode: debug
 
   build-web:
     name: Debug web
@@ -158,37 +154,12 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
+
+      # Debug parity check for the release web bundle (target js).
+      - uses: ./.github/actions/build-web-app
         with:
-          cache-target-dir: 'true'
-
-      - name: Restore nightly rustup toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.rustup/toolchains/nightly-*
-            ~/.rustup/update-hashes
-          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
-
-      - run: rustup toolchain install nightly --component rust-src
-
-      - name: Restore yq binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/yq
-          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
-
-      - name: Install yq
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
-          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      - name: Prepare web
-        run: ./scripts/prepare-web.sh
-
-      - run: flutter build web
+          target: js
+          mode: debug
 
   build-linux:
     name: Debug Linux (x64)
@@ -204,11 +175,10 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-linux-deps
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
-
-      - run: flutter build linux --target-platform linux-x64
+      - uses: ./.github/actions/build-linux-app
+        with:
+          arch: x64
+          mode: debug
 
   # Opt-in: set the repository variable ENABLE_ARM64_RUNNER to "true" once a
   # self-hosted arm64 runner exists. Skipped otherwise, so a missing runner
@@ -227,36 +197,10 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-linux-deps
-
-      - name: Check cache service
-        run: ./scripts/ci/check-cache.sh
-
-      - name: Resolve Flutter version
-        id: flutter
-        run: echo "version=$(./scripts/ci/flutter-version.sh)" >>"$GITHUB_OUTPUT"
-
-      # install-flutter-source.sh skips the clone when the directory is there,
-      # so restoring it turns a full SDK clone into a cache hit.
-      - name: Restore Flutter SDK
-        uses: actions/cache@v4
+      - uses: ./.github/actions/build-linux-app
         with:
-          path: ~/flutter
-          key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
-
-      - name: Restore pub cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: pub-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-v2-${{ runner.os }}-${{ runner.arch }}-
-
-      # No prebuilt Flutter archive exists for Linux arm64, so clone the SDK at
-      # the version pinned in .tool_versions.yaml.
-      - run: ./scripts/ci/install-flutter-source.sh
-
-      - run: flutter pub get --no-example
-      - run: flutter build linux --target-platform linux-arm64
+          arch: arm64
+          mode: debug
 
   # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true".
   build-ios:
@@ -298,7 +242,17 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check job results
+      - name: Ensure Node 24
         run: |
-          echo '${{ toJSON(needs) }}' |
-            jq -e 'all(.[]; .result == "success" or .result == "skipped")' >/dev/null
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: actions/checkout@v4
+
+      - name: Report aggregate status
+        env:
+          JOBS: ${{ toJson(needs) }}
+        run: |
+          echo "$JOBS" | jq -e 'all(.[]; .result == "success" or .result == "skipped")' >/dev/null

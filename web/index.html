@@ -49,26 +49,9 @@
   <title>Extera</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" type="text/css" href="splash/style.css">
-  <script src="Imaging.js" defer></script>
 </head>
 
 <body>
-  <script>
-    window.addEventListener('DOMContentLoaded', function (ev) {
-      {{flutter_js}}
-      {{flutter_build_config}}
-      _flutter.loader.load({
-        serviceWorker: {
-          serviceWorkerVersion: {{flutter_service_worker_version}},
-        },
-      onEntrypointLoaded: function (engineInitializer) {
-        engineInitializer.initializeEngine({ useColorEmoji: true }).then(function (appRunner) {
-          appRunner.runApp();
-        });
-      }
-      });
-    });
-  </script>
   <picture id="splash">
     <source
       srcset="icons/64.png 1x,icons/128.png 2x"
@@ -78,6 +61,7 @@
       media="(prefers-color-scheme: dark)">
     <img class="center" src="icons/128.png" />
   </picture>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 
 </html>
