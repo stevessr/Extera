@@ -14,9 +14,25 @@ inputs:
     required: false
     default: release
   signing:
-    description: Write the signing configuration from repository secrets before building.
+    description: Write the signing configuration from the keystore inputs before building.
     required: false
     default: 'false'
+  keystore-file:
+    description: Base64-encoded release keystore (KEYSTORE_FILE secret).
+    required: false
+    default: ''
+  keystore-pass:
+    description: Keystore password (KEYSTORE_PASS secret).
+    required: false
+    default: ''
+  key-pass:
+    description: Key password (KEY_PASS secret).
+    required: false
+    default: ''
+  key-alias:
+    description: Key alias (KEY_ALIAS secret, defaults to "key").
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -48,10 +64,12 @@ runs:
       if: ${{ inputs.signing == 'true' }}
       shell: bash
       env:
-        KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
-        KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-        KEY_PASS: ${{ secrets.KEY_PASS }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        # Composite action steps cannot read the secrets context; callers pass
+        # the secrets in as inputs.
+        KEYSTORE_FILE: ${{ inputs.keystore-file }}
+        KEYSTORE_PASS: ${{ inputs.keystore-pass }}
+        KEY_PASS: ${{ inputs.key-pass }}
+        KEY_ALIAS: ${{ inputs.key-alias }}
       run: ./scripts/ci/write-android-signing.sh
 
     - name: Build APK

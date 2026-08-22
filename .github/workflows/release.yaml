@@ -74,11 +74,8 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
-      android-matrix: ${{ steps.matrices.outputs.android_matrix }}
-      linux-x64: ${{ steps.matrices.outputs.linux_x64 }}
-      linux-arm64: ${{ steps.matrices.outputs.linux_arm64 }}
-      web-target: ${{ steps.matrices.outputs.web_target }}
-      web-artifact: ${{ steps.matrices.outputs.web_artifact }}
+      matrix: ${{ steps.matrices.outputs.matrix }}
+      any: ${{ steps.matrices.outputs.any }}
     steps:
       #The JS actions below declare runs.using: node24, which older runner
       #images do not ship. Must come before the first one of them.
@@ -96,76 +93,98 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
 
-      # Map the manual-trigger presets onto job gates. Tag pushes always
-      # produce the full spread: every Android ABI, amd64 Linux, JS web.
+      # Emit one build-matrix covering every requested platform, so all builds
+      # fan out from a single job. Tag pushes carry no inputs and always get
+      # the full spread: every Android ABI, amd64 Linux, JS web.
       - id: matrices
         env:
           EVENT: ${{ github.event_name }}
-          ANDROID_ARCH: ${{ inputs.android_arch }}
+          ANDROID_ENABLED: ${{ inputs.android }}
+          ANDROID_ARCH_INPUT: ${{ inputs.android_arch }}
           LINUX_ENABLED: ${{ inputs.linux }}
-          LINUX_ARCH: ${{ inputs.linux_arch }}
+          LINUX_ARCH_INPUT: ${{ inputs.linux_arch }}
+          WEB_ENABLED: ${{ inputs.web }}
           WEB_TARGET_INPUT: ${{ inputs.web_target }}
+          ARM64_RUNNER: ${{ vars.ENABLE_ARM64_RUNNER }}
         run: |
-          # Tag pushes carry no inputs; fall back to the full spread.
           if [ "$EVENT" = push ]; then
-            ANDROID_ARCH=full
-            LINUX_ARCH=amd64
-            LINUX_ENABLED=true
+            ANDROID_ENABLED=true LINUX_ENABLED=true WEB_ENABLED=true
+            ANDROID_ARCH=full LINUX_ARCH=amd64 WEB_TARGET=js
+          else
+            ANDROID_ARCH=$ANDROID_ARCH_INPUT
+            LINUX_ARCH=$LINUX_ARCH_INPUT
+            case "$WEB_TARGET_INPUT" in js|wasm) WEB_TARGET=$WEB_TARGET_INPUT ;; *) WEB_TARGET=js ;; esac
           fi
 
-          case "$ANDROID_ARCH" in
-            full)
-              # "arm" in the presets is the 32-bit ABI the packaging step
-              # labels armv7.
-              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"armv8","target_platform":"android-arm64"},{"name":"x86_64","target_platform":"android-x64"}]'
-              ;;
-            'armv7 & armv8')
-              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"armv8","target_platform":"android-arm64"}]'
-              ;;
-            'arm & x86_64')
-              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"x86_64","target_platform":"android-x64"}]'
-              ;;
-            *)
-              matrix='[{"name":"armv8","target_platform":"android-arm64"}]'
-              ;;
-          esac
+          entries=()
 
-          case "$LINUX_ARCH" in
-            'amd64 & arm64') want_x64=true want_arm64=true ;;
-            arm64) want_x64=false want_arm64=true ;;
-            amd64) want_x64=true want_arm64=false ;;
-            *) want_x64=false want_arm64=false ;;
-          esac
-          if [ "$LINUX_ENABLED" != true ]; then
-            want_x64=false want_arm64=false
+          if [ "$ANDROID_ENABLED" = true ]; then
+            abi_entry() { # <label> <target_platform>
+              entries+=("{\"name\":\"$1\",\"platform\":\"apk\",\"target_platform\":\"$2\",\"runner\":\"ubuntu-latest\"}")
+            }
+            # "arm" in the presets is the 32-bit ABI published as android-armv7.
+            case "$ANDROID_ARCH" in
+              full)
+                abi_entry armv7 android-arm
+                abi_entry armv8 android-arm64
+                abi_entry x86_64 android-x64
+                ;;
+              'armv7 & armv8')
+                abi_entry armv7 android-arm
+                abi_entry armv8 android-arm64
+                ;;
+              'arm & x86_64')
+                abi_entry armv7 android-arm
+                abi_entry x86_64 android-x64
+                ;;
+              *)
+                abi_entry armv8 android-arm64
+                ;;
+            esac
           fi
 
-          web_target=${WEB_TARGET_INPUT:-js}
-          case "$web_target" in
-            js|wasm) ;;
-            *) web_target=js ;;
-          esac
-          web_artifact=web
-          [ "$web_target" != js ] && web_artifact="web-$web_target"
+          if [ "$LINUX_ENABLED" = true ]; then
+            case "$LINUX_ARCH" in
+              'amd64 & arm64')
+                entries+=('{"name":"linux-x64","platform":"linux","arch":"x64","runner":"ubuntu-latest"}')
+                if [ "$ARM64_RUNNER" = true ]; then
+                  entries+=('{"name":"linux-arm64","platform":"linux","arch":"arm64","runner":"self-hosted"}')
+                fi
+                ;;
+              arm64)
+                if [ "$ARM64_RUNNER" = true ]; then
+                  entries+=('{"name":"linux-arm64","platform":"linux","arch":"arm64","runner":"self-hosted"}')
+                fi
+                ;;
+              *)
+                entries+=('{"name":"linux-x64","platform":"linux","arch":"x64","runner":"ubuntu-latest"}')
+                ;;
+            esac
+          fi
+
+          if [ "$WEB_ENABLED" = true ]; then
+            artifact=web
+            [ "$WEB_TARGET" != js ] && artifact="web-$WEB_TARGET"
+            entries+=("{\"name\":\"$artifact\",\"platform\":\"web\",\"web_target\":\"$WEB_TARGET\",\"runner\":\"ubuntu-latest\"}")
+          fi
 
           {
-            echo "android_matrix=$matrix"
-            echo "linux_x64=$want_x64"
-            echo "linux_arm64=$want_arm64"
-            echo "web_target=$web_target"
-            echo "web_artifact=$web_artifact"
+            echo "matrix=$(IFS=,; printf '[%s]' "${entries[*]}")"
+            echo "any=$([ "${#entries[@]}" -gt 0 ] && echo true || echo false)"
           } >>"$GITHUB_OUTPUT"
 
-  build-apk:
-    name: Android APK (${{ matrix.name }})
+  # Every platform build is a matrix entry of this one job so they all start
+  # together under a single concurrency budget.
+  build:
+    name: ${{ matrix.name }}
     needs: prepare
-    if: ${{ github.event_name == 'push' || inputs.android }}
-    runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'push' || inputs.android || inputs.linux || inputs.web) && needs.prepare.outputs.any == 'true' }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 6
       matrix:
-        include: ${{ fromJSON(needs.prepare.outputs.android-matrix) }}
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - name: Ensure Node 24
         run: |
@@ -175,127 +194,79 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
+
+      # --- Android APK ---
       - uses: ./.github/actions/build-android-apk
+        if: ${{ matrix.platform == 'apk' }}
         with:
           target-platform: ${{ matrix.target_platform }}
           signing: 'true'
+          keystore-file: ${{ secrets.KEYSTORE_FILE }}
+          keystore-pass: ${{ secrets.KEYSTORE_PASS }}
+          key-pass: ${{ secrets.KEY_PASS }}
+          key-alias: ${{ secrets.KEY_ALIAS }}
 
       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}" "${{ matrix.name }}"
+        if: ${{ matrix.platform == 'apk' }}
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
+        if: ${{ matrix.platform == 'apk' }}
 
       - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'apk' }}
         with:
           name: apk-${{ matrix.name }}
           path: artifacts/*.apk
           retention-days: 14
           if-no-files-found: error
 
-  build-linux:
-    name: Linux tarball and AppImage (x64)
-    needs: prepare
-    if: ${{ needs.prepare.outputs.linux-x64 == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
+      # --- Linux tarball and AppImage ---
       - uses: ./.github/actions/build-linux-app
+        if: ${{ matrix.platform == 'linux' }}
         with:
-          arch: x64
+          arch: ${{ matrix.arch }}
           appimage: 'true'
 
       - name: Package tarball
-        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" x64
+        if: ${{ matrix.platform == 'linux' }}
+        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" "${{ matrix.arch }}"
 
       - name: Package AppImage
+        if: ${{ matrix.platform == 'linux' }}
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
-        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" x64
+        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" "${{ matrix.arch }}"
 
       - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'linux' }}
         with:
-          name: linux-x64
+          name: ${{ matrix.name }}
           path: |
             artifacts/*.tar.gz
             artifacts/*.AppImage
           retention-days: 14
           if-no-files-found: error
 
-  # Requires the same opt-in infrastructure as the CI arm64 job: a registered
-  # self-hosted Linux arm64 runner and the ENABLE_ARM64_RUNNER repository
-  # variable set to "true". Skipped otherwise.
-  build-linux-arm64:
-    name: Linux tarball and AppImage (arm64)
-    needs: prepare
-    if: ${{ needs.prepare.outputs.linux-arm64 == 'true' && vars.ENABLE_ARM64_RUNNER == 'true' }}
-    runs-on: self-hosted
-    steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/build-linux-app
-        with:
-          arch: arm64
-          appimage: 'true'
-
-      - name: Package tarball
-        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" arm64
-
-      - name: Package AppImage
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: '1'
-        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" arm64
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm64
-          path: |
-            artifacts/*.tar.gz
-            artifacts/*.AppImage
-          retention-days: 14
-          if-no-files-found: error
-
-  build-web:
-    name: Web bundle (${{ needs.prepare.outputs.web-target }})
-    needs: prepare
-    if: ${{ github.event_name == 'push' || inputs.web }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
+      # --- Web bundle ---
       - uses: ./.github/actions/build-web-app
+        if: ${{ matrix.platform == 'web' }}
         with:
-          target: ${{ needs.prepare.outputs.web-target }}
+          target: ${{ matrix.web_target }}
           base-href: '/web/'
 
-      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}" "${{ needs.prepare.outputs.web-target }}"
+      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}" "${{ matrix.web_target }}"
+        if: ${{ matrix.platform == 'web' }}
 
       - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'web' }}
         with:
-          name: ${{ needs.prepare.outputs.web-artifact }}
+          name: ${{ matrix.name }}
           path: artifacts/*.tar.gz
           retention-days: 14
           if-no-files-found: error
 
   publish:
     name: Publish release
-    needs: [prepare, build-apk, build-linux, build-linux-arm64, build-web]
+    needs: [prepare, build]
     if: ${{ always() && (github.event_name == 'push' || inputs.publish) }}
     runs-on: ubuntu-latest
     steps:
