@@ -199,7 +199,7 @@ dependency_overrides:
   flutter_vodozemac:
     git:
       url: https://github.com/famedly/dart-vodozemac.git
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      ref: krille/frb-wasm-fix
       path: flutter
   flutter_rust_bridge:
     git:
@@ -209,5 +209,5 @@ dependency_overrides:
   vodozemac:
     git:
       url: https://github.com/famedly/dart-vodozemac.git
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      ref: krille/frb-wasm-fix
       path: dart

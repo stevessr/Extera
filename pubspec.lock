@@ -990,7 +990,7 @@ packages:
     dependency: "direct main"
     description:
       path: flutter
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      ref: "krille/frb-wasm-fix"
       resolved-ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
       url: "https://github.com/famedly/dart-vodozemac.git"
     source: git
@@ -2897,7 +2897,7 @@ packages:
     dependency: "direct main"
     description:
       path: dart
-      ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
+      ref: "krille/frb-wasm-fix"
       resolved-ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
       url: "https://github.com/famedly/dart-vodozemac.git"
     source: git
