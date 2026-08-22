@@ -13,6 +13,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/katex_fonts.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -849,29 +850,38 @@ class LatexSpan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LaTexT(
-      laTeXCode: Text(
-        '\$$math\$',
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontFamily: AppSettings.systemFont.value
-              ? 'SystemFont'
-              : AppSettings.chatFont.value.isNotEmpty
-              ? AppSettings.systemFont.value
-                    ? 'SystemFont'
-                    : AppSettings.chatFont.value
-              : null,
-          fontFamilyFallback: AppSettings.notoEmojiFont.value
-              ? [
-                  'Noto Color Emoji',
-                  ...AppSettings.chatFallbackFonts.value.split(','),
-                ]
-              : AppSettings.chatFallbackFonts.value.split(','),
-        ),
-      ),
-      onErrorFallback: (text) {
-        return Text(text);
+    final style = TextStyle(
+      color: color,
+      fontSize: fontSize,
+      fontFamily: AppSettings.systemFont.value
+          ? 'SystemFont'
+          : AppSettings.chatFont.value.isNotEmpty
+          ? AppSettings.systemFont.value
+                ? 'SystemFont'
+                : AppSettings.chatFont.value
+          : null,
+      fontFamilyFallback: AppSettings.notoEmojiFont.value
+          ? [
+              'Noto Color Emoji',
+              ...AppSettings.chatFallbackFonts.value.split(','),
+            ]
+          : AppSettings.chatFallbackFonts.value.split(','),
+    );
+
+    return FutureBuilder<void>(
+      future: ensureKaTeXFontsLoaded(),
+      builder: (context, snapshot) {
+        // KaTeX fonts register lazily on first render; until they arrive the
+        // equation glyphs would show up as tofu, so show the raw code.
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Text(math, style: style);
+        }
+        return LaTexT(
+          laTeXCode: Text('\$$math\$', style: style),
+          onErrorFallback: (text) {
+            return Text(text);
+          },
+        );
       },
     );
   }

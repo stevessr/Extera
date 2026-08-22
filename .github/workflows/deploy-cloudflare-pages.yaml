@@ -99,6 +99,9 @@ jobs:
 
       - name: Build release web
         run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps
+      # KaTeX fonts load lazily at first LaTeX render; drop them from the
+      # startup font manifest (scripts/strip-katex-manifest.py).
+      - run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
 
       - name: Deploy to Cloudflare
         # v4 runs on node24 and installs wrangler 4 by default. The action's v3
@@ -167,6 +170,9 @@ jobs:
 
       - name: Build release web (dart2wasm + JS fallback)
         run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --wasm
+      # KaTeX fonts load lazily at first LaTeX render; drop them from the
+      # startup font manifest (scripts/strip-katex-manifest.py).
+      - run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
 
       # dart2wasm requires cross-origin isolation. Workers assets honor the
       # Pages-style _headers file, so ship COOP/COEP with the dev bundle.

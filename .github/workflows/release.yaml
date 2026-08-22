@@ -224,6 +224,9 @@ jobs:
 
       - name: Build release web
         run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
+      # KaTeX fonts load lazily at first LaTeX render; drop them from the
+      # startup font manifest (scripts/strip-katex-manifest.py).
+      - run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
 
       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
 
