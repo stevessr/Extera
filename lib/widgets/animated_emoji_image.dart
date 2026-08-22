@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -8,8 +6,10 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
 import 'package:matrix/matrix.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 
 /// Renders one emoji as the Lottie animation Google ships for it.
 ///
@@ -36,7 +36,8 @@ class AnimatedEmojiImage extends StatefulWidget {
   State<AnimatedEmojiImage> createState() => _AnimatedEmojiImageState();
 }
 
-class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
+class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
+    with WidgetsBindingObserver {
   /// Emoji repeat a lot within a chat, so hold on to the parsed animations for
   /// the lifetime of the process.
   static final Map<String, LottieComposition> _compositions = {};
@@ -46,9 +47,20 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
 
   LottieComposition? _composition;
 
+  /// Stable across rebuilds so the visibility detector does not mistake a
+  /// rebuilt widget for a different child.
+  late final Key _visibilityDetectorKey = UniqueKey();
+
+  /// Whether any part of the emoji intersects the viewport.
+  bool _isVisible = true;
+
+  /// Whether the app is foregrounded; hidden tabs must not decode frames.
+  bool _appResumed = true;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
   }
 
@@ -56,6 +68,34 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
   void didUpdateWidget(AnimatedEmojiImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.codepoint != widget.codepoint) _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final playing = switch (state) {
+      AppLifecycleState.paused ||
+      AppLifecycleState.hidden ||
+      AppLifecycleState.detached => false,
+      _ => true,
+    };
+    if (playing != _appResumed && mounted) {
+      setState(() => _appResumed = playing);
+    }
+  }
+
+  /// Pauses frame decoding while the emoji is scrolled out of the viewport
+  /// and resumes when it comes back. Only transitions trigger rebuilds.
+  void _onVisibilityChanged(VisibilityInfo info) {
+    final visible = info.visibleFraction > 0;
+    if (visible != _isVisible && mounted) {
+      setState(() => _isVisible = visible);
+    }
   }
 
   void _load() {
@@ -129,13 +169,29 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
     // Emoji glyphs are drawn slightly larger than the font size.
     final size = widget.fontSize * 1.3;
 
-    return Lottie(
-      composition: composition,
-      width: size,
-      height: size,
-      // Emoji are tiny and repeat a lot, which is exactly the case the raster
-      // cache is meant for: every frame is rasterized once and then reused.
-      renderCache: RenderCache.raster,
+    return VisibilityDetector(
+      key: _visibilityDetectorKey,
+      onVisibilityChanged: _onVisibilityChanged,
+      child: Lottie(
+        composition: composition,
+        width: size,
+        height: size,
+        // Emoji are tiny and repeat a lot, which is exactly the case a render
+        // cache is meant for: every frame is rasterized/recorded once and reused.
+        //
+        // The raster cache keys frames by their on-screen size, which it derives
+        // from `RenderBox.localToGlobal` × device pixel ratio. For these inline
+        // emoji (WidgetSpan children) that size is non-finite on the Web engine,
+        // and dart2wasm throws `Infinity or NaN toInt` while building the cache
+        // key. The drawing-commands cache keys on `Size.zero` instead, so it is
+        // safe on Web while still sparing the per-frame composition walk.
+        renderCache: PlatformInfos.isWeb
+            ? RenderCache.drawingCommands
+            : RenderCache.raster,
+        // Off-screen or backgrounded emoji keep their last painted frame
+        // instead of burning CPU on invisible animation frames.
+        animate: _isVisible && _appResumed,
+      ),
     );
   }
 }

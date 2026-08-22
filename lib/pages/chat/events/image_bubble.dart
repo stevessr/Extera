@@ -259,10 +259,19 @@ class ImageBubble extends StatelessWidget {
           padding: const .all(2),
           child: Container(
             decoration: BoxDecoration(
+              // Transparent pixels must composite over the chat background /
+              // wallpaper, not over an opaque theme surface (which renders
+              // them as near-black or near-white depending on brightness).
+              // Keep an opaque backdrop only while no real image is shown
+              // (unloaded / hidden states), where the blurhash placeholder
+              // benefits from a defined surface. Explicit colors passed by
+              // callers still win.
               color: event.messageType == MessageTypes.Sticker
                   ? Colors.transparent
                   : backgroundColor ??
-                        theme.colorScheme.surfaceContainerHighest,
+                        (loadMedia && !isHidden
+                            ? Colors.transparent
+                            : theme.colorScheme.surfaceContainerHighest),
               borderRadius: borderRadius,
             ),
             clipBehavior: Clip.antiAlias,
