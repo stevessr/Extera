@@ -66,7 +66,10 @@ class ChatListViewBody extends StatelessWidget {
         .toList();
     final userSearchResult = controller.userSearchResult;
     const dummyChatCount = 4;
-    final filter = controller.searchController.text.toLowerCase();
+    // Null (not '') when inactive so ChatListItem skips the per-item
+    // displayname.toLowerCase() scan on every sync-triggered rebuild.
+    final rawFilter = controller.searchController.text;
+    final filter = rawFilter.isEmpty ? null : rawFilter.toLowerCase();
 
     return StreamBuilder(
       key: ValueKey(client.userID.toString()),

@@ -58,11 +58,16 @@ void main() async {
     FlutterForegroundTask.initCommunicationPort();
   }
 
-  await vod.init(wasmPath: './assets/assets/vodozemac/');
-
+  // Startup concurrency: vodozemac wasm loading is network/compile bound and
+  // independent of settings and wallpaper IO, so run them in parallel instead
+  // of serializing three awaits before the first frame.
+  final vodInit = vod.init(wasmPath: './assets/assets/vodozemac/');
   Logs().nativeColors = !PlatformInfos.isIOS;
   final store = await AppSettings.init();
   await initWallpaper();
+  // client.init() unpickles the olm account (vod.Account) inside
+  // ClientManager.getClients, so vodozemac must be ready beforehand.
+  await vodInit;
 
   final clients = await ClientManager.getClients(store: store);
 

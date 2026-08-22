@@ -49,18 +49,14 @@
   <title>Extera</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" type="text/css" href="splash/style.css">
-  <script src="Imaging.js"></script>
-
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
+  <script src="Imaging.js" defer></script>
 </head>
 
 <body>
   <script>
-    window.addEventListener('load', function (ev) {
+    window.addEventListener('DOMContentLoaded', function (ev) {
       {{flutter_js}}
       {{flutter_build_config}}
-
       _flutter.loader.load({
         serviceWorker: {
           serviceWorkerVersion: {{flutter_service_worker_version}},
