@@ -19,6 +19,7 @@ import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
+import 'package:extera_next/utils/unicode_font_loader.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 import 'config/app_settings.dart';
 import 'utils/background_push.dart';
@@ -65,6 +66,10 @@ void main() async {
   Logs().nativeColors = !PlatformInfos.isIOS;
   final store = await AppSettings.init();
   await initWallpaper();
+  if (AppSettings.unicode18Fallback.value) {
+    // Opt-in coverage loads in the background; text reflows as chunks land.
+    unawaited(loadUnicodeFallbackFonts());
+  }
   // client.init() unpickles the olm account (vod.Account) inside
   // ClientManager.getClients, so vodozemac must be ready beforehand.
   await vodInit;

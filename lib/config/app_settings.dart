@@ -90,10 +90,9 @@ enum AppSettings<T> {
   notoEmojiFont<bool>('xyz.extera.next.notoEmojiFont', false),
   // Append the bundled Unicode Font Set families (Unicode 18 coverage) to
   // every font fallback chain.
-  unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', true),
+  unicode18Fallback<bool>('xyz.extera.next.unicode18Fallback', false),
   animatedEmoji<bool>('xyz.extera.next.animatedEmoji', false),
   biometricUnlock<bool>('xyz.extera.next.biometricUnlock', false),
-
 
   checkForUpdates<bool>('xyz.extera.next.checkForUpdates', true),
   colorSchemeSeed<int>('xyz.extera.next.colorSchemeSeed', 0x5625BA),
@@ -173,7 +172,7 @@ enum AppSettings<T> {
   /// `tool/build_unicode_fallback_fonts.py`. Each font is tree-shaken against
   /// the earlier entries of the chain and split into lazily-loaded chunks, so
   /// the list is ordered exactly like the fallback priority.
-  static const unicodeFallbackFonts = kUnicodeFallbackFontFamilies;
+  static const unicodeFallbackFonts = kUnicodeFallbackFontAssets;
 
   /// Builds a `fontFamilyFallback` chain from a comma-separated fallback font
   /// setting, optionally prefixed with Noto Color Emoji and suffixed with the
@@ -185,7 +184,8 @@ enum AppSettings<T> {
     final chain = <String>[
       if (colorEmojiFirst && notoEmojiFont.value) 'Noto Color Emoji',
       ...setting.value.split(',').where((font) => font.isNotEmpty),
-      if (unicode18Fallback.value) ...unicodeFallbackFonts,
+      if (unicode18Fallback.value)
+        ...unicodeFallbackFonts.map((asset) => asset.$1),
     ];
     return chain.isEmpty ? null : chain;
   }
