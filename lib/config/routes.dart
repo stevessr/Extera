@@ -12,12 +12,14 @@ import 'package:extera_next/pages/bootstrap/bootstrap_page.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat_access_settings/chat_access_settings_controller.dart';
 import 'package:extera_next/pages/chat_details/chat_details.dart';
-import 'package:extera_next/pages/chat_encryption_settings/chat_encryption_settings.dart';
+import 'package:extera_next/pages/chat_custom_experience/chat_custom_experience.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
+import 'package:extera_next/pages/chat_encryption_settings/chat_encryption_settings.dart';
 import 'package:extera_next/pages/chat_members/chat_members.dart';
 import 'package:extera_next/pages/chat_permissions_settings/chat_permissions_settings.dart';
-import 'package:extera_next/pages/chat_privacy/chat_privacy.dart';
+import 'package:extera_next/pages/chat_room_profile/chat_room_profile.dart';
 import 'package:extera_next/pages/chat_search/chat_search_page.dart';
+import 'package:extera_next/pages/chat_privacy/chat_privacy.dart';
 import 'package:extera_next/pages/chat_thread/thread.dart';
 import 'package:extera_next/pages/chat_threads/chat_threads.dart';
 import 'package:extera_next/pages/chat_wallpaper/chat_wallpaper.dart';
@@ -41,8 +43,9 @@ import 'package:extera_next/pages/settings_homeserver/settings_homeserver.dart';
 import 'package:extera_next/pages/settings_ignore_list/settings_ignore_list.dart';
 import 'package:extera_next/pages/settings_multiple_emotes/settings_multiple_emotes.dart';
 import 'package:extera_next/pages/settings_navigation/settings_navigation.dart';
-import 'package:extera_next/pages/settings_notifications/settings_notifications.dart';
+import 'package:extera_next/pages/settings_custom_experience/settings_custom_experience.dart';
 import 'package:extera_next/pages/settings_password/settings_password.dart';
+import 'package:extera_next/pages/settings_notifications/settings_notifications.dart';
 import 'package:extera_next/pages/settings_ringtone/settings_ringtone.dart';
 import 'package:extera_next/pages/settings_security/settings_security.dart';
 import 'package:extera_next/pages/settings_style/settings_style.dart';
@@ -385,6 +388,15 @@ abstract class AppRoutes {
                       redirect: loggedOutRedirect,
                     ),
                     GoRoute(
+                      path: 'custom_experience',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        const SettingsCustomExperience(),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
                       path: 'ringtone',
                       pageBuilder: (context, state) => defaultPageBuilder(
                         context,
@@ -613,6 +625,28 @@ abstract class AppRoutes {
                         context,
                         state,
                         ChatPrivacy(roomId: state.pathParameters['roomid']!),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
+                      path: 'custom_experience',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        ChatCustomExperience(
+                          roomId: state.pathParameters['roomid']!,
+                        ),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
+                      path: 'profile',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        ChatRoomProfile(
+                          roomId: state.pathParameters['roomid']!,
+                        ),
                       ),
                       redirect: loggedOutRedirect,
                     ),
