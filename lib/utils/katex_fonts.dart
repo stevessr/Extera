@@ -17,51 +17,34 @@ const Map<String, List<String>> _kaTeXFontFiles = {
     'KaTeX_Main-Bold.ttf',
     'KaTeX_Main-BoldItalic.ttf',
   ],
-  'KaTeX_Math': [
-    'KaTeX_Math-Italic.ttf',
-    'KaTeX_Math-BoldItalic.ttf',
-  ],
-  'KaTeX_AMS': [
-    'KaTeX_AMS-Regular.ttf',
-  ],
+  'KaTeX_Math': ['KaTeX_Math-Italic.ttf', 'KaTeX_Math-BoldItalic.ttf'],
+  'KaTeX_AMS': ['KaTeX_AMS-Regular.ttf'],
   'KaTeX_Caligraphic': [
     'KaTeX_Caligraphic-Regular.ttf',
     'KaTeX_Caligraphic-Bold.ttf',
   ],
-  'KaTeX_Fraktur': [
-    'KaTeX_Fraktur-Regular.ttf',
-    'KaTeX_Fraktur-Bold.ttf',
-  ],
+  'KaTeX_Fraktur': ['KaTeX_Fraktur-Regular.ttf', 'KaTeX_Fraktur-Bold.ttf'],
   'KaTeX_SansSerif': [
     'KaTeX_SansSerif-Regular.ttf',
     'KaTeX_SansSerif-Bold.ttf',
     'KaTeX_SansSerif-Italic.ttf',
   ],
-  'KaTeX_Script': [
-    'KaTeX_Script-Regular.ttf',
-  ],
-  'KaTeX_Typewriter': [
-    'KaTeX_Typewriter-Regular.ttf',
-  ],
-  'KaTeX_Size1': [
-    'KaTeX_Size1-Regular.ttf',
-  ],
-  'KaTeX_Size2': [
-    'KaTeX_Size2-Regular.ttf',
-  ],
-  'KaTeX_Size3': [
-    'KaTeX_Size3-Regular.ttf',
-  ],
-  'KaTeX_Size4': [
-    'KaTeX_Size4-Regular.ttf',
-  ],
+  'KaTeX_Script': ['KaTeX_Script-Regular.ttf'],
+  'KaTeX_Typewriter': ['KaTeX_Typewriter-Regular.ttf'],
+  'KaTeX_Size1': ['KaTeX_Size1-Regular.ttf'],
+  'KaTeX_Size2': ['KaTeX_Size2-Regular.ttf'],
+  'KaTeX_Size3': ['KaTeX_Size3-Regular.ttf'],
+  'KaTeX_Size4': ['KaTeX_Size4-Regular.ttf'],
 };
 
 const String _fontAssetBase =
     'packages/flutter_math_fork/lib/katex_fonts/fonts';
 
+/// Package font family prefix used by flutter_math_fork's TextStyle objects.
+const String _fontFamilyPrefix = 'packages/flutter_math_fork/';
+
 /// Family prefix as it appears in FontManifest.json entries.
-const String _manifestFamilyPrefix = '"packages/flutter_math_fork/KaTeX_';
+const String _manifestFamilyPrefix = '"${_fontFamilyPrefix}KaTeX_';
 
 Future<void>? _loaded;
 
@@ -92,7 +75,10 @@ Future<bool> _registeredByEngine() async {
 }
 
 Future<void> _registerFamily(MapEntry<String, List<String>> family) async {
-  final loader = FontLoader(family.key);
+  // Package fonts are referenced with the package-qualified family name.
+  // Registering plain `KaTeX_Main` leaves Math.tex looking for a different
+  // family (`packages/flutter_math_fork/KaTeX_Main`) and produces tofu.
+  final loader = FontLoader('$_fontFamilyPrefix${family.key}');
   for (final file in family.value) {
     loader.addFont(rootBundle.load('$_fontAssetBase/$file'));
   }

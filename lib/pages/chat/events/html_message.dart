@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -868,6 +869,12 @@ class LatexSpan extends StatelessWidget {
           : AppSettings.chatFallbackFonts.value.split(','),
     );
 
+    // Native builds already register package fonts through Flutter's font
+    // manifest. Keeping LaTexT synchronous there is important because this
+    // widget sits inside a WidgetSpan: swapping a raw Text placeholder for a
+    // nested rich-text layout on the next frame breaks Android line metrics.
+    if (!kIsWeb) return _buildLatex(style);
+
     return FutureBuilder<void>(
       future: ensureKaTeXFontsLoaded(),
       builder: (context, snapshot) {
@@ -876,15 +883,15 @@ class LatexSpan extends StatelessWidget {
         if (snapshot.connectionState != ConnectionState.done) {
           return Text(math, style: style);
         }
-        return LaTexT(
-          laTeXCode: Text('\$$math\$', style: style),
-          onErrorFallback: (text) {
-            return Text(text);
-          },
-        );
+        return _buildLatex(style);
       },
     );
   }
+
+  Widget _buildLatex(TextStyle style) => LaTexT(
+    laTeXCode: Text('\$$math\$', style: style),
+    onErrorFallback: (text) => Text(text, style: style),
+  );
 }
 
 extension on String {
