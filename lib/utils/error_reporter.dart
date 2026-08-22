@@ -72,7 +72,11 @@ class ErrorReporter {
           FilledButton(
             onPressed: () => launchUrl(
               AppConfig.newIssueUrl.resolveUri(
-                Uri(queryParameters: {'template': 'bug_report.yaml'}),
+                Uri(
+                  queryParameters: {
+                    'template': '.github/ISSUE_TEMPLATE/bug_report.yaml',
+                  },
+                ),
               ),
               mode: LaunchMode.externalApplication,
             ),
