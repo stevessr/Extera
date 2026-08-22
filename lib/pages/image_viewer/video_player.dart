@@ -123,13 +123,12 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     final event = widget.event;
 
     final videoHeight =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('h') ??
-            1;
+        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('h') ?? 1;
     final videoWidth =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('w') ??
-            1;
-    final blurHash =
-        event.content.tryGetMap<String, dynamic>('info')?.tryGet<String>('xyz.amorgan.blurhash');
+        event.content.tryGetMap<String, dynamic>('info')?.tryGet<int>('w') ?? 1;
+    final blurHash = event.content
+        .tryGetMap<String, dynamic>('info')
+        ?.tryGet<String>('xyz.amorgan.blurhash');
     final hasThumbnail = event.hasThumbnail;
 
     // Calculate the maximum dimensions that the video can have.
@@ -170,17 +169,11 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
                       fit: BoxFit.cover,
                     ),
                   )
-                : BlurHash(
-                    blurhash: blurHash,
-                    width: width,
-                    height: height,
-                  ),
+                : BlurHash(blurhash: blurHash, width: width, height: height),
           ),
         ),
         Center(
-          child: CircularProgressIndicator.adaptive(
-            value: _downloadProgress,
-          ),
+          child: CircularProgressIndicator.adaptive(value: _downloadProgress),
         ),
       ],
     );
