@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:extera_next/config/themes.dart';
+import 'package:extera_next/utils/foreground_task_manager.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:matrix/matrix.dart' show Client, Logs;
@@ -77,55 +77,16 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
 
   bool _screenShareActive = false;
 
-  Future<void> _stopFgTaskIfNeeded() async {
-    if (!PlatformInfos.isAndroid) return;
-    if (await FlutterForegroundTask.isRunningService) {
-      await FlutterForegroundTask.stopService();
-    }
-  }
-
   Future<void> _startFgTaskIfNeeded() async {
     if (!PlatformInfos.isAndroid) return;
     final client = Matrix.of(context).client;
     final room = client.getRoomById(widget.roomId);
-    if (await FlutterForegroundTask.isRunningService) {
-      await FlutterForegroundTask.stopService();
-    }
-
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'notification_channel_id',
-        channelName: 'Foreground Notification',
-        channelDescription: L10n.of(context).foregroundServiceRunning,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.nothing(),
-      ),
+    await ForegroundTaskManager.startLivekitCall(
+      context,
+      room: room,
+      startCallback: startCallback,
+      taskDataCallback: onDataReceived,
     );
-
-    await FlutterForegroundTask.startService(
-      notificationTitle: L10n.of(context).ongoingElementCall,
-      notificationText: L10n.of(context).ongoingElementCallDetail(
-        room?.getLocalizedDisplayname() ?? widget.roomId,
-      ),
-      serviceTypes: [
-        ForegroundServiceTypes.mediaProjection,
-        ForegroundServiceTypes.microphone,
-        ForegroundServiceTypes.camera,
-      ],
-      notificationButtons: [
-        NotificationButton(id: 'mute', text: L10n.of(context).muteMic),
-        NotificationButton(
-          id: 'hangup',
-          text: L10n.of(context).hangUp,
-          textColor: Colors.red,
-        ),
-      ],
-      callback: startCallback,
-    );
-
-    FlutterForegroundTask.addTaskDataCallback(onDataReceived);
   }
 
   void onDataReceived(Object data) async {
@@ -381,7 +342,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       await room?.dispose();
     } catch (_) {}
     try {
-      await _stopFgTaskIfNeeded();
+      await ForegroundTaskManager.stopTask(taskType: .livekitCall);
     } catch (_) {}
 
     try {
@@ -406,9 +367,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   void dispose() {
     _disposed = true;
     _room?.removeListener(_onRoomUpdate);
-    if (PlatformInfos.isAndroid) {
-      FlutterForegroundTask.removeTaskDataCallback(onDataReceived);
-    }
+    ForegroundTaskManager.stopTask(taskType: .livekitCall);
     super.dispose();
   }
 
