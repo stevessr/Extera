@@ -11,6 +11,7 @@ import 'package:native_imaging/native_imaging.dart' as native;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/utils/native_imaging_loader.dart';
 import 'package:extera_next/utils/wallpaper_store/wallpaper_store.dart';
 
 /// Value stored as the wallpaper source on web.
@@ -392,6 +393,7 @@ Future<void> pruneWallpapersOfLeftRooms(List<Client> clients) async {
 /// than it has to, neither on disk nor in IndexedDB.
 Future<Uint8List> compressWallpaperBytes(Uint8List rawBytes) async {
   try {
+    await ensureNativeImagingLoaded();
     await native.init();
 
     final codec = await instantiateImageCodec(rawBytes);

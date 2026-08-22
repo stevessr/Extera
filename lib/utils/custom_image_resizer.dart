@@ -6,6 +6,8 @@ import 'package:flutter/painting.dart';
 import 'package:matrix/matrix.dart';
 import 'package:native_imaging/native_imaging.dart' as native;
 
+import 'package:extera_next/utils/native_imaging_loader.dart';
+
 (int, int) _scaleToBox(int width, int height, {required int boxSize}) {
   final fit = applyBoxFit(
     BoxFit.scaleDown,
@@ -18,8 +20,6 @@ import 'package:native_imaging/native_imaging.dart' as native;
 Future<MatrixImageFileResizedResponse?> customImageResizer(
   MatrixImageFileResizeArguments arguments,
 ) async {
-  await native.init();
-
   var imageBytes = arguments.bytes;
   String? blurhash;
 
@@ -29,6 +29,9 @@ Future<MatrixImageFileResizedResponse?> customImageResizer(
   var height = 0;
 
   try {
+    await ensureNativeImagingLoaded();
+    await native.init();
+
     // for the other platforms
     final dartCodec = await instantiateImageCodec(arguments.bytes);
     final frameCount = dartCodec.frameCount;
