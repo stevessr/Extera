@@ -9,10 +9,11 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 
 /// Regression guard for animated avatars: [Avatar] must forward the
-/// `allowAnimatedAvatars` setting to [MxcImage] as the `animated` flag (so the
-/// media server returns animated thumbnails) and must include the flag in the
-/// in-memory cache key (so toggling the setting does not serve a stale static
-/// thumbnail). See `lib/widgets/avatar.dart`.
+/// `allowAnimatedAvatars` setting to [MxcImage] as the `animated` flag, must
+/// switch to fetching the original media while animations are allowed
+/// (homeserver thumbnails are re-encoded as a single frame), and must include
+/// the flag in the in-memory cache key (so toggling the setting does not serve
+/// a stale static thumbnail). See `lib/widgets/avatar.dart`.
 void main() {
   late MatrixSdkDatabase database;
   late Client client;
@@ -51,6 +52,13 @@ void main() {
     final image = tester.widget<MxcImage>(find.byType(MxcImage));
     expect(image.animated, isTrue, reason: 'animated flag must mirror setting');
     expect(
+      image.isThumbnail,
+      isFalse,
+      reason:
+          'animation frames only survive when the original media is fetched; '
+          'homeserver thumbnails are single-frame',
+    );
+    expect(
       image.cacheKey,
       endsWith('_anim'),
       reason: 'cache key must differ from the static path',
@@ -66,6 +74,11 @@ void main() {
       image.animated,
       isFalse,
       reason: 'animated flag must mirror setting',
+    );
+    expect(
+      image.isThumbnail,
+      isTrue,
+      reason: 'static avatars keep using scaled thumbnails',
     );
     expect(
       image.cacheKey,

@@ -73,9 +73,15 @@ class Avatar extends StatelessWidget {
               client: client,
               borderRadius: borderRadius,
               key: ValueKey(mxContent.toString()),
-              cacheKey: '${mxContent}_$size${allowAnimated ? '_anim' : ''}',
+              // Server thumbnails are re-encoded as a single frame by common
+              // homeservers (Synapse ignores `animated`), so animation only
+              // survives when the original media is fetched. Static avatars
+              // keep using a scaled thumbnail.
+              isThumbnail: !allowAnimated,
+              cacheKey: allowAnimated
+                  ? '${mxContent}_anim'
+                  : '${mxContent}_$size',
               animated: allowAnimated,
-              uri: mxContent,
               fit: BoxFit.cover,
               width: size,
               height: size,
