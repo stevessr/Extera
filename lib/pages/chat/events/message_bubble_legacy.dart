@@ -172,15 +172,19 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
     switch (event.messageType) {
       case MessageTypes.Image:
       case MessageTypes.Sticker:
-        final maxSize = event.messageType == MessageTypes.Sticker
-            ? 128.0 * AppSettings.stickerScale.value
-            : 512.0;
         final w = event.content
             .tryGetMap<String, Object?>('info')
             ?.tryGet<int>('w');
         final h = event.content
             .tryGetMap<String, Object?>('info')
             ?.tryGet<int>('h');
+        final maxSize = event.messageType == MessageTypes.Sticker
+            ? 128.0 * AppSettings.stickerScale.value
+            : event.messageType == MessageTypes.Image
+            ? h != null
+                  ? min(512.0, max(256.0, h.toDouble()))
+                  : 512.0
+            : 256.0;
         var imageWidth = maxSize;
         if (w != null && h != null) {
           if (w > h) {
@@ -189,8 +193,8 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
             imageWidth = max(32, maxSize * (w / h));
           }
         }
-        final hasDescription = event.fileDescription != null;
         const minBubbleWidth = 180.0;
+        final hasDescription = event.fileDescription != null;
         return hasDescription ? max(minBubbleWidth, imageWidth) : imageWidth;
 
       case MessageTypes.Video:
