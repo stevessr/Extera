@@ -4,7 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pro_image_editor/pro_image_editor.dart';
+// Deferred imports may not expose extension declarations, so hide them all;
+// this file only constructs config/widget classes through the prefix.
+import 'package:pro_image_editor/pro_image_editor.dart'
+    deferred as pie
+    hide FilterStateListExtension;
 
 class MaterialYouEditor extends StatefulWidget {
   /// Creates a new [MaterialYouEditor] widget.
@@ -31,18 +35,18 @@ class _MaterialYouEditorState extends State<MaterialYouEditor> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return ProImageEditor.memory(
+        return pie.ProImageEditor.memory(
           widget.byteArray,
-          callbacks: ProImageEditorCallbacks(
+          callbacks: pie.ProImageEditorCallbacks(
             onImageEditingComplete: widget.onImageEditingComplete,
           ),
-          configs: ProImageEditorConfigs(
-            designMode: ImageEditorDesignMode.material,
+          configs: pie.ProImageEditorConfigs(
+            designMode: pie.ImageEditorDesignMode.material,
             theme: Theme.of(context),
-            paintEditor: PaintEditorConfigs(
-              style: const PaintEditorStyle(initialStrokeWidth: 5),
+            paintEditor: pie.PaintEditorConfigs(
+              style: pie.PaintEditorStyle(initialStrokeWidth: 5),
             ),
-            textEditor: TextEditorConfigs(
+            textEditor: pie.TextEditorConfigs(
               customTextStyles: [
                 GoogleFonts.roboto(),
                 GoogleFonts.averiaLibre(),
@@ -53,24 +57,24 @@ class _MaterialYouEditorState extends State<MaterialYouEditor> {
                 GoogleFonts.nabla(),
               ],
             ),
-            cropRotateEditor: const CropRotateEditorConfigs(),
-            filterEditor: const FilterEditorConfigs(
-              style: FilterEditorStyle(
+            cropRotateEditor: pie.CropRotateEditorConfigs(),
+            filterEditor: pie.FilterEditorConfigs(
+              style: pie.FilterEditorStyle(
                 filterListSpacing: 7,
                 filterListMargin: EdgeInsets.fromLTRB(8, 15, 8, 10),
               ),
             ),
-            tuneEditor: const TuneEditorConfigs(),
-            blurEditor: const BlurEditorConfigs(),
-            emojiEditor: EmojiEditorConfigs(
+            tuneEditor: pie.TuneEditorConfigs(),
+            blurEditor: pie.BlurEditorConfigs(),
+            emojiEditor: pie.EmojiEditorConfigs(
               checkPlatformCompatibility: !kIsWeb,
-              style: EmojiEditorStyle(
-                emojiViewConfig: EmojiViewConfig(
+              style: pie.EmojiEditorStyle(
+                emojiViewConfig: pie.EmojiViewConfig(
                   gridPadding: EdgeInsets.zero,
                   horizontalSpacing: 0,
                   verticalSpacing: 0,
                   recentsLimit: 40,
-                  buttonMode: ButtonMode.MATERIAL,
+                  buttonMode: pie.ButtonMode.MATERIAL,
                   loadingIndicator: const Center(
                     child: CircularProgressIndicator(),
                   ),
@@ -90,7 +94,10 @@ class _MaterialYouEditorState extends State<MaterialYouEditor> {
 Future<Uint8List?> showImageEditor({
   required BuildContext context,
   required Uint8List byteArray,
-}) {
+}) async {
+  // The editor is a large one-off feature; keep it out of the startup bundle
+  // on the web (JS fallback splits it into a lazily fetched part file).
+  await pie.loadLibrary();
   return showAdaptiveDialog<Uint8List>(
     context: context,
     useSafeArea: true,
