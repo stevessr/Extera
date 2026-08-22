@@ -1,0 +1,92 @@
+name: Build web app
+description: >
+  Prepares the web dependencies and builds the Flutter web bundle with dart2js
+  (target js) or dart2wasm plus a JS fallback (target wasm).
+
+inputs:
+  target:
+    description: Compiler target, js or wasm.
+    required: false
+    default: js
+  mode:
+    description: Build mode (release or debug).
+    required: false
+    default: release
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-flutter
+    # The vodozemac wasm crate is compiled inside a directory prepare-web.sh
+    # deletes, so redirect and cache CARGO_TARGET_DIR for it.
+    - uses: ./.github/actions/setup-rust
+      with:
+        cache-target-dir: 'true'
+
+    - name: Restore nightly rustup toolchain
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.rustup/toolchains/nightly-*
+          ~/.rustup/update-hashes
+        key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
+
+    # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
+    # bindings. Installing the toolchain by name avoids naming a host triple,
+    # and works whether or not nightly is already present.
+    - run: rustup toolchain install nightly --component rust-src
+      shell: bash
+
+    - name: Restore yq binary
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/bin/yq
+        key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
+
+    - name: Install yq
+      shell: bash
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
+        echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+
+    - name: Prepare web
+      shell: bash
+      run: ./scripts/prepare-web.sh
+
+    - name: Build web
+      shell: bash
+      env:
+        WEB_TARGET: ${{ inputs.target }}
+        BUILD_MODE: ${{ inputs.mode }}
+      run: |
+        args=''
+        if [ "$BUILD_MODE" = release ]; then
+          args='--dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href /web/'
+        fi
+        if [ "$WEB_TARGET" = wasm ]; then
+          args="$args --wasm"
+        elif [ "$WEB_TARGET" != js ]; then
+          echo "Unsupported web target: $WEB_TARGET" >&2
+          exit 1
+        fi
+        flutter build web $args
+
+    # KaTeX fonts load lazily at first LaTeX render; drop them from the
+    # startup font manifest (scripts/strip-katex-manifest.py).
+    - name: Strip KaTeX fonts from startup manifest
+      if: ${{ inputs.mode == 'release' }}
+      shell: bash
+      run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
+
+    # dart2wasm requires cross-origin isolation; ship COOP/COEP headers with
+    # the bundle so hosts that honour them (Cloudflare Workers/Pages) serve it
+    # correctly.
+    - name: Add COOP/COEP headers
+      if: ${{ inputs.target == 'wasm' }}
+      shell: bash
+      run: |
+        printf '%s\n' \
+          '/*' \
+          '  Cross-Origin-Opener-Policy: same-origin' \
+          '  Cross-Origin-Embedder-Policy: require-corp' >build/web/_headers

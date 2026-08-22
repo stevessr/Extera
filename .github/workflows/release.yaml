@@ -23,14 +23,37 @@ on:
         description: 'Build Android APK'
         type: boolean
         default: false
+      android_arch:
+        description: 'Android ABI set to build'
+        type: choice
+        default: 'armv8'
+        options:
+          - 'armv8'
+          - 'armv7 & armv8'
+          - 'arm & x86_64'
       web:
         description: 'Build web bundle'
         type: boolean
         default: false
+      web_target:
+        description: 'Web compiler target (wasm ships a JS fallback and COOP/COEP headers)'
+        type: choice
+        default: 'js'
+        options:
+          - 'js'
+          - 'wasm'
       linux:
         description: 'Build Linux tarball and AppImage'
         type: boolean
         default: false
+      linux_arch:
+        description: 'Linux architecture(s) to build'
+        type: choice
+        default: 'amd64'
+        options:
+          - 'amd64'
+          - 'arm64'
+          - 'amd64 & arm64'
 
 concurrency:
   group: release-${{ inputs.tag || github.ref }}
@@ -51,6 +74,11 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
+      android-matrix: ${{ steps.matrices.outputs.android_matrix }}
+      linux-x64: ${{ steps.matrices.outputs.linux_x64 }}
+      linux-arm64: ${{ steps.matrices.outputs.linux_arm64 }}
+      web-target: ${{ steps.matrices.outputs.web_target }}
+      web-artifact: ${{ steps.matrices.outputs.web_artifact }}
     steps:
       #The JS actions below declare runs.using: node24, which older runner
       #images do not ship. Must come before the first one of them.
@@ -68,6 +96,66 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
 
+      # Map the manual-trigger presets onto job gates. Tag pushes always
+      # produce the full spread: every Android ABI, amd64 Linux, JS web.
+      - id: matrices
+        env:
+          EVENT: ${{ github.event_name }}
+          ANDROID_ARCH: ${{ inputs.android_arch }}
+          LINUX_ENABLED: ${{ inputs.linux }}
+          LINUX_ARCH: ${{ inputs.linux_arch }}
+          WEB_TARGET_INPUT: ${{ inputs.web_target }}
+        run: |
+          # Tag pushes carry no inputs; fall back to the full spread.
+          if [ "$EVENT" = push ]; then
+            ANDROID_ARCH=full
+            LINUX_ARCH=amd64
+            LINUX_ENABLED=true
+          fi
+
+          case "$ANDROID_ARCH" in
+            full)
+              # "arm" in the presets is the 32-bit ABI the packaging step
+              # labels armv7.
+              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"armv8","target_platform":"android-arm64"},{"name":"x86_64","target_platform":"android-x64"}]'
+              ;;
+            'armv7 & armv8')
+              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"armv8","target_platform":"android-arm64"}]'
+              ;;
+            'arm & x86_64')
+              matrix='[{"name":"armv7","target_platform":"android-arm"},{"name":"x86_64","target_platform":"android-x64"}]'
+              ;;
+            *)
+              matrix='[{"name":"armv8","target_platform":"android-arm64"}]'
+              ;;
+          esac
+
+          case "$LINUX_ARCH" in
+            'amd64 & arm64') want_x64=true want_arm64=true ;;
+            arm64) want_x64=false want_arm64=true ;;
+            amd64) want_x64=true want_arm64=false ;;
+            *) want_x64=false want_arm64=false ;;
+          esac
+          if [ "$LINUX_ENABLED" != true ]; then
+            want_x64=false want_arm64=false
+          fi
+
+          web_target=${WEB_TARGET_INPUT:-js}
+          case "$web_target" in
+            js|wasm) ;;
+            *) web_target=js ;;
+          esac
+          web_artifact=web
+          [ "$web_target" != js ] && web_artifact="web-$web_target"
+
+          {
+            echo "android_matrix=$matrix"
+            echo "linux_x64=$want_x64"
+            echo "linux_arm64=$want_arm64"
+            echo "web_target=$web_target"
+            echo "web_artifact=$web_artifact"
+          } >>"$GITHUB_OUTPUT"
+
   build-apk:
     name: Android APK (${{ matrix.name }})
     needs: prepare
@@ -77,13 +165,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        include:
-          - name: armv7
-            target_platform: android-arm
-          - name: armv8
-            target_platform: android-arm64
-          - name: x86_64
-            target_platform: android-x64
+        include: ${{ fromJSON(needs.prepare.outputs.android-matrix) }}
     steps:
       - name: Ensure Node 24
         run: |
@@ -93,22 +175,10 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-android
+      - uses: ./.github/actions/build-android-apk
         with:
-          cache_scope: android-${{ matrix.name }}
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
-
-      - name: Write signing configuration
-        env:
-          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
-          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          KEY_PASS: ${{ secrets.KEY_PASS }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: ./scripts/ci/write-android-signing.sh
-
-      - name: Build signed release APK
-        run: flutter build apk --flavor fRelease --release --no-pub --target-platform ${{ matrix.target_platform }}
+          target-platform: ${{ matrix.target_platform }}
+          signing: 'true'
 
       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}" "${{ matrix.name }}"
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
@@ -120,11 +190,10 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-  # One Flutter build feeds both the tarball and the AppImage.
   build-linux:
-    name: Linux tarball and AppImage
+    name: Linux tarball and AppImage (x64)
     needs: prepare
-    if: ${{ github.event_name == 'push' || inputs.linux }}
+    if: ${{ needs.prepare.outputs.linux-x64 == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Ensure Node 24
@@ -135,41 +204,61 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-linux-deps
+      - uses: ./.github/actions/build-linux-app
         with:
+          arch: x64
           appimage: 'true'
 
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
-
-      - name: Restore appimagetool binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/appimagetool
-          key: appimagetool-${{ runner.os }}-${{ runner.arch }}-continuous
-
-      - name: Install appimagetool
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          APPIMAGETOOL_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-appimagetool.sh
-          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      - name: Build Linux bundle
-        run: flutter build linux --release --target-platform linux-x64
-
       - name: Package tarball
-        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}"
+        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" x64
 
       - name: Package AppImage
         env:
-          # Build containers have no /dev/fuse, so AppImages must self-extract.
           APPIMAGE_EXTRACT_AND_RUN: '1'
-        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}"
+        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" x64
 
       - uses: actions/upload-artifact@v4
         with:
-          name: linux
+          name: linux-x64
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.AppImage
+          retention-days: 14
+          if-no-files-found: error
+
+  # Requires the same opt-in infrastructure as the CI arm64 job: a registered
+  # self-hosted Linux arm64 runner and the ENABLE_ARM64_RUNNER repository
+  # variable set to "true". Skipped otherwise.
+  build-linux-arm64:
+    name: Linux tarball and AppImage (arm64)
+    needs: prepare
+    if: ${{ needs.prepare.outputs.linux-arm64 == 'true' && vars.ENABLE_ARM64_RUNNER == 'true' }}
+    runs-on: self-hosted
+    steps:
+      - name: Ensure Node 24
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          command -v sudo >/dev/null && sudo=sudo || sudo=
+          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
+          $sudo apt-get install -y nodejs
+
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-linux-app
+        with:
+          arch: arm64
+          appimage: 'true'
+
+      - name: Package tarball
+        run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" arm64
+
+      - name: Package AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" arm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
           path: |
             artifacts/*.tar.gz
             artifacts/*.AppImage
@@ -177,7 +266,7 @@ jobs:
           if-no-files-found: error
 
   build-web:
-    name: Web bundle
+    name: Web bundle (${{ needs.prepare.outputs.web-target }})
     needs: prepare
     if: ${{ github.event_name == 'push' || inputs.web }}
     runs-on: ubuntu-latest
@@ -190,56 +279,22 @@ jobs:
           $sudo apt-get install -y nodejs
 
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-flutter
-      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/build-web-app
         with:
-          cache-target-dir: 'true'
+          target: ${{ needs.prepare.outputs.web-target }}
 
-      - name: Restore nightly rustup toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.rustup/toolchains/nightly-*
-            ~/.rustup/update-hashes
-          key: rustup-nightly-${{ runner.os }}-${{ runner.arch }}
-
-      # rust-src on nightly is what flutter_rust_bridge needs to build the wasm
-      # bindings. Installing the toolchain by name avoids naming a host triple,
-      # and works whether or not nightly is already present.
-      - run: rustup toolchain install nightly --component rust-src
-      - name: Restore yq binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/bin/yq
-          key: yq-${{ runner.os }}-${{ runner.arch }}-${{ env.YQ_VERSION }}
-
-      - name: Install yq
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          YQ_INSTALL_DIR="$HOME/.local/bin" ./scripts/ci/install-yq.sh
-          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
-
-      - name: Prepare web
-        run: ./scripts/prepare-web.sh
-
-      - name: Build release web
-        run: flutter build web --dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href "/web/"
-      # KaTeX fonts load lazily at first LaTeX render; drop them from the
-      # startup font manifest (scripts/strip-katex-manifest.py).
-      - run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
-
-      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}"
+      - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}" "${{ needs.prepare.outputs.web-target }}"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: web
+          name: ${{ needs.prepare.outputs.web-artifact }}
           path: artifacts/*.tar.gz
           retention-days: 14
           if-no-files-found: error
 
   publish:
     name: Publish release
-    needs: [prepare, build-apk, build-linux, build-web]
+    needs: [prepare, build-apk, build-linux, build-linux-arm64, build-web]
     if: ${{ always() && (github.event_name == 'push' || inputs.publish) }}
     runs-on: ubuntu-latest
     steps:

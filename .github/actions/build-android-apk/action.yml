@@ -1,0 +1,63 @@
+name: Build Android APK
+description: Builds a flavoured Android APK for one target platform.
+
+inputs:
+  target-platform:
+    description: Flutter target platform (android-arm, android-arm64, or android-x64).
+    required: true
+  flavor:
+    description: Gradle flavor to build.
+    required: false
+    default: fRelease
+  mode:
+    description: Build mode passed to flutter build apk (release or debug).
+    required: false
+    default: release
+  signing:
+    description: Write the signing configuration from repository secrets before building.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # The packaging step labels artifacts after the ABI, and Gradle caches are
+    # scoped per ABI, so map the target platform to its cache scope.
+    - name: Resolve ABI cache scope
+      id: scope
+      shell: bash
+      env:
+        TARGET_PLATFORM: ${{ inputs.target-platform }}
+      run: |
+        case "$TARGET_PLATFORM" in
+          android-arm) echo "scope=armv7" >>"$GITHUB_OUTPUT" ;;
+          android-arm64) echo "scope=armv8" >>"$GITHUB_OUTPUT" ;;
+          android-x64) echo "scope=x86_64" >>"$GITHUB_OUTPUT" ;;
+          *) echo "Unsupported target platform: $TARGET_PLATFORM" >&2; exit 1 ;;
+        esac
+
+    - uses: ./.github/actions/setup-android
+      with:
+        cache_scope: android-${{ steps.scope.outputs.scope }}
+    - uses: ./.github/actions/setup-flutter
+    # cargokit compiles the vodozemac Rust crate during the Gradle build, so
+    # this action needs the toolchain and its cache as much as anything else.
+    - uses: ./.github/actions/setup-rust
+
+    - name: Write signing configuration
+      if: ${{ inputs.signing == 'true' }}
+      shell: bash
+      env:
+        KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+        KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        KEY_PASS: ${{ secrets.KEY_PASS }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      run: ./scripts/ci/write-android-signing.sh
+
+    - name: Build APK
+      shell: bash
+      env:
+        FLAVOR: ${{ inputs.flavor }}
+        MODE: ${{ inputs.mode }}
+        TARGET_PLATFORM: ${{ inputs.target-platform }}
+      run: flutter build apk --flavor "$FLAVOR" --"$MODE" --no-pub --target-platform "$TARGET_PLATFORM"

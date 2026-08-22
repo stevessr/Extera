@@ -1,0 +1,62 @@
+name: Setup Flutter from source
+description: >
+  Installs the pinned Flutter SDK by cloning it, for platforms where no
+  prebuilt archive exists (Linux arm64), and restores the SDK, pub, and
+  animated-emoji caches.
+
+runs:
+  using: composite
+  steps:
+    # Mirrors setup-flutter's cache check: this action runs in every job that
+    # cannot use setup-flutter, so it is the place to report a broken cache.
+    - name: Check cache service
+      shell: bash
+      run: ./scripts/ci/check-cache.sh
+
+    - name: Resolve Flutter version
+      id: flutter
+      shell: bash
+      run: echo "version=$(./scripts/ci/flutter-version.sh)" >>"$GITHUB_OUTPUT"
+
+    - name: Pin pub cache location
+      shell: bash
+      run: echo "PUB_CACHE=$HOME/.pub-cache" >>"$GITHUB_ENV"
+
+    # install-flutter-source.sh skips the clone when the directory is there,
+    # so restoring it turns a full SDK clone into a cache hit. Key matches the
+    # CI arm64 job so release and debug builds share warm caches.
+    - name: Restore Flutter SDK
+      uses: actions/cache@v4
+      with:
+        path: ~/flutter
+        key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
+
+    - name: Restore pub cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.pub-cache
+        key: pub-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
+        restore-keys: pub-v2-${{ runner.os }}-${{ runner.arch }}-
+
+    # No prebuilt Flutter archive exists for Linux arm64, so clone the SDK at
+    # the version pinned in .tool_versions.yaml.
+    - name: Install Flutter
+      shell: bash
+      run: ./scripts/ci/install-flutter-source.sh
+
+    - name: Resolve dependencies
+      shell: bash
+      run: flutter pub get --no-example
+
+    # The animated emoji are shipped as assets but not checked in, so every
+    # build has to fetch them. The tool skips files it already has, which makes
+    # this a no-op on a cache hit.
+    - name: Restore animated emoji
+      uses: actions/cache@v4
+      with:
+        path: assets/animated_emoji
+        key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}
+
+    - name: Download animated emoji
+      shell: bash
+      run: dart run tool/download_animated_emoji.dart
