@@ -282,6 +282,7 @@ jobs:
       - uses: ./.github/actions/build-web-app
         with:
           target: ${{ needs.prepare.outputs.web-target }}
+          base-href: '/web/'
 
       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}" "${{ needs.prepare.outputs.web-target }}"
 

@@ -12,6 +12,12 @@ inputs:
     description: Build mode (release or debug).
     required: false
     default: release
+  base-href:
+    description: >
+      Value for --base-href in release builds (e.g. /web/). Leave empty when
+      the bundle is served from the site root.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -59,10 +65,14 @@ runs:
       env:
         WEB_TARGET: ${{ inputs.target }}
         BUILD_MODE: ${{ inputs.mode }}
+        BASE_HREF: ${{ inputs.base-href }}
       run: |
         args=''
         if [ "$BUILD_MODE" = release ]; then
-          args='--dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps --base-href /web/'
+          args='--dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps'
+          if [ -n "$BASE_HREF" ]; then
+            args="$args --base-href $BASE_HREF"
+          fi
         fi
         if [ "$WEB_TARGET" = wasm ]; then
           args="$args --wasm"
