@@ -4394,6 +4394,133 @@
     "placeholder": {}
   },
   "addedToMyStickers": "已添加到个人贴纸",
+  "serverAdministration": "服务器管理",
+  "@serverAdministration": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminUsersTab": "用户",
+  "@adminUsersTab": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminRoomsTab": "房间",
+  "@adminRoomsTab": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminSearchUsers": "搜索用户…",
+  "@adminSearchUsers": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminSearchRooms": "搜索房间…",
+  "@adminSearchRooms": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminNoResults": "没有找到内容",
+  "@adminNoResults": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminMemberCount": "{count} 位成员",
+  "@adminMemberCount": {
+    "type": "String",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminDeleteRoom": "删除房间",
+  "@adminDeleteRoom": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminDeleteRoomWarning": "所有成员将被移出该房间。此操作无法撤销。",
+  "@adminDeleteRoomWarning": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminPurgeHistory": "清除历史记录",
+  "@adminPurgeHistory": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminBlockRoom": "阻止该房间 ID 被重新创建",
+  "@adminBlockRoom": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminKickedMembers": "已移除 {count} 名成员",
+  "@adminKickedMembers": {
+    "type": "String",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminDisplayName": "显示名称",
+  "@adminDisplayName": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminServerAdmin": "服务器管理员",
+  "@adminServerAdmin": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminDeactivated": "已停用",
+  "@adminDeactivated": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminResetPassword": "重置密码",
+  "@adminResetPassword": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminResetPasswordDone": "密码已重置。",
+  "@adminResetPasswordDone": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminDeactivateAndErase": "停用并抹除数据",
+  "@adminDeactivateAndErase": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminDeactivateConfirm": "停用该账户是永久性操作且无法撤销，所有个人数据将被抹除。确定继续吗？",
+  "@adminDeactivateConfirm": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminSave": "保存",
+  "@adminSave": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminSaved": "已保存",
+  "@adminSaved": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminDangerZone": "危险操作",
+  "@adminDangerZone": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "adminCreatedAt": "创建于 {date}",
+  "@adminCreatedAt": {
+    "type": "String",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "@addedToMyStickers": {
     "type": "String",
     "placeholder": {}

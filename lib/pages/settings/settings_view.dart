@@ -10,6 +10,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/fluffy_share.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/synapse_admin_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/drawer.dart';
@@ -467,6 +468,38 @@ class SettingsView extends StatelessWidget {
                                 )
                                 ? theme.colorScheme.surfaceContainerHigh
                                 : null,
+                          ),
+                          const ListDivider(),
+                          FutureBuilder<bool>(
+                            future: Matrix.of(
+                              context,
+                            ).client.isSynapseAdministratorCached(),
+                            builder: (context, snapshot) {
+                              if (snapshot.data != true) {
+                                return const SizedBox.shrink();
+                              }
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      theme.colorScheme.errorContainer,
+                                  child: Icon(
+                                    Icons.admin_panel_settings_outlined,
+                                    color: theme.colorScheme.onErrorContainer,
+                                  ),
+                                ),
+                                title: Text(
+                                  L10n.of(context).serverAdministration,
+                                ),
+                                onTap: () =>
+                                    context.go('/rooms/settings/admin'),
+                                tileColor:
+                                    activeRoute.startsWith(
+                                      '/rooms/settings/admin',
+                                    )
+                                    ? theme.colorScheme.surfaceContainerHigh
+                                    : null,
+                              );
+                            },
                           ),
                           const ListDivider(),
                           ListTile(

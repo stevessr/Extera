@@ -4276,6 +4276,133 @@
         "placeholder": {}
     },
     "addedToMyStickers": "Added to my stickers",
+    "serverAdministration": "Server administration",
+    "@serverAdministration": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminUsersTab": "Users",
+    "@adminUsersTab": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminRoomsTab": "Rooms",
+    "@adminRoomsTab": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminSearchUsers": "Search users…",
+    "@adminSearchUsers": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminSearchRooms": "Search rooms…",
+    "@adminSearchRooms": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminNoResults": "Nothing found",
+    "@adminNoResults": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminMemberCount": "{count} members",
+    "@adminMemberCount": {
+        "type": "String",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "adminDeleteRoom": "Delete room",
+    "@adminDeleteRoom": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminDeleteRoomWarning": "All members will be kicked from this room. This action cannot be undone.",
+    "@adminDeleteRoomWarning": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminPurgeHistory": "Purge history",
+    "@adminPurgeHistory": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminBlockRoom": "Prevent the room ID from being re-created",
+    "@adminBlockRoom": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminKickedMembers": "{count} member(s) removed",
+    "@adminKickedMembers": {
+        "type": "String",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "adminDisplayName": "Display name",
+    "@adminDisplayName": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminServerAdmin": "Server administrator",
+    "@adminServerAdmin": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminDeactivated": "Deactivated",
+    "@adminDeactivated": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminResetPassword": "Reset password",
+    "@adminResetPassword": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminResetPasswordDone": "Password has been reset.",
+    "@adminResetPasswordDone": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminDeactivateAndErase": "Deactivate and erase data",
+    "@adminDeactivateAndErase": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminDeactivateConfirm": "Deactivating this account is permanent and cannot be undone. All personal data will be erased. Continue?",
+    "@adminDeactivateConfirm": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminSave": "Save",
+    "@adminSave": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminSaved": "Saved",
+    "@adminSaved": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminDangerZone": "Danger zone",
+    "@adminDangerZone": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "adminCreatedAt": "Created {date}",
+    "@adminCreatedAt": {
+        "type": "String",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
     "@addedToMyStickers": {
         "type": "String",
         "placeholder": {}

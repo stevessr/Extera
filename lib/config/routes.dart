@@ -43,6 +43,7 @@ import 'package:extera_next/pages/settings_homeserver/settings_homeserver.dart';
 import 'package:extera_next/pages/settings_ignore_list/settings_ignore_list.dart';
 import 'package:extera_next/pages/settings_multiple_emotes/settings_multiple_emotes.dart';
 import 'package:extera_next/pages/settings_navigation/settings_navigation.dart';
+import 'package:extera_next/pages/settings_admin/settings_admin.dart';
 import 'package:extera_next/pages/settings_custom_experience/settings_custom_experience.dart';
 import 'package:extera_next/pages/settings_password/settings_password.dart';
 import 'package:extera_next/pages/settings_notifications/settings_notifications.dart';
@@ -397,6 +398,15 @@ abstract class AppRoutes {
                         context,
                         state,
                         const SettingsCustomExperience(),
+                      ),
+                      redirect: loggedOutRedirect,
+                    ),
+                    GoRoute(
+                      path: 'admin',
+                      pageBuilder: (context, state) => defaultPageBuilder(
+                        context,
+                        state,
+                        const SettingsAdmin(),
                       ),
                       redirect: loggedOutRedirect,
                     ),
