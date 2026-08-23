@@ -37,12 +37,6 @@ class ParticipantListItem extends StatelessWidget {
 
     final ignored = user.room.client.ignoredUsers.contains(user.id);
 
-    var statusMsg = user.presence?.presence.statusMsg;
-
-    if (statusMsg != null && statusMsg.trimLeft().startsWith('@')) {
-      statusMsg = null; // prevent impersonation
-    }
-
     return ListTile(
       onTap: () => showMemberActionsPopupMenu(context: context, user: user),
       title: Row(
@@ -128,11 +122,19 @@ class ParticipantListItem extends StatelessWidget {
                 ),
         ],
       ),
-      subtitle: Text(
-        statusMsg ?? user.id,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontStyle: statusMsg != null ? .italic : .normal),
+      subtitle: FutureBuilder<CachedPresence>(
+        future: user.fetchCurrentPresence(),
+        builder: (context, snapshot) {
+          final statusMsg = snapshot.hasData ? snapshot.data?.statusMsg : null;
+          return Text(
+            statusMsg != null && !statusMsg.startsWith('@')
+                ? statusMsg
+                : user.id,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontStyle: statusMsg != null ? .italic : .normal),
+          );
+        },
       ),
       leading: Opacity(
         opacity: user.membership == Membership.join && !ignored ? 1 : 0.5,
