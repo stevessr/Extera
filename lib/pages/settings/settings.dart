@@ -14,6 +14,7 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
+import 'package:extera_next/utils/client_profile_extension.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/widgets/avatar_history_picker.dart';
@@ -250,11 +251,14 @@ class SettingsController extends State<Settings> {
     final matrix = Matrix.of(context);
     final success = await showFutureLoadingDialog(
       context: context,
-      future: () => matrix.client.setProfileField(
-        matrix.client.userID!,
-        'displayname',
-        {'displayname': input},
-      ),
+      future: () async {
+        await matrix.client.setProfileField(
+          matrix.client.userID!,
+          'displayname',
+          {'displayname': input},
+        );
+        await matrix.client.refreshOwnProfile();
+      },
     );
     if (success.error == null) {
       updateProfile();
@@ -325,12 +329,14 @@ class SettingsController extends State<Settings> {
       final success = await showFutureLoadingDialog(
         context: context,
         future: () async {
-          await Matrix.of(context).client.setProfileField(
-            Matrix.of(context).client.userID!,
+          final client = Matrix.of(context).client;
+          await client.setProfileField(
+            client.userID!,
             'avatar_url',
             {'avatar_url': mxc},
           );
           await AvatarHistory.record(mxc);
+          await client.refreshOwnProfile();
         },
       );
       if (success.error == null) {
@@ -342,7 +348,10 @@ class SettingsController extends State<Settings> {
     if (action == AvatarAction.remove) {
       final success = await showFutureLoadingDialog(
         context: context,
-        future: () => matrix.client.setAvatar(null),
+        future: () async {
+          await matrix.client.setAvatar(null);
+          await matrix.client.refreshOwnProfile();
+        },
       );
       if (success.error == null) {
         updateProfile();
@@ -389,6 +398,7 @@ class SettingsController extends State<Settings> {
           {'avatar_url': mxc.toString()},
         );
         await AvatarHistory.record(mxc.toString());
+        await matrix.client.refreshOwnProfile();
       },
     );
     if (success.error == null) {

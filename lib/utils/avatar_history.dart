@@ -10,7 +10,7 @@ abstract final class AvatarHistory {
   static const int _maxEntries = 32;
 
   static List<String> _read(SharedPreferences prefs) =>
-      prefs.getStringList(_prefKey) ?? const [];
+      List.of(prefs.getStringList(_prefKey) ?? const <String>[]);
 
   static Future<void> _write(List<String> entries) async {
     final prefs = await SharedPreferences.getInstance();

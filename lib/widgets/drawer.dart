@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -29,14 +31,31 @@ class ExteraDrawer extends StatefulWidget {
 }
 
 class _ExteraDrawerState extends State<ExteraDrawer> {
+  StreamSubscription<String>? _profileUpdateSub;
   CachedProfileInformation? _profile;
 
   void _updateProfile(Client client) async {
     final userProfile = await client.getUserProfile(client.userID!);
-
+    if (!mounted) return;
     setState(() {
       _profile = userProfile;
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload whenever the own profile is announced as updated (e.g. right
+    // after changing the avatar), not just once on first build.
+    _profileUpdateSub ??= Matrix.of(context).client.onUserProfileUpdate.stream
+        .where((userId) => userId == Matrix.of(context).client.userID)
+        .listen((_) => _updateProfile(Matrix.of(context).client));
+  }
+
+  @override
+  void dispose() {
+    unawaited(_profileUpdateSub?.cancel());
+    super.dispose();
   }
 
   @override
