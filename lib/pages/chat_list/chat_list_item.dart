@@ -7,6 +7,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -278,7 +279,7 @@ class ChatListItem extends StatelessWidget {
                               '${lastEvent?.eventId}_${lastEvent?.type}_${lastEvent?.redacted}',
                             ),
                             future: needLastEventSender
-                                ? lastEvent.calcLocalizedBody(
+                                ? lastEvent.calcLocalizedBodyCached(
                                     MatrixLocals(L10n.of(context)),
                                     hideReply: true,
                                     hideEdit: true,
@@ -290,14 +291,15 @@ class ChatListItem extends StatelessWidget {
                                             room.lastEvent?.senderId),
                                   )
                                 : null,
-                            initialData: lastEvent?.calcLocalizedBodyFallback(
-                              MatrixLocals(L10n.of(context)),
-                              hideReply: true,
-                              hideEdit: true,
-                              plaintextBody: true,
-                              removeMarkdown: true,
-                              withSenderNamePrefix: !isDirectChat,
-                            ),
+                            initialData: lastEvent
+                                ?.calcLocalizedBodyFallbackCached(
+                                  MatrixLocals(L10n.of(context)),
+                                  hideReply: true,
+                                  hideEdit: true,
+                                  plaintextBody: true,
+                                  removeMarkdown: true,
+                                  withSenderNamePrefix: !isDirectChat,
+                                ),
                             builder: (context, snapshot) => Row(
                               mainAxisSize: MainAxisSize.min,
                               spacing: 2,

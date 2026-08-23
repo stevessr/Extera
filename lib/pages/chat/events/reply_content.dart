@@ -4,8 +4,9 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 
 class ReplyContent extends StatelessWidget {
   final Event replyEvent;
@@ -84,7 +85,7 @@ class ReplyContent extends StatelessWidget {
               children: <Widget>[
                 FutureBuilder<User?>(
                   initialData: displayEvent.senderFromMemoryOrFallback,
-                  future: displayEvent.fetchSenderUser(),
+                  future: displayEvent.fetchSenderUserCached(),
                   builder: (context, snapshot) {
                     return Text(
                       snapshot.data?.calcDisplayname() ??
@@ -102,7 +103,7 @@ class ReplyContent extends StatelessWidget {
                 ),
                 AnimatedEmojiText(
                   displayEvent
-                      .calcLocalizedBodyFallback(
+                      .calcLocalizedBodyFallbackCached(
                         MatrixLocals(L10n.of(context)),
                         withSenderNamePrefix: false,
                         hideReply: true,

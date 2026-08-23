@@ -8,6 +8,9 @@ class MatrixLocals extends MatrixLocalizations {
 
   MatrixLocals(this.l10n);
 
+  /// Stable tag of the active locale, e.g. for cache keying.
+  String get localeName => l10n.localeName;
+
   @override
   String voiceMessage(String senderName, Duration? duration) {
     return l10n.voiceMessage;

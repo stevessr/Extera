@@ -15,6 +15,7 @@ import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
@@ -128,7 +129,7 @@ class _LastMessageSubtitle extends StatelessWidget {
                     '${lastEvent?.eventId}_${lastEvent?.type}_${lastEvent?.redacted}',
                   ),
                   future: needLastEventSender
-                      ? lastEvent.calcLocalizedBody(
+                      ? lastEvent.calcLocalizedBodyCached(
                           MatrixLocals(L10n.of(context)),
                           hideReply: true,
                           hideEdit: true,
@@ -140,7 +141,7 @@ class _LastMessageSubtitle extends StatelessWidget {
                                   lastEvent.senderId),
                         )
                       : null,
-                  initialData: lastEvent?.calcLocalizedBodyFallback(
+                  initialData: lastEvent?.calcLocalizedBodyFallbackCached(
                     MatrixLocals(L10n.of(context)),
                     hideReply: true,
                     hideEdit: true,
