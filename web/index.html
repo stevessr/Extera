@@ -48,6 +48,15 @@
 
   <title>Extera</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Warm the vodozemac crypto bundle while the Flutter engine and the
+       main dart2wasm module are still downloading. Without these hints the
+       ~900 KB of wasm + glue is only fetched after Dart has booted,
+       serializing one extra round trip into startup. The loader injects a
+       classic script for the glue and fetch()es the wasm module, which
+       these preload entries match. -->
+  <link rel="preload" href="assets/assets/vodozemac/vodozemac_bindings_dart.js" as="script">
+  <link rel="preload" href="assets/assets/vodozemac/vodozemac_bindings_dart_bg.wasm" as="fetch" crossorigin>
+
   <link rel="stylesheet" type="text/css" href="splash/style.css">
 </head>
 
