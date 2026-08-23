@@ -662,14 +662,28 @@ class ChatController extends State<ChatPageWithRoom>
 
   bool firstUpdateReceived = false;
 
+  /// Timeline callbacks arrive in bursts (one sync can touch events,
+  /// receipts and account data at once). Rebuilding the whole page per
+  /// callback is wasted work; bursts coalesce into at most one rebuild per
+  /// window, matching the rate limiting the chat list already applies.
+  static const Duration _updateViewCoalesceWindow = Duration(
+    milliseconds: 100,
+  );
+  Timer? _updateViewTimer;
+
   Future<void> updateView() async {
     if (!mounted) return;
-    setReadMarker();
-    updateThreads();
-    _cachedFilteredEvents = null;
-    _cachedEventsKeyMap = null;
-    setState(() {
-      firstUpdateReceived = true;
+    if (_updateViewTimer != null) return;
+    _updateViewTimer = Timer(_updateViewCoalesceWindow, () {
+      _updateViewTimer = null;
+      if (!mounted) return;
+      setReadMarker();
+      updateThreads();
+      _cachedFilteredEvents = null;
+      _cachedEventsKeyMap = null;
+      setState(() {
+        firstUpdateReceived = true;
+      });
     });
   }
 
@@ -884,6 +898,7 @@ class ChatController extends State<ChatPageWithRoom>
   void dispose() {
     _scrolledUp.dispose();
     timeline?.cancelSubscriptions();
+    _updateViewTimer?.cancel();
     timeline = null;
     inputFocus.removeListener(_inputFocusListener);
     inputFocus.dispose();
