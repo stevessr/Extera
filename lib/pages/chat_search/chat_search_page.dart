@@ -62,13 +62,7 @@ class ChatSearchController extends State<ChatSearchPage>
             limit: 32,
           )
           .map(
-            (result) => (
-              [
-                if (previousSearchResult != null) ...previousSearchResult,
-                ...result.$1,
-              ],
-              result.$2,
-            ),
+            (result) => ([...?previousSearchResult, ...result.$1], result.$2),
           )
           .asBroadcastStream();
     });
@@ -92,13 +86,7 @@ class ChatSearchController extends State<ChatSearchPage>
             limit: 32,
           )
           .map(
-            (result) => (
-              [
-                if (previousSearchResult != null) ...previousSearchResult,
-                ...result.$1,
-              ],
-              result.$2,
-            ),
+            (result) => ([...?previousSearchResult, ...result.$1], result.$2),
           )
           .asBroadcastStream();
     });
@@ -122,13 +110,7 @@ class ChatSearchController extends State<ChatSearchPage>
             limit: 32,
           )
           .map(
-            (result) => (
-              [
-                if (previousSearchResult != null) ...previousSearchResult,
-                ...result.$1,
-              ],
-              result.$2,
-            ),
+            (result) => ([...?previousSearchResult, ...result.$1], result.$2),
           )
           .asBroadcastStream();
     });
