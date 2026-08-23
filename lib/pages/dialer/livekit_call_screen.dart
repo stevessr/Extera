@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/foreground_task_manager.dart';
+import 'package:extera_next/utils/error_reporter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
-import 'package:matrix/matrix.dart' show Client, Logs;
+import 'package:matrix/matrix.dart' show Client, Logs, DeviceKeys;
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/dialer/dialer.dart';
@@ -16,6 +20,9 @@ import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.d
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
 
 class LiveKitCallScreen extends StatefulWidget {
   final String roomId;
@@ -40,6 +47,12 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   Client? _client;
   String _localDisplayName = '';
   Uri? _localAvatar;
+  StreamSubscription? _onCallEncryptionKeysSub;
+  StreamSubscription? _onCallMembersChanged;
+  lk.BaseKeyProvider? _keyProvider;
+  Set<String> _lastSharedParticipants = {};
+  DateTime? _keyCreatedAt;
+  Uint8List? _lastKey;
 
   @override
   void initState() {
@@ -164,6 +177,172 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     }
   }
 
+  Future<void> _onCallEncryptionKeys(CallKeysEvent event) async {
+    final callKeys = event.callKeysContent;
+    final keyProvider = _keyProvider;
+    if (keyProvider == null) {
+      ErrorReporter(
+        null,
+        'Received a new key but the keyProvider is not ready yet!',
+      ).onErrorCallback(Exception(), StackTrace.current);
+      return;
+    }
+
+    await keyProvider.setRawKey(
+      base64Decode(callKeys.keys.key),
+      participantId: '${event.sender}:${callKeys.member.claimedDeviceId}',
+      keyIndex: callKeys.keys.index,
+    );
+  }
+
+  Future<void> _createKeyAndShare() async {
+    final liveKitRoom = _room;
+    final client = _client;
+    if (liveKitRoom == null || client == null) return;
+    final matrixRoom = client.getRoomById(widget.roomId);
+    if (matrixRoom == null) return;
+
+    final ownMemberId = '${client.userID}:${client.deviceID}';
+
+    final currentParticipants =
+        matrixRoom
+            .getActiveMatrixRtcMembers()
+            .map((member) => member.membershipId)
+            .whereType<String>()
+            .toSet()
+          ..remove(ownMemberId);
+
+    if (setEquals(currentParticipants, _lastSharedParticipants) &&
+        currentParticipants.isNotEmpty) {
+      Logs().d(
+        'Participant list has not changed. No need to share keys again!',
+      );
+      return;
+    }
+
+    var index = liveKitRoom.roomOptions.encryption!.keyProvider.getLatestIndex(
+      ownMemberId,
+    );
+
+    final keyCreatedAt = _keyCreatedAt;
+    final canJustForwardToNewUsers =
+        keyCreatedAt != null &&
+        DateTime.now().difference(keyCreatedAt).inSeconds < 15 &&
+        _lastSharedParticipants.difference(currentParticipants).isEmpty;
+
+    late final Uint8List key;
+    if (_lastKey == null || !canJustForwardToNewUsers) {
+      // Key generation
+      final rng = Random.secure();
+      key = Uint8List(16);
+      key.setAll(0, Iterable.generate(key.length, (i) => rng.nextInt(256)));
+      if (_lastKey != null) index = (index + 1) % 256;
+
+      await liveKitRoom.roomOptions.encryption!.keyProvider.setRawKey(
+        key,
+        keyIndex: index,
+        participantId: ownMemberId,
+      );
+      _keyCreatedAt = DateTime.now();
+      _lastKey = key;
+      if (_lastKey != null) {
+        await liveKitRoom.e2eeManager?.setKeyIndex(
+          index,
+          participantIdentity: ownMemberId,
+        );
+      }
+    } else {
+      key = _lastKey!;
+    }
+
+    final forwardParticipants = canJustForwardToNewUsers
+        ? currentParticipants.difference(_lastSharedParticipants)
+        : currentParticipants;
+    final deviceKeys = <DeviceKeys>[];
+    for (final membershipId in forwardParticipants) {
+      final membershipParts = membershipId.split(':');
+      final deviceId = membershipParts.removeLast();
+      final userId = membershipParts.join(':');
+      final keys = client.userDeviceKeys[userId]?.deviceKeys[deviceId];
+      if (keys == null) {
+        Logs().w('No device keys found for $membershipId');
+        continue;
+      }
+      deviceKeys.add(keys);
+    }
+
+    _lastSharedParticipants = currentParticipants;
+    await matrixRoom.shareMatrixRtcCallKey(
+      key: key,
+      index: index,
+      memberId: ownMemberId,
+      deviceKeys: deviceKeys,
+    );
+  }
+
+  Future<void> _publishCallMember() async {
+    final client = _client;
+    final matrixRoom = client?.getRoomById(widget.roomId);
+
+    if (client == null || matrixRoom == null) return;
+
+    final deviceId = client.deviceID ?? '';
+    final callStateKey = widget.callStateKey;
+
+    if (callStateKey == null) return;
+
+    try {
+      final membershipID = '${client.userID!}:$deviceId';
+
+      final memberEventContent = {
+        'application': 'm.call',
+        'call_id': '',
+        'device_id': deviceId,
+        'expires': 14400000,
+        'foci_preferred': widget.liveKitServiceUrls
+            .map(
+              (u) => {
+                'type': 'livekit',
+                'livekit_service_url': u,
+                'livekit_alias': widget.roomId,
+              },
+            )
+            .toList(),
+        'focus_active': {
+          'type': 'livekit',
+          'focus_selection': 'oldest_membership',
+        },
+        'm.call.intent': 'video',
+        'membershipID': membershipID,
+        'scope': 'm.room',
+      };
+
+      final memberEventId = await client.setRoomStateWithKey(
+        widget.roomId,
+        'org.matrix.msc3401.call.member',
+        callStateKey,
+        memberEventContent,
+      );
+
+      if (matrixRoom.callMembersCount <= 1 &&
+          matrixRoom.canSendEvent('org.matrix.msc4075.rtc.notification')) {
+        await matrixRoom.sendEvent({
+          'lifetime': 30000,
+          'm.call.intent': 'video',
+          'm.mentions': {'room': true, 'user_ids': []},
+          'm.relates.to': {
+            'event_id': memberEventId,
+            'rel_type': 'm.reference',
+          },
+          'notification_type': 'notification',
+          'sender_ts': DateTime.now().millisecondsSinceEpoch,
+        }, type: 'org.matrix.msc4075.rtc.notification');
+      }
+    } catch (e) {
+      Logs().d('DEBUG: error sending call member event: $e');
+    }
+  }
+
   Future<void> _connect() async {
     try {
       await _startFgTaskIfNeeded();
@@ -183,6 +362,34 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       LiveKitCredentials? creds;
       lk.Room? room;
 
+      final keyProviderOptions = rtc.KeyProviderOptions(
+        sharedKey: false,
+        ratchetSalt: Uint8List.fromList('LKFrameEncryptionKey'.codeUnits),
+        ratchetWindowSize: 0,
+        discardFrameWhenCryptorNotReady: true,
+        keyDerivationAlgorithm: rtc.KeyDerivationAlgorithm.kHKDF,
+      );
+      final nativeKeyProvider = await rtc.frameCryptorFactory
+          .createDefaultKeyProvider(keyProviderOptions);
+      final baseKeyProvider = _keyProvider = lk.BaseKeyProvider(
+        nativeKeyProvider,
+        keyProviderOptions,
+      );
+
+      _onCallEncryptionKeysSub = client.onCallEncryptionKeys.listen(
+        _onCallEncryptionKeys,
+      );
+
+      _onCallMembersChanged = client.onSync.stream
+          .where(
+            (syncUpdate) =>
+                syncUpdate.rooms?.join?[widget.roomId]?.timeline?.events?.any(
+                  (event) => event.type == MatrixRtcCallMember.eventType,
+                ) ??
+                false,
+          )
+          .listen((_) => _createKeyAndShare());
+
       for (final jwtServiceUrl in widget.liveKitServiceUrls) {
         try {
           creds = await LiveKitService.getCredentials(
@@ -194,7 +401,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
           Logs().d('LiveKit OK: $jwtServiceUrl → ${creds.url}');
 
           room = lk.Room(
-            roomOptions: const lk.RoomOptions(
+            roomOptions: lk.RoomOptions(
               adaptiveStream: true,
               dynacast: true,
               defaultAudioCaptureOptions: lk.AudioCaptureOptions(
@@ -203,10 +410,12 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
                 autoGainControl: true,
                 highPassFilter: true,
               ),
+              encryption: lk.E2EEOptions(keyProvider: baseKeyProvider),
             ),
           );
-
           await room.connect(creds.url, creds.jwt);
+          await _createKeyAndShare();
+          await _publishCallMember();
           Logs().d('LiveKit connected: $jwtServiceUrl');
           break;
         } catch (e) {
@@ -366,6 +575,8 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   @override
   void dispose() {
     _disposed = true;
+    _onCallEncryptionKeysSub?.cancel();
+    _onCallMembersChanged?.cancel();
     _room?.removeListener(_onRoomUpdate);
     ForegroundTaskManager.stopTask(taskType: .livekitCall);
     super.dispose();
@@ -1262,54 +1473,6 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
   final deviceId = client.deviceID ?? '';
   final userId = client.userID!;
   final stateKey = '_${userId}_${deviceId}_m.call';
-  final membershipID = '$userId:$deviceId';
-  final memberEventContent = {
-    'application': 'm.call',
-    'call_id': '',
-    'device_id': deviceId,
-    'expires': 14400000,
-    'foci_preferred': urls
-        .map(
-          (u) => {
-            'type': 'livekit',
-            'livekit_service_url': u,
-            'livekit_alias': roomId,
-          },
-        )
-        .toList(),
-    'focus_active': {'type': 'livekit', 'focus_selection': 'oldest_membership'},
-    'm.call.intent': 'video',
-    'membershipID': membershipID,
-    'scope': 'm.room',
-  };
-
-  try {
-    final memberEventId = await client.setRoomStateWithKey(
-      roomId,
-      'org.matrix.msc3401.call.member',
-      stateKey,
-      Map<String, Object?>.from(memberEventContent),
-    );
-
-    if (room.callMembersCount <= 1 &&
-        room.canSendEvent("org.matrix.msc4075.rtc.notification")) {
-      await room.sendEvent({
-        'lifetime': 30000,
-        'm.call.intent': 'video',
-        'm.mentions': {
-          'room': true,
-          'user_ids':
-              [], // TODO: we probably can invite only selected users to a call
-        },
-        'm.relates.to': {'event_id': memberEventId, 'rel_type': 'm.reference'},
-        'notification_type': 'notification',
-        'sender_ts': DateTime.now()
-            .millisecondsSinceEpoch, // maybe i can think of a better approach
-      }, type: 'org.matrix.msc4075.rtc.notification');
-    }
-  } catch (e) {
-    Logs().d('DEBUG: error sending call member event: $e');
-  }
 
   if (context.mounted) {
     final route = MaterialPageRoute(
