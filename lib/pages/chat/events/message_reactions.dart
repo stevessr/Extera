@@ -1,3 +1,4 @@
+import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -60,7 +61,15 @@ class MessageReactions extends StatelessWidget {
     return Wrap(
       spacing: 4.0,
       runSpacing: 4.0,
-      alignment: ownMessage ? WrapAlignment.end : WrapAlignment.start,
+      alignment:
+          (ownMessage &&
+              chatController?.layout != .modern &&
+              {
+                EventTypes.Message,
+                EventTypes.Sticker,
+              }.contains(event.type)) // Nested reactions :)
+          ? WrapAlignment.end
+          : WrapAlignment.start,
       children: [
         ...reactionList.map(
           (r) => _Reaction(
@@ -87,6 +96,7 @@ class MessageReactions extends StatelessWidget {
             },
             onLongPress: () async => await _AdaptiveReactorsDialog(
               client: client,
+              timeline: timeline,
               reactionEntry: r,
               chatController: chatController,
             ).show(context),
@@ -210,9 +220,11 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
   final Client? client;
   final _ReactionEntry? reactionEntry;
   final ChatController? chatController;
+  final Timeline? timeline;
 
   const _AdaptiveReactorsDialog({
     this.client,
+    this.timeline,
     this.chatController,
     this.reactionEntry,
   });
@@ -226,7 +238,6 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final reactionEvents = reactionEntry!.reactionEvents;
 
     if (reactionEvents == null) {
@@ -253,39 +264,59 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
                     final event = reactionEvents[i];
                     final user = event.senderFromMemoryOrFallback;
 
-                    return ListTile(
-                      leading: Avatar(
-                        mxContent: user.avatarUrl,
-                        size: 32,
-                        name: user.displayName ?? user.id,
-                        key: ValueKey(user.id),
-                      ),
-                      trailing: chatController == null
-                          ? null
-                          : Row(
-                              mainAxisSize: .min,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    chatController?.replyAction(event);
-                                    Navigator.of(context).pop();
-                                  },
-                                  icon: const Icon(Icons.reply_outlined),
+                    return Column(
+                      children: [
+                        ListTile(
+                          leading: Avatar(
+                            mxContent: user.avatarUrl,
+                            size: 32,
+                            name: user.displayName ?? user.id,
+                            key: ValueKey(user.id),
+                          ),
+                          title: Text(user.displayName ?? user.id),
+                          subtitle: Text(
+                            event.originServerTs.localizedMessageTime(context),
+                          ),
+                          visualDensity: .compact,
+                          trailing: chatController == null
+                              ? null
+                              : Row(
+                                  mainAxisSize: .min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        chatController?.replyAction(event);
+                                        Navigator.of(context).pop();
+                                      },
+                                      icon: const Icon(Icons.reply_outlined),
+                                    ),
+                                    if (event.canRedact)
+                                      IconButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          chatController?.redactEventsAction(
+                                            event: event,
+                                          );
+                                        },
+                                        color: theme.colorScheme.error,
+                                        icon: const Icon(Icons.close),
+                                      ),
+                                  ],
                                 ),
-                                if (event.canRedact)
-                                  IconButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      chatController?.redactEventsAction(
-                                        event: event,
-                                      );
-                                    },
-                                    color: theme.colorScheme.error,
-                                    icon: const Icon(Icons.close),
-                                  ),
-                              ],
+                        ),
+                        if (timeline != null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const .symmetric(horizontal: 16),
+                              child: MessageReactions(
+                                event,
+                                timeline!,
+                                chatController: chatController,
+                              ),
                             ),
-                      title: Text(user.displayName ?? user.id),
+                          ),
+                      ],
                     );
                   },
                   itemCount: reactionEvents.length,
