@@ -102,12 +102,23 @@ abstract class ClientManager {
   /// real parallelism, since dart2wasm isolates stay on the UI thread.
   /// The compiled worker script ships with every js and wasm build (see
   /// scripts/prepare-web.sh and the CI build-web-app action).
+  ///
+  /// Both instances are memoized: the SDK's web worker class spawns its
+  /// Worker eagerly in the constructor and never terminates it, so
+  /// constructing one per getter access (e.g. on every sent message) would
+  /// leak a worker per call.
+  static final NativeImplementations _webNativeImplementations =
+      NativeImplementationsWebWorker(Uri.parse('native_impl_worker.dart.js'));
+
+  static final NativeImplementations _isolateNativeImplementations =
+      NativeImplementationsIsolate(
+        compute,
+        vodozemacInit: () => vod.init(wasmPath: './assets/assets/vodozemac/'),
+      );
+
   static NativeImplementations get nativeImplementations => kIsWeb
-      ? NativeImplementationsWebWorker(Uri.parse('native_impl_worker.dart.js'))
-      : NativeImplementationsIsolate(
-          compute,
-          vodozemacInit: () => vod.init(wasmPath: './assets/assets/vodozemac/'),
-        );
+      ? _webNativeImplementations
+      : _isolateNativeImplementations;
 
   static Future<Client> createClient(
     String clientName,
