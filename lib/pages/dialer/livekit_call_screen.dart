@@ -53,6 +53,12 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   Set<String> _lastSharedParticipants = {};
   DateTime? _keyCreatedAt;
   Uint8List? _lastKey;
+  Timer? _membershipRefreshTimer;
+  /// Latest encryption key index received per remote membership identity.
+  /// Used to drop out-of-order keys and to resync receiver frame cryptors.
+  final Map<String, int> _latestRemoteKeyIndex = {};
+
+  static const Duration _membershipRefreshInterval = Duration(hours: 1);
 
   @override
   void initState() {
@@ -60,7 +66,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     final manager = LiveKitCallManager();
     if (manager.room != null && manager.currentRoomId == widget.roomId) {
       _room = manager.room;
-      _client = manager.client;
+      _client = manager.client ?? Matrix.of(context).client;
       _connecting = false;
       _screenShareActive =
           _room?.localParticipant?.videoTrackPublications.any(
@@ -68,6 +74,15 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
           ) ??
           false;
       _setupRoomListeners();
+      // The previous screen state was disposed and cancelled the matrix
+      // listeners with it. Re-register them, otherwise incoming E2EE keys
+      // from other members are silently dropped after re-entering a call.
+      if (_client != null) {
+        _registerMatrixListeners(_client!);
+      }
+      // The call kept running while this screen was closed; make sure our
+      // membership keeps being refreshed.
+      _startMembershipRefreshTimer();
       _fetchProfile();
     } else {
       _connect();
@@ -188,15 +203,42 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       return;
     }
 
+    final identity = '${event.sender}:${callKeys.member.claimedDeviceId}';
+    final index = callKeys.keys.index;
+
+    // Drop out-of-order keys: applying an older key after a newer one would
+    // regress the latest known index and break decryption.
+    if (index < (_latestRemoteKeyIndex[identity] ?? -1)) {
+      Logs().d('DEBUG: dropping out of order call key from $identity');
+      return;
+    }
+    _latestRemoteKeyIndex[identity] = index;
+
     await keyProvider.setRawKey(
       base64Decode(callKeys.keys.key),
-      participantId: '${event.sender}:${callKeys.member.claimedDeviceId}',
-      keyIndex: callKeys.keys.index,
+      participantId: identity,
+      keyIndex: index,
     );
+
+    // Setting a key on the key provider only stores the key material. Frame
+    // cryptors that were already created for this participant (their tracks
+    // were subscribed before the key arrived) stay pinned at their old key
+    // index and would never decrypt. Re-apply the latest index so they pick
+    // up the newly available key immediately.
+    try {
+      await _room?.e2eeManager?.setKeyIndex(
+        index,
+        participantIdentity: identity,
+      );
+    } catch (e) {
+      Logs().d('DEBUG: failed to resync e2ee cryptors for $identity: $e');
+    }
   }
 
-  Future<void> _createKeyAndShare() async {
-    final liveKitRoom = _room;
+  /// Generates/shares our E2EE key. [roomOverride] must be passed when this
+  /// is called during [_connect] where [_room] is not yet assigned.
+  Future<void> _createKeyAndShare([lk.Room? roomOverride]) async {
+    final liveKitRoom = roomOverride ?? _room;
     final client = _client;
     if (liveKitRoom == null || client == null) return;
     final matrixRoom = client.getRoomById(widget.roomId);
@@ -280,7 +322,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     );
   }
 
-  Future<void> _publishCallMember() async {
+  Future<void> _publishCallMember({bool notify = true}) async {
     final client = _client;
     final matrixRoom = client?.getRoomById(widget.roomId);
 
@@ -324,7 +366,8 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         memberEventContent,
       );
 
-      if (matrixRoom.callMembersCount <= 1 &&
+      if (notify &&
+          matrixRoom.callMembersCount <= 1 &&
           matrixRoom.canSendEvent('org.matrix.msc4075.rtc.notification')) {
         await matrixRoom.sendEvent({
           'lifetime': 30000,
@@ -341,6 +384,29 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     } catch (e) {
       Logs().d('DEBUG: error sending call member event: $e');
     }
+  }
+
+  /// Registers the matrix listeners required for the E2EE key exchange.
+  ///
+  /// Cancels any previously registered subscriptions first, so this is safe
+  /// to call again when re-attaching to a running call (the reuse path of
+  /// [initState]).
+  void _registerMatrixListeners(Client client) {
+    _onCallEncryptionKeysSub?.cancel();
+    _onCallMembersChanged?.cancel();
+    _onCallEncryptionKeysSub = client.onCallEncryptionKeys.listen(
+      _onCallEncryptionKeys,
+    );
+
+    _onCallMembersChanged = client.onSync.stream
+        .where(
+          (syncUpdate) =>
+              syncUpdate.rooms?.join?[widget.roomId]?.timeline?.events?.any(
+                (event) => event.type == MatrixRtcCallMember.eventType,
+              ) ??
+              false,
+        )
+        .listen((_) => _createKeyAndShare());
   }
 
   Future<void> _connect() async {
@@ -365,7 +431,10 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final keyProviderOptions = rtc.KeyProviderOptions(
         sharedKey: false,
         ratchetSalt: Uint8List.fromList('LKFrameEncryptionKey'.codeUnits),
-        ratchetWindowSize: 0,
+        // Must be > 0 so decryption can self-heal via ratcheting when the
+        // remote side rotates to a key index we have not applied yet.
+        // (Element Call uses 10, the livekit default is 16.)
+        ratchetWindowSize: 16,
         discardFrameWhenCryptorNotReady: true,
         keyDerivationAlgorithm: rtc.KeyDerivationAlgorithm.kHKDF,
       );
@@ -376,21 +445,37 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         keyProviderOptions,
       );
 
-      _onCallEncryptionKeysSub = client.onCallEncryptionKeys.listen(
-        _onCallEncryptionKeys,
+      _registerMatrixListeners(client);
+
+      final ownMemberId = '${client.userID}:${client.deviceID}';
+      final otherActiveMembers = matrixRoom
+          ?.getActiveMatrixRtcMembers()
+          .where(
+            (m) => m.membershipId != null && m.membershipId != ownMemberId,
+          )
+          .toList();
+      Logs().d(
+        'DEBUG: livekit service url candidates: ${widget.liveKitServiceUrls}, '
+        'other active members: ${otherActiveMembers?.length ?? 0}',
       );
 
-      _onCallMembersChanged = client.onSync.stream
-          .where(
-            (syncUpdate) =>
-                syncUpdate.rooms?.join?[widget.roomId]?.timeline?.events?.any(
-                  (event) => event.type == MatrixRtcCallMember.eventType,
-                ) ??
-                false,
-          )
-          .listen((_) => _createKeyAndShare());
+      var membershipPublished = false;
+      Future<void> rollbackMembership() async {
+        if (!membershipPublished || widget.callStateKey == null) return;
+        try {
+          await client.setRoomStateWithKey(
+            widget.roomId,
+            'org.matrix.msc3401.call.member',
+            widget.callStateKey!,
+            {},
+          );
+        } catch (_) {}
+        membershipPublished = false;
+      }
 
-      for (final jwtServiceUrl in widget.liveKitServiceUrls) {
+      for (var i = 0; i < widget.liveKitServiceUrls.length; i++) {
+        final jwtServiceUrl = widget.liveKitServiceUrls[i];
+        final hasNextUrl = i < widget.liveKitServiceUrls.length - 1;
         try {
           creds = await LiveKitService.getCredentials(
             openId: openId,
@@ -413,13 +498,46 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
               encryption: lk.E2EEOptions(keyProvider: baseKeyProvider),
             ),
           );
-          await room.connect(creds.url, creds.jwt);
-          await _createKeyAndShare();
+
+          // Publish our membership and share our encryption key BEFORE
+          // connecting to the LiveKit room. This mirrors Element Call's join
+          // order: existing members start pushing their E2EE keys as soon as
+          // they see our membership, while we are subscribing to their tracks.
+          // Connecting first would subscribe to already-published tracks and
+          // create receiver frame cryptors before any key material exists,
+          // leaving them pinned at key index 0 with no way to recover once
+          // the peer rotates to a higher index.
           await _publishCallMember();
+          membershipPublished = true;
+          await _createKeyAndShare(room);
+
+          await room.connect(creds.url, creds.jwt);
           Logs().d('LiveKit connected: $jwtServiceUrl');
+
+          // Sanity check: if the LiveKit room is empty while other members
+          // are active in the Matrix call, we most likely ended up on a
+          // different LiveKit instance than they did (e.g. a stale foci URL).
+          // Fail over to the next candidate URL instead of sitting in an
+          // empty room forever.
+          if (room.remoteParticipants.isEmpty &&
+              (otherActiveMembers?.isNotEmpty ?? false) &&
+              hasNextUrl) {
+            Logs().w(
+              'LiveKit room is empty but ${otherActiveMembers!.length} member(s) '
+              'are in the call - wrong instance? Trying next service URL...',
+            );
+            await rollbackMembership();
+            try {
+              await room.dispose();
+            } catch (_) {}
+            room = null;
+            creds = null;
+            continue;
+          }
           break;
         } catch (e) {
           Logs().d('LiveKit FAIL: $jwtServiceUrl → $e');
+          await rollbackMembership();
           try {
             await room?.dispose();
           } catch (_) {}
@@ -431,6 +549,10 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       if (room == null) {
         throw Exception(L10n.of(context).allLiveKitUnavailable);
       }
+
+      // Keep our own membership alive: it is published with a fixed expiry,
+      // and unlike Element Call's membership manager nothing refreshes it.
+      _startMembershipRefreshTimer();
 
       _room = room;
       LiveKitCallManager().room = room;
@@ -503,6 +625,55 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     _room!.events.on<lk.LocalTrackPublishedEvent>((event) {
       if (mounted) setState(() {});
     });
+    // Self-healing for E2EE: if a receiver frame cryptor is stuck without a
+    // key (e.g. the track was subscribed before the remote key arrived), or
+    // failed to decrypt, re-apply the latest known key index for that
+    // participant so decryption can resume.
+    _room!.events.on<lk.TrackE2EEStateEvent>((event) {
+      final state = event.state;
+      if (state == lk.E2EEState.kMissingKey ||
+          state == lk.E2EEState.kDecryptionFailed ||
+          state == lk.E2EEState.kInternalError) {
+        final userId = _client?.userID;
+        final deviceId = _client?.deviceID;
+        final ownIdentity = userId != null && deviceId != null
+            ? '$userId:$deviceId'
+            : null;
+        if (ownIdentity != null && event.participant.identity == ownIdentity) {
+          return;
+        }
+        _resyncRemoteE2ee(event.participant.identity);
+      }
+    });
+  }
+
+  /// Re-applies the latest known remote encryption key index for [identity]
+  /// to its existing frame cryptors.
+  ///
+  /// Setting a key on the [lk.BaseKeyProvider] only stores the material;
+  /// already-created cryptors keep using their configured index. Without
+  /// this, tracks subscribed before the key arrived stay undecryptable.
+  Future<void> _resyncRemoteE2ee(String identity) async {
+    final room = _room;
+    final keyProvider = _keyProvider;
+    if (room == null || keyProvider == null) return;
+    final index = keyProvider.getLatestIndex(identity);
+    Logs().d('DEBUG: resyncing e2ee cryptor index for $identity -> $index');
+    try {
+      await room.e2eeManager?.setKeyIndex(index, participantIdentity: identity);
+    } catch (e) {
+      Logs().d('DEBUG: e2ee resync failed for $identity: $e');
+    }
+  }
+
+  /// Periodically republishes our call member state event so it does not
+  /// expire while we are still in the call. Other clients treat expired
+  /// memberships as left, which stops E2EE key delivery towards us.
+  void _startMembershipRefreshTimer() {
+    _membershipRefreshTimer?.cancel();
+    _membershipRefreshTimer = Timer.periodic(_membershipRefreshInterval, (_) {
+      if (!_disposed) _publishCallMember(notify: false);
+    });
   }
 
   void _onRoomUpdate() {
@@ -535,6 +706,8 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     Client? client,
     String? stateKey,
   ) async {
+    _membershipRefreshTimer?.cancel();
+    _membershipRefreshTimer = null;
     try {
       await room?.localParticipant?.setCameraEnabled(false);
     } catch (_) {}
@@ -575,6 +748,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   @override
   void dispose() {
     _disposed = true;
+    _membershipRefreshTimer?.cancel();
     _onCallEncryptionKeysSub?.cancel();
     _onCallMembersChanged?.cancel();
     _room?.removeListener(_onRoomUpdate);
@@ -1416,10 +1590,45 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
   final room = client.getRoomById(roomId);
   if (room == null) return;
 
-  final callMembers = room.states['org.matrix.msc3401.call.member'];
+  final deviceId = client.deviceID ?? '';
+  final userId = client.userID!;
+  final ownMemberId = '$userId:$deviceId';
 
   final urls = <String>{};
 
+  // Prefer the LiveKit instances that the currently ACTIVE members are
+  // actually using. getActiveMatrixRtcMembers() expiry-filters the member
+  // state events; without this, a leftover membership from a crashed
+  // previous session could send us to a different (empty) LiveKit
+  // instance where nobody can see us.
+  for (final member in room.getActiveMatrixRtcMembers()) {
+    final membershipId = member.membershipId;
+    if (membershipId == null || membershipId == ownMemberId) continue;
+    for (final focus in member.fociPreferred) {
+      if (focus.type == 'livekit' && focus.livekitServiceUrl.isNotEmpty) {
+        urls.add(focus.livekitServiceUrl);
+      }
+    }
+  }
+
+  // Fall back to our homeserver's advertised instance.
+  try {
+    final wellKnown = await client.getWellknown();
+    final rtcFoci =
+        wellKnown.additionalProperties['org.matrix.msc4143.rtc_foci'];
+    if (rtcFoci is List) {
+      for (final f in rtcFoci) {
+        if (f is Map && f['type'] == 'livekit') {
+          final url = f['livekit_service_url'] as String?;
+          if (url != null) urls.add(url);
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Last resort: scan ALL raw member state events (including expired or
+  // unparsable ones). These may be stale, so they must come last.
+  final callMembers = room.states['org.matrix.msc3401.call.member'];
   if (callMembers != null && callMembers.isNotEmpty) {
     for (final entry in callMembers.entries) {
       final content = entry.value.content;
@@ -1441,18 +1650,8 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
   }
 
   try {
-    final wellKnown = await client.getWellknown();
-    final rtcFoci =
-        wellKnown.additionalProperties['org.matrix.msc4143.rtc_foci'];
-    if (rtcFoci is List) {
-      for (final f in rtcFoci) {
-        if (f is Map && f['type'] == 'livekit') {
-          final url = f['livekit_service_url'] as String?;
-          if (url != null) urls.add(url);
-        }
-      }
-    }
     if (urls.isEmpty) {
+      final wellKnown = await client.getWellknown();
       final homeserverUrl = wellKnown.mHomeserver.baseUrl.toString().replaceAll(
         RegExp(r'/+$'),
         '',
@@ -1470,8 +1669,6 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
     return;
   }
 
-  final deviceId = client.deviceID ?? '';
-  final userId = client.userID!;
   final stateKey = '_${userId}_${deviceId}_m.call';
 
   if (context.mounted) {
