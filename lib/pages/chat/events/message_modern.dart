@@ -192,7 +192,7 @@ class _MessageModernState extends State<MessageModern> {
       EventTypes.Sticker,
       EventTypes.Encrypted,
       EventTypes.CallInvite,
-      PollEvents.PollStart,
+      PollEvents.pollStart,
     }.contains(event.type)) {
       if (event.type.startsWith('m.call.')) {
         return const SizedBox.shrink();
@@ -233,7 +233,7 @@ class _MessageModernState extends State<MessageModern> {
           EventTypes.Message,
           EventTypes.Sticker,
           EventTypes.Encrypted,
-          PollEvents.PollStart,
+          PollEvents.pollStart,
         }.contains(widget.nextEvent!.type) &&
         widget.nextEvent!.senderId == event.senderId &&
         !displayTime;

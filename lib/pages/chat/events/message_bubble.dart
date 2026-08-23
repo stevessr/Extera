@@ -269,7 +269,7 @@ class _MessageBubbleState extends State<MessageBubble> {
       EventTypes.Sticker,
       EventTypes.Encrypted,
       EventTypes.CallInvite,
-      PollEvents.PollStart,
+      PollEvents.pollStart,
     }.contains(event.type)) {
       if (event.type.startsWith('m.call.')) {
         return const SizedBox.shrink();
@@ -312,7 +312,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           EventTypes.Message,
           EventTypes.Sticker,
           EventTypes.Encrypted,
-          PollEvents.PollStart,
+          PollEvents.pollStart,
         }.contains(widget.nextEvent!.type) &&
         widget.nextEvent!.senderId == event.senderId &&
         !displayTime;
@@ -323,7 +323,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           EventTypes.Message,
           EventTypes.Sticker,
           EventTypes.Encrypted,
-          PollEvents.PollStart,
+          PollEvents.pollStart,
         }.contains(widget.previousEvent!.type) &&
         widget.previousEvent!.senderId == event.senderId &&
         widget.previousEvent!.originServerTs.sameEnvironment(
