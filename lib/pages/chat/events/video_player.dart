@@ -100,7 +100,6 @@ class EventVideoPlayer extends StatelessWidget {
     final h = infoMap?.tryGet<int>('h');
     final hasDescription = event.fileDescription != null;
     const minBubbleWidth = 180.0;
-    // const height = 300.0;
     var width = maxSize;
     if (w != null && h != null) {
       if (w > h) {
@@ -175,7 +174,6 @@ class EventVideoPlayer extends StatelessWidget {
                         uri: event.thumbnailMxcUrl,
                         isThumbnail: true,
                         width: bubbleWidth,
-                        // height: width * aspectRatio,
                         fit: BoxFit.cover,
                         placeholder: (context) => LayoutBuilder(
                           builder: (context, constraints) => BlurHash(
@@ -209,11 +207,6 @@ class EventVideoPlayer extends StatelessWidget {
                       )
                     else
                       Center(
-                        // child: CircleAvatar(
-                        //   child: supportsVideoPlayer
-                        //       ? const Icon(Icons.play_arrow_outlined)
-                        //       : const Icon(Icons.file_download_outlined),
-                        // ),
                         child: FilledButton.tonal(
                           onPressed: () => supportsVideoPlayer
                               ? showDialog(
