@@ -143,6 +143,12 @@ class SettingsChatView extends StatelessWidget {
                       ),
                       const ListDivider(),
                       SettingsSwitchListTile.adaptive(
+                        title: L10n.of(context).urlPreviews,
+                        subtitle: L10n.of(context).urlPreviewsDescription,
+                        setting: AppSettings.urlPreviews,
+                      ),
+                      const ListDivider(),
+                      SettingsSwitchListTile.adaptive(
                         title: L10n.of(context).hideMemberChangesInPublicChats,
                         subtitle: L10n.of(
                           context,

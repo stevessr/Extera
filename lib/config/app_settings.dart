@@ -104,6 +104,7 @@ enum AppSettings<T> {
   themeMode<String>('xyz.extera.next.themeMode', 'system'),
   pureBlack<bool>('xyz.extera.next.pureBlack', false),
   renderHtml<bool>('chat.fluffy.renderHtml', true),
+  urlPreviews<bool>('xyz.extera.next.urlPreviews', true),
   schemeVariant<int>('xyz.extera.next.schemeVariant', 0),
   hideRedactedEvents<bool>('chat.fluffy.hideRedactedEvents', false),
   hideUnknownEvents<bool>('chat.fluffy.hideUnknownEvents', true),

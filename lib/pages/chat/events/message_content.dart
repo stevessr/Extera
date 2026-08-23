@@ -31,6 +31,7 @@ import 'image_bubble.dart';
 import 'map_bubble.dart';
 import 'message_download_content.dart';
 import 'utd_content.dart';
+import 'url_preview_card.dart';
 
 class MessageContent extends StatelessWidget {
   final Event event;
@@ -136,8 +137,7 @@ class MessageContent extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildContent(BuildContext context) {
     final fontSize =
         AppSettings.fontSizeFactor.value * AppSettings.messageFontSize.value;
     final buttonTextColor = textColor;
@@ -501,6 +501,35 @@ class MessageContent extends StatelessWidget {
           },
         );
     }
+  }
+
+  /// Returns the link preview card for this message, or null when previews
+  /// are disabled, unsupported for this event type, or the body is not
+  /// essentially a single link.
+  Widget? _maybeUrlPreview() {
+    if (!AppSettings.urlPreviews.value || event.redacted) return null;
+    switch (event.messageType) {
+      case MessageTypes.Text:
+      case MessageTypes.Notice:
+        break;
+      default:
+        return null;
+    }
+    final url = UrlPreviewCard.extractSingleLink(event.text);
+    if (url == null) return null;
+    return UrlPreviewCard(event: event, url: url);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final content = _buildContent(context);
+    final preview = _maybeUrlPreview();
+    if (preview == null) return content;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [content, preview],
+    );
   }
 }
 
