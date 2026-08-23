@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:extera_next/utils/foreground_task_manager.dart';
-import 'package:flutter/cupertino.dart' hide Image;
 import 'package:flutter/material.dart';
 
 import 'package:cross_file/cross_file.dart';
