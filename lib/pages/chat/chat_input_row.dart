@@ -8,6 +8,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/recording_input_row.dart';
 import 'package:extera_next/pages/chat/recording_view_model.dart';
 import 'package:extera_next/pages/chat/video_note_recording_dialog.dart';
+import 'package:extera_next/pages/chat/schedule_message_dialog.dart';
 import 'package:extera_next/shortcuts/chat/paste_shortcut.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/filtered_timeline_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
@@ -439,6 +440,8 @@ class ChatInputRow extends StatelessWidget {
                         : IconButton(
                             tooltip: L10n.of(context).send,
                             onPressed: controller.send,
+                            onLongPress: () =>
+                                showScheduleMessageSheet(context, controller),
                             style: IconButton.styleFrom(
                               foregroundColor: theme.colorScheme.primary,
                             ),

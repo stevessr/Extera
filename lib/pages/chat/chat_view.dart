@@ -31,8 +31,10 @@ import 'package:extera_next/widgets/chat_settings_popup_menu.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mini_audio_player.dart';
 import 'package:extera_next/widgets/unread_rooms_badge.dart';
+import 'package:extera_next/utils/msc/server_capabilities.dart';
 import 'chat_emoji_picker.dart';
 import 'chat_input_row.dart';
+import 'schedule_message_dialog.dart';
 
 enum _EventContextAction {
   info,
@@ -216,6 +218,7 @@ class _ChatViewState extends State<ChatView> {
             icon: const Icon(Icons.call_outlined),
             tooltip: L10n.of(context).placeCall,
           ),
+        _ScheduledMessagesButton(controller: controller),
         EncryptionButton(controller.room),
         ChatSettingsPopupMenu(controller.room, true),
       ];
@@ -918,5 +921,43 @@ class _MeasureSizeRenderObject extends RenderProxyBox {
         onChange(newSize);
       });
     }
+  }
+}
+
+/// App bar entry listing MSC4140 delayed events; hidden until the
+/// homeserver reports support for them.
+class _ScheduledMessagesButton extends StatefulWidget {
+  final ChatController controller;
+
+  const _ScheduledMessagesButton({required this.controller});
+
+  @override
+  State<_ScheduledMessagesButton> createState() =>
+      _ScheduledMessagesButtonState();
+}
+
+class _ScheduledMessagesButtonState extends State<_ScheduledMessagesButton> {
+  bool supported = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ServerCapabilityProbe.of(widget.controller.room.client)
+        .then((support) {
+          if (mounted) {
+            setState(() => supported = support.delayedEvents);
+          }
+        })
+        .catchError((_) {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!supported) return const SizedBox.shrink();
+    return IconButton(
+      tooltip: L10n.of(context).scheduledMessagesTitle,
+      icon: const Icon(Icons.schedule_send_outlined),
+      onPressed: () => showDelayedEventsSheet(context, widget.controller),
+    );
   }
 }

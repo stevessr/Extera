@@ -11,9 +11,10 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/profile/profile_fields_section.dart';
 import 'package:extera_next/pages/chat_list/chat_list_item.dart';
-import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
+import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -488,6 +489,9 @@ class ProfileView extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (profile.userId == client.userID)
+                    ProfileFieldsSection(controller),
                   const SizedBox(height: 8),
                   if (profile.userId != client.userID) ...[
                     Material(

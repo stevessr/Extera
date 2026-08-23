@@ -15,6 +15,7 @@ import 'package:extera_next/widgets/matrix.dart';
 import '../../config/themes.dart';
 import '../../utils/date_time_extension.dart';
 import '../../widgets/avatar.dart';
+import '../room_preview/room_preview.dart';
 
 enum ArchivedRoomAction { delete, rejoin }
 
@@ -364,7 +365,13 @@ class ChatListItem extends StatelessWidget {
                   UnreadBubble(room: room),
                 ],
               ),
-              onTap: onTap,
+              onTap: room.membership == Membership.invite
+                  ? () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => RoomPreviewPage(room: room),
+                      ),
+                    )
+                  : onTap,
               trailing: onForget == null
                   ? room.membership == Membership.invite
                         ? IconButton(

@@ -28,6 +28,7 @@ import 'package:extera_next/pages/chat/message_edits_dialog.dart';
 import 'package:extera_next/pages/chat/recovered_event_dialog.dart';
 import 'package:extera_next/pages/chat/seen_by_row.dart';
 import 'package:extera_next/pages/chat/send_poll_dialog.dart';
+import 'package:extera_next/pages/chat/schedule_message_dialog.dart';
 import 'package:extera_next/pages/chat/translated_event_dialog.dart';
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
 import 'package:extera_next/pages/chat/vote_results_dialog.dart';
@@ -46,6 +47,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/synapse_admin_extension.
 import 'package:extera_next/utils/neurogate.dart';
 import 'package:extera_next/utils/other_party_can_receive.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/msc/msc4140_delayed_events.dart';
 import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
@@ -998,6 +1000,87 @@ class ChatController extends State<ChatPageWithRoom>
       editEvent = null;
       pendingText = '';
     });
+  }
+
+  /// Schedules the current composer text via MSC4140 delayed events.
+  /// Edits and commands are not schedulable; edits fall back to an
+  /// immediate send.
+  Future<void> sendScheduled(Duration delay) async {
+    if (sendController.text.trim().isEmpty) return;
+    if (editEvent != null) {
+      await send();
+      return;
+    }
+
+    final text = sendController.text;
+    if (currentlyTyping) {
+      typingCoolDown?.cancel();
+      room.setTyping(false);
+      currentlyTyping = false;
+    }
+
+    // Plain content only; relations are attached manually below because
+    // the scheduled event bypasses Room.sendEvent's relation handling.
+    final content = room.getTextEventContent(
+      text,
+      inReplyTo: replyEvent,
+      replyMention: replyMention,
+    );
+    final relations = <String, Object?>{};
+    if (thread != null) {
+      relations['rel_type'] = RelationshipTypes.thread;
+      relations['event_id'] = thread!.rootEvent.eventId;
+      relations['is_falling_back'] = false;
+      relations['m.in_reply_to'] = {
+        'event_id': thread?.lastEvent?.eventId ?? thread!.rootEvent.eventId,
+      };
+    } else if (replyEvent != null) {
+      relations['m.in_reply_to'] = {'event_id': replyEvent!.eventId};
+    }
+    if (relations.isNotEmpty) {
+      content['m.relates_to'] = relations;
+    }
+
+    try {
+      await room.client.sendDelayedMessage(
+        room: room,
+        content: content,
+        delay: delay,
+      );
+    } catch (e) {
+      Logs().e('Scheduling message failed', e);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
+      return;
+    }
+
+    _storeInputTimeoutTimer?.cancel();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('draft_$roomId');
+    sendController.value = TextEditingValue(
+      text: pendingText,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    if (!mounted) return;
+    setState(() {
+      sendController.text = pendingText;
+      _inputTextIsEmpty = pendingText.isEmpty;
+      replyEvent = null;
+      editEvent = null;
+      pendingText = '';
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.of(context).messageScheduled),
+        action: SnackBarAction(
+          label: L10n.of(context).scheduledMessagesTitle,
+          onPressed: () => showDelayedEventsSheet(context, this),
+        ),
+      ),
+    );
   }
 
   /// Sends the edit of an image message.
