@@ -36,6 +36,13 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
   /// room state until the sync catches up.
   Map<String, dynamic>? _overrideContent;
 
+  /// Account profile, used as the display fallback while this chat has no
+  /// in-chat override for name or avatar.
+  Future<Profile>? _accountProfile;
+
+  Future<Profile> get accountProfile =>
+      _accountProfile ??= Matrix.of(context).client.fetchOwnProfile();
+
   Room get room => Matrix.of(context).client.getRoomById(widget.roomId)!;
 
   Map<String, dynamic> get _memberContent =>
@@ -143,13 +150,26 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
     }
   }
 
-  Future<dynamic> _sendMemberState(Map<String, dynamic> content) =>
-      room.client.setRoomStateWithKey(
-        room.id,
-        EventTypes.RoomMember,
-        room.client.userID!,
-        content,
-      );
+  Future<void> _sendMemberState(Map<String, dynamic> content) async {
+    final client = room.client;
+    final userId = client.userID!;
+    await client.setRoomStateWithKey(
+      room.id,
+      EventTypes.RoomMember,
+      userId,
+      content,
+    );
+    // Local echo so the UI updates instantly instead of waiting for the
+    // sync round trip to deliver our own state change back.
+    room.setState(
+      StrippedStateEvent(
+        type: EventTypes.RoomMember,
+        senderId: userId,
+        stateKey: userId,
+        content: content,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => ChatRoomProfileView(this);
