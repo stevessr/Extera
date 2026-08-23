@@ -80,19 +80,9 @@ class _MxcImageState extends State<MxcImage> {
   static final Map<String?, Map<String, Uint8List>> _imageDataCaches = {};
   Uint8List? _imageDataNoCache;
 
-  /// Bytes of the last successful load, kept around while a reload after a
-  /// widget update (e.g. toggling animated avatars) is in flight, so that the
-  /// image swaps seamlessly instead of flashing a placeholder.
-  Uint8List? _staleData;
-
-  /// The bytes to render: the ones for the current configuration if they are
-  /// loaded already, otherwise the last bytes this state ever had, so that a
-  /// reconfiguration keeps the old pixels visible until the new ones arrive.
-  Uint8List? get _imageData =>
-      (widget.cacheKey == null
-          ? _imageDataNoCache
-          : _imageDataCache[widget.cacheKey]) ??
-      _staleData;
+  Uint8List? get _imageData => widget.cacheKey == null
+      ? _imageDataNoCache
+      : _imageDataCache[widget.cacheKey];
 
   set _imageData(Uint8List? data) {
     if (data == null) return;
@@ -162,24 +152,6 @@ class _MxcImageState extends State<MxcImage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoad());
   }
 
-  @override
-  void didUpdateWidget(MxcImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // A changed configuration (uri, thumbnailing, animated flag, cache key)
-    // invalidates the bytes looked up under the old one. Reload while the
-    // previous image stays on screen, see [_staleData].
-    final needsReload =
-        oldWidget.uri != widget.uri ||
-        oldWidget.event != widget.event ||
-        oldWidget.cacheKey != widget.cacheKey ||
-        oldWidget.animated != widget.animated ||
-        oldWidget.isThumbnail != widget.isThumbnail ||
-        oldWidget.thumbnailMethod != widget.thumbnailMethod;
-    if (needsReload && _imageData == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoad());
-    }
-  }
-
   Future<void> _load() async {
     if (!mounted) return;
     final client =
@@ -204,7 +176,7 @@ class _MxcImageState extends State<MxcImage> {
       );
       if (!mounted) return;
       setState(() {
-        _imageData = _staleData = remoteData;
+        _imageData = remoteData;
       });
     }
 
@@ -223,7 +195,7 @@ class _MxcImageState extends State<MxcImage> {
       if (data.detectFileType is MatrixImageFile) {
         if (!mounted) return;
         setState(() {
-          _imageData = _staleData = data.bytes;
+          _imageData = data.bytes;
         });
         return;
       }
@@ -231,12 +203,7 @@ class _MxcImageState extends State<MxcImage> {
   }
 
   Future<void> _tryLoad() async {
-    // Compare against the cache for the *current* configuration only; the
-    // [_staleData] holdover must not prevent loading the new bytes.
-    final cached = widget.cacheKey == null
-        ? _imageDataNoCache
-        : _imageDataCache[widget.cacheKey];
-    if (cached != null) {
+    if (_imageData != null) {
       return;
     }
     try {

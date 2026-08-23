@@ -46,7 +46,6 @@ class Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allowAnimated = AppSettings.allowAnimatedAvatars.value;
     final theme = Theme.of(context);
 
     final fallbackLetters = _calcFallbackLetters();
@@ -73,15 +72,8 @@ class Avatar extends StatelessWidget {
               client: client,
               borderRadius: borderRadius,
               key: ValueKey(mxContent.toString()),
-              // Server thumbnails are re-encoded as a single frame by common
-              // homeservers (Synapse ignores `animated`), so animation only
-              // survives when the original media is fetched. Static avatars
-              // keep using a scaled thumbnail.
-              isThumbnail: !allowAnimated,
-              cacheKey: allowAnimated
-                  ? '${mxContent}_anim'
-                  : '${mxContent}_$size',
-              animated: allowAnimated,
+              cacheKey: '${mxContent}_$size',
+              uri: mxContent,
               fit: BoxFit.cover,
               width: size,
               height: size,

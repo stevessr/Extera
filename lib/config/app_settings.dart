@@ -122,7 +122,6 @@ enum AppSettings<T> {
   showPresences<bool>('chat.fluffy.show_presences', true),
   presenceStatus<String>('xyz.extera.presence_status', 'online'),
   avatarBorderRadius<double>('xyz.extera.next.avatarBorderRadius', 1),
-  allowAnimatedAvatars<bool>('xyz.extera.next.allowAnimatedAvatars', true),
   autoMarkUnavailable<bool>('xyz.extera.next.autoMarkUnavailable', true),
   incomingCallsOnLockScreen<bool>(
     'xyz.extera.next.incomingCallsOnLockScreen',

@@ -2064,16 +2064,6 @@
       }
     }
   },
-  "allowAnimatedAvatars": "允许动态头像",
-  "@allowAnimatedAvatars": {
-    "type": "String",
-    "placeholder": {}
-  },
-  "allowAnimatedAvatarsDescription": "播放动态 WebP、APNG 和 GIF 头像",
-  "@allowAnimatedAvatarsDescription": {
-    "type": "String",
-    "placeholder": {}
-  },
   "autoplayImages": "自动播放动态贴纸和表情",
   "@autoplayImages": {
     "type": "String",

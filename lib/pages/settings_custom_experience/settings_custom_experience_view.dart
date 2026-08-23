@@ -1,12 +1,10 @@
 import 'package:extera_next/config/app_config.dart';
-import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:extera_next/widgets/settings_switch_list_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 
@@ -36,23 +34,6 @@ class SettingsCustomExperienceView extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Column(
               children: [
-                Material(
-                  clipBehavior: Clip.hardEdge,
-                  color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: borderRadius,
-                  child: Column(
-                    children: [
-                      SettingsSwitchListTile.adaptive(
-                        title: L10n.of(context).allowAnimatedAvatars,
-                        subtitle: L10n.of(
-                          context,
-                        ).allowAnimatedAvatarsDescription,
-                        setting: AppSettings.allowAnimatedAvatars,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Material(
                   clipBehavior: Clip.hardEdge,
                   color: theme.colorScheme.surfaceContainerHigh,
