@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -50,9 +49,6 @@ class MxcImage extends StatefulWidget {
 
   @override
   State<MxcImage> createState() => _MxcImageState();
-
-  static void clearCache(String cacheName) =>
-      _MxcImageState._imageDataCaches.remove(cacheName);
 }
 
 class _MxcImagePlaceholder extends StatelessWidget {
@@ -78,56 +74,63 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _LruImageDataCache {
-  _LruImageDataCache(this.capacity);
-
-  final int capacity;
-  final LinkedHashMap<String, Uint8List> _entries = LinkedHashMap();
-  Uint8List? operator [](String? key) {
-    if (key == null) return null;
-    // Re-inserting on read refreshes recency.
-    final value = _entries.remove(key);
-    if (value != null) {
-      _entries[key] = value;
-    }
-    return value;
-  }
-
-  void operator []=(String key, Uint8List value) {
-    _entries
-      ..remove(key)
-      ..[key] = value;
-    while (_entries.length > capacity) {
-      _entries.remove(_entries.keys.first);
-    }
-  }
-}
-
 class _MxcImageState extends State<MxcImage> {
-  /// Byte-level cache for rendered thumbnails/avatars. On wasm the GC runs
-  /// on the UI thread, so an unbounded cache of image bytes turns long
-  /// sessions into GC-pause jank; cap each named cache (1024 entries is
-  /// roughly 10–20 MB of typical thumbnails).
-  static const int _imageDataCacheCapacity = 1024;
-  static final Map<String?, _LruImageDataCache> _imageDataCaches = {};
+  /// Global in-memory cache of decoded-input image bytes.
+  ///
+  /// Raw bytes accumulate quickly (message thumbnails, avatars, stickers),
+  /// so the cache is bounded both by total bytes and entry count; the
+  /// least-recently-used entries are dropped first. Evicted data is still
+  /// available through the on-disk HTTP/media cache, so an eviction only
+  /// costs a disk read plus decode, not a network round trip.
+  static const int _cacheMaxBytes = 64 * 1024 * 1024;
+  static const int _cacheMaxEntries = 1024;
+
+  /// Upper bound for [_tryLoad] retries on persistent transport failures.
+  static const int _maxLoadRetries = 4;
+  static final Map<String, Uint8List> _imageDataLru = <String, Uint8List>{};
+  static int _imageDataBytes = 0;
   Uint8List? _imageDataNoCache;
 
-  Uint8List? get _imageData => widget.cacheKey == null
-      ? _imageDataNoCache
-      : _imageDataCache[widget.cacheKey];
-
+  Uint8List? get _imageData =>
+      widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
   set _imageData(Uint8List? data) {
     if (data == null) return;
     final cacheKey = widget.cacheKey;
-    cacheKey == null
-        ? _imageDataNoCache = data
-        : _imageDataCache[cacheKey] = data;
+    if (cacheKey == null) {
+      _imageDataNoCache = data;
+      return;
+    }
+    _store(cacheKey, data);
   }
 
-  _LruImageDataCache get _imageDataCache =>
-      _imageDataCaches[widget.cacheName ?? ''] ??= _LruImageDataCache(
-        _imageDataCacheCapacity,
-      );
+  String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
+
+  static Uint8List? _touch(String lruKey) {
+    final data = _imageDataLru.remove(lruKey);
+    if (data == null) return null;
+    _imageDataLru[lruKey] = data; // move to most-recently-used position
+    return data;
+  }
+
+  void _store(String cacheKey, Uint8List data) {
+    final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
+    final previous = _imageDataLru.remove(lruKey);
+    if (previous != null) {
+      _imageDataBytes -= previous.length;
+    }
+    _imageDataLru[lruKey] = data;
+    _imageDataBytes += data.length;
+    _evictOverflow();
+  }
+
+  static void _evictOverflow() {
+    while (_imageDataLru.length > _cacheMaxEntries ||
+        (_imageDataBytes > _cacheMaxBytes && _imageDataLru.isNotEmpty)) {
+      final oldestKey = _imageDataLru.keys.first;
+      final evicted = _imageDataLru.remove(oldestKey)!;
+      _imageDataBytes -= evicted.length;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -236,19 +239,19 @@ class _MxcImageState extends State<MxcImage> {
     }
   }
 
-  Future<void> _tryLoad() async {
+  Future<void> _tryLoad([int attempt = 0]) async {
     if (_imageData != null) {
       return;
     }
     try {
       await _load();
     } on IOException {
-      _retryAfterDelay();
+      await _retryAfterDelay(attempt);
     } on ClientException {
       // On the web, transport failures ("Failed to fetch") surface as
       // package:http's ClientException, which implements Exception but not
       // IOException. Same recoverable error class: retrying may succeed.
-      _retryAfterDelay();
+      await _retryAfterDelay(attempt);
     } catch (e, s) {
       // Deterministic failure (e.g. HTTP error status): retrying cannot
       // succeed. Keep the placeholder instead of crashing the app.
@@ -256,10 +259,11 @@ class _MxcImageState extends State<MxcImage> {
     }
   }
 
-  void _retryAfterDelay() {
-    if (!mounted) return;
-    Future.delayed(widget.retryDuration, () {
-      if (mounted) _tryLoad();
-    });
+  Future<void> _retryAfterDelay(int attempt) async {
+    // Stop after a bounded number of retries: retrying forever burns network
+    // and CPU for permanently unavailable media.
+    if (attempt >= _maxLoadRetries || !mounted) return;
+    await Future<void>.delayed(widget.retryDuration);
+    if (mounted) await _tryLoad(attempt + 1);
   }
 }
