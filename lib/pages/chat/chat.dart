@@ -1377,6 +1377,15 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void recoverEventAction({Event? event}) async {
+    final consent = await showOkCancelAlertDialog(
+      context: context,
+      title: L10n.of(context).recoverMessage,
+      message: L10n.of(context).recoverMessageDescription,
+      okLabel: L10n.of(context).ok,
+      cancelLabel: L10n.of(context).cancel,
+    );
+    if (!mounted) return;
+    if (consent != OkCancelResult.ok) return;
     final mx = Matrix.of(context);
     if (!await mx.client.isSynapseAdministrator()) {
       ScaffoldMessenger.of(context).showSnackBar(

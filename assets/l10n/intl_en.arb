@@ -1885,6 +1885,11 @@
         "type": "String",
         "placeholders": {}
     },
+    "recoverMessageDescription": "The original content of this deleted message will be fetched from the homeserver using admin privileges.",
+    "@recoverMessageDescription": {
+        "type": "String",
+        "placeholders": {}
+    },
     "requestPermission": "Request permission",
     "@requestPermission": {
         "type": "String",

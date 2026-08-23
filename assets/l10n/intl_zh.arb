@@ -3457,6 +3457,11 @@
     "type": "String",
     "placeholders": {}
   },
+  "recoverMessageDescription": "将使用服务器管理员权限从主服务器获取此已删除消息的原始内容。",
+  "@recoverMessageDescription": {
+    "type": "String",
+    "placeholders": {}
+  },
   "retry": "重试",
   "@retry": {
     "type": "String",
