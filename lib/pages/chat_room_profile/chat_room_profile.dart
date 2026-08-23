@@ -8,11 +8,16 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
+import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 import 'chat_room_profile_view.dart';
+
+enum _AvatarChoice { file, history }
 
 /// Edits the own member state of a single room, so that name and avatar can
 /// differ from the account profile just for this chat (the equivalent of the
@@ -62,6 +67,33 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
   }
 
   Future<void> changeAvatar() async {
+    final action = await showModalActionPopup<_AvatarChoice>(
+      context: context,
+      title: L10n.of(context).changeYourAvatar,
+      cancelLabel: L10n.of(context).cancel,
+      actions: [
+        AdaptiveModalAction(
+          value: _AvatarChoice.file,
+          label: L10n.of(context).openGallery,
+          isDefaultAction: true,
+          icon: const Icon(Icons.photo_outlined),
+        ),
+        AdaptiveModalAction(
+          value: _AvatarChoice.history,
+          label: L10n.of(context).avatarHistory,
+          icon: const Icon(Icons.history_outlined),
+        ),
+      ],
+    );
+    if (!mounted) return;
+    if (action == _AvatarChoice.history) {
+      final mxc = await showAvatarHistoryPicker(context);
+      if (mxc == null || !mounted) return;
+      await _applyPatch({'avatar_url': mxc});
+      await AvatarHistory.record(mxc);
+      return;
+    }
+    if (action != _AvatarChoice.file) return;
     final result = await selectFiles(context, type: FileType.image);
     final pickedFile = result.firstOrNull;
     if (pickedFile == null || !mounted) return;
@@ -82,6 +114,7 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
     );
     if (mxc.error != null || !mounted) return;
     await _applyPatch({'avatar_url': mxc.result!.toString()});
+    await AvatarHistory.record(mxc.result!.toString());
   }
 
   Future<void> removeAvatar() => _applyPatch({'avatar_url': null});

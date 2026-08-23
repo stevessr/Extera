@@ -4345,5 +4345,50 @@
   "@resetToGlobalProfile": {
     "type": "String",
     "placeholder": {}
+  },
+  "addToMyStickers": "添加到个人贴纸",
+  "@addToMyStickers": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "setAsMyGlobalAvatar": "设为我的全局头像",
+  "@setAsMyGlobalAvatar": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "setAsMyRoomAvatar": "设为我在此房间的头像",
+  "@setAsMyRoomAvatar": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "setAsRoomIcon": "设为房间图标",
+  "@setAsRoomIcon": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "setAsSpaceIcon": "设为空间图标",
+  "@setAsSpaceIcon": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "chooseSpace": "选择一个空间",
+  "@chooseSpace": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "avatarHistory": "使用历史头像",
+  "@avatarHistory": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "noAvatarHistory": "暂无本地缓存的历史头像",
+  "@noAvatarHistory": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "addedToMyStickers": "已添加到个人贴纸",
+  "@addedToMyStickers": {
+    "type": "String",
+    "placeholder": {}
   }
 }

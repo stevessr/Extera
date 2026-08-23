@@ -89,6 +89,13 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                   ),
                 ),
               ),
+            IconButton(
+              style: iconButtonStyle,
+              icon: const Icon(Icons.more_vert),
+              onPressed: () => widget.controller.showMoreActions(context),
+              color: Colors.white,
+              tooltip: L10n.of(context).more,
+            ),
           ],
         ),
         body: HoverBuilder(

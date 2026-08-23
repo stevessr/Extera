@@ -15,6 +15,8 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -295,6 +297,11 @@ class SettingsController extends State<Settings> {
         label: L10n.of(context).openGallery,
         icon: const Icon(Icons.photo_outlined),
       ),
+      AdaptiveModalAction(
+        value: AvatarAction.history,
+        label: L10n.of(context).avatarHistory,
+        icon: const Icon(Icons.history_outlined),
+      ),
       if (profile?.avatarUrl != null)
         AdaptiveModalAction(
           value: AvatarAction.remove,
@@ -312,6 +319,25 @@ class SettingsController extends State<Settings> {
             actions: actions,
           );
     if (action == null) return;
+    if (action == AvatarAction.history) {
+      final mxc = await showAvatarHistoryPicker(context);
+      if (mxc == null || !mounted) return;
+      final success = await showFutureLoadingDialog(
+        context: context,
+        future: () async {
+          await Matrix.of(context).client.setProfileField(
+            Matrix.of(context).client.userID!,
+            'avatar_url',
+            {'avatar_url': mxc},
+          );
+          await AvatarHistory.record(mxc);
+        },
+      );
+      if (success.error == null) {
+        updateProfile();
+      }
+      return;
+    }
     final matrix = Matrix.of(context);
     if (action == AvatarAction.remove) {
       final success = await showFutureLoadingDialog(
@@ -351,7 +377,19 @@ class SettingsController extends State<Settings> {
     }
     final success = await showFutureLoadingDialog(
       context: context,
-      future: () => matrix.client.setAvatar(file),
+      future: () async {
+        final mxc = await matrix.client.uploadContent(
+          file.bytes,
+          filename: file.name,
+          contentType: file.mimeType,
+        );
+        await matrix.client.setProfileField(
+          matrix.client.userID!,
+          'avatar_url',
+          {'avatar_url': mxc.toString()},
+        );
+        await AvatarHistory.record(mxc.toString());
+      },
     );
     if (success.error == null) {
       updateProfile();
@@ -506,7 +544,7 @@ class SettingsController extends State<Settings> {
   }
 }
 
-enum AvatarAction { camera, file, remove }
+enum AvatarAction { camera, file, remove, history }
 
 class _TimezonePickerDialog extends StatefulWidget {
   final String? detectedTimezone;

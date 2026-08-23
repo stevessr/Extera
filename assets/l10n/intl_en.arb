@@ -4196,5 +4196,50 @@
     "@resetToGlobalProfile": {
         "type": "String",
         "placeholder": {}
+    },
+    "addToMyStickers": "Add to my stickers",
+    "@addToMyStickers": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "setAsMyGlobalAvatar": "Set as my global avatar",
+    "@setAsMyGlobalAvatar": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "setAsMyRoomAvatar": "Set as my avatar in this room",
+    "@setAsMyRoomAvatar": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "setAsRoomIcon": "Set as room icon",
+    "@setAsRoomIcon": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "setAsSpaceIcon": "Set as space icon",
+    "@setAsSpaceIcon": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "chooseSpace": "Choose a space",
+    "@chooseSpace": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "avatarHistory": "Use past avatars",
+    "@avatarHistory": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "noAvatarHistory": "No past avatars cached yet",
+    "@noAvatarHistory": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "addedToMyStickers": "Added to my stickers",
+    "@addedToMyStickers": {
+        "type": "String",
+        "placeholder": {}
     }
 }
