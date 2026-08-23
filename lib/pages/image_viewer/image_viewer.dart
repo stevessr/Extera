@@ -4,6 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
+import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
+import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/widgets/future_loading_dialog.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/favourite_stickers_extension.dart';
+import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/pages/image_viewer/image_viewer_view.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
@@ -105,6 +111,208 @@ class ImageViewerController extends State<ImageViewer> {
 
   /// Save this file with a system call.
   void shareFileAction(BuildContext context) => currentEvent.shareFile(context);
+
+  /// The original attachment mxc of the currently viewed image, or null for
+  /// events without an attachment (e.g. stickers sent without url are rare;
+  /// videos/images always have one).
+  Uri? get _attachmentMxc => currentEvent.attachmentMxcUrl;
+
+  /// Opens the extended actions sheet: reuse this media as sticker or as any
+  /// kind of avatar without re-uploading it.
+  void showMoreActions(BuildContext context) {
+    final event = currentEvent;
+    final mxc = _attachmentMxc;
+    final client = event.room.client;
+    final room = event.room;
+
+    void run(
+      String message,
+      Future<void> Function() task, {
+      bool recordHistory = false,
+    }) {
+      _runAction(context, mxc, message, task, recordHistory);
+    }
+
+    final actions = <Widget>[
+      if (mxc != null)
+        ListTile(
+          leading: const Icon(Icons.sticky_note_2_outlined),
+          title: Text(L10n.of(context).addToMyStickers),
+          onTap: () {
+            Navigator.of(context).pop();
+            run(L10n.of(context).addedToMyStickers, () async {
+              await client.addFavouriteSticker(
+                ImagePackImageContent.fromJson({
+                  'url': mxc.toString(),
+                  'body':
+                      event.content.tryGet<String>('filename') ?? event.body,
+                  if (event.infoMap.isNotEmpty) 'info': event.infoMap,
+                }),
+              );
+            });
+          },
+        ),
+      if (mxc != null)
+        ListTile(
+          leading: const Icon(Icons.account_circle_outlined),
+          title: Text(L10n.of(context).setAsMyGlobalAvatar),
+          onTap: () {
+            Navigator.of(context).pop();
+            run(
+              L10n.of(context).setAsMyGlobalAvatar,
+              () => client.setProfileField(client.userID!, 'avatar_url', {
+                'avatar_url': mxc.toString(),
+              }),
+              recordHistory: true,
+            );
+          },
+        ),
+      if (mxc != null &&
+          room.membership == Membership.join &&
+          room.canChangeStateEvent(EventTypes.RoomMember))
+        ListTile(
+          leading: const Icon(Icons.face_outlined),
+          title: Text(L10n.of(context).setAsMyRoomAvatar),
+          onTap: () {
+            Navigator.of(context).pop();
+            run(
+              L10n.of(context).setAsMyRoomAvatar,
+              () => _setOwnRoomAvatar(room, mxc),
+              recordHistory: true,
+            );
+          },
+        ),
+      if (mxc != null && room.canChangeStateEvent(EventTypes.RoomAvatar))
+        ListTile(
+          leading: const Icon(Icons.image_outlined),
+          title: Text(L10n.of(context).setAsRoomIcon),
+          onTap: () {
+            Navigator.of(context).pop();
+            run(
+              L10n.of(context).setAsRoomIcon,
+              () => room.client.setRoomStateWithKey(
+                room.id,
+                EventTypes.RoomAvatar,
+                '',
+                {'url': mxc.toString()},
+              ),
+              recordHistory: true,
+            );
+          },
+        ),
+      if (mxc != null) ..._spaceTiles(context, mxc),
+    ];
+
+    showAdaptiveBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: actions),
+        ),
+      ),
+    );
+  }
+
+  /// Runs [task] behind a loading dialog, records the attachment in the
+  /// avatar history when [recordHistory] is set and shows [message] on
+  /// success.
+  Future<void> _runAction(
+    BuildContext context,
+    Uri? mxc,
+    String message,
+    Future<void> Function() task,
+    bool recordHistory,
+  ) async {
+    final result = await showFutureLoadingDialog(
+      context: context,
+      future: () async {
+        await task();
+        if (recordHistory && mxc != null) {
+          await AvatarHistory.record(mxc.toString());
+        }
+      },
+    );
+    if (!context.mounted || result.error != null) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  List<Widget> _spaceTiles(BuildContext context, Uri mxc) {
+    final client = currentEvent.room.client;
+    final spaces = client.rooms
+        .where(
+          (room) =>
+              room.isSpace &&
+              room.membership == Membership.join &&
+              room.canChangeStateEvent(EventTypes.RoomAvatar),
+        )
+        .toList();
+    if (spaces.isEmpty) return const [];
+    return [
+      ListTile(
+        leading: const Icon(Icons.workspaces_outlined),
+        title: Text(L10n.of(context).setAsSpaceIcon),
+        onTap: () async {
+          final space = spaces.length == 1
+              ? spaces.single
+              : await showAdaptiveBottomSheet<Room>(
+                  context: context,
+                  builder: (sheetContext) => SafeArea(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: spaces.length + 1,
+                      itemBuilder: (context, i) {
+                        if (i == 0) {
+                          return ListTile(
+                            title: Text(L10n.of(context).chooseSpace),
+                          );
+                        }
+                        final space = spaces[i - 1];
+                        return ListTile(
+                          leading: Avatar(
+                            mxContent: space.avatar,
+                            name: space.getLocalizedDisplayname(),
+                          ),
+                          title: Text(space.getLocalizedDisplayname()),
+                          onTap: () => Navigator.of(context).pop(space),
+                        );
+                      },
+                    ),
+                  ),
+                );
+          if (!context.mounted || space == null) return;
+          Navigator.of(context).pop();
+          _runAction(
+            context,
+            mxc,
+            L10n.of(context).setAsSpaceIcon,
+            () => space.client.setRoomStateWithKey(
+              space.id,
+              EventTypes.RoomAvatar,
+              '',
+              {'url': mxc.toString()},
+            ),
+            true,
+          );
+        },
+      ),
+    ];
+  }
+
+  Future<void> _setOwnRoomAvatar(Room room, Uri mxc) async {
+    final userId = room.client.userID!;
+    final content =
+        room.getState(EventTypes.RoomMember, userId)?.content.copy() ??
+        <String, Object?>{'membership': room.membership.name};
+    content['avatar_url'] = mxc.toString();
+    await room.client.setRoomStateWithKey(
+      room.id,
+      EventTypes.RoomMember,
+      userId,
+      content,
+    );
+  }
 
   static const maxScaleFactor = 1.5;
 

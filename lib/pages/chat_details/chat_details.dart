@@ -15,6 +15,8 @@ import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
@@ -150,6 +152,11 @@ class ChatDetailsController extends State<ChatDetails> {
         label: L10n.of(context).openGallery,
         icon: const Icon(Icons.photo_outlined),
       ),
+      AdaptiveModalAction(
+        value: AvatarAction.history,
+        label: L10n.of(context).avatarHistory,
+        icon: const Icon(Icons.history_outlined),
+      ),
       if (room?.avatar != null)
         AdaptiveModalAction(
           value: AvatarAction.remove,
@@ -167,6 +174,23 @@ class ChatDetailsController extends State<ChatDetails> {
             actions: actions,
           );
     if (action == null) return;
+    if (action == AvatarAction.history) {
+      final mxc = await showAvatarHistoryPicker(context);
+      if (mxc == null || !mounted) return;
+      await showFutureLoadingDialog(
+        context: context,
+        future: () async {
+          await room!.client.setRoomStateWithKey(
+            room.id,
+            EventTypes.RoomAvatar,
+            '',
+            {'url': mxc},
+          );
+          await AvatarHistory.record(mxc);
+        },
+      );
+      return;
+    }
     if (action == AvatarAction.remove) {
       await showFutureLoadingDialog(
         context: context,
@@ -178,7 +202,20 @@ class ChatDetailsController extends State<ChatDetails> {
     if (file == null) return;
     await showFutureLoadingDialog(
       context: context,
-      future: () => room!.setAvatar(file),
+      future: () async {
+        final mxc = await room!.client.uploadContent(
+          file.bytes,
+          filename: file.name,
+          contentType: file.mimeType,
+        );
+        await room.client.setRoomStateWithKey(
+          room.id,
+          EventTypes.RoomAvatar,
+          '',
+          {'url': mxc.toString()},
+        );
+        await AvatarHistory.record(mxc.toString());
+      },
     );
   }
 
@@ -202,6 +239,11 @@ class ChatDetailsController extends State<ChatDetails> {
         label: L10n.of(context).openGallery,
         icon: const Icon(Icons.photo_outlined),
       ),
+      AdaptiveModalAction(
+        value: AvatarAction.history,
+        label: L10n.of(context).avatarHistory,
+        icon: const Icon(Icons.history_outlined),
+      ),
       if (currentAvatar != null && currentAvatar.toString().isNotEmpty)
         AdaptiveModalAction(
           value: AvatarAction.remove,
@@ -219,6 +261,19 @@ class ChatDetailsController extends State<ChatDetails> {
             actions: actions,
           );
     if (action == null) return;
+    if (action == AvatarAction.history) {
+      final mxc = await showAvatarHistoryPicker(context);
+      if (mxc == null || !mounted) return;
+      await showFutureLoadingDialog(
+        context: context,
+        future: () async {
+          await _setOwnRoomMemberProfile(room, avatarUrl: mxc);
+          await AvatarHistory.record(mxc);
+        },
+      );
+      return;
+    }
+
     if (action == AvatarAction.remove) {
       await showFutureLoadingDialog(
         context: context,
@@ -240,6 +295,7 @@ class ChatDetailsController extends State<ChatDetails> {
           room,
           avatarUrl: uploadResponse.toString(),
         );
+        await AvatarHistory.record(uploadResponse.toString());
       },
     );
   }
