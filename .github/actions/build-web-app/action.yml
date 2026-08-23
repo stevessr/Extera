@@ -88,6 +88,14 @@ runs:
       if: ${{ inputs.mode == 'release' }}
       shell: bash
       run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
+    # The matrix SDK native-implementations web worker is a pure Dart entry
+    # point compiled to JS; it serves image shrinking and metadata
+    # calculation off the main thread for both the js and wasm bundles.
+    - name: Compile native implementations web worker
+      shell: bash
+      run: |
+        dart compile js --minify -O4 \
+          -o build/web/native_impl_worker.dart.js web/native_impl_worker.dart
 
     # dart2wasm requires cross-origin isolation; ship COOP/COEP headers with
     # the bundle so hosts that honour them (Cloudflare Workers/Pages) serve it

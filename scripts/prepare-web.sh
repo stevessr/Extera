@@ -41,3 +41,10 @@ unzip -o native_imaging.zip
 mv js/* web/
 rmdir js
 rm native_imaging.zip
+
+# Compile the matrix SDK native-implementations web worker (image resizing
+# and metadata calculation off the main thread). Pure Dart entry point, so
+# it is compiled to JS and serves both the js and wasm bundles. Output is
+# gitignored; the CI build-web-app action compiles it into build/web itself.
+dart compile js --minify -O4 \
+  -o web/native_impl_worker.dart.js web/native_impl_worker.dart

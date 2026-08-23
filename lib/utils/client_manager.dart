@@ -96,8 +96,14 @@ abstract class ClientManager {
     await store.setStringList(clientNamespace, clientNamesList);
   }
 
+  /// On the web this is backed by a dedicated dart2js web worker
+  /// (web/native_impl_worker.dart, compiled to native_impl_worker.dart.js)
+  /// so image shrinking and metadata calculation run off the main thread —
+  /// real parallelism, since dart2wasm isolates stay on the UI thread.
+  /// The compiled worker script ships with every js and wasm build (see
+  /// scripts/prepare-web.sh and the CI build-web-app action).
   static NativeImplementations get nativeImplementations => kIsWeb
-      ? const NativeImplementationsDummy()
+      ? NativeImplementationsWebWorker(Uri.parse('native_impl_worker.dart.js'))
       : NativeImplementationsIsolate(
           compute,
           vodozemacInit: () => vod.init(wasmPath: './assets/assets/vodozemac/'),

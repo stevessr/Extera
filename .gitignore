@@ -17,6 +17,7 @@ prime
 # libolm package
 web/Imaging.js
 web/Imaging.wasm
+web/native_impl_worker.dart.js
 /lib/generated
 
 /appimage/Extera.AppDir
@@ -83,3 +84,5 @@ lib/generated
 
 
 packages/flutter_keyboard_visibility_web/pubspec.lock
+web/native_impl_worker.dart.js.deps
+web/native_impl_worker.dart.js.map
