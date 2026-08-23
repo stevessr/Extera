@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -30,6 +31,7 @@ class ImageBubble extends StatelessWidget {
   final void Function()? onTap;
   final Timeline? timeline;
   final InlineSpan? trailingSpan;
+  final MessageLayout layout;
 
   final bool ownMessage;
   final bool previousEventSameSender;
@@ -64,6 +66,7 @@ class ImageBubble extends StatelessWidget {
     this.onRevealHiddenMedia,
     this.contentWarning,
     this.trailingSpan,
+    required this.layout,
     super.key,
   });
 
@@ -223,31 +226,33 @@ class ImageBubble extends StatelessWidget {
     final isHidden = contentWarning != null && !showHiddenMedia;
     final textColor = this.textColor;
 
-    if (ownMessage) {
-      borderRadius = borderRadius.copyWith(
-        topRight: nextEventSameSender ? hardCorner : roundedCorner,
-        bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
-      );
-    } else {
-      borderRadius = borderRadius.copyWith(
-        topLeft: nextEventSameSender ? hardCorner : roundedCorner,
-        bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
-      );
-    }
+    if (layout != .modern) {
+      if (ownMessage) {
+        borderRadius = borderRadius.copyWith(
+          topRight: nextEventSameSender ? hardCorner : roundedCorner,
+          bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
+        );
+      } else {
+        borderRadius = borderRadius.copyWith(
+          topLeft: nextEventSameSender ? hardCorner : roundedCorner,
+          bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
+        );
+      }
 
-    if (fileDescription != null) {
-      borderRadius = borderRadius.copyWith(
-        bottomLeft: hardCorner,
-        bottomRight: hardCorner,
-      );
-    }
+      if (fileDescription != null) {
+        borderRadius = borderRadius.copyWith(
+          bottomLeft: hardCorner,
+          bottomRight: hardCorner,
+        );
+      }
 
-    if (event.inReplyToEventId(includingFallback: false) != null &&
-        fileDescription != null) {
-      borderRadius = borderRadius.copyWith(
-        topLeft: hardCorner,
-        topRight: hardCorner,
-      );
+      if (event.inReplyToEventId(includingFallback: false) != null &&
+          fileDescription != null) {
+        borderRadius = borderRadius.copyWith(
+          topLeft: hardCorner,
+          topRight: hardCorner,
+        );
+      }
     }
 
     return Column(
@@ -255,10 +260,11 @@ class ImageBubble extends StatelessWidget {
       spacing: 8,
       children: [
         Padding(
-          padding: const .all(2),
+          padding: .all(layout == .modern ? 0 : 2),
           child: Container(
             decoration: BoxDecoration(
-              color: event.messageType == MessageTypes.Sticker
+              color:
+                  event.messageType == MessageTypes.Sticker || layout == .modern
                   ? Colors.transparent
                   : theme.colorScheme.surfaceContainerHighest,
               borderRadius: borderRadius,
@@ -271,6 +277,7 @@ class ImageBubble extends StatelessWidget {
                 aspectRatio: _aspectRatio,
                 child: InkWell(
                   onTap: () => _onTap(context),
+                  borderRadius: borderRadius,
                   child: Hero(
                     tag: event.eventId,
                     child: Align(
@@ -302,7 +309,10 @@ class ImageBubble extends StatelessWidget {
           SizedBox(
             width: width,
             child: Padding(
-              padding: const .symmetric(horizontal: 16, vertical: 4),
+              padding: .symmetric(
+                horizontal: layout == .modern ? 0 : 16,
+                vertical: 4,
+              ),
               child: HtmlMessage(
                 html: fileDescription,
                 textColor: textColor,

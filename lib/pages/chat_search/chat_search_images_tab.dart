@@ -145,6 +145,7 @@ class ChatSearchImagesTab extends StatelessWidget {
                           event,
                           theme.colorScheme.onSurface,
                           theme.colorScheme.primary,
+                          layout: .bubbles,
                         ),
                       );
                     }

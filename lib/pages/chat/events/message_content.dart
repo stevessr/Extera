@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -37,7 +38,7 @@ class MessageContent extends StatelessWidget {
   final BorderRadius borderRadius;
   final Timeline timeline;
   final bool selectable;
-  final bool useBubbleLayout;
+  final MessageLayout layout;
 
   final bool ownMessage;
   final bool previousEventSameSender;
@@ -64,7 +65,7 @@ class MessageContent extends StatelessWidget {
     this.ownMessage = false,
     this.previousEventSameSender = false,
     this.nextEventSameSender = false,
-    this.useBubbleLayout = true,
+    this.layout = .bubbles,
     this.selectable = false,
     this.loadMedia = false,
     this.onLoadMedia,
@@ -187,6 +188,7 @@ class MessageContent extends StatelessWidget {
               imageWidth: imageWidth,
               height: h == null ? 512.0 : min(512, max(256.0, h.toDouble())),
               fit: fit,
+              layout: layout,
               // borderRadius: borderRadius,
               timeline: timeline,
               textColor: textColor,
@@ -226,6 +228,7 @@ class MessageContent extends StatelessWidget {
               event,
               textColor: textColor,
               linkColor: linkColor,
+              layout: layout,
               trailingSpan: trailingSpan,
               loadMedia: loadMedia,
               showHiddenMedia: showHiddenMedia,
@@ -244,6 +247,7 @@ class MessageContent extends StatelessWidget {
               trailingSpan: trailingSpan,
               onRevealHiddenMedia: onRevealHiddenMedia,
               contentWarning: contentWarning,
+              layout: layout,
               ownMessage: ownMessage,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
@@ -253,6 +257,7 @@ class MessageContent extends StatelessWidget {
               event,
               textColor: textColor,
               linkColor: linkColor,
+              layout: layout,
               trailingSpan: trailingSpan,
               loadMedia: loadMedia,
               showHiddenMedia: showHiddenMedia,
@@ -275,7 +280,7 @@ class MessageContent extends StatelessWidget {
               }
               return Padding(
                 padding: .symmetric(
-                  horizontal: useBubbleLayout ? 16 : 0,
+                  horizontal: layout != .modern ? 16 : 0,
                   vertical: 2,
                 ),
                 child: HtmlMessage(
@@ -438,7 +443,7 @@ class MessageContent extends StatelessWidget {
             final textScaler = MediaQuery.textScalerOf(context);
             return Padding(
               padding: .symmetric(
-                horizontal: useBubbleLayout ? 16 : 0,
+                horizontal: layout != .modern ? 16 : 0,
                 vertical: 2,
               ),
               child: selectable

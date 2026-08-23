@@ -781,7 +781,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                 previousEventSameSender:
                                                     previousEventSameSender,
                                                 ownMessage: ownMessage,
-                                                useBubbleLayout: true,
+                                                layout: .bubbles,
                                                 selectable:
                                                     PlatformInfos.isMobile
                                                     ? widget.longPressSelect

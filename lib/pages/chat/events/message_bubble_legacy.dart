@@ -741,7 +741,7 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
                                                   });
                                                 },
                                                 contentWarning: contentWarning,
-                                                useBubbleLayout: true,
+                                                layout: .bubblesLegacy,
                                                 selectable:
                                                     PlatformInfos.isMobile
                                                     ? widget.longPressSelect

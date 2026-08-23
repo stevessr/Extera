@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,6 +29,7 @@ class EventVideoPlayer extends StatelessWidget {
   final bool ownMessage;
   final bool nextEventSameSender;
   final bool previousEventSameSender;
+  final MessageLayout layout;
 
   final bool showHiddenMedia;
   final void Function()? onRevealHiddenMedia;
@@ -46,6 +48,7 @@ class EventVideoPlayer extends StatelessWidget {
     this.showHiddenMedia = false,
     this.onRevealHiddenMedia,
     this.contentWarning,
+    required this.layout,
     super.key,
   });
 
@@ -122,31 +125,33 @@ class EventVideoPlayer extends StatelessWidget {
         ? null
         : Duration(milliseconds: durationInt);
 
-    if (ownMessage) {
-      borderRadius = borderRadius.copyWith(
-        topRight: nextEventSameSender ? hardCorner : roundedCorner,
-        bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
-      );
-    } else {
-      borderRadius = borderRadius.copyWith(
-        topLeft: nextEventSameSender ? hardCorner : roundedCorner,
-        bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
-      );
-    }
+    if (layout != .modern) {
+      if (ownMessage) {
+        borderRadius = borderRadius.copyWith(
+          topRight: nextEventSameSender ? hardCorner : roundedCorner,
+          bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
+        );
+      } else {
+        borderRadius = borderRadius.copyWith(
+          topLeft: nextEventSameSender ? hardCorner : roundedCorner,
+          bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
+        );
+      }
 
-    if (fileDescription != null) {
-      borderRadius = borderRadius.copyWith(
-        bottomLeft: hardCorner,
-        bottomRight: hardCorner,
-      );
-    }
+      if (fileDescription != null) {
+        borderRadius = borderRadius.copyWith(
+          bottomLeft: hardCorner,
+          bottomRight: hardCorner,
+        );
+      }
 
-    if (event.inReplyToEventId(includingFallback: false) != null &&
-        fileDescription != null) {
-      borderRadius = borderRadius.copyWith(
-        topLeft: hardCorner,
-        topRight: hardCorner,
-      );
+      if (event.inReplyToEventId(includingFallback: false) != null &&
+          fileDescription != null) {
+        borderRadius = borderRadius.copyWith(
+          topLeft: hardCorner,
+          topRight: hardCorner,
+        );
+      }
     }
 
     return Column(
@@ -154,7 +159,7 @@ class EventVideoPlayer extends StatelessWidget {
       spacing: 8,
       children: [
         Padding(
-          padding: const .all(2),
+          padding: .all(layout == .modern ? 0 : 2),
           child: Material(
             clipBehavior: .antiAlias,
             shape: RoundedRectangleBorder(borderRadius: borderRadius),
@@ -263,7 +268,10 @@ class EventVideoPlayer extends StatelessWidget {
           SizedBox(
             width: width,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: .symmetric(
+                horizontal: layout == .modern ? 0 : 16,
+                vertical: 4,
+              ),
               child: HtmlMessage(
                 html: fileDescription,
                 textColor: textColor,

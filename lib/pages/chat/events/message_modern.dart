@@ -493,7 +493,7 @@ class _MessageModernState extends State<MessageModern> {
                                       });
                                     },
                                     contentWarning: contentWarning,
-                                    useBubbleLayout: false,
+                                    layout: .modern,
                                     borderRadius: BorderRadius.zero,
                                     selectable: PlatformInfos.isMobile
                                         ? widget.longPressSelect
@@ -624,11 +624,7 @@ class _MessageModernState extends State<MessageModern> {
           row,
           if (showReactionsRow)
             Padding(
-              padding: const EdgeInsets.only(
-                top: 4.0,
-                left: 24 + 16.0,
-                right: 12.0,
-              ),
+              padding: const .only(top: 2.0, left: 52.0, right: 12.0),
               child: MessageReactions(
                 event,
                 timeline,
