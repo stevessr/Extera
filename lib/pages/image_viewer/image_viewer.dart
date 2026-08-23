@@ -7,6 +7,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/utils/client_profile_extension.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/favourite_stickers_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -14,6 +15,7 @@ import 'package:extera_next/pages/image_viewer/image_viewer_view.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
+import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import '../../utils/matrix_sdk_extensions/event_extension.dart';
 
 class ImageViewer extends StatefulWidget {
@@ -125,13 +127,11 @@ class ImageViewerController extends State<ImageViewer> {
     final client = event.room.client;
     final room = event.room;
 
-    void run(
+    Future<void> run(
       String message,
       Future<void> Function() task, {
       bool recordHistory = false,
-    }) {
-      _runAction(context, mxc, message, task, recordHistory);
-    }
+    }) => _runAction(context, mxc, message, task, recordHistory);
 
     final actions = <Widget>[
       if (mxc != null)
@@ -154,18 +154,34 @@ class ImageViewerController extends State<ImageViewer> {
         ),
       if (mxc != null)
         ListTile(
-          leading: const Icon(Icons.account_circle_outlined),
-          title: Text(L10n.of(context).setAsMyGlobalAvatar),
+          leading: const Icon(Icons.history),
+          title: Text(L10n.of(context).addToAvatarHistory),
           onTap: () {
             Navigator.of(context).pop();
             run(
-              L10n.of(context).setAsMyGlobalAvatar,
-              () => client.setProfileField(client.userID!, 'avatar_url', {
-                'avatar_url': mxc.toString(),
-              }),
-              recordHistory: true,
+              L10n.of(context).addedToAvatarHistory,
+              () => AvatarHistory.record(mxc.toString()),
             );
           },
+        ),
+      if (mxc != null)
+        ListTile(
+          leading: const Icon(Icons.account_circle_outlined),
+          title: Text(L10n.of(context).setAsMyGlobalAvatar),
+          onTap: () => _confirmAndRun(
+            context,
+            L10n.of(context).setAsMyGlobalAvatar,
+            () => run(
+              L10n.of(context).setAsMyGlobalAvatar,
+              () async {
+                await client.setProfileField(client.userID!, 'avatar_url', {
+                  'avatar_url': mxc.toString(),
+                });
+                await client.refreshOwnProfile();
+              },
+              recordHistory: true,
+            ),
+          ),
         ),
       if (mxc != null &&
           room.membership == Membership.join &&
@@ -173,22 +189,24 @@ class ImageViewerController extends State<ImageViewer> {
         ListTile(
           leading: const Icon(Icons.face_outlined),
           title: Text(L10n.of(context).setAsMyRoomAvatar),
-          onTap: () {
-            Navigator.of(context).pop();
-            run(
+          onTap: () => _confirmAndRun(
+            context,
+            L10n.of(context).setAsMyRoomAvatar,
+            () => run(
               L10n.of(context).setAsMyRoomAvatar,
               () => _setOwnRoomAvatar(room, mxc),
               recordHistory: true,
-            );
-          },
+            ),
+          ),
         ),
       if (mxc != null && room.canChangeStateEvent(EventTypes.RoomAvatar))
         ListTile(
           leading: const Icon(Icons.image_outlined),
           title: Text(L10n.of(context).setAsRoomIcon),
-          onTap: () {
-            Navigator.of(context).pop();
-            run(
+          onTap: () => _confirmAndRun(
+            context,
+            L10n.of(context).setAsRoomIcon,
+            () => run(
               L10n.of(context).setAsRoomIcon,
               () => room.client.setRoomStateWithKey(
                 room.id,
@@ -197,20 +215,46 @@ class ImageViewerController extends State<ImageViewer> {
                 {'url': mxc.toString()},
               ),
               recordHistory: true,
-            );
-          },
+            ),
+          ),
         ),
       if (mxc != null) ..._spaceTiles(context, mxc),
     ];
 
     showAdaptiveBottomSheet<void>(
       context: context,
-      builder: (sheetContext) => SafeArea(
-        child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: actions),
+      builder: (sheetContext) => Material(
+        // Opaque surface so options stay readable over the dark viewer.
+        color: Theme.of(sheetContext).colorScheme.surface,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: actions),
+          ),
         ),
       ),
     );
+  }
+
+  /// Asks the user to confirm applying the current image as [title].
+  Future<bool> _confirmApply(BuildContext context, String title) async =>
+      OkCancelResult.ok ==
+      await showOkCancelAlertDialog(
+        context: context,
+        title: title,
+        message: L10n.of(context).applyImageConfirmation,
+      );
+
+  /// Confirms, closes the actions sheet, then runs [action]. Cancelling
+  /// keeps the sheet open.
+  Future<void> _confirmAndRun(
+    BuildContext context,
+    String title,
+    Future<void> Function() action,
+  ) async {
+    if (!await _confirmApply(context, title)) return;
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+    await action();
   }
 
   /// Runs [task] behind a loading dialog, records the attachment in the
@@ -258,7 +302,8 @@ class ImageViewerController extends State<ImageViewer> {
               ? spaces.single
               : await showAdaptiveBottomSheet<Room>(
                   context: context,
-                  builder: (sheetContext) => SafeArea(
+                  builder: (sheetContext) => Material(
+                    color: Theme.of(sheetContext).colorScheme.surface,
                     child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: spaces.length + 1,
@@ -282,6 +327,9 @@ class ImageViewerController extends State<ImageViewer> {
                   ),
                 );
           if (!context.mounted || space == null) return;
+          if (!await _confirmApply(context, L10n.of(context).setAsSpaceIcon)) {
+            return;
+          }
           Navigator.of(context).pop();
           _runAction(
             context,
@@ -311,6 +359,16 @@ class ImageViewerController extends State<ImageViewer> {
       EventTypes.RoomMember,
       userId,
       content,
+    );
+    // Local echo so the UI updates instantly instead of waiting for the
+    // sync round trip to deliver our own state change back.
+    room.setState(
+      StrippedStateEvent(
+        type: EventTypes.RoomMember,
+        senderId: userId,
+        stateKey: userId,
+        content: content,
+      ),
     );
   }
 

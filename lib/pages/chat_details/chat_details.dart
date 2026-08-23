@@ -360,6 +360,16 @@ class ChatDetailsController extends State<ChatDetails> {
       userId,
       content,
     );
+    // Local echo so the UI updates instantly instead of waiting for the
+    // sync round trip to deliver our own state change back.
+    room.setState(
+      StrippedStateEvent(
+        type: EventTypes.RoomMember,
+        senderId: userId,
+        stateKey: userId,
+        content: content,
+      ),
+    );
   }
 
   static const fixedWidth = 360.0;

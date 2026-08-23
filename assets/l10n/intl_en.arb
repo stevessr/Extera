@@ -4406,5 +4406,25 @@
     "@addedToMyStickers": {
         "type": "String",
         "placeholder": {}
+    },
+    "addToAvatarHistory": "Add to avatar history",
+    "@addToAvatarHistory": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "addedToAvatarHistory": "Added to avatar history",
+    "@addedToAvatarHistory": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "applyImageConfirmation": "Are you sure you want to apply this image?",
+    "@applyImageConfirmation": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "roomProfileCustomHint": "These name and avatar apply only to this chat.",
+    "@roomProfileCustomHint": {
+        "type": "String",
+        "placeholder": {}
     }
 }
