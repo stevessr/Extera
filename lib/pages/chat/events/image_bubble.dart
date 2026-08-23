@@ -106,7 +106,7 @@ class ImageBubble extends StatelessWidget {
       blurhash: blurHashString,
       width: _effectiveImageWidth,
       height: _effectiveImageHeight,
-      fit: fit,
+      fit: .cover,
     );
   }
 
@@ -139,7 +139,7 @@ class ImageBubble extends StatelessWidget {
           blurhash: blurHashString,
           width: _effectiveImageWidth,
           height: _effectiveImageHeight,
-          fit: fit,
+          fit: .cover,
         ),
         Center(
           child: FilledButton.tonal(
@@ -173,7 +173,7 @@ class ImageBubble extends StatelessWidget {
           blurhash: blurHashString,
           width: _effectiveImageWidth,
           height: _effectiveImageHeight,
-          fit: fit,
+          fit: .cover,
         ),
         Center(
           child: FilledButton.tonal(

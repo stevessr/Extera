@@ -182,7 +182,7 @@ class EventVideoPlayer extends StatelessWidget {
                             blurhash: blurHash,
                             width: constraints.maxWidth,
                             height: constraints.maxHeight,
-                            fit: BoxFit.cover,
+                            fit: .cover,
                           ),
                         ),
                       )
@@ -191,7 +191,7 @@ class EventVideoPlayer extends StatelessWidget {
                         blurhash: blurHash,
                         width: bubbleWidth,
                         height: bubbleWidth * aspectRatio,
-                        fit: BoxFit.cover,
+                        fit: .cover,
                       ),
                     if (isHidden)
                       Center(
