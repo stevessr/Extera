@@ -2064,16 +2064,6 @@
       }
     }
   },
-  "allowAnimatedAvatars": "允许动态头像",
-  "@allowAnimatedAvatars": {
-    "type": "String",
-    "placeholder": {}
-  },
-  "allowAnimatedAvatarsDescription": "播放动态 WebP、APNG 和 GIF 头像",
-  "@allowAnimatedAvatarsDescription": {
-    "type": "String",
-    "placeholder": {}
-  },
   "autoplayImages": "自动播放动态贴纸和表情",
   "@autoplayImages": {
     "type": "String",
@@ -4317,5 +4307,45 @@
   "callVideocam": "视频通话",
   "callMic": "语音通话",
   "callScreenShare": "屏幕共享",
-  "lkCallSettings": "通话设置"
+  "lkCallSettings": "通话设置",
+  "customExperience": "自定义体验",
+  "@customExperience": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "customExperienceDescription": "动态头像与单个聊天的自定义设置",
+  "@customExperienceDescription": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "roomsWithCustomSettings": "应用了自定义设置的聊天",
+  "@roomsWithCustomSettings": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "noCustomSettings": "暂无自定义的聊天",
+  "@noCustomSettings": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "noCustomSettingsDetails": "设置了专属壁纸、隐私设置或聊天内个人资料的聊天会显示在这里。",
+  "@noCustomSettingsDetails": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "roomProfile": "聊天内个人资料",
+  "@roomProfile": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "roomProfileDescription": "你在此聊天中展示给其他人的昵称与头像",
+  "@roomProfileDescription": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "resetToGlobalProfile": "重置为账号资料",
+  "@resetToGlobalProfile": {
+    "type": "String",
+    "placeholder": {}
+  }
 }

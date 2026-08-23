@@ -13,7 +13,7 @@ import 'package:matrix/encryption.dart';
 import 'package:matrix/matrix.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/dialer/livekit_incoming_call.dart';
@@ -22,6 +22,7 @@ import 'package:extera_next/utils/init_with_restore.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/uia_request_manager.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/utils/voip_plugin.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/fluffy_chat_app.dart';
@@ -397,10 +398,7 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
             cancelLabel: L10n.of(context).doNotShowAgain,
           );
           if (result == OkCancelResult.ok && link != null) {
-            launchUrlString(
-              link.toString(),
-              mode: LaunchMode.externalApplication,
-            );
+            openLink(link.toString());
           }
           if (result == OkCancelResult.cancel) {
             AppSettings.showNoGoogle.setItem(true);

@@ -46,7 +46,6 @@ class Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allowAnimated = AppSettings.allowAnimatedAvatars.value;
     final theme = Theme.of(context);
 
     final fallbackLetters = _calcFallbackLetters();
@@ -73,8 +72,7 @@ class Avatar extends StatelessWidget {
               client: client,
               borderRadius: borderRadius,
               key: ValueKey(mxContent.toString()),
-              cacheKey: '${mxContent}_$size${allowAnimated ? '_anim' : ''}',
-              animated: allowAnimated,
+              cacheKey: '${mxContent}_$size',
               uri: mxContent,
               fit: BoxFit.cover,
               width: size,

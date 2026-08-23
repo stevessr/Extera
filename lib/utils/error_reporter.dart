@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:matrix/matrix.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
@@ -71,11 +71,12 @@ class ErrorReporter {
             child: Text(L10n.of(context).copy),
           ),
           FilledButton(
-            onPressed: () => launchUrl(
-              AppConfig.newIssueUrl.resolveUri(
-                Uri(queryParameters: {'template': 'bug_report.yaml'}),
-              ),
-              mode: LaunchMode.externalApplication,
+            onPressed: () => openLink(
+              AppConfig.newIssueUrl
+                  .resolveUri(
+                    Uri(queryParameters: {'template': 'bug_report.yaml'}),
+                  )
+                  .toString(),
             ),
             child: Text(L10n.of(context).report),
           ),

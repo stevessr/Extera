@@ -252,16 +252,6 @@
             }
         }
     },
-    "allowAnimatedAvatars": "Allow animated avatars",
-    "@allowAnimatedAvatars": {
-        "type": "String",
-        "placeholder": {}
-    },
-    "allowAnimatedAvatarsDescription": "Play animated WebP, APNG and GIF profile pictures",
-    "@allowAnimatedAvatarsDescription": {
-        "type": "String",
-        "placeholder": {}
-    },
     "autoplayImages": "Automatically play animated stickers and emotes",
     "@autoplayImages": {
         "type": "String",
@@ -4199,5 +4189,45 @@
     "cancelScheduledMessage": "Cancel sending",
     "sendScheduledNow": "Send now",
     "rescheduleScheduledMessage": "Reschedule",
-    "schedulingUnsupported": "Your homeserver does not support scheduled messages."
+    "schedulingUnsupported": "Your homeserver does not support scheduled messages.",
+    "customExperience": "Custom experience",
+    "@customExperience": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "customExperienceDescription": "Animated avatars and customizations for individual chats",
+    "@customExperienceDescription": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "roomsWithCustomSettings": "Chats with custom settings",
+    "@roomsWithCustomSettings": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "noCustomSettings": "Nothing customized yet",
+    "@noCustomSettings": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "noCustomSettingsDetails": "Chats with their own wallpaper, privacy settings or in-chat profile will appear here.",
+    "@noCustomSettingsDetails": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "roomProfile": "Profile in this chat",
+    "@roomProfile": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "roomProfileDescription": "Your own name and avatar as others see them in this chat",
+    "@roomProfileDescription": {
+        "type": "String",
+        "placeholder": {}
+    },
+    "resetToGlobalProfile": "Reset to account profile",
+    "@resetToGlobalProfile": {
+        "type": "String",
+        "placeholder": {}
+    }
 }

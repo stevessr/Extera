@@ -585,14 +585,6 @@ class SettingsStyleView extends StatelessWidget {
                       onChanged: controller.changeAvatarBorderRadius,
                     ),
                     const ListDivider(),
-                    SettingsSwitchListTile.adaptive(
-                      title: L10n.of(context).allowAnimatedAvatars,
-                      subtitle: L10n.of(
-                        context,
-                      ).allowAnimatedAvatarsDescription,
-                      setting: AppSettings.allowAnimatedAvatars,
-                    ),
-                    const ListDivider(),
                     ListTile(
                       title: Text(L10n.of(context).stickerScale),
                       trailing: Text('× ${AppSettings.stickerScale.value}'),

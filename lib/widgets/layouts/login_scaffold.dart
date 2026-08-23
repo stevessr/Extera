@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:particles_network/particles_network.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
@@ -117,15 +117,15 @@ class _PrivacyButtons extends StatelessWidget {
           mainAxisAlignment: mainAxisAlignment,
           children: [
             TextButton(
-              onPressed: () => launchUrlString(AppConfig.website),
+              onPressed: () => openLink(AppConfig.website),
               child: Text(L10n.of(context).website, style: shadowTextStyle),
             ),
             TextButton(
-              onPressed: () => launchUrlString(AppConfig.supportUrl),
+              onPressed: () => openLink(AppConfig.supportUrl),
               child: Text(L10n.of(context).help, style: shadowTextStyle),
             ),
             TextButton(
-              onPressed: () => launchUrlString(AppConfig.privacyUrl),
+              onPressed: () => openLink(AppConfig.privacyUrl),
               child: Text(L10n.of(context).privacy, style: shadowTextStyle),
             ),
             TextButton(

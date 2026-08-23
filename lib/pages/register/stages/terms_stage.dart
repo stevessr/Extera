@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -184,8 +184,7 @@ class _TermsStageState extends State<TermsStage> {
                                         if (policy.url.isNotEmpty) ...[
                                           const SizedBox(height: 4),
                                           InkWell(
-                                            onTap: () =>
-                                                launchUrlString(policy.url),
+                                            onTap: () => openLink(policy.url),
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),

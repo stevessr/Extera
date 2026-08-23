@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/list_divider.dart';
@@ -75,7 +75,7 @@ abstract class PlatformInfos {
                   ),
                 ),
                 title: Text(L10n.of(context).sourceCode),
-                onTap: () => launchUrlString(AppConfig.sourceCodeUrl),
+                onTap: () => openLink(AppConfig.sourceCodeUrl),
               ),
               ListDivider(color: theme.colorScheme.surfaceContainerHigh),
               ListTile(
@@ -87,7 +87,7 @@ abstract class PlatformInfos {
                   ),
                 ),
                 title: Text(L10n.of(context).supportDevelopment),
-                onTap: () => launchUrlString(AppConfig.donateUrl),
+                onTap: () => openLink(AppConfig.donateUrl),
               ),
               ListDivider(color: theme.colorScheme.surfaceContainerHigh),
               ListTile(

@@ -5,6 +5,9 @@
 - Redesign livekit call controls.
 - Use avatar placeholder design as in FluffyChat.
 - Update image messages layout.
+- Animated avatars play again when 动态头像 is enabled (originals are fetched instead of thumbnails).
+- Toggling 动态头像 no longer refreshes every avatar.
+- Add 自定义体验 settings section with per-chat customizations: in-chat profile, wallpaper and privacy.
 
 ## Extera 26.4.7
 - Fix legacy bubbles and modern message layouts.
