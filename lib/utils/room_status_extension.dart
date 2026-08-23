@@ -76,9 +76,18 @@ extension RoomStatusExtension on Room {
     return true;
   }
 
-  String? getLatestReadMessage(Timeline timeline, {String? userID}) {
-    if (timeline.events.isEmpty) return null;
-    for (final event in timeline.events.filterByVisibleInGui()) {
+  String? getLatestReadMessage(
+    Timeline timeline, {
+    String? userID,
+
+    /// Pre-filtered visible events; when omitted, [Timeline.events] is
+    /// filtered here. Callers that already hold the filtered list (e.g.
+    /// `ChatController.filteredEvents`) should pass it to avoid redoing
+    /// the same O(n) filter on every rebuild.
+    List<Event>? events,
+  }) {
+    final visibleEvents = events ?? timeline.events.filterByVisibleInGui();
+    for (final event in visibleEvents) {
       if (event.receipts
           .where(
             (receipt) => userID == null

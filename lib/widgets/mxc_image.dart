@@ -48,9 +48,6 @@ class MxcImage extends StatefulWidget {
 
   @override
   State<MxcImage> createState() => _MxcImageState();
-
-  static void clearCache(String cacheName) =>
-      _MxcImageState._imageDataCaches.remove(cacheName);
 }
 
 class _MxcImagePlaceholder extends StatelessWidget {
@@ -77,23 +74,63 @@ class _MxcImagePlaceholder extends StatelessWidget {
 }
 
 class _MxcImageState extends State<MxcImage> {
-  static final Map<String?, Map<String, Uint8List>> _imageDataCaches = {};
+  /// Global in-memory cache of decoded-input image bytes.
+  ///
+  /// Raw bytes accumulate quickly (message thumbnails, avatars, stickers),
+  /// so the cache is bounded both by total bytes and entry count; the
+  /// least-recently-used entries are dropped first. Evicted data is still
+  /// available through the on-disk HTTP/media cache, so an eviction only
+  /// costs a disk read plus decode, not a network round trip.
+  static const int _cacheMaxBytes = 64 * 1024 * 1024;
+  static const int _cacheMaxEntries = 1024;
+
+  /// Upper bound for [_tryLoad] retries on persistent IO failures.
+  static const int _maxLoadAttempts = 4;
+  static final Map<String, Uint8List> _imageDataLru = <String, Uint8List>{};
+  static int _imageDataBytes = 0;
+
   Uint8List? _imageDataNoCache;
 
-  Uint8List? get _imageData => widget.cacheKey == null
-      ? _imageDataNoCache
-      : _imageDataCache[widget.cacheKey];
-
+  Uint8List? get _imageData =>
+      widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
   set _imageData(Uint8List? data) {
     if (data == null) return;
     final cacheKey = widget.cacheKey;
-    cacheKey == null
-        ? _imageDataNoCache = data
-        : _imageDataCache[cacheKey] = data;
+    if (cacheKey == null) {
+      _imageDataNoCache = data;
+      return;
+    }
+    _store(cacheKey, data);
   }
 
-  Map<String, Uint8List> get _imageDataCache =>
-      _imageDataCaches[widget.cacheName ?? ''] ??= {};
+  String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
+
+  static Uint8List? _touch(String lruKey) {
+    final data = _imageDataLru.remove(lruKey);
+    if (data == null) return null;
+    _imageDataLru[lruKey] = data; // move to most-recently-used position
+    return data;
+  }
+
+  void _store(String cacheKey, Uint8List data) {
+    final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
+    final previous = _imageDataLru.remove(lruKey);
+    if (previous != null) {
+      _imageDataBytes -= previous.length;
+    }
+    _imageDataLru[lruKey] = data;
+    _imageDataBytes += data.length;
+    _evictOverflow();
+  }
+
+  static void _evictOverflow() {
+    while (_imageDataLru.length > _cacheMaxEntries ||
+        (_imageDataBytes > _cacheMaxBytes && _imageDataLru.isNotEmpty)) {
+      final oldestKey = _imageDataLru.keys.first;
+      final evicted = _imageDataLru.remove(oldestKey)!;
+      _imageDataBytes -= evicted.length;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,16 +239,19 @@ class _MxcImageState extends State<MxcImage> {
     }
   }
 
-  Future<void> _tryLoad() async {
+  Future<void> _tryLoad([int attempt = 0]) async {
     if (_imageData != null) {
       return;
     }
     try {
       await _load();
     } on IOException catch (_) {
+      // Stop after a bounded number of attempts: retrying forever kept
+      // burning network and CPU for permanently unavailable media.
+      if (attempt >= _maxLoadAttempts) return;
       if (!mounted) return;
       await Future.delayed(widget.retryDuration);
-      _tryLoad();
+      await _tryLoad(attempt + 1);
     }
   }
 }

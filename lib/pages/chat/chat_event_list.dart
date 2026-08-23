@@ -34,25 +34,28 @@ class ChatEventList extends StatelessWidget {
 
     final colors = [theme.secondaryBubbleColor, theme.bubbleColor];
 
+    // Reuse the controller's cached visible-event list: re-filtering the raw
+    // timeline here would redo the same O(n) pass on every rebuild.
+    final events = controller.filteredEvents;
+
     final latestReadEvent = controller.room.getLatestReadMessage(
       timeline,
       userID: controller
           .room
           .directChatMatrixID, // If in a DM, show double check mark only when read by second party. Bridged DMs may have bridge bots sending read marks after message delivery to remote platform
+      events: events,
     );
 
     final horizontalPadding = FluffyThemes.isColumnMode(context) ? 8.0 : 0.0;
-
-    final events = controller.filteredEvents;
 
     final threads = controller.room.threads;
 
     final hasWallpaper = AppSettings.wallpaperPath.value.isNotEmpty;
 
+    // eventsKeyMap is the eventId→index map over the same filteredEvents list.
     final latestReadEventIndex = latestReadEvent != null
-        ? events.indexWhere((event) => event.eventId == latestReadEvent)
+        ? (controller.eventsKeyMap[latestReadEvent] ?? -1)
         : -1;
-
     final newEventCount = controller.newEventCount.clamp(0, events.length);
     final centerEventCount = events.length - newEventCount;
 
