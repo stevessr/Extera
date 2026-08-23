@@ -44,26 +44,44 @@ abstract class ClientManager {
       clientNames.map((name) => createClient(name, store)),
     );
     if (initialize) {
-      await Future.wait(
-        clients.map(
-          (client) => client
-              .initWithRestore(
-                onMigration: () async {
-                  final l10n = await lookupL10n(
-                    PlatformDispatcher.instance.locale,
-                  );
-                  sendInitNotification(
-                    l10n.databaseMigrationTitle,
-                    l10n.databaseMigrationBody,
-                  );
-                },
-              )
-              .catchError(
-                (e, s) => Logs().e('Unable to initialize client', e, s),
-              ),
-        ),
-      );
+      await initializeClients(clients, store: store);
     }
+    return clients;
+  }
+
+  /// Runs [Client.initWithRestore] for every client and prunes clients that
+  /// are logged out. Split from [getClients] so callers can overlap the
+  /// IndexedDB-heavy client construction with independent warmup work
+  /// (vodozemac download, wallpaper load) before initializing.
+  ///
+  /// Must run after any vodozemac warmup: init unpickles the Olm account,
+  /// which requires the crypto module to be ready.
+  static Future<void> initializeClients(
+    List<Client> clients, {
+    required SharedPreferences store,
+  }) async {
+    await Future.wait(
+      clients.map(
+        (client) => client
+            .initWithRestore(
+              onMigration: () async {
+                final l10n = await lookupL10n(
+                  PlatformDispatcher.instance.locale,
+                );
+                sendInitNotification(
+                  l10n.databaseMigrationTitle,
+                  l10n.databaseMigrationBody,
+                );
+              },
+            )
+            .catchError(
+              (e, s) => Logs().e('Unable to initialize client', e, s),
+            ),
+      ),
+    );
+    final clientNames = <String>{
+      ...store.getStringList(clientNamespace) ?? const <String>[],
+    };
     if (clients.length > 1 && clients.any((c) => !c.isLogged())) {
       final loggedOutClients = clients.where((c) => !c.isLogged()).toList();
       for (final client in loggedOutClients) {
@@ -75,7 +93,6 @@ abstract class ClientManager {
       }
       await store.setStringList(clientNamespace, clientNames.toList());
     }
-    return clients;
   }
 
   static Future<void> addClientNameToStore(
@@ -116,9 +133,8 @@ abstract class ClientManager {
         vodozemacInit: () => vod.init(wasmPath: './assets/assets/vodozemac/'),
       );
 
-  static NativeImplementations get nativeImplementations => kIsWeb
-      ? _webNativeImplementations
-      : _isolateNativeImplementations;
+  static NativeImplementations get nativeImplementations =>
+      kIsWeb ? _webNativeImplementations : _isolateNativeImplementations;
 
   static Future<Client> createClient(
     String clientName,

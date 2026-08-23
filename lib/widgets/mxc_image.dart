@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -77,8 +78,38 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
+class _LruImageDataCache {
+  _LruImageDataCache(this.capacity);
+
+  final int capacity;
+  final LinkedHashMap<String, Uint8List> _entries = LinkedHashMap();
+  Uint8List? operator [](String? key) {
+    if (key == null) return null;
+    // Re-inserting on read refreshes recency.
+    final value = _entries.remove(key);
+    if (value != null) {
+      _entries[key] = value;
+    }
+    return value;
+  }
+
+  void operator []=(String key, Uint8List value) {
+    _entries
+      ..remove(key)
+      ..[key] = value;
+    while (_entries.length > capacity) {
+      _entries.remove(_entries.keys.first);
+    }
+  }
+}
+
 class _MxcImageState extends State<MxcImage> {
-  static final Map<String?, Map<String, Uint8List>> _imageDataCaches = {};
+  /// Byte-level cache for rendered thumbnails/avatars. On wasm the GC runs
+  /// on the UI thread, so an unbounded cache of image bytes turns long
+  /// sessions into GC-pause jank; cap each named cache (1024 entries is
+  /// roughly 10–20 MB of typical thumbnails).
+  static const int _imageDataCacheCapacity = 1024;
+  static final Map<String?, _LruImageDataCache> _imageDataCaches = {};
   Uint8List? _imageDataNoCache;
 
   Uint8List? get _imageData => widget.cacheKey == null
@@ -93,8 +124,10 @@ class _MxcImageState extends State<MxcImage> {
         : _imageDataCache[cacheKey] = data;
   }
 
-  Map<String, Uint8List> get _imageDataCache =>
-      _imageDataCaches[widget.cacheName ?? ''] ??= {};
+  _LruImageDataCache get _imageDataCache =>
+      _imageDataCaches[widget.cacheName ?? ''] ??= _LruImageDataCache(
+        _imageDataCacheCapacity,
+      );
 
   @override
   Widget build(BuildContext context) {

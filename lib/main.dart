@@ -65,10 +65,22 @@ void main() async {
   }
 
   Logs().nativeColors = !PlatformInfos.isIOS;
-  final store = await storeFuture;
-  await Future.wait([vodozemacFuture, initWallpaper()]);
 
-  final clients = await ClientManager.getClients(store: store);
+  // Client construction only opens IndexedDB and reads the session, while
+  // the vodozemac download and wallpaper load are independent I/O — run
+  // them concurrently instead of serializing startup behind each other.
+  // Initialization itself (which unpickles the Olm account) must wait for
+  // vodozemac, so it runs once both have finished.
+  final store = await storeFuture;
+  final clientsFuture = ClientManager.getClients(
+    store: store,
+    initialize: false,
+  );
+  final warmupFuture = Future.wait([vodozemacFuture, initWallpaper()]);
+
+  final clients = await clientsFuture;
+  await warmupFuture;
+  await ClientManager.initializeClients(clients, store: store);
 
   // If the app starts in detached mode, we assume that it is in
   // background fetch mode for processing push notifications. This is
