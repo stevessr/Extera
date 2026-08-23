@@ -22,6 +22,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
+import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import '../../widgets/matrix.dart';
 import 'settings_view.dart';
@@ -288,6 +289,7 @@ class SettingsController extends State<Settings> {
 
   void setAvatarAction() async {
     final profile = await profileFuture;
+    if (!mounted) return;
     final actions = [
       if (PlatformInfos.isMobile)
         AdaptiveModalAction(
@@ -322,7 +324,7 @@ class SettingsController extends State<Settings> {
             cancelLabel: L10n.of(context).cancel,
             actions: actions,
           );
-    if (action == null) return;
+    if (action == null || !mounted) return;
     if (action == AvatarAction.history) {
       final mxc = await showAvatarHistoryPicker(context);
       if (mxc == null || !mounted) return;
@@ -339,7 +341,7 @@ class SettingsController extends State<Settings> {
           await client.refreshOwnProfile();
         },
       );
-      if (success.error == null) {
+      if (success.error == null && mounted) {
         updateProfile();
       }
       return;
@@ -353,37 +355,13 @@ class SettingsController extends State<Settings> {
           await matrix.client.refreshOwnProfile();
         },
       );
-      if (success.error == null) {
+      if (success.error == null && mounted) {
         updateProfile();
       }
       return;
     }
-    MatrixFile file;
-    if (PlatformInfos.isMobile) {
-      final result = await ImagePicker().pickImage(
-        source: action == AvatarAction.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        imageQuality: 50,
-      );
-      if (result == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await result.readAsBytes()),
-        ),
-        name: result.path,
-      );
-    } else {
-      final result = await selectFiles(context, type: FileType.image);
-      final pickedFile = result.firstOrNull;
-      if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await pickedFile.readAsBytes()),
-        ),
-        name: pickedFile.name,
-      );
-    }
+    final file = await _pickProfileImage(action);
+    if (file == null || !mounted) return;
     final success = await showFutureLoadingDialog(
       context: context,
       future: () async {
@@ -401,13 +379,14 @@ class SettingsController extends State<Settings> {
         await matrix.client.refreshOwnProfile();
       },
     );
-    if (success.error == null) {
+    if (success.error == null && mounted) {
       updateProfile();
     }
   }
 
   void setBannerAction() async {
     final bannerUrl = await bannerFuture;
+    if (!mounted) return;
     final actions = [
       if (PlatformInfos.isMobile)
         AdaptiveModalAction(
@@ -437,7 +416,7 @@ class SettingsController extends State<Settings> {
             cancelLabel: L10n.of(context).cancel,
             actions: actions,
           );
-    if (action == null) return;
+    if (action == null || !mounted) return;
     final matrix = Matrix.of(context);
     if (action == AvatarAction.remove) {
       final success = await showFutureLoadingDialog(
@@ -447,37 +426,13 @@ class SettingsController extends State<Settings> {
           AppConfig.bannerProfileField,
         ),
       );
-      if (success.error == null) {
+      if (success.error == null && mounted) {
         updateBanner();
       }
       return;
     }
-    MatrixFile file;
-    if (PlatformInfos.isMobile) {
-      final result = await ImagePicker().pickImage(
-        source: action == AvatarAction.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        imageQuality: 50,
-      );
-      if (result == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await result.readAsBytes()),
-        ),
-        name: result.path,
-      );
-    } else {
-      final result = await selectFiles(context, type: FileType.image);
-      final pickedFile = result.firstOrNull;
-      if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await pickedFile.readAsBytes()),
-        ),
-        name: pickedFile.name,
-      );
-    }
+    final file = await _pickProfileImage(action);
+    if (file == null || !mounted) return;
     final success = await showFutureLoadingDialog(
       context: context,
       future: () async {
@@ -493,9 +448,37 @@ class SettingsController extends State<Settings> {
         );
       },
     );
-    if (success.error == null) {
+    if (success.error == null && mounted) {
       updateBanner();
     }
+  }
+
+  Future<MatrixFile?> _pickProfileImage(AvatarAction action) async {
+    final XFile? pickedFile;
+    if (PlatformInfos.isMobile) {
+      // Camera/gallery temporarily hide the app. Keep AppLock paused for the
+      // whole native picker round trip so it cannot cover and interrupt the
+      // upload flow when the activity is resumed.
+      pickedFile = await AppLock.of(context).pauseWhile(
+        ImagePicker().pickImage(
+          source: action == AvatarAction.camera
+              ? ImageSource.camera
+              : ImageSource.gallery,
+          imageQuality: 50,
+        ),
+      );
+    } else {
+      final files = await selectFiles(context, type: FileType.image);
+      pickedFile = files.firstOrNull;
+    }
+    if (pickedFile == null) return null;
+
+    return MatrixFile(
+      bytes: Uint8List.fromList(
+        ExifCleaner.removeExifData(await pickedFile.readAsBytes()),
+      ),
+      name: pickedFile.name,
+    );
   }
 
   @override
