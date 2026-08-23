@@ -209,8 +209,6 @@ class ImageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final hardCorner = Radius.circular(2);
     final roundedCorner = Radius.circular(AppConfig.borderRadius - 2);
 
@@ -262,13 +260,7 @@ class ImageBubble extends StatelessWidget {
         Padding(
           padding: .all(layout == .modern ? 0 : 2),
           child: Container(
-            decoration: BoxDecoration(
-              color:
-                  event.messageType == MessageTypes.Sticker || layout == .modern
-                  ? Colors.transparent
-                  : theme.colorScheme.surfaceContainerHighest,
-              borderRadius: borderRadius,
-            ),
+            decoration: BoxDecoration(borderRadius: borderRadius),
             clipBehavior: Clip.antiAlias,
             width: width,
             child: ConstrainedBox(

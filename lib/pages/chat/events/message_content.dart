@@ -217,6 +217,7 @@ class MessageContent extends StatelessWidget {
                 linkColor: linkColor,
                 fontSize: fontSize,
                 trailingSpan: trailingSpan,
+                layout: layout,
                 loadMedia: loadMedia,
                 showHiddenMedia: showHiddenMedia,
                 onLoadMedia: onLoadMedia,
