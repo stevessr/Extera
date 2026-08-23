@@ -4395,5 +4395,25 @@
   "@addedToMyStickers": {
     "type": "String",
     "placeholder": {}
+  },
+  "addToAvatarHistory": "添加到历史头像",
+  "@addToAvatarHistory": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "addedToAvatarHistory": "已添加到历史头像",
+  "@addedToAvatarHistory": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "applyImageConfirmation": "确定要应用这张图片吗？",
+  "@applyImageConfirmation": {
+    "type": "String",
+    "placeholder": {}
+  },
+  "roomProfileCustomHint": "此昵称和头像仅在该聊天中生效。",
+  "@roomProfileCustomHint": {
+    "type": "String",
+    "placeholder": {}
   }
 }
