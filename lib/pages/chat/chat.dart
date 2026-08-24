@@ -61,9 +61,54 @@ import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
 import '../../utils/account_bundles.dart';
 import '../../utils/localized_exception_extension.dart';
+import '../../utils/memoized_tile_cache.dart';
 import '../../utils/resize_video.dart';
 import 'send_file_dialog.dart';
 import 'send_location_dialog.dart';
+
+/// Immutable snapshot of every input [ChatEventList] feeds into a message
+/// tile. Records compare structurally, so an unchanged snapshot proves the
+/// previously built [Message] widget can be reused verbatim, letting Flutter
+/// skip the entire bubble subtree rebuild.
+///
+/// Callbacks are deliberately excluded: they only capture the controller and
+/// the event, both of which are covered here.
+typedef ChatTileDeps = ({
+  Event event,
+  Event? nextEvent,
+  Event? previousEvent,
+  Timeline timeline,
+  Thread? thread,
+  MessageLayout layout,
+  Color secondaryBubbleColor,
+  Color bubbleColor,
+  bool animateIn,
+  bool selected,
+  bool singleSelected,
+  bool longPressSelect,
+  bool hasBeenRead,
+  bool displayReadMarker,
+  bool highlightMarker,
+  bool wallpaperMode,
+  bool gradient,
+  // Settings read synchronously inside bubble builds; captured as values so
+  // a changed setting invalidates cached tiles without any listener wiring.
+  bool autoplayImages,
+  String chatFallbackFonts,
+  String chatFont,
+  bool enableChatFrostedGlass,
+  double fontSizeFactor,
+  bool latexMath,
+  double messageFontSize,
+  String monospaceFallbackFonts,
+  String monospaceFont,
+  bool notoEmojiFont,
+  bool renderHtml,
+  double stickerScale,
+  bool swipeRightToLeftToReply,
+  bool systemFont,
+  int memberStateVersion,
+});
 
 class ChatPage extends StatelessWidget {
   final String roomId;
@@ -305,6 +350,95 @@ class ChatController extends State<ChatPageWithRoom>
   /// Converts a visible event index into the [AutoScrollTag] index used by
   /// the scroll controller. Index 0 is reserved for the bottom padding sliver.
   int autoScrollIndexForEvent(int eventIndex) => eventIndex + 1;
+
+  /// Memoized message tiles; see [MemoizedTileCache] and [memoizeMessageTile].
+  final MemoizedTileCache<ChatTileDeps, Message> _messageTileCache =
+      MemoizedTileCache();
+
+  /// Bumped whenever a room-member state event arrives: displaynames and
+  /// avatars render inside every bubble, so all tiles must refresh.
+  int _memberStateVersion = 0;
+
+  final List<StreamSubscription<void>> _tileCacheSubs = [];
+
+  int get memberStateVersion => _memberStateVersion;
+
+  /// Returns the previously built [Message] widget for [eventId] when its
+  /// inputs are unchanged; otherwise builds a fresh tile via [build].
+  /// Reusing the identical widget instance makes Flutter's element tree
+  /// skip the whole bubble subtree rebuild.
+  Message memoizeMessageTile(
+    String eventId,
+    ChatTileDeps deps,
+    Message Function() build,
+  ) => _messageTileCache.get(eventId, deps, build);
+
+  /// Extracts every event ID whose tile is affected by an incoming update:
+  /// the updated event itself plus edit/reaction/reply/redaction targets.
+  static Set<String> _tileIdsAffectedBy(Event event) {
+    final ids = <String>{event.eventId};
+    final relationship = event.relationshipEventId;
+    if (relationship != null) ids.add(relationship);
+    final relation = event.content['m.relates_to'];
+    if (relation is Map<String, dynamic>) {
+      final inReplyTo = relation['m.in_reply_to'];
+      if (inReplyTo is Map<String, dynamic>) {
+        final replyTarget = inReplyTo['event_id'];
+        if (replyTarget is String) ids.add(replyTarget);
+      }
+    }
+    final redacts = event.redacts;
+    if (redacts != null) ids.add(redacts);
+    return ids;
+  }
+
+  void _onTileRelevantEventUpdate(Event event) {
+    if (event.roomId != roomId) return;
+    if (event.type == EventTypes.RoomMember) {
+      _memberStateVersion++;
+      return;
+    }
+    final affected = _tileIdsAffectedBy(event);
+    // Tiles quoting an affected event must refresh their reply previews.
+    _messageTileCache.forEach((id, deps, _) {
+      final quoted = deps.event.content['m.relates_to'];
+      if (quoted is! Map<String, dynamic>) return;
+      final inReplyTo = quoted['m.in_reply_to'];
+      if (inReplyTo is Map<String, dynamic> &&
+          affected.contains(inReplyTo['event_id'])) {
+        affected.add(id);
+      }
+    });
+    _messageTileCache.markDirty(affected);
+  }
+
+  void _subscribeTileInvalidation() {
+    final client = Matrix.of(context).client;
+    _tileCacheSubs.add(
+      client.onTimelineEvent.stream.listen(_onTileRelevantEventUpdate),
+    );
+    _tileCacheSubs.add(
+      client.onHistoryEvent.stream.listen(_onTileRelevantEventUpdate),
+    );
+    _tileCacheSubs.add(
+      client.onRoomState.stream.listen((update) {
+        if (update.roomId != roomId) return;
+        if (update.state.type == EventTypes.RoomMember) {
+          _memberStateVersion++;
+        }
+      }),
+    );
+  }
+
+  void _unsubscribeTileInvalidation() {
+    for (final sub in _tileCacheSubs) {
+      sub.cancel();
+    }
+    _tileCacheSubs.clear();
+    clearMessageTileCache();
+  }
+
+  void clearMessageTileCache() => _messageTileCache.clear();
 
   void _recalculateEventsCache() {
     if (timeline == null) {
@@ -587,6 +721,7 @@ class ChatController extends State<ChatPageWithRoom>
     readMarkerEventId = room.hasNewMessages ? room.fullyRead : '';
     WidgetsBinding.instance.addObserver(this);
     _tryLoadTimeline();
+    _subscribeTileInvalidation();
 
     _getThreads();
     if (PlatformInfos.isWeb) {
@@ -666,9 +801,7 @@ class ChatController extends State<ChatPageWithRoom>
   /// receipts and account data at once). Rebuilding the whole page per
   /// callback is wasted work; bursts coalesce into at most one rebuild per
   /// window, matching the rate limiting the chat list already applies.
-  static const Duration _updateViewCoalesceWindow = Duration(
-    milliseconds: 100,
-  );
+  static const Duration _updateViewCoalesceWindow = Duration(milliseconds: 100);
   Timer? _updateViewTimer;
 
   Future<void> updateView() async {
@@ -771,6 +904,7 @@ class ChatController extends State<ChatPageWithRoom>
 
   Future<void> _getTimeline({String? eventContextId}) async {
     _scrollAnchorEventId = null;
+    clearMessageTileCache();
     await Matrix.of(context).client.roomsLoading;
     await Matrix.of(context).client.accountDataLoading;
     threads = null;
@@ -896,6 +1030,7 @@ class ChatController extends State<ChatPageWithRoom>
 
   @override
   void dispose() {
+    _unsubscribeTileInvalidation();
     _scrolledUp.dispose();
     timeline?.cancelSubscriptions();
     _updateViewTimer?.cancel();
