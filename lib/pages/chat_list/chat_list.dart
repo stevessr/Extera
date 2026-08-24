@@ -18,6 +18,7 @@ import 'package:extera_next/pages/chat_list/invite_dialog.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/check_updates.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
+import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
@@ -335,6 +336,16 @@ class ChatListController extends State<ChatList>
 
   final ScrollController scrollController = ScrollController();
   final ValueNotifier<bool> scrolledToTop = ValueNotifier(true);
+
+  /// Stable rate-limited room-update pipeline for the main list body.
+  /// Hoisted here so the body widget does not rebuild the pipeline (and
+  /// re-subscribe the throttling window) on every parent rebuild.
+  late final Stream<bool> roomUpdatesStream = Matrix.of(context)
+      .client
+      .onSync
+      .stream
+      .where((s) => s.hasRoomUpdate)
+      .rateLimit(const Duration(seconds: 1));
 
   // final StreamController<Client> _clientStream = StreamController.broadcast();
 

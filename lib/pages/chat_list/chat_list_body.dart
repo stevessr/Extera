@@ -18,7 +18,6 @@ import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/shortcuts/chat_list/chat_list_shortcuts.dart';
 import 'package:extera_next/utils/show_profile.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mini_audio_player.dart';
@@ -70,9 +69,7 @@ class ChatListViewBody extends StatelessWidget {
 
     return StreamBuilder(
       key: ValueKey(client.userID.toString()),
-      stream: client.onSync.stream
-          .where((s) => s.hasRoomUpdate)
-          .rateLimit(const Duration(seconds: 1)),
+      stream: controller.roomUpdatesStream,
       builder: (context, _) {
         final rooms = controller.filteredRooms;
 
