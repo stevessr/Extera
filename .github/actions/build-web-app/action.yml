@@ -116,8 +116,13 @@ runs:
           Cross-Origin-Opener-Policy: same-origin
           Cross-Origin-Embedder-Policy: require-corp
 
+        # The document is the only fetch that must complete before parsing
+        # starts, so no-cache would put one blocking revalidation round trip
+        # in front of every repeat visit. Filenames are all unhashed and
+        # stable, so a short TTL only delays picking up a new deployment by
+        # at most a minute.
         /index.html
-          Cache-Control: no-cache
+          Cache-Control: public, max-age=60, must-revalidate
 
         /auth.html
           Cache-Control: no-cache
