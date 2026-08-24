@@ -12,7 +12,7 @@ import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
-class SpacesNavigationRail extends StatelessWidget {
+class SpacesNavigationRail extends StatefulWidget {
   final String? activeSpaceId;
   final void Function() onGoToChats;
   final void Function(String) onGoToSpaceId;
@@ -27,6 +27,26 @@ class SpacesNavigationRail extends StatelessWidget {
   });
 
   @override
+  State<SpacesNavigationRail> createState() => _SpacesNavigationRailState();
+}
+
+class _SpacesNavigationRailState extends State<SpacesNavigationRail> {
+  /// Composed once per client so the StreamBuilder below keeps a single
+  /// subscription across rebuilds instead of resubscribing per setState.
+  Stream<bool>? _syncStream;
+  Client? _boundClient;
+
+  Stream<bool> _getSyncStream(Client client) {
+    if (!identical(client, _boundClient)) {
+      _boundClient = client;
+      _syncStream = client.onSync.stream
+          .where((s) => s.hasRoomUpdate)
+          .rateLimit(const Duration(seconds: 1));
+    }
+    return _syncStream!;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final client = Matrix.of(context).client;
     final isSettings =
@@ -38,9 +58,7 @@ class SpacesNavigationRail extends StatelessWidget {
     // who will even see it selected on mobile?
     return StreamBuilder(
       key: ValueKey(client.userID.toString()),
-      stream: client.onSync.stream
-          .where((s) => s.hasRoomUpdate)
-          .rateLimit(const Duration(seconds: 1)),
+      stream: _getSyncStream(client),
       builder: (context, snapshot) {
         return Container(
           width: FluffyThemes.navRailWidth,
@@ -51,12 +69,13 @@ class SpacesNavigationRail extends StatelessWidget {
                 Expanded(
                   child: ListView.builder(
                     scrollDirection: Axis.vertical,
-                    itemCount: rootSpaces.length + 2,
+                    itemCount: widget.rootSpaces.length + 2,
                     itemBuilder: (context, i) {
                       if (i == 0) {
                         return NaviRailItem(
-                          isSelected: activeSpaceId == null && !isSettings,
-                          onTap: onGoToChats,
+                          isSelected:
+                              widget.activeSpaceId == null && !isSettings,
+                          onTap: widget.onGoToChats,
                           icon: const Padding(
                             padding: EdgeInsets.all(10.0),
                             child: Icon(Icons.forum_outlined),
@@ -70,7 +89,7 @@ class SpacesNavigationRail extends StatelessWidget {
                         );
                       }
                       i--;
-                      if (i == rootSpaces.length) {
+                      if (i == widget.rootSpaces.length) {
                         return NaviRailItem(
                           isSelected: false,
                           onTap: () => context.go('/rooms/newspace'),
@@ -81,21 +100,23 @@ class SpacesNavigationRail extends StatelessWidget {
                           toolTip: L10n.of(context).createNewSpace,
                         );
                       }
-                      final space = rootSpaces[i];
-                      final displayname = rootSpaces[i].getLocalizedDisplayname(
-                        MatrixLocals(L10n.of(context)),
-                      );
+                      final space = widget.rootSpaces[i];
+                      final displayname = widget.rootSpaces[i]
+                          .getLocalizedDisplayname(
+                            MatrixLocals(L10n.of(context)),
+                          );
                       final spaceChildrenIds = space.spaceChildren
                           .map((c) => c.roomId)
                           .toSet();
                       return NaviRailItem(
                         toolTip: displayname,
-                        isSelected: activeSpaceId == space.id,
-                        onTap: () => onGoToSpaceId(rootSpaces[i].id),
+                        isSelected: widget.activeSpaceId == space.id,
+                        onTap: () =>
+                            widget.onGoToSpaceId(widget.rootSpaces[i].id),
                         unreadBadgeFilter: (room) =>
                             spaceChildrenIds.contains(room.id),
                         icon: Avatar(
-                          mxContent: rootSpaces[i].avatar,
+                          mxContent: widget.rootSpaces[i].avatar,
                           name: displayname,
                           border: BorderSide(
                             width: 1,

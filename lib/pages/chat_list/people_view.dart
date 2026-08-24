@@ -38,6 +38,10 @@ class PeopleView extends StatefulWidget {
 class _PeopleViewState extends State<PeopleView> {
   final ScrollController scrollController = ScrollController();
 
+  /// Composed once per client so the StreamBuilder below keeps a single
+  /// subscription across rebuilds instead of resubscribing per setState.
+  Stream<bool>? _syncStream;
+
   Widget _buildProfileItem(
     BuildContext context,
     String userId,
@@ -138,10 +142,11 @@ class _PeopleViewState extends State<PeopleView> {
     final client = Matrix.of(context).client;
     final interestingPresences = client.interestingPresences;
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius);
-
     return SafeArea(
       child: StreamBuilder(
-        stream: client.onSync.stream.rateLimit(const Duration(seconds: 3)),
+        stream: _syncStream ??= client.onSync.stream.rateLimit(
+          const Duration(seconds: 3),
+        ),
         builder: (context, snapshot) {
           final onlinePeople = interestingPresences
               .where(

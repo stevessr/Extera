@@ -207,6 +207,10 @@ class _SpaceViewState extends State<SpaceView> {
   List<SpaceRoomsChunk$2>? _cachedFilteredChildren;
   String _appliedFilter = '';
 
+  /// Composed once so the body StreamBuilder keeps a single subscription
+  /// across rebuilds instead of resubscribing per setState.
+  Stream<bool>? _syncStream;
+
   @override
   void initState() {
     _loadHierarchy();
@@ -702,7 +706,7 @@ class _SpaceViewState extends State<SpaceView> {
       body: room == null
           ? const Center(child: Icon(Icons.search_outlined, size: 80))
           : StreamBuilder(
-              stream: room.client.onSync.stream
+              stream: _syncStream ??= room.client.onSync.stream
                   .where((s) => s.hasRoomUpdate)
                   .rateLimit(const Duration(seconds: 1)),
               builder: (context, snapshot) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -12,16 +13,57 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
-class StatusMessageList extends StatelessWidget {
+class StatusMessageList extends StatefulWidget {
   final void Function() onStatusEdit;
 
   const StatusMessageList({required this.onStatusEdit, super.key});
 
   static const double height = 116;
 
+  @override
+  State<StatusMessageList> createState() => _StatusMessageListState();
+}
+
+class _StatusMessageListState extends State<StatusMessageList> {
+  Client? _boundClient;
+  Stream<bool>? _syncStream;
+
+  Set<String> _presenceKey = const {};
+  Future<List<CachedPresence>> _presenceFuture = Future.value(const []);
+
+  /// Returns a stable rate-limited sync stream per client instead of
+  /// composing a fresh pipeline per build: recreating it would make the
+  /// StreamBuilder unsubscribe/resubscribe and reset the rate-limit window
+  /// on every parent rebuild.
+  Stream<bool> _getSyncStream(Client client) {
+    if (!identical(client, _boundClient)) {
+      _boundClient = client;
+      _syncStream = client.onSync.stream.rateLimit(const Duration(seconds: 3));
+    }
+    return _syncStream!;
+  }
+
+  /// Presence lookups are memoized until the set of interesting users
+  /// changes, so rebuilds reuse the in-flight/completed future instead of
+  /// refiring a lookup per user on every rebuild.
+  Future<List<CachedPresence>> _getPresenceFuture(Client client) {
+    final users = client.interestingPresences;
+    if (identical(client, _boundClient) && setEquals(users, _presenceKey)) {
+      return _presenceFuture;
+    }
+    _boundClient = client;
+    _presenceKey = Set<String>.of(users);
+    return _presenceFuture = Future.wait(
+      users.map(
+        (userId) =>
+            client.fetchCurrentPresence(userId, fetchOnlyFromCached: true),
+      ),
+    );
+  }
+
   void _onStatusTab(BuildContext context, Profile profile) {
     final client = Matrix.of(context).client;
-    if (profile.userId == client.userID) return onStatusEdit();
+    if (profile.userId == client.userID) return widget.onStatusEdit();
 
     showProfile(context: context, profile: profile);
     return;
@@ -30,27 +72,19 @@ class StatusMessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final client = Matrix.of(context).client;
-    final interestingPresences = client.interestingPresences;
 
     return StreamBuilder(
-      stream: client.onSync.stream.rateLimit(const Duration(seconds: 3)),
+      stream: _getSyncStream(client),
       builder: (context, snapshot) {
         return AnimatedSize(
           duration: FluffyThemes.animationDuration,
           curve: Curves.easeInOut,
-          child: FutureBuilder(
-            initialData: interestingPresences
-                // ignore: deprecated_member_use
-                .map((userId) => client.presences[userId])
-                .whereType<CachedPresence>(),
-            future: Future.wait(
-              client.interestingPresences.map(
-                (userId) => client.fetchCurrentPresence(
-                  userId,
-                  fetchOnlyFromCached: true,
-                ),
-              ),
-            ),
+          child: FutureBuilder<List<CachedPresence>>(
+            future: _getPresenceFuture(client),
+            initialData: [
+              for (final userId in client.interestingPresences)
+                if (client.presences[userId] != null) client.presences[userId]!,
+            ],
             builder: (context, snapshot) {
               final presences = snapshot.data
                   ?.where(isInterestingPresence)
@@ -91,6 +125,25 @@ class StatusMessageList extends StatelessWidget {
   }
 }
 
+/// Memoized profile lookups for presence avatars: the underlying SDK call
+/// hits the database cache on every invocation, which used to happen once
+/// per visible avatar on every list rebuild. Failed lookups evict
+/// themselves so they are retried.
+final Map<String, Future<Profile>> _presenceProfileCache = {};
+
+Future<Profile> _getProfileCached(Client client, String userId) {
+  final cached = _presenceProfileCache[userId];
+  if (cached != null) return cached;
+  final future = client.getProfileFromUserId(userId).catchError((Object error) {
+    _presenceProfileCache.remove(userId);
+    throw error;
+  });
+  if (_presenceProfileCache.length > 128) {
+    _presenceProfileCache.remove(_presenceProfileCache.keys.first);
+  }
+  return _presenceProfileCache[userId] = future;
+}
+
 class PresenceAvatar extends StatelessWidget {
   final CachedPresence presence;
   final double height;
@@ -108,7 +161,7 @@ class PresenceAvatar extends StatelessWidget {
     final avatarSize = height - 16 - 16 - 8;
     final client = Matrix.of(context).client;
     return FutureBuilder<Profile>(
-      future: client.getProfileFromUserId(presence.userid),
+      future: _getProfileCached(client, presence.userid),
       builder: (context, snapshot) {
         final theme = Theme.of(context);
 
