@@ -30,7 +30,8 @@ class _UnicodeFontFallbackScopeState extends State<UnicodeFontFallbackScope> {
 
   final _anchorKey = GlobalKey();
   final _lastText = Expando<String>('unicode fallback visible text');
-  Duration? _lastScanTimestamp;
+  final _scanClock = Stopwatch()..start();
+  Duration? _lastScanElapsed;
   Timer? _delayedScan;
 
   UnicodeFontLoader get _loader => widget.loader ?? UnicodeFontLoader.instance;
@@ -55,19 +56,22 @@ class _UnicodeFontFallbackScopeState extends State<UnicodeFontFallbackScope> {
 
   void _handleFrame(Duration timestamp) {
     if (!mounted || !widget.enabled) return;
-    final previous = _lastScanTimestamp;
-    if (previous == null || timestamp - previous >= _scanInterval) {
-      _lastScanTimestamp = timestamp;
+    final previous = _lastScanElapsed;
+    final now = _scanClock.elapsed;
+    if (previous == null || now - previous >= _scanInterval) {
+      _lastScanElapsed = now;
       _delayedScan?.cancel();
       _delayedScan = null;
       _scanNow();
       return;
     }
 
-    _delayedScan ??= Timer(_scanInterval - (timestamp - previous), () {
+    // Runs outside a frame callback, so frame timestamps are unavailable
+    // here; the stopwatch provides the monotonic clock instead.
+    _delayedScan ??= Timer(_scanInterval - (now - previous), () {
       _delayedScan = null;
       if (!mounted || !widget.enabled) return;
-      _lastScanTimestamp = SchedulerBinding.instance.currentFrameTimeStamp;
+      _lastScanElapsed = _scanClock.elapsed;
       _scanNow();
     });
   }
