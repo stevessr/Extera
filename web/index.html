@@ -73,25 +73,36 @@
        guess at worst cancels one unused speculative request. -->
   <script>
     (() => {
+      const link = (rel, as, href, cors) => {
+        const el = document.createElement("link");
+        el.rel = rel;
+        if (as) el.as = as;
+        if (href) el.href = href;
+        if (cors) el.crossOrigin = "anonymous";
+        document.head.appendChild(el);
+      };
       try {
+        // Same probe the loader runs before selecting the wasm build.
         const gcProbe = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
-        const hint = document.createElement("link");
-        if ((navigator.vendor === "Google Inc." || navigator.userAgent.includes("Edg/"))
-            && typeof WebAssembly === "object" && WebAssembly.validate(gcProbe)) {
-          const runtime = document.createElement("link");
-          runtime.rel = "modulepreload";
-          runtime.href = "main.dart.mjs";
-          document.head.appendChild(runtime);
-          hint.rel = "preload";
-          hint.as = "fetch";
-          hint.crossOrigin = "anonymous";
-          hint.href = "main.dart.wasm";
+        const hasWasmGC = typeof WebAssembly === "object" && WebAssembly.validate(gcProbe);
+        const isBlink = navigator.vendor === "Google Inc." || navigator.userAgent.includes("Edg/");
+        if (isBlink && hasWasmGC) {
+          link("modulepreload", "", "main.dart.mjs");
+          link("preload", "fetch", "main.dart.wasm", true);
+          // Skwasm is the only renderer of the wasm build; threaded and
+          // single-threaded modes load the same two files.
+          const gl = document.createElement("canvas").getContext("webgl2")
+            || document.createElement("canvas").getContext("webgl");
+          if (gl) {
+            link("preload", "script", "canvaskit/skwasm.js");
+            link("preload", "fetch", "canvaskit/skwasm.wasm", true);
+          }
         } else {
-          hint.rel = "preload";
-          hint.as = "script";
-          hint.href = "main.dart.js";
+          link("preload", "script", "main.dart.js");
+          // The JS fallback renders with the Chromium-flavored canvaskit.
+          link("preload", "script", "canvaskit/chromium/canvaskit.js");
+          link("preload", "fetch", "canvaskit/chromium/canvaskit.wasm", true);
         }
-        document.head.appendChild(hint);
       } catch (_) {}
     })();
   </script>

@@ -129,5 +129,7 @@ The manual trigger accepts three presets in addition to the toggles:
   specific entrypoints and manifests always revalidate (304s keep bytes off
   the wire), stable assets get TTLs, and the pinned vodozemac bindings are
   forced to revalidate so their bytes can never go stale against newer Dart
-  code. `index.html` also preloads the selected Dart bundle (WasmGC probe)
-  and the icon font at HTML parse time.
+  code. `index.html` also preloads the selected Dart bundle (WasmGC probe),
+  the matching renderer assets (`canvaskit/skwasm.*` for the wasm build,
+  `canvaskit/chromium/canvaskit.*` for the JS fallback) and the icon font at
+  HTML parse time.
