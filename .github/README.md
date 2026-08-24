@@ -125,4 +125,9 @@ The manual trigger accepts three presets in addition to the toggles:
   the pinned version instead.
 - `web_target=wasm` builds dart2wasm plus the automatic JS fallback and ships
   COOP/COEP headers (`_headers`) inside the bundle, since dart2wasm needs
-  cross-origin isolation.
+  cross-origin isolation. The same file adds tiered `Cache-Control`: build-
+  specific entrypoints and manifests always revalidate (304s keep bytes off
+  the wire), stable assets get TTLs, and the pinned vodozemac bindings are
+  forced to revalidate so their bytes can never go stale against newer Dart
+  code. `index.html` also preloads the selected Dart bundle (WasmGC probe)
+  and the icon font at HTML parse time.

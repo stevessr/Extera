@@ -57,6 +57,45 @@
   <link rel="preload" href="assets/assets/vodozemac/vodozemac_bindings_dart.js" as="script">
   <link rel="preload" href="assets/assets/vodozemac/vodozemac_bindings_dart_bg.wasm" as="fetch" crossorigin>
 
+  <!-- Warm the icon font so first-frame chrome never paints blank glyphs;
+       the engine only discovers it after boot (~300 ms in on a warm LAN). -->
+  <link rel="preload" href="assets/fonts/MaterialIcons-Regular.otf" as="font" type="font/otf" crossorigin>
+
+  <!-- Start the selected Dart bundle at HTML parse time. Without this, the
+       ~13 MB main.dart.wasm download waits for flutter_bootstrap.js to
+       download, parse and run feature detection first - one serialized hop on
+       the critical path. This mirrors the loader's own build selection: Blink
+       engines passing the identical WasmGC probe get the dart2wasm pair
+       (modulepreload for the JS runtime, preload-as-fetch for the module -
+       exactly the request shapes _loadWasmEntrypoint later issues, so both
+       come from the preload cache with no duplicate fetches); every other
+       browser falls back to the dart2js build it would run anyway. A wrong
+       guess at worst cancels one unused speculative request. -->
+  <script>
+    (() => {
+      try {
+        const gcProbe = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]);
+        const hint = document.createElement("link");
+        if ((navigator.vendor === "Google Inc." || navigator.userAgent.includes("Edg/"))
+            && typeof WebAssembly === "object" && WebAssembly.validate(gcProbe)) {
+          const runtime = document.createElement("link");
+          runtime.rel = "modulepreload";
+          runtime.href = "main.dart.mjs";
+          document.head.appendChild(runtime);
+          hint.rel = "preload";
+          hint.as = "fetch";
+          hint.crossOrigin = "anonymous";
+          hint.href = "main.dart.wasm";
+        } else {
+          hint.rel = "preload";
+          hint.as = "script";
+          hint.href = "main.dart.js";
+        }
+        document.head.appendChild(hint);
+      } catch (_) {}
+    })();
+  </script>
+
   <link rel="stylesheet" type="text/css" href="splash/style.css">
 </head>
 

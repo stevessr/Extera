@@ -69,7 +69,7 @@ runs:
       run: |
         args=''
         if [ "$BUILD_MODE" = release ]; then
-          args='--dart-define=FLUTTER_WEB_CANVASKIT_URL=canvaskit/ --release --source-maps'
+          args='--no-web-resources-cdn --release --source-maps'
           if [ -n "$BASE_HREF" ]; then
             args="$args --base-href $BASE_HREF"
           fi
@@ -99,12 +99,89 @@ runs:
 
     # dart2wasm requires cross-origin isolation; ship COOP/COEP headers with
     # the bundle so hosts that honour them (Cloudflare Workers/Pages) serve it
-    # correctly.
-    - name: Add COOP/COEP headers
+    # correctly. Cache tiers follow URL stability: everything that changes
+    # every build (entrypoints, manifests, the bootstrap that embeds build
+    # hashes) must revalidate - a 304 keeps bytes off the wire without ever
+    # risking stale bundles; long-lived static assets get TTLs. The vodozemac
+    # bindings are pinned-dependency output whose bytes must never go stale
+    # against newer Dart code (runtime wire mismatch), so they revalidate
+    # too. Rules are last-match-wins, so specific paths come after broader
+    # ones.
+    - name: Add COOP/COEP and cache-control headers
       if: ${{ inputs.target == 'wasm' }}
       shell: bash
       run: |
-        printf '%s\n' \
-          '/*' \
-          '  Cross-Origin-Opener-Policy: same-origin' \
-          '  Cross-Origin-Embedder-Policy: require-corp' >build/web/_headers
+        cat >build/web/_headers <<'EOF'
+        /*
+          Cross-Origin-Opener-Policy: same-origin
+          Cross-Origin-Embedder-Policy: require-corp
+
+        /index.html
+          Cache-Control: no-cache
+
+        /auth.html
+          Cache-Control: no-cache
+
+        /config.json
+          Cache-Control: no-cache
+
+        /flutter.js
+          Cache-Control: no-cache
+
+        /flutter_bootstrap.js
+          Cache-Control: no-cache
+
+        /flutter_service_worker.js
+          Cache-Control: no-cache
+
+        /main.dart.*
+          Cache-Control: no-cache
+
+        /native_impl_worker.dart.js
+          Cache-Control: no-cache
+
+        /assets/AssetManifest.bin
+          Cache-Control: no-cache
+
+        /assets/AssetManifest.bin.json
+          Cache-Control: no-cache
+
+        /assets/FontManifest.json
+          Cache-Control: no-cache
+
+        /assets/NOTICES
+          Cache-Control: no-cache
+
+        /assets/assets/vodozemac/*
+          Cache-Control: no-cache
+
+        /assets/fonts/*
+          Cache-Control: public, max-age=604800
+
+        /assets/packages/*
+          Cache-Control: public, max-age=86400
+
+        /assets/assets/*
+          Cache-Control: public, max-age=86400
+
+        /icons/*
+          Cache-Control: public, max-age=604800
+
+        /splash/*
+          Cache-Control: public, max-age=604800
+
+        /favicon.png
+          Cache-Control: public, max-age=604800
+
+        /manifest.json
+          Cache-Control: public, max-age=604800
+
+        # --no-web-resources-cdn serves engine files (skwasm/canvaskit) from
+        # this origin instead of gstatic. They are not hash-named, so a long
+        # immutable TTL would risk a stale engine pairing against newer Dart
+        # code after a Flutter upgrade; one day bounds that window while
+        # still skipping most re-downloads.
+        /canvaskit/*
+          Cache-Control: public, max-age=86400
+
+        EOF
