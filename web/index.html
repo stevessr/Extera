@@ -103,6 +103,13 @@
           link("preload", "script", "canvaskit/chromium/canvaskit.js");
           link("preload", "fetch", "canvaskit/chromium/canvaskit.wasm", true);
         }
+        // The engine and app read these serially right after the wasm
+        // module instantiates; issuing them here turns each later read
+        // into a cache hit instead of a fresh round trip.
+        for (const f of ["assets/FontManifest.json",
+            "assets/AssetManifest.bin.json", "config.json"]) {
+          link("preload", "fetch", f, true);
+        }
       } catch (_) {}
     })();
   </script>
