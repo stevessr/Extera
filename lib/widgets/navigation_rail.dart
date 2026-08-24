@@ -60,6 +60,34 @@ class _SpacesNavigationRailState extends State<SpacesNavigationRail> {
       key: ValueKey(client.userID.toString()),
       stream: _getSyncStream(client),
       builder: (context, snapshot) {
+        // Single pass over all rooms per rebuild: every badge used to run
+        // its own full O(rooms) scan, so the rail cost was multiplied by
+        // the number of items.
+        final rootSpaces = widget.rootSpaces;
+        const allChatsKey = '';
+        final unreadCounts = <String, int>{allChatsKey: 0};
+        for (final id in rootSpaces) {
+          unreadCounts[id.id] = 0;
+        }
+        final roomOwnerSpaceIds = <String, List<String>>{};
+        for (final space in rootSpaces) {
+          for (final childId in space.spaceChildren.map((c) => c.roomId)) {
+            if (childId == null) continue;
+            roomOwnerSpaceIds.putIfAbsent(childId, () => []).add(space.id);
+          }
+        }
+        for (final room in client.rooms) {
+          if (!(room.isUnread || room.membership == Membership.invite)) {
+            continue;
+          }
+          unreadCounts[allChatsKey] = unreadCounts[allChatsKey]! + 1;
+          final owners = roomOwnerSpaceIds[room.id];
+          if (owners != null) {
+            for (final id in owners) {
+              unreadCounts[id] = unreadCounts[id]! + 1;
+            }
+          }
+        }
         return Container(
           width: FluffyThemes.navRailWidth,
           color: Theme.of(context).scaffoldBackgroundColor,
@@ -85,7 +113,7 @@ class _SpacesNavigationRailState extends State<SpacesNavigationRail> {
                             child: Icon(Icons.forum),
                           ),
                           toolTip: L10n.of(context).chats,
-                          unreadBadgeFilter: (room) => true,
+                          unreadBadgeCount: unreadCounts[allChatsKey],
                         );
                       }
                       i--;
@@ -105,16 +133,12 @@ class _SpacesNavigationRailState extends State<SpacesNavigationRail> {
                           .getLocalizedDisplayname(
                             MatrixLocals(L10n.of(context)),
                           );
-                      final spaceChildrenIds = space.spaceChildren
-                          .map((c) => c.roomId)
-                          .toSet();
                       return NaviRailItem(
                         toolTip: displayname,
                         isSelected: widget.activeSpaceId == space.id,
                         onTap: () =>
                             widget.onGoToSpaceId(widget.rootSpaces[i].id),
-                        unreadBadgeFilter: (room) =>
-                            spaceChildrenIds.contains(room.id),
+                        unreadBadgeCount: unreadCounts[space.id],
                         icon: Avatar(
                           mxContent: widget.rootSpaces[i].avatar,
                           name: displayname,

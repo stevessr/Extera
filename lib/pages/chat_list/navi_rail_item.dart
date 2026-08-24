@@ -16,6 +16,10 @@ class NaviRailItem extends StatelessWidget {
   final Widget? selectedIcon;
   final bool Function(Room)? unreadBadgeFilter;
 
+  /// Precomputed unread count; when set, the badge skips its own O(rooms)
+  /// scan on every rebuild. Takes precedence over [unreadBadgeFilter].
+  final int? unreadBadgeCount;
+
   const NaviRailItem({
     required this.toolTip,
     required this.isSelected,
@@ -23,6 +27,7 @@ class NaviRailItem extends StatelessWidget {
     required this.icon,
     this.selectedIcon,
     this.unreadBadgeFilter,
+    this.unreadBadgeCount,
     super.key,
   });
   @override
@@ -71,9 +76,12 @@ class NaviRailItem extends StatelessWidget {
                       child: InkWell(
                         borderRadius: borderRadius,
                         onTap: onTap,
-                        child: unreadBadgeFilter == null
+                        child:
+                            unreadBadgeFilter == null &&
+                                unreadBadgeCount == null
                             ? icon
                             : UnreadRoomsBadge(
+                                count: unreadBadgeCount,
                                 filter: unreadBadgeFilter,
                                 badgePosition: BadgePosition.topEnd(
                                   top: -12,

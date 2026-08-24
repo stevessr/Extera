@@ -8,6 +8,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/room_space_children_extension.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -18,6 +19,28 @@ import '../../utils/date_time_extension.dart';
 import '../../widgets/avatar.dart';
 
 enum ArchivedRoomAction { delete, rejoin }
+
+/// Memoized hero-user loads for unnamed rooms. The FutureBuilder future used
+/// to be recreated on every rebuild, refiring per-hero database lookups each
+/// sync tick. Keyed by room id and hero set so membership changes retrigger;
+/// failed lookups evict themselves.
+final Map<String, Future<List<User>>> _heroUsersFutures = {};
+
+Future<List<User>> _loadHeroUsersCached(Room room) {
+  final key =
+      '${room.id}::${room.summary.mHeroes?.join(',') ?? ''}::'
+      '${room.directChatMatrixID ?? ''}';
+  final cached = _heroUsersFutures[key];
+  if (cached != null) return cached;
+  final future = room.loadHeroUsers().catchError((Object error) {
+    _heroUsersFutures.remove(key);
+    throw error;
+  });
+  if (_heroUsersFutures.length > 128) {
+    _heroUsersFutures.remove(_heroUsersFutures.keys.first);
+  }
+  return _heroUsersFutures[key] = future;
+}
 
 class ChatListItem extends StatelessWidget {
   final Room room;
@@ -79,7 +102,7 @@ class ChatListItem extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         color: noBackgroundColor ? null : backgroundColor,
         child: FutureBuilder(
-          future: room.name.isEmpty ? room.loadHeroUsers() : null,
+          future: room.name.isEmpty ? _loadHeroUsersCached(room) : null,
           builder: (context, _) => HoverBuilder(
             builder: (context, listTileHovered) => ListTile(
               visualDensity: const VisualDensity(vertical: -0.5),
@@ -257,7 +280,7 @@ class ChatListItem extends StatelessWidget {
                     child: room.isSpace && room.membership == Membership.join
                         ? Text(
                             L10n.of(context).countChatsAndCountParticipants(
-                              room.spaceChildren.length,
+                              room.spaceChildrenCount,
                               (room.summary.mJoinedMemberCount ?? 1),
                             ),
                             style: TextStyle(color: theme.colorScheme.outline),
