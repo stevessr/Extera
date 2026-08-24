@@ -462,6 +462,13 @@ class ChatController extends State<ChatPageWithRoom>
       .stream
       .rateLimit(const Duration(seconds: 1));
 
+  /// Stable badge pipeline for the narrow-screen back button; recomposing
+  /// it in build() would resubscribe and reset the throttle window on
+  /// every per-second setState.
+  late final Stream<bool> unreadBadgeUpdatesStream = room.client.onSync.stream
+      .where((s) => s.hasRoomUpdate)
+      .rateLimit(const Duration(seconds: 1));
+
   void _recalculateEventsCache() {
     if (timeline == null) {
       _cachedFilteredEvents = [];

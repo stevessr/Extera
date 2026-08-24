@@ -496,9 +496,7 @@ class _ChatViewState extends State<ChatView> {
                   : FluffyThemes.isColumnMode(context)
                   ? null
                   : StreamBuilder<Object>(
-                      stream: Matrix.of(context).client.onSync.stream
-                          .where((s) => s.hasRoomUpdate)
-                          .rateLimit(const Duration(seconds: 1)),
+                      stream: controller.unreadBadgeUpdatesStream,
                       builder: (context, _) => UnreadRoomsBadge(
                         filter: (r) => r.id != controller.roomId,
                         badgePosition: .topEnd(top: 4, end: 8),
