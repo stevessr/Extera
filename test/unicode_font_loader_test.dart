@@ -44,6 +44,11 @@ void main() {
           codePoint,
         )!];
 
+    // Noto Color Emoji leads the chain and claims core emoji coverage.
+    expect(assetFor(0x1F600).family, 'Noto Color Emoji');
+    expect(assetFor(0x1F1E9).family, 'Noto Color Emoji');
+    expect(assetFor(0x2764).family, 'Noto Color Emoji');
+    // Newer code points stay with the tree-shaken chunks that cover them.
     expect(assetFor(0x4E2D).family, 'Plangothic P2 u00295');
     expect(assetFor(0x1FAEB).family, 'UFSTemp Alpha u16D80');
     expect(assetFor(0x30EDE).family, 'Plangothic P2 u30803');
@@ -84,6 +89,22 @@ void main() {
         'Plangothic P2 u30803',
       ]);
       expect(probe.calls, hasLength(1));
+    },
+  );
+
+  test(
+    'emoji loads the color font once and never the monochrome one',
+    () async {
+      final probe = _FakeCoverageProbe(missing: <int>{0x1F600});
+      final loaded = <UnicodeFallbackFontAsset>[];
+      final loader = UnicodeFontLoader(
+        coverageProbe: probe,
+        fontAssetLoader: (asset) async => loaded.add(asset),
+      );
+
+      await loader.ensureFontsForText('😀');
+
+      expect(loaded.map((asset) => asset.family), <String>['Noto Color Emoji']);
     },
   );
 

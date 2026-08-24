@@ -55,6 +55,26 @@ CHAIN = [
     # an unsupported character would defeat the on-demand fallback policy.
 ]
 
+# Fonts prepended ahead of CHAIN whose file already ships at a fixed repo
+# location. Each tuple is (family, probe path relative to --src, shipped
+# asset path). They claim coverage exclusively (later fonts only see the
+# remainder) and are never copied into the output directory.
+PREPEND_ASSET = [
+    (
+        # Noto Color Emoji ships as a regular pubspec font asset (the fonts:
+        # section must keep bundling it for native platforms). It leads the
+        # fallback chain so its coverage claims emoji code points before the
+        # monochrome Noto Emoji, but the web build must not preload it: the
+        # engine blocks the first frame until every FontManifest font finishes
+        # downloading, and this one font is ~10MB. The CI manifest-strip step
+        # removes the family from FontManifest.json after `flutter build web`,
+        # deferring the download to the first rendered emoji instead.
+        "Noto Color Emoji",
+        "../NotoColorEmoji.ttf",
+        "assets/font/NotoColorEmoji.ttf",
+    ),
+]
+
 # Emoji shaping relies on GSUB sequences that can cross Unicode blocks. Keep
 # this relatively small font whole; every other family is safe to split.
 KEEP_WHOLE = {"Noto Emoji"}
@@ -132,7 +152,10 @@ def main() -> None:
     family_ranges: list[list[tuple[int, int]]] = []
     stats: list[dict] = []
 
-    for base, filename in CHAIN:
+    chain_sources = [
+        (base, filename, asset) for base, filename, asset in PREPEND_ASSET
+    ] + [(base, filename, None) for base, filename in CHAIN]
+    for base, filename, shipped_asset in chain_sources:
         src_path = src_dir / filename
         orig_size = src_path.stat().st_size
         entry: dict = {"family": base, "orig_size": orig_size}
@@ -144,15 +167,40 @@ def main() -> None:
         probe.close()
         ext = ".otf" if is_cff else ".ttf"
 
-        if base in KEEP_WHOLE:
+        if shipped_asset is not None:
+            # The file already ships at its final location; claim coverage
+            # exclusively (like the split path) but never copy or subset it.
+            exclusive = sorted(cps - covered)
             covered |= cps
+            if not exclusive:
+                entry.update(kind="dropped", out_size=0, chunks=0)
+                stats.append(entry)
+                print(f"{base}: fully covered by earlier fonts -> DROPPED", flush=True)
+                continue
+            families.append({"family": base, "file": shipped_asset})
+            family_ranges.append(contiguous_ranges(exclusive))
+            entry.update(kind="whole", out_size=orig_size, exclusive=len(exclusive), chunks=1)
+            stats.append(entry)
+            print(f"{base}: kept whole at {shipped_asset} ({orig_size >> 10}KB)", flush=True)
+            continue
+        if base in KEEP_WHOLE:
+            # Keep the file intact (GSUB sequences may cross blocks) but only
+            # claim code points not already covered by an earlier font, so
+            # generated ranges stay disjoint.
+            exclusive_cps = sorted(cps - covered)
+            covered |= cps
+            if not exclusive_cps:
+                entry.update(kind="dropped", out_size=0, chunks=0)
+                stats.append(entry)
+                print(f"{base}: fully covered by earlier fonts -> DROPPED", flush=True)
+                continue
             if not args.metadata_only:
                 shutil.copyfile(src_path, out_dir / filename)
             families.append(
                 {"family": base, "file": f"assets/font/ufs/{filename}"}
             )
-            family_ranges.append(contiguous_ranges(sorted(cps)))
-            entry.update(kind="whole", out_size=orig_size, exclusive=len(cps), chunks=1)
+            family_ranges.append(contiguous_ranges(exclusive_cps))
+            entry.update(kind="whole", out_size=orig_size, exclusive=len(exclusive_cps), chunks=1)
             stats.append(entry)
             print(f"{base}: kept whole ({orig_size >> 10}KB)", flush=True)
             continue

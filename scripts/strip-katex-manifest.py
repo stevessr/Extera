@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-"""Strip flutter_math_fork's KaTeX families from a built FontManifest.json.
+"""Strip eagerly-preloaded families from a built FontManifest.json.
 
-The Flutter engine loads every font listed in FontManifest.json at startup,
-so all 20 bundled KaTeX TTFs get fetched and decoded even when LaTeX
-rendering is disabled in settings. Removing those entries defers loading to
-the first LaTeX render: lib/utils/katex_fonts.dart then registers the same
-families through FontLoader from the still-bundled font assets.
+The Flutter engine loads every font listed in FontManifest.json at startup
+and blocks the first frame until they all finish downloading. Two groups
+must not be in that list:
+
+  * flutter_math_fork's 20 bundled KaTeX TTFs - even when LaTeX rendering is
+    disabled in settings. Removing those entries defers loading to the first
+    LaTeX render: lib/utils/katex_fonts.dart then registers the same families
+    through FontLoader from the still-bundled font assets.
+
+  * Noto Color Emoji (~10MB) - emoji code points are claimed by the leading
+    entry of kUnicodeFallbackFontAssets instead, so the coverage probe loads
+    it from its still-bundled asset on the first rendered emoji.
 
 Run after `flutter build web` on the built asset bundle. Idempotent.
 """
@@ -14,6 +21,7 @@ import pathlib
 import sys
 
 FAMILY_PREFIX = "packages/flutter_math_fork/"
+DROP_FAMILIES = {"Noto Color Emoji"}
 
 
 def main() -> None:
@@ -25,6 +33,7 @@ def main() -> None:
         family
         for family in families
         if not family.get("family", "").startswith(FAMILY_PREFIX)
+        and family.get("family") not in DROP_FAMILIES
     ]
     removed = len(families) - len(kept)
     manifest_path.write_text(json.dumps(kept, separators=(",", ":")))

@@ -82,9 +82,12 @@ runs:
         fi
         flutter build web $args
 
-    # KaTeX fonts load lazily at first LaTeX render; drop them from the
-    # startup font manifest (scripts/strip-katex-manifest.py).
-    - name: Strip KaTeX fonts from startup manifest
+    # KaTeX fonts load lazily at first LaTeX render, and Noto Color Emoji
+    # (~10MB) loads lazily via the unicode fallback probe on the first
+    # rendered emoji; drop both from the startup font manifest, which the
+    # engine drains before showing the first frame
+    # (scripts/strip-katex-manifest.py).
+    - name: Strip lazily-loaded fonts from startup manifest
       if: ${{ inputs.mode == 'release' }}
       shell: bash
       run: python3 scripts/strip-katex-manifest.py build/web/assets/FontManifest.json
