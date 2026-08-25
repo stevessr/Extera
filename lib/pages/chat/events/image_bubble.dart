@@ -210,6 +210,7 @@ class ImageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final hardCorner = Radius.circular(2);
     final roundedCorner = Radius.circular(AppConfig.borderRadius - 2);
 
@@ -269,8 +270,9 @@ class ImageBubble extends StatelessWidget {
               // passed color therefore only applies while no real image is
               // visible (unloaded / hidden states), where the blurhash
               // placeholder benefits from a defined surface.
-              color: event.messageType == MessageTypes.Sticker ||
-                  (loadMedia && !isHidden)
+              color:
+                  event.messageType == MessageTypes.Sticker ||
+                      (loadMedia && !isHidden)
                   ? Colors.transparent
                   : backgroundColor ??
                         theme.colorScheme.surfaceContainerHighest,
