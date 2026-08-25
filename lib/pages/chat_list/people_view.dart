@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 
@@ -41,6 +42,32 @@ class _PeopleViewState extends State<PeopleView> {
   /// Composed once per client so the StreamBuilder below keeps a single
   /// subscription across rebuilds instead of resubscribing per setState.
   Stream<bool>? _syncStream;
+
+  Set<String> _profileKey = const {};
+  Future<List<CachedProfileInformation>> _profileFuture = Future.value(
+    const [],
+  );
+
+  /// Profile lookups are memoized until the set of people changes, so
+  /// sync-tick rebuilds reuse the in-flight/completed future instead of
+  /// refiring one lookup per person on every rate-limited update.
+  Future<List<CachedProfileInformation>> _getProfileFuture(
+    Client client,
+    List<String> userIds,
+  ) {
+    if (setEquals(_profileKey, Set<String>.of(userIds))) {
+      return _profileFuture;
+    }
+    _profileKey = Set<String>.of(userIds);
+    return _profileFuture = Future.wait(
+      userIds.map(
+        (userId) => client.getUserProfile(
+          userId,
+          maxCacheAge: const Duration(hours: 1),
+        ),
+      ),
+    );
+  }
 
   Widget _buildProfileItem(
     BuildContext context,
@@ -176,14 +203,7 @@ class _PeopleViewState extends State<PeopleView> {
                 ChatListHeader(controller: widget.chatListController),
               SliverToBoxAdapter(
                 child: FutureBuilder<List<CachedProfileInformation>>(
-                  future: Future.wait(
-                    allUserIds.map(
-                      (userId) => client.getUserProfile(
-                        userId,
-                        maxCacheAge: const Duration(hours: 1),
-                      ),
-                    ),
-                  ),
+                  future: _getProfileFuture(client, allUserIds),
                   builder: (context, snapshot) {
                     final profileMap = <String, CachedProfileInformation?>{};
                     if (snapshot.hasData) {

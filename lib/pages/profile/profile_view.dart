@@ -14,7 +14,6 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/chat_list_item.dart';
 import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -76,13 +75,9 @@ class ProfileView extends StatelessWidget {
     required BuildContext context,
     required String userId,
   }) {
-    final client = Matrix.of(context).client;
-
     return StreamBuilder(
       key: ValueKey(userId),
-      stream: client.onSync.stream
-          .where((s) => s.hasRoomUpdate)
-          .rateLimit(const Duration(seconds: 1)),
+      stream: controller.mutualRoomsUpdatesStream,
       builder: (context, _) {
         return ListView.builder(
           physics: const NeverScrollableScrollPhysics(),
