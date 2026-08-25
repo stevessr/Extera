@@ -1,3 +1,14 @@
+## Extera 26.4.9
+- View nested reactions (reactions to reactions). To add a reaction, reply to reaction with `/react <reaction>` command.
+- Remove unneccessary paddings for media content in modern message layout.
+- Fix long startup times. (fix in sdk krille-chan: [PR 2448](https://github.com/famedly/matrix-dart-sdk/pull/2448))
+- Implement E2EE for livekit calls. (@cherret)
+- Fix wrong SFU instances being chosen for calls.
+- Use foreground service when sending files.
+- Fix bubble layout for small images.
+- Removed cross-fade animation when loading pictures (also fixes banner layout)
+- Fix blurhash canvas layout.
+
 ## Extera 26.4.8
 - Add extended Unicode fallback: the bundled Unicode Font Set fonts (Unicode 18 coverage) are appended to all font fallback chains, toggle in **settings** -> **style**. Fonts are tree-shaken per fallback priority and split into lazily-loaded chunks.
 - Hide ignored users from mention suggestions.

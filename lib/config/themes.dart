@@ -70,8 +70,6 @@ abstract class FluffyThemes {
       surfaceContainerLowest: extraDarkColors['surfaceContainerLowest'],
       surfaceDim: extraDarkColors['surfaceDim'],
       surfaceTint: extraDarkColors['surfaceTint'],
-      surfaceVariant: extraDarkColors['surfaceVariant'],
-      background: extraDarkColors['background'],
       dynamicSchemeVariant: variant ?? DynamicSchemeVariant.tonalSpot,
     );
 

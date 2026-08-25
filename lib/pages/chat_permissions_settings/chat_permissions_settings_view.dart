@@ -71,7 +71,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius);
     final l10n = L10n.of(context);
 
-    final categories0 = [
+    final permissionCategories = [
       _PermissionCategory(
         title: l10n.users,
         entries: [
@@ -296,7 +296,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
               final canEdit = room.canChangePowerLevel;
 
               final knownEventKeys = <String>{
-                for (final c in categories0)
+                for (final c in permissionCategories)
                   for (final e in c.entries)
                     if (e.category == 'events') e.permissionKey,
               };
@@ -312,7 +312,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
                     ),
               ];
               final categories = <_PermissionCategory>[
-                ...categories0,
+                ...permissionCategories,
                 if (otherEntries.isNotEmpty)
                   _PermissionCategory(title: l10n.other, entries: otherEntries),
               ];
