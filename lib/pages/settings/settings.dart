@@ -16,6 +16,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/client_profile_extension.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/timezone_init.dart';
 import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/utils/platform_infos.dart';
@@ -332,11 +333,9 @@ class SettingsController extends State<Settings> {
         context: context,
         future: () async {
           final client = Matrix.of(context).client;
-          await client.setProfileField(
-            client.userID!,
-            'avatar_url',
-            {'avatar_url': mxc},
-          );
+          await client.setProfileField(client.userID!, 'avatar_url', {
+            'avatar_url': mxc,
+          });
           await AvatarHistory.record(mxc);
           await client.refreshOwnProfile();
         },
@@ -483,6 +482,9 @@ class SettingsController extends State<Settings> {
 
   @override
   void initState() {
+    // The timezone picker below needs the database; parse it here instead
+    // of blocking app startup for a page most sessions never open.
+    ensureTimeZonesInitialized();
     WidgetsBinding.instance.addPostFrameCallback((_) => checkBootstrap());
 
     super.initState();

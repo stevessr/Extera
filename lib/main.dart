@@ -16,9 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
-import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/noto_emoji_font.dart';
-import 'package:extera_next/utils/timezone_initializer.dart' as tz;
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 import 'config/app_settings.dart';
@@ -58,8 +57,6 @@ void main() async {
   // overlap the remaining synchronous startup work.
   final storeFuture = AppSettings.init();
   final vodozemacFuture = vod.init(wasmPath: './assets/assets/vodozemac/');
-
-  tz.initializeTimeZones();
 
   if (!PlatformInfos.isWeb) {
     FlutterForegroundTask.initCommunicationPort();

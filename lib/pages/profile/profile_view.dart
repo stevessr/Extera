@@ -14,6 +14,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/chat_list_item.dart';
 import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
+import 'package:extera_next/utils/timezone_init.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -596,6 +597,7 @@ class _TimezoneClockState extends State<_TimezoneClock> {
   @override
   void initState() {
     super.initState();
+    ensureTimeZonesInitialized();
     _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       setState(() {
         _now = DateTime.now().toUtc();
