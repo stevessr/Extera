@@ -270,8 +270,9 @@ class ImageBubble extends StatelessWidget {
               // passed color therefore only applies while no real image is
               // visible (unloaded / hidden states), where the blurhash
               // placeholder benefits from a defined surface.
-              color: event.messageType == MessageTypes.Sticker ||
-                  (loadMedia && !isHidden)
+              color:
+                  event.messageType == MessageTypes.Sticker ||
+                      (loadMedia && !isHidden)
                   ? Colors.transparent
                   : backgroundColor ??
                         theme.colorScheme.surfaceContainerHighest,

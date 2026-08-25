@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat_input_row.dart';
 import 'package:extera_next/utils/content_warning.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -238,7 +239,7 @@ class _EditContent extends StatelessWidget {
         Icon(Icons.edit, color: theme.colorScheme.primary),
         Container(width: 15.0),
         Text(
-          event.calcLocalizedBodyFallback(
+          event.calcLocalizedBodyFallbackCached(
             MatrixLocals(L10n.of(context)),
             withSenderNamePrefix: false,
             hideReply: true,

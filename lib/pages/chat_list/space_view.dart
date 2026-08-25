@@ -15,6 +15,8 @@ import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
+import 'package:extera_next/utils/memoized_tile_cache.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
@@ -32,8 +34,31 @@ enum SpaceChildAction { edit, moveToSpace, removeFromSpace }
 
 enum SpaceActions { settings, invite, members, leave }
 
+/// Snapshot of every input that influences a rendered space-child row.
+/// Compared structurally on every sync tick; unchanged rows reuse the
+/// previously built widget so the element tree skips that subtree.
+typedef _SpaceChildDeps = ({
+  ThemeData theme,
+  String localeName,
+  String displayname,
+  Uri? avatarUrl,
+  String? roomType,
+  bool isJoined,
+  bool activeChat,
+  bool isAdmin,
+  bool unread,
+  bool hasNewMessages,
+  int notificationCount,
+  int highlightCount,
+  bool markedUnread,
+});
+
+final MemoizedTileCache<_SpaceChildDeps, Widget> _spaceChildTiles =
+    MemoizedTileCache(maxEntries: 512);
+
 class SpaceView extends StatefulWidget {
   final String spaceId;
+
   final void Function() onBack;
   final void Function(String spaceId) toParentSpace;
   final void Function(Room room) onChatTab;
@@ -128,7 +153,7 @@ class _LastMessageSubtitle extends StatelessWidget {
                     '${lastEvent?.eventId}_${lastEvent?.type}_${lastEvent?.redacted}',
                   ),
                   future: needLastEventSender
-                      ? lastEvent.calcLocalizedBody(
+                      ? lastEvent.calcLocalizedBodyCached(
                           MatrixLocals(L10n.of(context)),
                           hideReply: true,
                           hideEdit: true,
@@ -140,7 +165,7 @@ class _LastMessageSubtitle extends StatelessWidget {
                                   lastEvent.senderId),
                         )
                       : null,
-                  initialData: lastEvent?.calcLocalizedBodyFallback(
+                  initialData: lastEvent?.calcLocalizedBodyFallbackCached(
                     MatrixLocals(L10n.of(context)),
                     hideReply: true,
                     hideEdit: true,
@@ -205,6 +230,10 @@ class _SpaceViewState extends State<SpaceView> {
   Timer? _filterDebounce;
   List<SpaceRoomsChunk$2>? _cachedFilteredChildren;
   String _appliedFilter = '';
+
+  /// Composed once so the body StreamBuilder keeps a single subscription
+  /// across rebuilds instead of resubscribing per setState.
+  Stream<bool>? _syncStream;
 
   @override
   void initState() {
@@ -701,7 +730,7 @@ class _SpaceViewState extends State<SpaceView> {
       body: room == null
           ? const Center(child: Icon(Icons.search_outlined, size: 80))
           : StreamBuilder(
-              stream: room.client.onSync.stream
+              stream: _syncStream ??= room.client.onSync.stream
                   .where((s) => s.hasRoomUpdate)
                   .rateLimit(const Duration(seconds: 1)),
               builder: (context, snapshot) {
@@ -822,125 +851,153 @@ class _SpaceViewState extends State<SpaceView> {
                         }
                         final item = filteredChildren[i];
                         var joinedRoom = room.client.getRoomById(item.roomId);
+                        if (joinedRoom?.membership == .leave) {
+                          joinedRoom = null;
+                        }
+                        final client = Matrix.of(context).client;
                         final displayname =
                             item.name ??
                             item.canonicalAlias ??
                             joinedRoom?.getLocalizedDisplayname() ??
                             L10n.of(context).emptyChat;
-                        final avatarUrl = item.avatarUrl ?? joinedRoom?.avatar;
-                        final client = Matrix.of(context).client;
-                        if (joinedRoom?.membership == .leave) {
-                          joinedRoom = null;
-                        }
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 1,
-                          ),
-                          child: Material(
-                            borderRadius: BorderRadius.circular(
-                              AppConfig.borderRadius,
+                        // Memoized per roomId: unchanged rows reuse the
+                        // previously built widget across sync ticks.
+                        final deps = (
+                          theme: theme,
+                          localeName: L10n.of(context).localeName,
+                          displayname: displayname,
+                          avatarUrl: item.avatarUrl ?? joinedRoom?.avatar,
+                          roomType: item.roomType,
+                          isJoined: joinedRoom != null,
+                          activeChat:
+                              joinedRoom != null &&
+                              widget.activeChat == joinedRoom.id,
+                          isAdmin: isAdmin,
+                          unread: joinedRoom?.isUnread ?? false,
+                          hasNewMessages: joinedRoom?.hasNewMessages ?? false,
+                          notificationCount: joinedRoom?.notificationCount ?? 0,
+                          highlightCount: joinedRoom?.highlightCount ?? 0,
+                          markedUnread: joinedRoom?.markedUnread ?? false,
+                        );
+                        return _spaceChildTiles.get(item.roomId, deps, () {
+                          final avatarUrl = deps.avatarUrl;
+                          final displayname = deps.displayname;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 1,
                             ),
-                            clipBehavior: Clip.hardEdge,
-                            color:
-                                joinedRoom != null &&
-                                    widget.activeChat == joinedRoom.id
-                                ? theme.colorScheme.secondaryContainer
-                                : Colors.transparent,
-                            child: HoverBuilder(
-                              builder: (context, hovered) => ListTile(
-                                visualDensity: const VisualDensity(
-                                  vertical: -0.5,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                onTap: joinedRoom != null
-                                    ? () => widget.onChatTab(joinedRoom!)
-                                    : () => _joinChildRoom(item),
-                                onLongPress: isAdmin
-                                    ? () => _showSpaceChildEditMenu(
-                                        context,
-                                        item.roomId,
-                                      )
-                                    : null,
-                                leading: hovered && isAdmin
-                                    ? SizedBox.square(
-                                        dimension: avatarSize,
-                                        child: IconButton(
-                                          splashRadius: avatarSize,
-                                          style: IconButton.styleFrom(
-                                            foregroundColor: theme
-                                                .colorScheme
-                                                .onTertiaryContainer,
-                                            backgroundColor: theme
-                                                .colorScheme
-                                                .tertiaryContainer,
+                            child: Material(
+                              borderRadius: BorderRadius.circular(
+                                AppConfig.borderRadius,
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              color:
+                                  joinedRoom != null &&
+                                      widget.activeChat == joinedRoom.id
+                                  ? theme.colorScheme.secondaryContainer
+                                  : Colors.transparent,
+                              child: HoverBuilder(
+                                builder: (context, hovered) => ListTile(
+                                  visualDensity: const VisualDensity(
+                                    vertical: -0.5,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  onTap: joinedRoom != null
+                                      ? () => widget.onChatTab(joinedRoom!)
+                                      : () => _joinChildRoom(item),
+                                  onLongPress: isAdmin
+                                      ? () => _showSpaceChildEditMenu(
+                                          context,
+                                          item.roomId,
+                                        )
+                                      : null,
+                                  leading: hovered && isAdmin
+                                      ? SizedBox.square(
+                                          dimension: avatarSize,
+                                          child: IconButton(
+                                            splashRadius: avatarSize,
+                                            style: IconButton.styleFrom(
+                                              foregroundColor: theme
+                                                  .colorScheme
+                                                  .onTertiaryContainer,
+                                              backgroundColor: theme
+                                                  .colorScheme
+                                                  .tertiaryContainer,
+                                            ),
+                                            onPressed: () =>
+                                                _showSpaceChildEditMenu(
+                                                  context,
+                                                  item.roomId,
+                                                ),
+                                            icon: const Icon(
+                                              Icons.edit_outlined,
+                                            ),
                                           ),
-                                          onPressed: () =>
-                                              _showSpaceChildEditMenu(
-                                                context,
-                                                item.roomId,
-                                              ),
-                                          icon: const Icon(Icons.edit_outlined),
+                                        )
+                                      : Avatar(
+                                          size: avatarSize,
+                                          mxContent: avatarUrl,
+                                          name: displayname,
+                                          border: item.roomType == 'm.space'
+                                              ? BorderSide(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .surfaceContainerHighest,
+                                                )
+                                              : null,
+                                          borderRadius:
+                                              item.roomType == 'm.space'
+                                              ? BorderRadius.circular(
+                                                  AppConfig.borderRadius / 4,
+                                                )
+                                              : null,
                                         ),
-                                      )
-                                    : Avatar(
-                                        size: avatarSize,
-                                        mxContent: avatarUrl,
-                                        name: displayname,
-                                        border: item.roomType == 'm.space'
-                                            ? BorderSide(
-                                                color: theme
-                                                    .colorScheme
-                                                    .surfaceContainerHighest,
-                                              )
-                                            : null,
-                                        borderRadius: item.roomType == 'm.space'
-                                            ? BorderRadius.circular(
-                                                AppConfig.borderRadius / 4,
-                                              )
-                                            : null,
-                                      ),
-                                title: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Opacity(
-                                        opacity: joinedRoom == null ? 0.5 : 1,
-                                        child: Text(
-                                          displayname,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontWeight:
-                                                (joinedRoom?.isUnread == true ||
-                                                    joinedRoom
-                                                            ?.hasNewMessages ==
-                                                        true)
-                                                ? FontWeight.w500
-                                                : null,
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Opacity(
+                                          opacity: joinedRoom == null ? 0.5 : 1,
+                                          child: Text(
+                                            displayname,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight:
+                                                  (joinedRoom?.isUnread ==
+                                                          true ||
+                                                      joinedRoom
+                                                              ?.hasNewMessages ==
+                                                          true)
+                                                  ? FontWeight.w500
+                                                  : null,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    if (joinedRoom != null)
-                                      UnreadBubble(room: joinedRoom)
-                                    else
-                                      const Icon(Icons.chevron_right_outlined),
-                                  ],
+                                      if (joinedRoom != null)
+                                        UnreadBubble(room: joinedRoom)
+                                      else
+                                        const Icon(
+                                          Icons.chevron_right_outlined,
+                                        ),
+                                    ],
+                                  ),
+                                  subtitle: joinedRoom == null
+                                      ? null
+                                      : _LastMessageSubtitle(
+                                          joinedRoom: joinedRoom,
+                                          client: client,
+                                          theme: theme,
+                                        ),
                                 ),
-                                subtitle: joinedRoom == null
-                                    ? null
-                                    : _LastMessageSubtitle(
-                                        joinedRoom: joinedRoom,
-                                        client: client,
-                                        theme: theme,
-                                      ),
                               ),
                             ),
-                          ),
-                        );
+                          );
+                        });
                       },
                     ),
                     const SliverPadding(padding: EdgeInsets.only(top: 86)),

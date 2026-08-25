@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -13,6 +15,7 @@ import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/msc2666_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/user_notes_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -140,6 +143,17 @@ class ProfileController extends State<ProfilePage> {
   }
 
   List<Room> mutualRooms = [];
+
+  /// Stable mutual-rooms update pipeline shared with ProfileView:
+  /// recomposing `onSync.where(...).rateLimit(...)` per build would make
+  /// the StreamBuilder unsubscribe/resubscribe and reset the rate-limit
+  /// window on every parent rebuild.
+  late final Stream<bool> mutualRoomsUpdatesStream = Matrix.of(context)
+      .client
+      .onSync
+      .stream
+      .where((s) => s.hasRoomUpdate)
+      .rateLimit(const Duration(seconds: 1));
   bool canQueryMutualRooms = true;
   bool isQueryingMutualRooms = false;
 

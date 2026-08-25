@@ -483,8 +483,9 @@ class SettingsStyleView extends StatelessWidget {
                           title: L10n.of(context).useNotoEmoji,
                           setting: AppSettings.notoEmojiFont,
                           // Rebuild so that the animated emoji switch below
-                          // appears or disappears right away.
-                          onChanged: controller.refreshView,
+                          // appears or disappears right away, and fetch the
+                          // font on demand when the setting turns on.
+                          onChanged: controller.toggleNotoEmoji,
                         ),
                         if (AppSettings.notoEmojiFont.value) ...[
                           const ListDivider(),

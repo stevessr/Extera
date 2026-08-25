@@ -134,6 +134,30 @@ class HtmlMessage extends StatefulWidget {
   State<HtmlMessage> createState() => _HtmlMessageState();
 }
 
+/// Memoized [linkify] results. Linkification is a pure text-to-elements
+/// mapping with no styling or theme dependency, so its output can be shared
+/// across rebuilds and widget instances; only the (cheap) span mapping runs
+/// per build. Bounded LRU keyed by the raw text.
+const int _linkifyCacheMaxEntries = 512;
+final Map<String, List<LinkifyElement>> _linkifyCache = {};
+
+List<LinkifyElement> _linkifyCached(String text) {
+  final cached = _linkifyCache.remove(text);
+  if (cached != null) {
+    _linkifyCache[text] = cached;
+    return cached;
+  }
+  final elements = linkify(
+    text,
+    options: const LinkifyOptions(humanize: false),
+  );
+  if (_linkifyCache.length >= _linkifyCacheMaxEntries) {
+    _linkifyCache.remove(_linkifyCache.keys.first);
+  }
+  _linkifyCache[text] = elements;
+  return elements;
+}
+
 class _HtmlMessageState extends State<HtmlMessage> {
   final Map<int, bool> _detailsOpenState = {};
   final Map<int, bool> _spoilerRevealedState = {};
@@ -165,12 +189,8 @@ class _HtmlMessageState extends State<HtmlMessage> {
   );
 
   // to fix issue 7
-  TextSpan _buildLinkifySpan(
-    BuildContext context, {
-    required String text,
-    LinkifyOptions options = const LinkifyOptions(humanize: false),
-  }) {
-    final elements = linkify(text, options: options);
+  TextSpan _buildLinkifySpan(BuildContext context, {required String text}) {
+    final elements = _linkifyCached(text);
     return TextSpan(
       children: elements.map((element) {
         if (element is LinkableElement) {

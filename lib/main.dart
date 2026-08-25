@@ -16,8 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
+import 'package:extera_next/utils/noto_emoji_font.dart';
 import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/timezone_initializer.dart' as tz;
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 import 'config/app_settings.dart';
@@ -58,20 +58,25 @@ void main() async {
   final storeFuture = AppSettings.init();
   final vodozemacFuture = vod.init(wasmPath: './assets/assets/vodozemac/');
 
-  tz.initializeTimeZones();
-
   if (!PlatformInfos.isWeb) {
     FlutterForegroundTask.initCommunicationPort();
   }
 
   Logs().nativeColors = !PlatformInfos.isIOS;
 
+  final store = await storeFuture;
+
+  // The 10.7 MB emoji font is no longer engine-preloaded via
+  // FontManifest.json; only fetch it when the fallback setting is on.
+  if (AppSettings.notoEmojiFont.value) {
+    unawaited(ensureNotoEmojiFontLoaded());
+  }
+
   // Client construction only opens IndexedDB and reads the session, while
   // the vodozemac download and wallpaper load are independent I/O — run
   // them concurrently instead of serializing startup behind each other.
   // Initialization itself (which unpickles the Olm account) must wait for
   // vodozemac, so it runs once both have finished.
-  final store = await storeFuture;
   final clientsFuture = ClientManager.getClients(
     store: store,
     initialize: false,
@@ -119,24 +124,27 @@ void main() async {
 
 /// Fetch the pincode for the applock and start the flutter engine.
 Future<void> startGui(List<Client> clients, SharedPreferences store) async {
-  // Fetch the pin for the applock if existing for mobile applications.
-  String? pin;
+  // The PIN read, room loading and account-data loading are independent:
+  // overlap them instead of paying the sum of all three at startup.
+  var pinFuture = Future.value();
   if (PlatformInfos.isMobile) {
-    try {
-      pin = await const FlutterSecureStorage().read(
-        key: SettingKeys.appLockKey,
-      );
-    } catch (e, s) {
-      Logs().d('Unable to read PIN from Secure storage', e, s);
-    }
+    pinFuture = const FlutterSecureStorage()
+        .read(key: SettingKeys.appLockKey)
+        .catchError((Object e, StackTrace s) {
+          Logs().d('Unable to read PIN from Secure storage', e, s);
+          return null;
+        });
   }
 
   // Preload first client
   final firstClient = clients.firstOrNull;
   Logs().i("Loading rooms...");
-  await firstClient?.roomsLoading;
-  Logs().i("Loading account data...");
-  await firstClient?.accountDataLoading;
+  await Future.wait([
+    ?firstClient?.roomsLoading,
+    ?firstClient?.accountDataLoading,
+    pinFuture,
+  ]);
+  final pin = await pinFuture;
 
   ErrorWidget.builder = (details) => FluffyChatErrorWidget(details);
   Logs().i('${clients.length} clients');

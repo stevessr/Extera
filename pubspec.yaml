@@ -69,7 +69,6 @@ dependencies:
   livekit_client: ^2.11.0
   local_auth: ^3.0.2
   lottie: ^3.5.1
-  material: ^1.0.1
   matrix:
     # path: ../matrix-dart-sdk
      git:
@@ -159,9 +158,6 @@ flutter:
     # Populated by tool/download_animated_emoji.dart, see .gitignore.
     - assets/animated_emoji/
   fonts:
-    - family: "Noto Color Emoji"
-      fonts:
-        - asset: assets/font/NotoColorEmoji.ttf
     - family: "Roboto"
       fonts:
         - asset: assets/font/RobotoVariable.ttf

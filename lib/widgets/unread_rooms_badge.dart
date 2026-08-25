@@ -6,13 +6,18 @@ import 'package:matrix/matrix.dart';
 import 'matrix.dart';
 
 class UnreadRoomsBadge extends StatelessWidget {
-  final bool Function(Room) filter;
+  /// Precomputed count of matching unread rooms. When provided, the widget
+  /// skips scanning all rooms on every rebuild — callers that rebuild every
+  /// sync tick should compute counts once and pass them here.
+  final int? count;
+  final bool Function(Room)? filter;
   final b.BadgePosition? badgePosition;
   final Widget? child;
 
   const UnreadRoomsBadge({
     super.key,
-    required this.filter,
+    this.count,
+    this.filter,
     this.badgePosition,
     this.child,
   });
@@ -21,10 +26,15 @@ class UnreadRoomsBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final unreadCount = Matrix.of(context).client.rooms
-        .where(filter)
-        .where((r) => (r.isUnread || r.membership == Membership.invite))
-        .length;
+    final unreadCount =
+        count ??
+        Matrix.of(context).client.rooms
+            .where(
+              (r) =>
+                  (filter?.call(r) ?? true) &&
+                  (r.isUnread || r.membership == Membership.invite),
+            )
+            .length;
     return b.Badge(
       badgeStyle: b.BadgeStyle(
         badgeColor: theme.colorScheme.primary,

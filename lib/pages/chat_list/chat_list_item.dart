@@ -7,6 +7,9 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
+import 'package:extera_next/utils/memoized_tile_cache.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/room_space_children_extension.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -17,7 +20,68 @@ import '../../utils/date_time_extension.dart';
 import '../../widgets/avatar.dart';
 import '../room_preview/room_preview.dart';
 
-enum ArchivedRoomAction { delete, rejoin }
+/// Memoized hero-user loads for unnamed rooms. The FutureBuilder future used
+/// to be recreated on every rebuild, refiring per-hero database lookups each
+/// sync tick. Keyed by room id and hero set so membership changes retrigger;
+/// failed lookups evict themselves.
+final Map<String, Future<List<User>>> _heroUsersFutures = {};
+
+Future<List<User>> _loadHeroUsersCached(Room room) {
+  final key =
+      '${room.id}::${room.summary.mHeroes?.join(',') ?? ''}::'
+      '${room.directChatMatrixID ?? ''}';
+  final cached = _heroUsersFutures[key];
+  if (cached != null) return cached;
+  final future = room.loadHeroUsers().catchError((Object error) {
+    _heroUsersFutures.remove(key);
+    throw error;
+  });
+  if (_heroUsersFutures.length > 128) {
+    _heroUsersFutures.remove(_heroUsersFutures.keys.first);
+  }
+  return _heroUsersFutures[key] = future;
+}
+
+/// Snapshot of every input that influences the rendered room row. Compared
+/// structurally on every rebuild; when unchanged the previously built widget
+/// is reused so Flutter's element tree skips rebuilding that subtree.
+typedef ChatListItemDeps = ({
+  ThemeData theme,
+  String localeName,
+  bool activeChat,
+  bool noBackgroundColor,
+  String? filter,
+  String displayname,
+  String typingText,
+  Room? space,
+  Object? spaceNameContent,
+  Object? spaceAvatarContent,
+  String? lastEventId,
+  EventStatus? lastEventStatus,
+  bool lastEventRedacted,
+  int receiptsCount,
+  int notificationCount,
+  int highlightCount,
+  bool markedUnread,
+  bool unread,
+  bool hasNewMessages,
+  bool isMuted,
+  bool isLowPriority,
+  bool isFavourite,
+  Membership membership,
+  String? directChatMatrixId,
+  int memberCount,
+  Object? avatarContent,
+  Object? myMemberContent,
+  bool senderMemberMissing,
+  bool hasOnLongPress,
+  bool hasOnForget,
+});
+
+/// Bounded per-room-row tile cache; rows rebuilt only when their deps
+/// snapshot changes (new event, badge count, theme, rename, ...).
+final MemoizedTileCache<ChatListItemDeps, Widget> _chatListItemTiles =
+    MemoizedTileCache(maxEntries: 512);
 
 class ChatListItem extends StatelessWidget {
   final Room room;
@@ -43,6 +107,57 @@ class ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayname = room.getLocalizedDisplayname(
+      MatrixLocals(L10n.of(context)),
+    );
+    final filter = this.filter;
+    if (filter != null && !displayname.toLowerCase().contains(filter)) {
+      return const SizedBox.shrink();
+    }
+    final space = this.space;
+    final lastEvent = room.lastEvent;
+
+    final deps = (
+      theme: Theme.of(context),
+      localeName: L10n.of(context).localeName,
+      activeChat: activeChat,
+      noBackgroundColor: noBackgroundColor,
+      filter: filter,
+      displayname: displayname,
+      typingText: room.getLocalizedTypingText(context),
+      space: space,
+      spaceNameContent: space?.getState(EventTypes.RoomName)?.content,
+      spaceAvatarContent: space?.getState(EventTypes.RoomAvatar)?.content,
+      lastEventId: lastEvent?.eventId,
+      lastEventStatus: lastEvent?.status,
+      lastEventRedacted: lastEvent?.redacted ?? false,
+      receiptsCount: lastEvent?.receipts.length ?? 0,
+      notificationCount: room.notificationCount,
+      highlightCount: room.highlightCount,
+      markedUnread: room.markedUnread,
+      unread: room.isUnread,
+      hasNewMessages: room.hasNewMessages,
+      isMuted: room.pushRuleState != PushRuleState.notify,
+      isLowPriority: room.isLowPriority,
+      isFavourite: room.isFavourite,
+      membership: room.membership,
+      directChatMatrixId: room.directChatMatrixID,
+      memberCount: room.summary.mJoinedMemberCount ?? 1,
+      avatarContent: room.getState(EventTypes.RoomAvatar)?.content,
+      myMemberContent: room
+          .getState(EventTypes.RoomMember, room.client.userID!)
+          ?.content,
+      senderMemberMissing:
+          lastEvent != null &&
+          room.getState(EventTypes.RoomMember, lastEvent.senderId) == null,
+      hasOnLongPress: onLongPress != null,
+      hasOnForget: onForget != null,
+    );
+
+    return _chatListItemTiles.get(room.id, deps, () => _buildTile(context));
+  }
+
+  Widget _buildTile(BuildContext context) {
     final client = Matrix.of(context).client;
     final theme = Theme.of(context);
 
@@ -79,7 +194,7 @@ class ChatListItem extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         color: noBackgroundColor ? null : backgroundColor,
         child: FutureBuilder(
-          future: room.name.isEmpty ? room.loadHeroUsers() : null,
+          future: room.name.isEmpty ? _loadHeroUsersCached(room) : null,
           builder: (context, _) => HoverBuilder(
             builder: (context, listTileHovered) => ListTile(
               visualDensity: const VisualDensity(vertical: -0.5),
@@ -257,7 +372,7 @@ class ChatListItem extends StatelessWidget {
                     child: room.isSpace && room.membership == Membership.join
                         ? Text(
                             L10n.of(context).countChatsAndCountParticipants(
-                              room.spaceChildren.length,
+                              room.spaceChildrenCount,
                               (room.summary.mJoinedMemberCount ?? 1),
                             ),
                             style: TextStyle(color: theme.colorScheme.outline),
@@ -279,7 +394,7 @@ class ChatListItem extends StatelessWidget {
                               '${lastEvent?.eventId}_${lastEvent?.type}_${lastEvent?.redacted}',
                             ),
                             future: needLastEventSender
-                                ? lastEvent.calcLocalizedBody(
+                                ? lastEvent.calcLocalizedBodyCached(
                                     MatrixLocals(L10n.of(context)),
                                     hideReply: true,
                                     hideEdit: true,
@@ -291,14 +406,15 @@ class ChatListItem extends StatelessWidget {
                                             room.lastEvent?.senderId),
                                   )
                                 : null,
-                            initialData: lastEvent?.calcLocalizedBodyFallback(
-                              MatrixLocals(L10n.of(context)),
-                              hideReply: true,
-                              hideEdit: true,
-                              plaintextBody: true,
-                              removeMarkdown: true,
-                              withSenderNamePrefix: !isDirectChat,
-                            ),
+                            initialData: lastEvent
+                                ?.calcLocalizedBodyFallbackCached(
+                                  MatrixLocals(L10n.of(context)),
+                                  hideReply: true,
+                                  hideEdit: true,
+                                  plaintextBody: true,
+                                  removeMarkdown: true,
+                                  withSenderNamePrefix: !isDirectChat,
+                                ),
                             builder: (context, snapshot) => Row(
                               mainAxisSize: MainAxisSize.min,
                               spacing: 2,

@@ -20,6 +20,44 @@ class ChatMembersController extends State<ChatMembersPage> {
   List<User>? members;
   List<User>? filteredMembers;
   Object? error;
+  List<User>? _filtersSource;
+  List<Membership> _availableFiltersCache = const [];
+
+  /// Membership chips depend only on the raw member list; memoized so
+  /// keystroke rebuilds skip the O(membership × members) header scan.
+  List<Membership> get availableFilters {
+    if (!identical(members, _filtersSource)) {
+      _filtersSource = members;
+      final filters = Membership.values
+          .where(
+            (membership) =>
+                members?.any((member) => member.membership == membership) ??
+                false,
+          )
+          .toList();
+      filters.sort((a, b) => a == Membership.join ? -1 : 1);
+      _availableFiltersCache = filters;
+    }
+    return _availableFiltersCache;
+  }
+
+  List<User>? _joinCountSource;
+  int _joinedMemberCountCache = 0;
+
+  /// Fallback join count for the chip label when the room summary does
+  /// not carry one; recomputed only when the member list changes.
+  int get joinedMemberCountFallback {
+    if (!identical(members, _joinCountSource)) {
+      _joinCountSource = members;
+      _joinedMemberCountCache =
+          members
+              ?.where((member) => member.membership == Membership.join)
+              .length ??
+          0;
+    }
+    return _joinedMemberCountCache;
+  }
+
   Membership membershipFilter = Membership.join;
   bool _showIgnoredUsers = false;
 
@@ -39,45 +77,25 @@ class ChatMembersController extends State<ChatMembersPage> {
     setFilter();
   }
 
+  /// Members are sorted once in [refreshMembers]; filtering preserves
+  /// that order so each keystroke only pays a single O(n) pass instead
+  /// of a re-sort.
   Future<void> setFilter([_]) async {
     final client = Matrix.of(context).client;
     final filter = filterController.text.toLowerCase().trim();
+    final ignoredUsers = client.ignoredUsers;
 
-    final members = this.members
-        ?.where((member) => member.membership == membershipFilter)
-        .toList();
-
-    if (filter.isEmpty) {
-      setState(() {
-        filteredMembers =
-            members
-                ?.where(
-                  (user) =>
-                      showIgnoredUsers ||
-                      !client.ignoredUsers.contains(user.id),
-                )
-                .toList()
-              ?..sort(
-                (b, a) => a.powerLevel.level.compareTo(b.powerLevel.level),
-              );
-      });
-      return;
-    }
     setState(() {
-      filteredMembers =
-          members
-              ?.where(
-                (user) =>
-                    (user.displayName?.toLowerCase().contains(filter) ??
-                        false) ||
-                    user.id.toLowerCase().contains(filter),
-              )
-              .where(
-                (user) =>
-                    showIgnoredUsers || !client.ignoredUsers.contains(user.id),
-              )
-              .toList()
-            ?..sort((b, a) => a.powerLevel.level.compareTo(b.powerLevel.level));
+      filteredMembers = members
+          ?.where((member) => member.membership == membershipFilter)
+          .where((user) => showIgnoredUsers || !ignoredUsers.contains(user.id))
+          .where(
+            (user) =>
+                filter.isEmpty ||
+                (user.displayName?.toLowerCase().contains(filter) ?? false) ||
+                user.id.toLowerCase().contains(filter),
+          )
+          .toList();
     });
   }
 
@@ -96,7 +114,8 @@ class ChatMembersController extends State<ChatMembersPage> {
       if (!mounted) return;
 
       setState(() {
-        members = participants;
+        members = participants
+          ?..sort((b, a) => a.powerLevel.level.compareTo(b.powerLevel.level));
         setFilter();
       });
     } catch (e, s) {

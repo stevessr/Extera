@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/noto_emoji_font.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_list_choose_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
@@ -192,6 +194,15 @@ class SettingsStyleController extends State<SettingsStyle> {
   /// Rebuilds the settings page after a setting changed the set of visible
   /// options.
   void refreshView(bool _) => setState(() {});
+
+  /// The emoji font is fetched on demand (see lib/utils/noto_emoji_font.dart);
+  /// loading it here covers the mid-session toggle path.
+  void toggleNotoEmoji(bool _) {
+    setState(() {});
+    if (AppSettings.notoEmojiFont.value) {
+      unawaited(ensureNotoEmojiFontLoaded());
+    }
+  }
 
   void changeFontSizeFactor(double d) {
     AppSettings.fontSizeFactor.setItem(d);

@@ -6,6 +6,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/pages/chat/chat_app_bar_list_tile.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
@@ -40,7 +41,7 @@ class PinnedEvents extends StatelessWidget {
                     value: event?.eventId ?? '',
                     icon: const Icon(Icons.push_pin_outlined),
                     label:
-                        event?.calcLocalizedBodyFallback(
+                        event?.calcLocalizedBodyFallbackCached(
                           MatrixLocals(L10n.of(context)),
                           withSenderNamePrefix: true,
                           hideReply: true,
@@ -70,7 +71,7 @@ class PinnedEvents extends StatelessWidget {
         final event = snapshot.data;
         return ChatAppBarListTile(
           title:
-              event?.calcLocalizedBodyFallback(
+              event?.calcLocalizedBodyFallbackCached(
                 MatrixLocals(L10n.of(context)),
                 withSenderNamePrefix: true,
                 hideReply: true,

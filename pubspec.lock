@@ -1560,14 +1560,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.12.20"
-  material:
-    dependency: "direct main"
-    description:
-      name: material
-      sha256: "544f2dd87d8b24ecdcf7850fe12b2f2e8ccc3ad6cf47396e9c9241e4e7efac44"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.1"
   material_color_utilities:
     dependency: transitive
     description:

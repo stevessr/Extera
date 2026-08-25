@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -22,15 +21,7 @@ class TypingIndicators extends StatelessWidget {
     const avatarSize = Avatar.defaultSize / 2;
 
     return StreamBuilder<Object>(
-      stream: controller.room.client.onSync.stream
-          .where(
-            (syncUpdate) =>
-                syncUpdate.rooms?.join?[controller.room.id]?.ephemeral?.any(
-                  (ephemeral) => ephemeral.type == 'm.typing',
-                ) ??
-                false,
-          )
-          .rateLimit(const Duration(seconds: 1)),
+      stream: controller.typingUpdatesStream,
       builder: (context, _) {
         final typingUsers = controller.room.typingUsers
           ..removeWhere(

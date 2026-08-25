@@ -65,6 +65,24 @@ class _ChatListLegacyBottomNavbarState
       ActiveFilter.people: (Room room) => false,
     };
 
+    final client = Matrix.of(context).client;
+    // Single pass over all rooms per rebuild: every badge used to run its
+    // own full O(rooms) scan, so the bar cost was multiplied by the
+    // number of filters.
+    final unreadCounts = <ActiveFilter, int>{
+      for (final filter in filters) filter: 0,
+    };
+    for (final room in client.rooms) {
+      if (!(room.isUnread || room.membership == Membership.invite)) {
+        continue;
+      }
+      for (final filter in filters) {
+        if (filterLambdas[filter]!(room)) {
+          unreadCounts[filter] = unreadCounts[filter]! + 1;
+        }
+      }
+    }
+
     return NavigationBar(
       height: 64,
       onDestinationSelected: (filterIndex) {
@@ -78,6 +96,7 @@ class _ChatListLegacyBottomNavbarState
           selectedIcon: Icon(filter.toIconData(false)),
           icon: UnreadRoomsBadge(
             filter: filterLambdas[filter]!,
+            count: unreadCounts[filter],
             badgePosition: BadgePosition.topEnd(),
             child: Icon(filter.toIconData(true)),
           ),

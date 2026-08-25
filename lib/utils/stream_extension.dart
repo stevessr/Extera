@@ -1,10 +1,16 @@
 import 'dart:async';
 
 extension StreamExtension on Stream {
-  /// Returns a new Stream which outputs only `true` for every update of the original
-  /// stream, ratelimited by the Duration t
+  /// Returns a new Stream which outputs only `true` for every update of the
+  /// original stream, ratelimited by the Duration t.
+  ///
+  /// The result is a broadcast stream: widgets hoist these pipelines into
+  /// stable fields (controller/state) and may transiently hold two
+  /// subscriptions (e.g. during sliver child rebuilds), which a
+  /// single-subscription controller would reject with "Stream has already
+  /// been listened to".
   Stream<bool> rateLimit(Duration t) {
-    final controller = StreamController<bool>();
+    final controller = StreamController<bool>.broadcast();
     Timer? timer;
     var gotMessage = false;
     // as we call our inline-defined function recursively we need to make sure that the

@@ -60,8 +60,13 @@ class ChatEventList extends StatelessWidget {
     final centerEventCount = events.length - newEventCount;
 
     // Builds a Message widget for the event at [eventIndex] in filteredEvents.
+    //
+    // The Message widget itself is memoized on the controller: when every
+    // input in the deps record is unchanged, the previously built widget
+    // instance is reused and Flutter skips rebuilding the bubble subtree.
+    // Only the cheap AutoScrollTag/RepaintBoundary wrappers are fresh, so
+    // scroll-to-index registration keeps working.
     Widget buildEventTile(int eventIndex) {
-      //print('Building event $eventIndex ${events[eventIndex].eventId}');
       final event = events[eventIndex];
       final animateIn =
           eventIndex == 0 &&
@@ -70,50 +75,87 @@ class ChatEventList extends StatelessWidget {
               1000 &&
           controller.firstUpdateReceived;
 
-      final thread = threads.containsKey(event.eventId)
-          ? threads[event.eventId]
-          : null;
+      final thread = threads[event.eventId];
+      final selected = controller.selectedEvents.any(
+        (e) => e.eventId == event.eventId,
+      );
+
+      final deps = (
+        event: event,
+        nextEvent: eventIndex + 1 < events.length
+            ? events[eventIndex + 1]
+            : null,
+        previousEvent: eventIndex > 0 ? events[eventIndex - 1] : null,
+        timeline: timeline,
+        thread: thread,
+        layout: controller.layout,
+        secondaryBubbleColor: colors[0],
+        bubbleColor: colors[1],
+        animateIn: animateIn,
+        selected: selected,
+        singleSelected:
+            controller.selectedEvents.length == 1 &&
+            controller.selectedEvents.first.eventId == event.eventId,
+        longPressSelect: controller.selectedEvents.isNotEmpty,
+        hasBeenRead:
+            latestReadEventIndex != -1 && latestReadEventIndex <= eventIndex,
+        displayReadMarker:
+            eventIndex > 0 && controller.readMarkerEventId == event.eventId,
+        highlightMarker: controller.scrollToEventIdMarker == event.eventId,
+        wallpaperMode: hasWallpaper,
+        gradient: AppSettings.enableGradient.value,
+        autoplayImages: AppSettings.autoplayImages.value,
+        chatFallbackFonts: AppSettings.chatFallbackFonts.value,
+        chatFont: AppSettings.chatFont.value,
+        enableChatFrostedGlass: AppSettings.enableChatFrostedGlass.value,
+        fontSizeFactor: AppSettings.fontSizeFactor.value,
+        latexMath: AppSettings.latexMath.value,
+        messageFontSize: AppSettings.messageFontSize.value,
+        monospaceFallbackFonts: AppSettings.monospaceFallbackFonts.value,
+        monospaceFont: AppSettings.monospaceFont.value,
+        notoEmojiFont: AppSettings.notoEmojiFont.value,
+        renderHtml: AppSettings.renderHtml.value,
+        stickerScale: AppSettings.stickerScale.value,
+        swipeRightToLeftToReply: AppSettings.swipeRightToLeftToReply.value,
+        systemFont: AppSettings.systemFont.value,
+        memberStateVersion: controller.memberStateVersion,
+      );
+
+      final message = controller.memoizeMessageTile(
+        event.eventId,
+        deps,
+        () => Message(
+          event,
+          animateIn: animateIn,
+          thread: thread,
+          layout: controller.layout,
+          singleSelected: deps.singleSelected,
+          onSwipe: controller.replyAction,
+          hasBeenRead: deps.hasBeenRead,
+          onInfoTab: controller.showEventInfo,
+          onMention: () => controller.sendController.text +=
+              '${event.senderFromMemoryOrFallback.mention} ',
+          highlightMarker: deps.highlightMarker,
+          onSelect: controller.onSelectMessage,
+          scrollToEventId: controller.scrollToEventId,
+          longPressSelect: deps.longPressSelect,
+          selected: selected,
+          timeline: timeline,
+          displayReadMarker: deps.displayReadMarker,
+          nextEvent: deps.nextEvent,
+          previousEvent: deps.previousEvent,
+          wallpaperMode: hasWallpaper,
+          colors: colors,
+          gradient: deps.gradient,
+          chatController: controller,
+        ),
+      );
 
       return AutoScrollTag(
         key: ValueKey(event.transactionId ?? event.eventId),
         index: controller.autoScrollIndexForEvent(eventIndex),
         controller: controller.scrollController,
-        child: RepaintBoundary(
-          child: Message(
-            event,
-            animateIn: animateIn,
-            thread: thread,
-            layout: controller.layout,
-            singleSelected:
-                controller.selectedEvents.length == 1 &&
-                controller.selectedEvents.first.eventId == event.eventId,
-            onSwipe: controller.replyAction,
-            hasBeenRead:
-                latestReadEventIndex != -1 &&
-                latestReadEventIndex <= eventIndex,
-            onInfoTab: controller.showEventInfo,
-            onMention: () => controller.sendController.text +=
-                '${event.senderFromMemoryOrFallback.mention} ',
-            highlightMarker: controller.scrollToEventIdMarker == event.eventId,
-            onSelect: controller.onSelectMessage,
-            scrollToEventId: controller.scrollToEventId,
-            longPressSelect: controller.selectedEvents.isNotEmpty,
-            selected: controller.selectedEvents.any(
-              (e) => e.eventId == event.eventId,
-            ),
-            timeline: timeline,
-            displayReadMarker:
-                eventIndex > 0 && controller.readMarkerEventId == event.eventId,
-            nextEvent: eventIndex + 1 < events.length
-                ? events[eventIndex + 1]
-                : null,
-            previousEvent: eventIndex > 0 ? events[eventIndex - 1] : null,
-            wallpaperMode: hasWallpaper,
-            colors: colors,
-            gradient: AppSettings.enableGradient.value,
-            chatController: controller,
-          ),
-        ),
+        child: RepaintBoundary(child: message),
       );
     }
 
