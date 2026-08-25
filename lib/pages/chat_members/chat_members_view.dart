@@ -114,18 +114,7 @@ class ChatMembersView extends StatelessWidget {
                 itemCount: members.length + 1,
                 itemBuilder: (context, i) {
                   if (i == 0) {
-                    final availableFilters = Membership.values
-                        .where(
-                          (membership) =>
-                              controller.members?.any(
-                                (member) => member.membership == membership,
-                              ) ??
-                              false,
-                        )
-                        .toList();
-                    availableFilters.sort(
-                      (a, b) => a == Membership.join ? -1 : 1,
-                    );
+                    final availableFilters = controller.availableFilters;
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -173,14 +162,8 @@ class ChatMembersView extends StatelessWidget {
                                     Membership.join =>
                                       L10n.of(context).countParticipants(
                                         room.summary.mJoinedMemberCount ??
-                                            controller.members
-                                                ?.where(
-                                                  (member) =>
-                                                      member.membership ==
-                                                      Membership.join,
-                                                )
-                                                .length ??
-                                            0,
+                                            controller
+                                                .joinedMemberCountFallback,
                                       ),
                                     Membership.knock => L10n.of(
                                       context,

@@ -107,24 +107,27 @@ void main() async {
 
 /// Fetch the pincode for the applock and start the flutter engine.
 Future<void> startGui(List<Client> clients, SharedPreferences store) async {
-  // Fetch the pin for the applock if existing for mobile applications.
-  String? pin;
+  // The PIN read, room loading and account-data loading are independent:
+  // overlap them instead of paying the sum of all three at startup.
+  var pinFuture = Future.value();
   if (PlatformInfos.isMobile) {
-    try {
-      pin = await const FlutterSecureStorage().read(
-        key: SettingKeys.appLockKey,
-      );
-    } catch (e, s) {
-      Logs().d('Unable to read PIN from Secure storage', e, s);
-    }
+    pinFuture = const FlutterSecureStorage()
+        .read(key: SettingKeys.appLockKey)
+        .catchError((Object e, StackTrace s) {
+          Logs().d('Unable to read PIN from Secure storage', e, s);
+          return null;
+        });
   }
 
   // Preload first client
   final firstClient = clients.firstOrNull;
   Logs().i("Loading rooms...");
-  await firstClient?.roomsLoading;
-  Logs().i("Loading account data...");
-  await firstClient?.accountDataLoading;
+  await Future.wait([
+    ?firstClient?.roomsLoading,
+    ?firstClient?.accountDataLoading,
+    pinFuture,
+  ]);
+  final pin = await pinFuture;
 
   ErrorWidget.builder = (details) => FluffyChatErrorWidget(details);
   Logs().i('${clients.length} clients');
