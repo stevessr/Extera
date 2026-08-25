@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE"
         android:maxSdkVersion="29" />
@@ -129,7 +130,7 @@
         </service>
 
         <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:foregroundServiceType="camera|microphone|mediaProjection">
+            android:foregroundServiceType="camera|microphone|mediaProjection|dataSync">
         </service>
 
         <!-- <service android:name="io.wazo.callkeep.VoiceConnectionService"

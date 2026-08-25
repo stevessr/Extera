@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -34,6 +35,10 @@ void checkForUpdates(BuildContext context) async {
   if (PlatformInfos.isWeb ||
       !AppSettings.checkForUpdates.value ||
       AppConfig.alreadyCheckedUpdates) {
+    return;
+  }
+  if (kDebugMode) {
+    Logs().w("Running in debug mode - not checking updates");
     return;
   }
   Logs().v("Checking updates...");

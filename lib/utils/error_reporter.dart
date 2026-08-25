@@ -14,7 +14,7 @@ class ErrorReporter {
 
   const ErrorReporter(this.context, [this.message]);
 
-  static const Set<String> ingoredTypes = {
+  static const Set<String> ignoredTypes = {
     "IOException",
     "ClientException",
     "SocketException",
@@ -23,7 +23,7 @@ class ErrorReporter {
   };
 
   void onErrorCallback(Object error, [StackTrace? stackTrace]) {
-    if (ingoredTypes.contains(error.runtimeType.toString())) return;
+    if (ignoredTypes.contains(error.runtimeType.toString())) return;
     Logs().e(message ?? 'Error caught', error, stackTrace);
     final text = '$error\n${stackTrace ?? ''}';
     return _onErrorCallback(text);
@@ -73,7 +73,11 @@ class ErrorReporter {
             onPressed: () => openLink(
               AppConfig.newIssueUrl
                   .resolveUri(
-                    Uri(queryParameters: {'template': 'bug_report.yaml'}),
+                    Uri(
+                      queryParameters: {
+                        'template': '.github/ISSUE_TEMPLATE/bug_report.yaml',
+                      },
+                    ),
                   )
                   .toString(),
             ),

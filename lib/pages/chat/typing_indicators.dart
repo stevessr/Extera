@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -10,7 +11,8 @@ import 'package:extera_next/widgets/matrix.dart';
 
 class TypingIndicators extends StatelessWidget {
   final ChatController controller;
-  const TypingIndicators(this.controller, {super.key});
+  final MessageLayout layout;
+  const TypingIndicators(this.controller, {required this.layout, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -81,12 +83,14 @@ class TypingIndicators extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Material(
-                  color: theme.colorScheme.surfaceContainerHigh,
+                  color: layout == .modern
+                      ? Colors.transparent
+                      : theme.colorScheme.surfaceContainerHigh,
                   borderRadius: const BorderRadius.all(
                     Radius.circular(AppConfig.borderRadius),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: .symmetric(horizontal: layout == .modern ? 0 : 8),
                     child: typingUsers.isEmpty ? null : const _TypingDots(),
                   ),
                 ),
