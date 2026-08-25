@@ -7,7 +7,6 @@ import 'package:highlight_selectable/highlight_selectable.dart';
 import 'package:highlight_selectable/theme_map.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
-import 'package:latext/latext.dart';
 import 'package:linkify/linkify.dart';
 import 'package:matrix/matrix.dart';
 
@@ -15,6 +14,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/katex_fonts.dart';
+import 'package:extera_next/utils/latex_renderer.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -857,6 +857,16 @@ class MatrixPill extends StatelessWidget {
   }
 }
 
+Future<void>? _latexRendererFuture;
+
+Future<void> _loadLatexRenderer() {
+  _latexRendererFuture ??= Future.wait<void>([
+    ensureKaTeXFontsLoaded(),
+    ensureLatexRendererLoaded(),
+  ]).then((_) {});
+  return _latexRendererFuture!;
+}
+
 class LatexSpan extends StatelessWidget {
   final Color color;
   final double fontSize;
@@ -889,17 +899,18 @@ class LatexSpan extends StatelessWidget {
           : AppSettings.chatFallbackFonts.value.split(','),
     );
 
-    // Native builds already register package fonts through Flutter's font
-    // manifest. Keeping LaTexT synchronous there is important because this
-    // widget sits inside a WidgetSpan: swapping a raw Text placeholder for a
-    // nested rich-text layout on the next frame breaks Android line metrics.
+    // Native builds compile deferred libraries in eagerly, so LaTexT stays
+    // synchronous there — important because this widget sits inside a
+    // WidgetSpan: swapping a raw Text placeholder for a nested rich-text
+    // layout on the next frame breaks Android line metrics.
     if (!kIsWeb) return _buildLatex(style);
 
     return FutureBuilder<void>(
-      future: ensureKaTeXFontsLoaded(),
+      future: _loadLatexRenderer(),
       builder: (context, snapshot) {
-        // KaTeX fonts register lazily on first render; until they arrive the
-        // equation glyphs would show up as tofu, so show the raw code.
+        // KaTeX fonts register and the renderer chunk loads lazily on first
+        // render; until then the equation glyphs would show up as tofu, so
+        // show the raw code.
         if (snapshot.connectionState != ConnectionState.done) {
           return Text(math, style: style);
         }
@@ -908,7 +919,7 @@ class LatexSpan extends StatelessWidget {
     );
   }
 
-  Widget _buildLatex(TextStyle style) => LaTexT(
+  Widget _buildLatex(TextStyle style) => buildLatexWidget(
     laTeXCode: Text('\$$math\$', style: style),
     onErrorFallback: (text) => Text(text, style: style),
   );
