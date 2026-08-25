@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 // Deferred imports may not expose extension declarations, so hide them all;
@@ -91,13 +92,37 @@ class _MaterialYouEditorState extends State<MaterialYouEditor> {
   }
 }
 
+const String _iconsFamily = 'packages/pro_image_editor/ProImageEditorIcons';
+const String _iconsAsset =
+    'assets/packages/pro_image_editor/assets/fonts/ProImageEditorIcons.ttf';
+
+Future<void>? _iconsLoaded;
+
+/// The icon font is stripped from FontManifest.json by the release pipeline
+/// (scripts/strip-katex-manifest.py) so the engine does not preload ~1 MB
+/// for a one-off feature; register it here before the editor renders.
+Future<void> ensureProImageEditorIconsLoaded() => _iconsLoaded ??= _loadIcons();
+
+Future<void> _loadIcons() async {
+  try {
+    final manifest = await rootBundle.loadString('FontManifest.json');
+    if (manifest.contains('"$_iconsFamily"')) return;
+    final loader = FontLoader(_iconsFamily);
+    loader.addFont(rootBundle.load(_iconsAsset));
+    await loader.load();
+  } catch (_) {
+    // Unstripped builds already register the family via the manifest; any
+    // other failure just falls back to tofu icons instead of crashing.
+  }
+}
+
 Future<Uint8List?> showImageEditor({
   required BuildContext context,
   required Uint8List byteArray,
 }) async {
   // The editor is a large one-off feature; keep it out of the startup bundle
   // on the web (JS fallback splits it into a lazily fetched part file).
-  await pie.loadLibrary();
+  await Future.wait([pie.loadLibrary(), ensureProImageEditorIconsLoaded()]);
   return showAdaptiveDialog<Uint8List>(
     context: context,
     useSafeArea: true,

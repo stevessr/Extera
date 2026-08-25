@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
-"""Strip flutter_math_fork's KaTeX families from a built FontManifest.json.
+"""Strip lazily-loaded package fonts from a built FontManifest.json.
 
-The Flutter engine loads every font listed in FontManifest.json at startup,
-so all 20 bundled KaTeX TTFs get fetched and decoded even when LaTeX
-rendering is disabled in settings. Removing those entries defers loading to
-the first LaTeX render: lib/utils/katex_fonts.dart then registers the same
-families through FontLoader from the still-bundled font assets.
+The Flutter engine loads every font listed in FontManifest.json at startup:
 
-Run after `flutter build web` on the built asset bundle. Idempotent.
+- flutter_math_fork's 20 KaTeX TTFs are fetched and decoded even when LaTeX
+  rendering is disabled in settings. lib/utils/katex_fonts.dart registers the
+  same families on demand at the first LaTeX render.
+- pro_image_editor's icon TTF is fetched even though the editor's Dart code
+  is deferred (image_editor_dialog.dart); that dialog registers the family
+  before opening the editor.
+
+Removing those manifest entries defers loading to first use; the font assets
+themselves stay bundled. Run after `flutter build web` on the built asset
+bundle. Idempotent.
 """
 import json
 import pathlib
 import sys
 
-FAMILY_PREFIX = "packages/flutter_math_fork/"
+FAMILY_PREFIXES = (
+    "packages/flutter_math_fork/",
+    "packages/pro_image_editor/",
+)
 
 
 def main() -> None:
@@ -24,7 +32,7 @@ def main() -> None:
     kept = [
         family
         for family in families
-        if not family.get("family", "").startswith(FAMILY_PREFIX)
+        if not family.get("family", "").startswith(FAMILY_PREFIXES)
     ]
     removed = len(families) - len(kept)
     manifest_path.write_text(json.dumps(kept, separators=(",", ":")))
