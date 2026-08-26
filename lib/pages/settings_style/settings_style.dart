@@ -99,7 +99,6 @@ class SettingsStyleController extends State<SettingsStyle> {
   void _loadMessageStyleSetting() {
     _messageStyle = switch (AppSettings.messageStyle.value) {
       'bubbles' => .bubbles,
-      'bubbles_legacy' => .bubblesLegacy,
       'modern' => .modern,
       _ => .bubbles,
     };
@@ -294,7 +293,6 @@ class SettingsStyleController extends State<SettingsStyle> {
     setState(() {
       AppSettings.messageStyle.setItem(switch (value) {
         .bubbles => 'bubbles',
-        .bubblesLegacy => 'bubbles_legacy',
         .modern => 'modern',
       });
       _messageStyle = value;

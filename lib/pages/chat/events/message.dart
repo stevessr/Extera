@@ -4,10 +4,9 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/pages/chat/chat.dart';
 import 'message_bubble.dart';
-import 'message_bubble_legacy.dart';
 import 'message_modern.dart';
 
-enum MessageLayout { modern, bubbles, bubblesLegacy }
+enum MessageLayout { modern, bubbles }
 
 class Message extends StatelessWidget {
   final Event event;
@@ -94,32 +93,6 @@ class Message extends StatelessWidget {
         thread: thread,
         wallpaperMode: wallpaperMode,
         selectable: selectable,
-      ),
-      .bubblesLegacy => MessageBubbleLegacy(
-        event,
-        onSelect: onSelect,
-        onInfoTab: onInfoTab,
-        scrollToEventId: scrollToEventId,
-        onSwipe: onSwipe,
-        timeline: timeline,
-        onMention: onMention,
-        colors: colors,
-        animateIn: animateIn,
-        displayReadMarker: displayReadMarker,
-        gradient: gradient,
-        hasBeenRead: hasBeenRead,
-        exampleMessage: exampleMessage,
-        highlightMarker: highlightMarker,
-        key: key,
-        longPressSelect: longPressSelect,
-        nextEvent: nextEvent,
-        previousEvent: previousEvent,
-        scrollController: scrollController,
-        chatController: chatController,
-        selected: selected,
-        singleSelected: singleSelected,
-        thread: thread,
-        wallpaperMode: wallpaperMode,
       ),
       .modern => MessageModern(
         event,

@@ -529,7 +529,6 @@ class ChatController extends State<ChatPageWithRoom>
 
     _layout = switch (AppSettings.messageStyle.value) {
       'bubbles' => .bubbles,
-      'bubbles_legacy' => .bubblesLegacy,
       'modern' => .modern,
       _ => .bubbles,
     };
