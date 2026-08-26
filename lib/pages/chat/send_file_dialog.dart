@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart' hide Image;
+import 'package:extera_next/utils/foreground_task_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cross_file/cross_file.dart';
@@ -75,6 +75,8 @@ class SendFileDialogState extends State<SendFileDialog> {
       if (mounted) {
         Navigator.of(context, rootNavigator: false).pop();
       }
+
+      await ForegroundTaskManager.startFileUpload(context);
 
       for (final xfile in widget.files) {
         final MatrixFile file;
@@ -234,6 +236,7 @@ class SendFileDialogState extends State<SendFileDialog> {
         }
       }
       scaffoldMessenger.clearSnackBars();
+      await ForegroundTaskManager.stopTask(taskType: .fileUpload);
     } catch (e) {
       Logs().e('error on send', e);
       if (mounted) {

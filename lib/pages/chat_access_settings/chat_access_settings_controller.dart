@@ -78,13 +78,13 @@ class ChatAccessSettingsController extends State<ChatAccessSettings> {
     try {
       await room.setJoinRules(
         newJoinRules,
-        allowConditionRoomId:
+        allowConditionRoomIds:
             {
               JoinRules.restricted,
               JoinRules.knockRestricted,
             }.contains(newJoinRules)
-            ? knownSpaceParents.first.id
-            : null,
+            ? knownSpaceParents.map((Room x) => x.id).toList()
+            : [],
       );
     } catch (e, s) {
       Logs().w('Unable to change join rules', e, s);

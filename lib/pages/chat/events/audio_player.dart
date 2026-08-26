@@ -1,3 +1,4 @@
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,6 +20,7 @@ class AudioPlayerWidget extends StatefulWidget {
   final Event event;
   final InlineSpan? trailingSpan;
 
+  final MessageLayout layout;
   final bool loadMedia;
   final bool showHiddenMedia;
   final void Function()? onLoadMedia;
@@ -32,6 +34,7 @@ class AudioPlayerWidget extends StatefulWidget {
     required this.color,
     required this.linkColor,
     required this.fontSize,
+    required this.layout,
     this.trailingSpan,
     this.loadMedia = false,
     this.showHiddenMedia = false,
@@ -199,279 +202,305 @@ class AudioPlayerState extends State<AudioPlayerWidget> {
                             : 0.0;
 
                         return Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  SizedBox(
-                                    width: buttonSize,
-                                    height: buttonSize,
-                                    child: isLoading
-                                        ? CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: widget.color,
-                                          )
-                                        : InkWell(
-                                            borderRadius: BorderRadius.circular(
-                                              64,
-                                            ),
-                                            onLongPress: isHidden
-                                                ? null
-                                                : () => widget.event.saveFile(
-                                                    context,
-                                                  ),
-                                            onTap: isHidden
-                                                ? null
-                                                : _startAction,
-                                            child: Material(
-                                              color: widget.color.withAlpha(64),
+                          padding: .symmetric(
+                            horizontal: widget.layout == .modern ? 0 : 12,
+                            vertical: 12,
+                          ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: widget.layout == .modern
+                                  ? 400
+                                  : double.infinity,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    SizedBox(
+                                      width: buttonSize,
+                                      height: buttonSize,
+                                      child: isLoading
+                                          ? CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: widget.color,
+                                            )
+                                          : InkWell(
                                               borderRadius:
                                                   BorderRadius.circular(64),
-                                              child: Icon(
-                                                isHidden
-                                                    ? Icons.music_note_outlined
-                                                    : isPlaying
-                                                    ? Icons.pause_outlined
-                                                    : Icons.play_arrow_outlined,
-                                                color: widget.color,
+                                              onLongPress: isHidden
+                                                  ? null
+                                                  : () => widget.event.saveFile(
+                                                      context,
+                                                    ),
+                                              onTap: isHidden
+                                                  ? null
+                                                  : _startAction,
+                                              child: Material(
+                                                color: widget.color.withAlpha(
+                                                  64,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(64),
+                                                child: Icon(
+                                                  isHidden
+                                                      ? Icons
+                                                            .music_note_outlined
+                                                      : isPlaying
+                                                      ? Icons.pause_outlined
+                                                      : Icons
+                                                            .play_arrow_outlined,
+                                                  color: widget.color,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (!isHidden)
-                                    Flexible(
-                                      child: Stack(
-                                        children: [
-                                          if (waveform != null)
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16.0,
-                                                  ),
-                                              child: Row(
-                                                children: [
-                                                  for (
-                                                    var i = 0;
-                                                    i <
-                                                        AudioPlayerWidget
-                                                            .wavesCount;
-                                                    i++
-                                                  )
-                                                    Expanded(
-                                                      child: Container(
-                                                        height: 32,
-                                                        alignment:
-                                                            Alignment.center,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    if (!isHidden)
+                                      Flexible(
+                                        child: Stack(
+                                          children: [
+                                            if (waveform != null)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16.0,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    for (
+                                                      var i = 0;
+                                                      i <
+                                                          AudioPlayerWidget
+                                                              .wavesCount;
+                                                      i++
+                                                    )
+                                                      Expanded(
                                                         child: Container(
-                                                          margin:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 1,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color:
-                                                                i < wavePosition
-                                                                ? widget.color
-                                                                : widget.color
-                                                                      .withAlpha(
-                                                                        128,
-                                                                      ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  64,
+                                                          height: 32,
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Container(
+                                                            margin:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 1,
                                                                 ),
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  i <
+                                                                      wavePosition
+                                                                  ? widget.color
+                                                                  : widget.color
+                                                                        .withAlpha(
+                                                                          128,
+                                                                        ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    64,
+                                                                  ),
+                                                            ),
+                                                            height:
+                                                                32 *
+                                                                (waveform[i] /
+                                                                    1024),
                                                           ),
-                                                          height:
-                                                              32 *
-                                                              (waveform[i] /
-                                                                  1024),
                                                         ),
                                                       ),
-                                                    ),
-                                                ],
+                                                  ],
+                                                ),
+                                              ),
+                                            SizedBox(
+                                              height: 32,
+                                              child: Slider(
+                                                thumbColor:
+                                                    widget.event.senderId ==
+                                                        widget
+                                                            .event
+                                                            .room
+                                                            .client
+                                                            .userID
+                                                    ? theme
+                                                          .colorScheme
+                                                          .onPrimary
+                                                    : theme.colorScheme.primary,
+                                                activeColor: waveform == null
+                                                    ? widget.color
+                                                    : Colors.transparent,
+                                                inactiveColor: waveform == null
+                                                    ? widget.color.withAlpha(
+                                                        128,
+                                                      )
+                                                    : Colors.transparent,
+                                                max: maxPosition,
+                                                value: currentPosition.clamp(
+                                                  0.0,
+                                                  maxPosition,
+                                                ),
+                                                onChanged: (position) {
+                                                  if (!isThisTrack) {
+                                                    _startAction();
+                                                  } else {
+                                                    player.seekToMs(position);
+                                                  }
+                                                },
                                               ),
                                             ),
-                                          SizedBox(
-                                            height: 32,
-                                            child: Slider(
-                                              thumbColor:
-                                                  widget.event.senderId ==
-                                                      widget
-                                                          .event
-                                                          .room
-                                                          .client
-                                                          .userID
-                                                  ? theme.colorScheme.onPrimary
-                                                  : theme.colorScheme.primary,
-                                              activeColor: waveform == null
-                                                  ? widget.color
-                                                  : Colors.transparent,
-                                              inactiveColor: waveform == null
-                                                  ? widget.color.withAlpha(128)
-                                                  : Colors.transparent,
-                                              max: maxPosition,
-                                              value: currentPosition.clamp(
-                                                0.0,
-                                                maxPosition,
-                                              ),
-                                              onChanged: (position) {
-                                                if (!isThisTrack) {
-                                                  _startAction();
-                                                } else {
-                                                  player.seekToMs(position);
-                                                }
-                                              },
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      Flexible(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                          child: FilledButton.tonal(
+                                            onPressed:
+                                                widget.onRevealHiddenMedia,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.visibility_off_outlined,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(_hiddenReason()),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    Flexible(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0,
                                         ),
-                                        child: FilledButton.tonal(
-                                          onPressed: widget.onRevealHiddenMedia,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(
-                                                Icons.visibility_off_outlined,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Text(_hiddenReason()),
-                                            ],
+                                      ),
+                                    if (!isHidden) ...[
+                                      const SizedBox(width: 8),
+                                      SizedBox(
+                                        width: 36,
+                                        child: Text(
+                                          statusText,
+                                          style: TextStyle(
+                                            color: widget.color,
+                                            fontSize: 12,
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  if (!isHidden) ...[
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 36,
-                                      child: Text(
-                                        statusText,
-                                        style: TextStyle(
-                                          color: widget.color,
-                                          fontSize: 12,
+                                      const SizedBox(width: 8),
+                                      AnimatedCrossFade(
+                                        firstChild: Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 8.0,
+                                          ),
+                                          child: Icon(
+                                            isVoiceNote
+                                                ? Icons.mic_none_outlined
+                                                : Icons.audiotrack_outlined,
+                                            color: widget.color,
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    AnimatedCrossFade(
-                                      firstChild: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 8.0,
-                                        ),
-                                        child: Icon(
-                                          isVoiceNote
-                                              ? Icons.mic_none_outlined
-                                              : Icons.audiotrack_outlined,
-                                          color: widget.color,
-                                        ),
-                                      ),
-                                      secondChild: Material(
-                                        color: widget.color.withAlpha(64),
-                                        borderRadius: BorderRadius.circular(
-                                          AppConfig.borderRadius,
-                                        ),
-                                        child: InkWell(
+                                        secondChild: Material(
+                                          color: widget.color.withAlpha(64),
                                           borderRadius: BorderRadius.circular(
                                             AppConfig.borderRadius,
                                           ),
-                                          onTap: _toggleSpeed,
-                                          child: SizedBox(
-                                            width: 32,
-                                            height: 20,
-                                            child: Center(
-                                              child: Text(
-                                                '${isThisTrack ? playbackRate : 1.0}x',
-                                                style: TextStyle(
-                                                  color: widget.color,
-                                                  fontSize: 9,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(
+                                              AppConfig.borderRadius,
+                                            ),
+                                            onTap: _toggleSpeed,
+                                            child: SizedBox(
+                                              width: 32,
+                                              height: 20,
+                                              child: Center(
+                                                child: Text(
+                                                  '${isThisTrack ? playbackRate : 1.0}x',
+                                                  style: TextStyle(
+                                                    color: widget.color,
+                                                    fontSize: 9,
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
+                                        alignment: Alignment.center,
+                                        crossFadeState: !isThisTrack
+                                            ? CrossFadeState.showFirst
+                                            : CrossFadeState.showSecond,
+                                        duration:
+                                            FluffyThemes.animationDuration,
                                       ),
-                                      alignment: Alignment.center,
-                                      crossFadeState: !isThisTrack
-                                          ? CrossFadeState.showFirst
-                                          : CrossFadeState.showSecond,
-                                      duration: FluffyThemes.animationDuration,
-                                    ),
+                                    ],
                                   ],
-                                ],
-                              ),
-                              if (!isHidden &&
-                                  fileDescription != filename &&
-                                  filename != null) ...[
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  child: Text(
-                                    filename,
-                                    style: TextStyle(
-                                      color: widget.color,
-                                      fontSize: widget.fontSize,
+                                ),
+                                if (!isHidden &&
+                                    fileDescription != filename &&
+                                    filename != null) ...[
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: .symmetric(
+                                      horizontal: widget.layout == .modern
+                                          ? 0
+                                          : 16,
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      filename,
+                                      style: TextStyle(
+                                        color: widget.color,
+                                        fontSize: widget.fontSize,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                              if (fileDescription != null) ...[
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  child: HtmlMessage(
-                                    html: fileDescription,
-                                    textColor: textColor,
-                                    room: widget.event.room,
-                                    trailingSpan: widget.trailingSpan,
-                                    fontSize:
-                                        AppSettings.fontSizeFactor.value *
-                                        AppSettings.messageFontSize.value,
-                                    linkStyle: TextStyle(
-                                      color: linkColor,
+                                ],
+                                if (fileDescription != null) ...[
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: .symmetric(
+                                      horizontal: widget.layout == .modern
+                                          ? 0
+                                          : 16,
+                                      vertical: 8,
+                                    ),
+                                    child: HtmlMessage(
+                                      html: fileDescription,
+                                      textColor: textColor,
+                                      room: widget.event.room,
+                                      trailingSpan: widget.trailingSpan,
                                       fontSize:
                                           AppSettings.fontSizeFactor.value *
                                           AppSettings.messageFontSize.value,
-                                      decoration: .none,
-                                    ),
-                                    onOpen: (url) => UrlLauncher(
-                                      context,
-                                      url.url,
-                                    ).launchUrl(),
-                                    onCopy: () {
-                                      Clipboard.setData(
-                                        ClipboardData(text: fileDescription),
-                                      );
-                                      ScaffoldMessenger.of(
+                                      linkStyle: TextStyle(
+                                        color: linkColor,
+                                        fontSize:
+                                            AppSettings.fontSizeFactor.value *
+                                            AppSettings.messageFontSize.value,
+                                        decoration: .none,
+                                      ),
+                                      onOpen: (url) => UrlLauncher(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            L10n.of(context).copiedToClipboard,
+                                        url.url,
+                                      ).launchUrl(),
+                                      onCopy: () {
+                                        Clipboard.setData(
+                                          ClipboardData(text: fileDescription),
+                                        );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              L10n.of(
+                                                context,
+                                              ).copiedToClipboard,
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         );
                       },

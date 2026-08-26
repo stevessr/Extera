@@ -172,15 +172,19 @@ class _MessageBubbleState extends State<MessageBubble> {
     switch (event.messageType) {
       case MessageTypes.Image:
       case MessageTypes.Sticker:
-        final maxSize = event.messageType == MessageTypes.Sticker
-            ? 128.0 * AppSettings.stickerScale.value
-            : 512.0;
         final w = event.content
             .tryGetMap<String, Object?>('info')
             ?.tryGet<int>('w');
         final h = event.content
             .tryGetMap<String, Object?>('info')
             ?.tryGet<int>('h');
+        final maxSize = event.messageType == MessageTypes.Sticker
+            ? 128.0 * AppSettings.stickerScale.value
+            : event.messageType == MessageTypes.Image
+            ? h != null
+                  ? min(512.0, max(256.0, h.toDouble()))
+                  : 512.0
+            : 256.0;
         var imageWidth = maxSize;
         if (w != null && h != null) {
           if (w > h) {
@@ -189,8 +193,8 @@ class _MessageBubbleState extends State<MessageBubble> {
             imageWidth = max(32, maxSize * (w / h));
           }
         }
-        final hasDescription = event.fileDescription != null;
         const minBubbleWidth = 180.0;
+        final hasDescription = event.fileDescription != null;
         return hasDescription ? max(minBubbleWidth, imageWidth) : imageWidth;
 
       case MessageTypes.Video:
@@ -265,7 +269,7 @@ class _MessageBubbleState extends State<MessageBubble> {
       EventTypes.Sticker,
       EventTypes.Encrypted,
       EventTypes.CallInvite,
-      PollEvents.PollStart,
+      PollEvents.pollStart,
     }.contains(event.type)) {
       if (event.type.startsWith('m.call.')) {
         return const SizedBox.shrink();
@@ -308,7 +312,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           EventTypes.Message,
           EventTypes.Sticker,
           EventTypes.Encrypted,
-          PollEvents.PollStart,
+          PollEvents.pollStart,
         }.contains(widget.nextEvent!.type) &&
         widget.nextEvent!.senderId == event.senderId &&
         !displayTime;
@@ -319,7 +323,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           EventTypes.Message,
           EventTypes.Sticker,
           EventTypes.Encrypted,
-          PollEvents.PollStart,
+          PollEvents.pollStart,
         }.contains(widget.previousEvent!.type) &&
         widget.previousEvent!.senderId == event.senderId &&
         widget.previousEvent!.originServerTs.sameEnvironment(
@@ -777,7 +781,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                 previousEventSameSender:
                                                     previousEventSameSender,
                                                 ownMessage: ownMessage,
-                                                useBubbleLayout: true,
+                                                layout: .bubbles,
                                                 selectable:
                                                     PlatformInfos.isMobile
                                                     ? widget.longPressSelect
@@ -907,6 +911,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
+                if (!ownMessage) SizedBox(height: 36, width: 36),
               ],
             ),
           ],

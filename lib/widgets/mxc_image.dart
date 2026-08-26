@@ -100,49 +100,38 @@ class _MxcImageState extends State<MxcImage> {
     final data = _imageData;
     final hasData = data != null && data.isNotEmpty;
 
-    return AnimatedCrossFade(
-      duration: FluffyThemes.animationDuration,
-      firstChild: ClipRRect(
-        borderRadius: widget.borderRadius,
-        child: data == null
-            ? _MxcImagePlaceholder(
-                width: widget.width,
-                height: widget.height,
-                placeholder: widget.placeholder,
-              )
-            : Image.memory(
-                data,
-                width: widget.width,
-                height: widget.height,
-                fit: widget.fit,
-                filterQuality: widget.isThumbnail
-                    ? FilterQuality.low
-                    : FilterQuality.medium,
-                errorBuilder: (context, e, s) {
-                  Logs().d('Unable to render mxc image', e, s);
-                  return SizedBox(
-                    width: widget.width,
-                    height: widget.height,
-                    child: Material(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+    return ClipRRect(
+      borderRadius: widget.borderRadius,
+      child: !hasData
+          ? _MxcImagePlaceholder(
+              width: widget.width,
+              height: widget.height,
+              placeholder: widget.placeholder,
+            )
+          : Image.memory(
+              data,
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              filterQuality: widget.isThumbnail
+                  ? FilterQuality.low
+                  : FilterQuality.medium,
+              errorBuilder: (context, e, s) {
+                Logs().d('Unable to render mxc image', e, s);
+                return SizedBox(
+                  width: widget.width,
+                  height: widget.height,
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                  );
-                },
-              ),
-      ),
-      secondChild: _MxcImagePlaceholder(
-        width: widget.width,
-        height: widget.height,
-        placeholder: widget.placeholder,
-      ),
-      crossFadeState: hasData
-          ? CrossFadeState.showFirst
-          : CrossFadeState.showSecond,
+                  ),
+                );
+              },
+            ),
     );
   }
 

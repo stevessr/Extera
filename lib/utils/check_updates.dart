@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -16,10 +17,11 @@ Future<String> getLatestVersion() async {
   final http = CustomHttpClient.createHTTPClient();
   final response = await http.get(Uri.parse(AppConfig.updateCheckUrl));
 
-  if (response.statusCode > 399)
+  if (response.statusCode > 399) {
     throw HttpException(
       "Failed to fetch latest version: ${response.statusCode}",
     );
+  }
 
   final latestVersion = response.body.trim();
 
@@ -27,8 +29,13 @@ Future<String> getLatestVersion() async {
 }
 
 void checkForUpdates(BuildContext context) async {
-  if (!AppSettings.checkForUpdates.value || AppConfig.alreadyCheckedUpdates)
+  if (!AppSettings.checkForUpdates.value || AppConfig.alreadyCheckedUpdates) {
     return;
+  }
+  if (kDebugMode) {
+    Logs().w("Running in debug mode - not checking updates");
+    return;
+  }
   Logs().v("Checking updates...");
   try {
     final currentVersion = await PlatformInfos.getVersion();

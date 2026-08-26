@@ -1,3 +1,4 @@
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,11 +24,13 @@ class MessageDownloadContent extends StatefulWidget {
   final void Function()? onLoadMedia;
   final void Function()? onRevealHiddenMedia;
   final String? contentWarning;
+  final MessageLayout layout;
 
   const MessageDownloadContent(
     this.event, {
     required this.textColor,
     required this.linkColor,
+    required this.layout,
     this.trailingSpan,
     this.loadMedia = false,
     this.showHiddenMedia = false,
@@ -152,7 +155,7 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
               onTap: widget.onRevealHiddenMedia,
               child: Container(
                 width: 400,
-                padding: const EdgeInsets.all(16.0),
+                padding: const .all(16.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 16,
@@ -203,7 +206,7 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
               },
               child: Container(
                 width: 400,
-                padding: const EdgeInsets.all(16.0),
+                padding: .all(widget.layout == .modern ? 4 : 16),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 16,
@@ -251,8 +254,8 @@ class MessageDownloadContentState extends State<MessageDownloadContent> {
           ),
         if (fileDescription != null) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
+            padding: .symmetric(
+              horizontal: widget.layout == .modern ? 0 : 16,
               vertical: 8.0,
             ),
             child: HtmlMessage(
