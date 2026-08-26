@@ -687,7 +687,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                                   HapticFeedback.heavyImpact();
                                   widget.onSelect(event, _tapPosition);
                                 }
-                              : null,
+                              : () {
+                                  if (PlatformInfos.isMobile) {
+                                    _handleQuickActionTap();
+                                  }
+                                },
                           onSecondaryTapDown: (details) =>
                               _tapPosition = details.globalPosition,
                           onSecondaryTap: () =>
