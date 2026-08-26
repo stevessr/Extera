@@ -51,6 +51,7 @@ class MessageBubble extends StatefulWidget {
   final bool singleSelected;
   final Thread? thread;
   final bool hasBeenRead;
+  final bool selectable;
   final bool? exampleMessage;
 
   const MessageBubble(
@@ -74,6 +75,7 @@ class MessageBubble extends StatefulWidget {
     this.animateIn = false,
     this.wallpaperMode = false,
     required this.onMention,
+    this.selectable = true,
     this.scrollController,
     this.chatController,
     required this.colors,
@@ -586,7 +588,12 @@ class _MessageBubbleState extends State<MessageBubble> {
                 onTapDown: (details) => _tapPosition = details.globalPosition,
                 onSecondaryTapDown: (details) =>
                     _tapPosition = details.globalPosition,
-                onTap: () => _handleQuickActionTap(),
+                onTap: widget.longPressSelect
+                    ? () {
+                        HapticFeedback.heavyImpact();
+                        widget.onSelect(event, _tapPosition);
+                      }
+                    : () => _handleQuickActionTap(),
                 onLongPress: () {
                   if (PlatformInfos.isMobile) {
                     widget.onSelect(event, _tapPosition);
@@ -681,6 +688,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                                   widget.onSelect(event, _tapPosition);
                                 }
                               : null,
+                          onSecondaryTapDown: (details) =>
+                              _tapPosition = details.globalPosition,
+                          onSecondaryTap: () =>
+                              widget.onSelect(event, _tapPosition),
                           child: Material(
                             color: noBubble
                                 ? Colors.transparent
@@ -782,10 +793,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                     previousEventSameSender,
                                                 ownMessage: ownMessage,
                                                 layout: .bubbles,
-                                                selectable:
-                                                    PlatformInfos.isMobile
-                                                    ? widget.longPressSelect
-                                                    : true,
+                                                selectable: widget.selectable,
                                                 trailingSpan: useInlineStatus
                                                     ? inlineStatusPlaceholder
                                                     : null,

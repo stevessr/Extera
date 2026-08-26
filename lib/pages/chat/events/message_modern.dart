@@ -46,6 +46,7 @@ class MessageModern extends StatefulWidget {
   final List<Color> colors;
   final bool gradient;
   final bool singleSelected;
+  final bool selectable;
   final Thread? thread;
   final bool hasBeenRead;
   final bool? exampleMessage;
@@ -60,6 +61,7 @@ class MessageModern extends StatefulWidget {
     this.singleSelected = false,
     this.hasBeenRead = false,
     this.exampleMessage = false,
+    this.selectable = true,
     this.thread,
     required this.onSelect,
     required this.onInfoTab,
@@ -495,9 +497,7 @@ class _MessageModernState extends State<MessageModern> {
                                     contentWarning: contentWarning,
                                     layout: .modern,
                                     borderRadius: BorderRadius.zero,
-                                    selectable: PlatformInfos.isMobile
-                                        ? widget.longPressSelect
-                                        : true,
+                                    selectable: widget.selectable,
                                   ),
                                 ],
                               ),

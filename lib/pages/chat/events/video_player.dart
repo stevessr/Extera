@@ -30,6 +30,7 @@ class EventVideoPlayer extends StatelessWidget {
   final bool nextEventSameSender;
   final bool previousEventSameSender;
   final MessageLayout layout;
+  final bool selectable;
 
   final bool showHiddenMedia;
   final void Function()? onRevealHiddenMedia;
@@ -41,6 +42,7 @@ class EventVideoPlayer extends StatelessWidget {
     this.linkColor, {
     this.timeline,
     this.trailingSpan,
+    this.selectable = true,
     this.loadThumbnail = false,
     this.ownMessage = false,
     this.nextEventSameSender = false,
@@ -280,7 +282,7 @@ class EventVideoPlayer extends StatelessWidget {
                   decoration: .none,
                 ),
                 trailingSpan: trailingSpan,
-                selectable: true,
+                selectable: selectable,
                 onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
                 onCopy: () {
                   Clipboard.setData(ClipboardData(text: event.body));

@@ -76,6 +76,10 @@ class ChatEventList extends StatelessWidget {
         index: controller.autoScrollIndexForEvent(eventIndex),
         controller: controller.scrollController,
         child: RepaintBoundary(
+          key: controller.eventGlobalKeys.putIfAbsent(
+            event.eventId,
+            () => GlobalKey(),
+          ),
           child: Message(
             event,
             animateIn: animateIn,
@@ -98,6 +102,9 @@ class ChatEventList extends StatelessWidget {
             selected: controller.selectedEvents.any(
               (e) => e.eventId == event.eventId,
             ),
+            selectable:
+                controller.selectedEvents.isNotEmpty ||
+                controller.selectedEventId == event.eventId,
             timeline: timeline,
             displayReadMarker:
                 eventIndex > 0 && controller.readMarkerEventId == event.eventId,

@@ -32,6 +32,7 @@ class ImageBubble extends StatelessWidget {
   final Timeline? timeline;
   final InlineSpan? trailingSpan;
   final MessageLayout layout;
+  final bool selectable;
 
   final bool ownMessage;
   final bool previousEventSameSender;
@@ -66,6 +67,7 @@ class ImageBubble extends StatelessWidget {
     this.onRevealHiddenMedia,
     this.contentWarning,
     this.trailingSpan,
+    this.selectable = true,
     required this.layout,
     super.key,
   });
@@ -320,7 +322,7 @@ class ImageBubble extends StatelessWidget {
                       AppSettings.messageFontSize.value,
                   decoration: .none,
                 ),
-                selectable: true,
+                selectable: selectable,
                 onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
                 onCopy: () {
                   Clipboard.setData(ClipboardData(text: event.body));
