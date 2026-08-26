@@ -115,7 +115,14 @@ void main() {
           child: AnimatedEmojiText('😀'),
         ),
       );
-      // The animation itself is loaded asynchronously, so the glyph is the
+      // The lottie renderer is deferred (kept out of the web startup
+      // bundle). Its load timer lives in the fake-async zone, so advance
+      // fake time (and let real async work run) until it has fired, or the
+      // binding fails on a pending timer at teardown.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(seconds: 5));
       // placeholder. What matters here is that the emoji became a widget span.
       expect(find.byType(AnimatedEmojiImage), findsOneWidget);
     });
