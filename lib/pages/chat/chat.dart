@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -324,8 +326,6 @@ class ChatController extends State<ChatPageWithRoom>
     if (success.error != null) return;
     context.go('/rooms');
   }
-
-  EmojiPickerType emojiPickerType = EmojiPickerType.keyboard;
 
   void requestHistory([_]) async {
     Logs().v('Requesting history...');
@@ -1152,7 +1152,6 @@ class ChatController extends State<ChatPageWithRoom>
     } else {
       inputFocus.unfocus();
     }
-    emojiPickerType = EmojiPickerType.keyboard;
     setState(() {
       initiallyShowStickerPicker = sendController.text.isEmpty;
       showEmojiPicker = !showEmojiPicker;
@@ -1161,7 +1160,6 @@ class ChatController extends State<ChatPageWithRoom>
 
   void _inputFocusListener() {
     if (showEmojiPicker && inputFocus.hasFocus) {
-      emojiPickerType = EmojiPickerType.keyboard;
       setState(() => showEmojiPicker = false);
     }
   }
@@ -1936,20 +1934,33 @@ class ChatController extends State<ChatPageWithRoom>
       );
     } else {
       _contextMenuController?.remove();
-      _contextMenuController = ContextMenuController();
-
-      _contextMenuController!.show(
-        context: context,
-        contextMenuBuilder: (context) {
-          return _ContextMenuOverlay(
-            tapPosition: tapPosition ?? Offset.zero,
-            onDismiss: () => _contextMenuController?.remove(),
-            child: MessageContextMenu(controller: this, event: event),
-          );
+      _contextMenuController = ContextMenuController(
+        onRemove: () {
+          setState(() {
+            selectedEventId = null;
+            eventGlobalKeys.removeWhere((_, key) => key.currentContext == null);
+          });
         },
       );
+
+      setState(() {
+        selectedEventId = event.eventId;
+        _contextMenuController!.show(
+          context: context,
+          contextMenuBuilder: (context) {
+            return _ContextMenuOverlay(
+              tapPosition: tapPosition ?? Offset.zero,
+              onDismiss: () => _contextMenuController?.remove(),
+              selectedEventKey: eventGlobalKeys[event.eventId]!,
+              child: MessageContextMenu(controller: this, event: event),
+            );
+          },
+        );
+      });
     }
   }
+
+  String? selectedEventId;
 
   void onSelectMessage(Event event, Offset? tapPosition) {
     if (selectedEvents.isEmpty) {
@@ -2126,6 +2137,8 @@ class ChatController extends State<ChatPageWithRoom>
       }
     }
   }
+
+  final Map<String, GlobalKey> eventGlobalKeys = {};
 
   bool _inputTextIsEmpty = true;
 
@@ -2311,31 +2324,86 @@ class ChatController extends State<ChatPageWithRoom>
   }
 }
 
-enum EmojiPickerType { reaction, keyboard }
-
-class _ContextMenuOverlay extends StatelessWidget {
+class _ContextMenuOverlay extends StatefulWidget {
   final Offset tapPosition;
   final VoidCallback onDismiss;
   final Widget child;
+  final GlobalKey selectedEventKey;
 
   const _ContextMenuOverlay({
     required this.tapPosition,
     required this.onDismiss,
     required this.child,
+    required this.selectedEventKey,
   });
+
+  @override
+  State<_ContextMenuOverlay> createState() => _ContextMenuOverlayState();
+}
+
+class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
+  Rect? _messageRect;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateRect();
+  }
+
+  @override
+  void didUpdateWidget(_ContextMenuOverlay old) {
+    super.didUpdateWidget(old);
+    if (widget.selectedEventKey != old.selectedEventKey) {
+      _updateRect();
+    }
+  }
+
+  void _updateRect() {
+    final ctx = widget.selectedEventKey.currentContext;
+    if (ctx == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateRect();
+      });
+      return;
+    }
+
+    final box = ctx.findRenderObject() as RenderBox;
+    if (!box.hasSize) return;
+
+    final pos = box.localToGlobal(Offset.zero);
+    setState(() {
+      _messageRect = Rect.fromLTWH(
+        pos.dx,
+        pos.dy,
+        box.size.width,
+        box.size.height,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         GestureDetector(
-          onTap: onDismiss,
+          onTap: widget.onDismiss,
           behavior: HitTestBehavior.translucent,
-          child: Container(color: Colors.transparent),
+          child: ClipPath(
+            clipper: MultiHoleClipper(holes: [?_messageRect]),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: AnimatedOpacity(
+                opacity: _messageRect == null ? 0 : 1,
+                duration: FluffyThemes.animationDuration,
+                curve: FluffyThemes.animationCurve,
+                child: Container(color: Colors.black.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
         ),
         CustomSingleChildLayout(
-          delegate: _ContextMenuLayoutDelegate(tapPosition: tapPosition),
-          child: child,
+          delegate: _ContextMenuLayoutDelegate(tapPosition: widget.tapPosition),
+          child: widget.child,
         ),
       ],
     );
