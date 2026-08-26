@@ -14,5 +14,4 @@ typedef WebDropFilesCallback = void Function(List<XFile> files);
 void Function()? registerWebDropListener({
   required WebDragStateCallback onDragStateChanged,
   required WebDropFilesCallback onDrop,
-}) =>
-    null;
+}) => null;

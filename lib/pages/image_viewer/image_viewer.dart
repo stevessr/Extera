@@ -171,16 +171,12 @@ class ImageViewerController extends State<ImageViewer> {
           onTap: () => _confirmAndRun(
             context,
             L10n.of(context).setAsMyGlobalAvatar,
-            () => run(
-              L10n.of(context).setAsMyGlobalAvatar,
-              () async {
-                await client.setProfileField(client.userID!, 'avatar_url', {
-                  'avatar_url': mxc.toString(),
-                });
-                await client.refreshOwnProfile();
-              },
-              recordHistory: true,
-            ),
+            () => run(L10n.of(context).setAsMyGlobalAvatar, () async {
+              await client.setProfileField(client.userID!, 'avatar_url', {
+                'avatar_url': mxc.toString(),
+              });
+              await client.refreshOwnProfile();
+            }, recordHistory: true),
           ),
         ),
       if (mxc != null &&
