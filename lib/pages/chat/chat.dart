@@ -1950,7 +1950,8 @@ class ChatController extends State<ChatPageWithRoom>
             return _ContextMenuOverlay(
               tapPosition: tapPosition ?? Offset.zero,
               onDismiss: () => _contextMenuController?.remove(),
-              selectedEventKey: eventGlobalKeys[event.eventId]!,
+              selectedEventKey:
+                  eventGlobalKeys[event.transactionId ?? event.eventId]!,
               child: MessageContextMenu(controller: this, event: event),
             );
           },

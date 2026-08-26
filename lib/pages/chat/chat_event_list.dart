@@ -77,7 +77,7 @@ class ChatEventList extends StatelessWidget {
         controller: controller.scrollController,
         child: RepaintBoundary(
           key: controller.eventGlobalKeys.putIfAbsent(
-            event.eventId,
+            event.transactionId ?? event.eventId,
             () => GlobalKey(),
           ),
           child: Message(
