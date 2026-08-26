@@ -80,7 +80,7 @@ class SendFileDialogState extends State<SendFileDialog> {
       await ForegroundTaskManager.startFileUpload(context);
 
       for (final xfile in widget.files) {
-        final MatrixFile file;
+        MatrixFile file;
         MatrixImageFile? thumbnail;
         final length = await xfile.length();
         final mimeType = xfile.mimeType ?? lookupMimeType(xfile.path);
@@ -122,6 +122,15 @@ class SendFileDialogState extends State<SendFileDialog> {
             name: name,
             mimeType: mimeType,
           ).detectFileType;
+        }
+
+        // Shrink images before sending, but keep the original if the
+        // shrunk result would be bigger than the source file.
+        if (compress && file is MatrixImageFile) {
+          file = await file.shrinkWithSizeCheck(
+            maxDimension: 1600,
+            client: widget.room.client,
+          );
         }
 
         if (file.bytes.length > maxUploadSize) {
@@ -192,7 +201,6 @@ class SendFileDialogState extends State<SendFileDialog> {
           await widget.room.sendFileEvent(
             file,
             thumbnail: thumbnail,
-            shrinkImageMaxDimension: compress ? 1600 : null,
             extraContent: extraContent,
             threadLastEventId:
                 widget.thread?.lastEvent?.eventId ??
@@ -222,8 +230,6 @@ class SendFileDialogState extends State<SendFileDialog> {
           await widget.room.sendFileEvent(
             file,
             thumbnail: thumbnail,
-            shrinkImageMaxDimension: compress ? 1600 : null,
-            extraContent: extraContent,
             threadLastEventId:
                 widget.thread?.lastEvent?.eventId ??
                 widget.thread?.rootEvent.eventId,

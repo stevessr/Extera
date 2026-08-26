@@ -516,8 +516,16 @@ class RecordingViewModelState extends State<RecordingViewModel>
           quality: VideoQuality.MediumQuality,
           includeAudio: true,
         );
-        if (mediaInfo?.file != null) {
-          finalPath = mediaInfo!.file!.path;
+        final compressedFile = mediaInfo?.file;
+        if (compressedFile != null) {
+          if (await compressedFile.length() < await xFile.length()) {
+            finalPath = compressedFile.path;
+          } else {
+            Logs().i(
+              'Compressed video is not smaller than original, '
+              'sending original',
+            );
+          }
         }
       } catch (e, s) {
         Logs().w('Video compression failed, using original', e, s);
