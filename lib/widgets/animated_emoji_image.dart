@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
-import 'package:lottie/lottie.dart';
+import 'package:lottie/lottie.dart' deferred as lottie;
 import 'package:matrix/matrix.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -40,12 +40,15 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
     with WidgetsBindingObserver {
   /// Emoji repeat a lot within a chat, so hold on to the parsed animations for
   /// the lifetime of the process.
-  static final Map<String, LottieComposition> _compositions = {};
+  ///
+  /// Held as `dynamic` because deferred library types cannot appear in
+  /// declarations; the values are only touched after `lottie.loadLibrary()`.
+  static final Map<String, dynamic> _compositions = {};
 
   /// Never load and parse the same emoji twice at once.
-  static final Map<String, Future<LottieComposition?>> _pending = {};
+  static final Map<String, Future<dynamic>> _pending = {};
 
-  LottieComposition? _composition;
+  dynamic _composition;
 
   /// Stable across rebuilds so the visibility detector does not mistake a
   /// rebuilt widget for a different child.
@@ -116,8 +119,11 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
     });
   }
 
-  static Future<LottieComposition?> _resolve(String codepoint) async {
+  static Future<dynamic> _resolve(String codepoint) async {
     try {
+      // The renderer stays out of the web startup bundle; animated emoji are
+      // opt-in and usually render as the plain glyph until first use.
+      await lottie.loadLibrary();
       final composition =
           await _fromAsset(codepoint) ?? await _fromNetwork(codepoint);
       if (composition != null) _compositions[codepoint] = composition;
@@ -131,17 +137,17 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
   }
 
   /// The animations are downloaded into the bundle at build time.
-  static Future<LottieComposition?> _fromAsset(String codepoint) async {
+  static Future<dynamic> _fromAsset(String codepoint) async {
     try {
       final data = await rootBundle.load(animatedEmojiAssetPath(codepoint));
-      return await LottieComposition.fromByteData(data);
+      return await lottie.LottieComposition.fromByteData(data);
     } catch (_) {
       // Not bundled, e.g. because the download step was skipped.
       return null;
     }
   }
 
-  static Future<LottieComposition?> _fromNetwork(String codepoint) async {
+  static Future<dynamic> _fromNetwork(String codepoint) async {
     final url = animatedEmojiUrl(codepoint).toString();
     final Uint8List bytes;
     if (kIsWeb) {
@@ -156,7 +162,7 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
       final file = await DefaultCacheManager().getSingleFile(url);
       bytes = await file.readAsBytes();
     }
-    return LottieComposition.fromBytes(bytes);
+    return lottie.LottieComposition.fromBytes(bytes);
   }
 
   @override
@@ -172,7 +178,7 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
     return VisibilityDetector(
       key: _visibilityDetectorKey,
       onVisibilityChanged: _onVisibilityChanged,
-      child: Lottie(
+      child: lottie.Lottie(
         composition: composition,
         width: size,
         height: size,
@@ -186,8 +192,8 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
         // key. The drawing-commands cache keys on `Size.zero` instead, so it is
         // safe on Web while still sparing the per-frame composition walk.
         renderCache: PlatformInfos.isWeb
-            ? RenderCache.drawingCommands
-            : RenderCache.raster,
+            ? lottie.RenderCache.drawingCommands
+            : lottie.RenderCache.raster,
         // Off-screen or backgrounded emoji keep their last painted frame
         // instead of burning CPU on invisible animation frames.
         animate: _isVisible && _appResumed,
