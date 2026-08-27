@@ -54,6 +54,8 @@ class SendFileDialogState extends State<SendFileDialog> {
   bool isSending = false;
   String? contentWarning;
 
+  final Map<String, Future<MatrixImageFile?>> _videoPreviewFutures = {};
+
   /// Images smaller than 20kb don't need compression.
   static const int minSizeToCompress = 20 * 1000;
 
@@ -144,7 +146,7 @@ class SendFileDialogState extends State<SendFileDialog> {
             scaffoldMessenger.showLoadingSnackBar(
               l10n.generatingVideoThumbnail,
             );
-            thumbnail = await xfile.getVideoThumbnail();
+            thumbnail = await _getVideoPreview(xfile);
           } catch (e) {
             Logs().e("Failed to generate video thumbnail", e);
             scaffoldMessenger.showLoadingSnackBar(
@@ -271,6 +273,62 @@ class SendFileDialogState extends State<SendFileDialog> {
       widget.files.map((file) => file.length()),
     );
     return lengths.fold<double>(0, (p, length) => p + length).sizeString;
+  }
+
+  Future<MatrixImageFile?> _getVideoPreview(XFile file) {
+    final key = '${file.path}\u0000${file.name}';
+    return _videoPreviewFutures.putIfAbsent(key, file.getVideoThumbnail);
+  }
+
+  Widget _buildVideoPreview(int index) {
+    final file = widget.files[index];
+    final width = widget.files.length == 1 ? 220.0 : 256.0;
+
+    return Material(
+      borderRadius: BorderRadius.circular(AppConfig.borderRadius / 2),
+      color: Colors.transparent,
+      clipBehavior: Clip.hardEdge,
+      child: FutureBuilder<MatrixImageFile?>(
+        future: _getVideoPreview(file),
+        builder: (context, snapshot) {
+          final thumbnail = snapshot.data;
+          final preview = snapshot.connectionState == ConnectionState.waiting
+              ? const Center(child: CircularProgressIndicator.adaptive())
+              : thumbnail == null
+              ? const Center(child: Icon(Icons.video_file_outlined, size: 64))
+              : Image.memory(
+                  thumbnail.bytes,
+                  height: 256,
+                  width: width,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    Logs().w('Unable to preview video', error, stackTrace);
+                    return const Center(
+                      child: Icon(Icons.video_file_outlined, size: 64),
+                    );
+                  },
+                );
+
+          return SizedBox(
+            width: width,
+            height: 256,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                preview,
+                if (thumbnail != null)
+                  const Icon(
+                    Icons.play_circle_outline,
+                    size: 56,
+                    color: Colors.white,
+                    shadows: [Shadow(blurRadius: 8)],
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void editImage(int index) async {
@@ -438,6 +496,24 @@ class SendFileDialogState extends State<SendFileDialog> {
                                   },
                                 ),
                               ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (uniqueFileType == 'video')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: SizedBox(
+                        height: 256,
+                        child: Center(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: widget.files.length,
+                            scrollDirection: Axis.horizontal,
+                            itemBuilder: (context, i) => Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: _buildVideoPreview(i),
                             ),
                           ),
                         ),
