@@ -125,6 +125,9 @@ class ChatEventList extends StatelessWidget {
       controller: controller.scrollController,
       reverse: true,
       center: _centerKey,
+      physics: controller.selectedEventId != null
+          ? const NeverScrollableScrollPhysics()
+          : null,
       keyboardDismissBehavior: PlatformInfos.isIOS
           ? ScrollViewKeyboardDismissBehavior.onDrag
           : ScrollViewKeyboardDismissBehavior.manual,
