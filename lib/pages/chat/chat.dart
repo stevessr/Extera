@@ -638,16 +638,12 @@ class ChatController extends State<ChatPageWithRoom>
       timeline?.cancelSubscriptions();
       timeline = await room.getTimeline(
         onUpdate: updateView,
-        onNewEvent: _onNewEvent,
         eventContextId: eventContextId,
       );
     } catch (e, s) {
       Logs().w('Unable to load timeline on event ID $eventContextId', e, s);
       // if (!mounted) return;
-      timeline = await room.getTimeline(
-        onUpdate: updateView,
-        onNewEvent: _onNewEvent,
-      );
+      timeline = await room.getTimeline(onUpdate: updateView);
       if (!mounted) return;
       if (e is TimeoutException || e is IOException) {
         _showScrollUpMaterialBanner(eventContextId!);
@@ -665,7 +661,6 @@ class ChatController extends State<ChatPageWithRoom>
       timeline?.cancelSubscriptions();
       timeline = await thread!.getTimeline(
         onUpdate: updateView,
-        onNewEvent: _onNewEvent,
         eventContextId: eventContextId,
       );
       Logs().v("Thread timeline loaded ${timeline?.events.length}");
@@ -676,10 +671,7 @@ class ChatController extends State<ChatPageWithRoom>
         s,
       );
       if (!mounted) return;
-      timeline = await thread!.getTimeline(
-        onUpdate: updateView,
-        onNewEvent: _onNewEvent,
-      );
+      timeline = await thread!.getTimeline(onUpdate: updateView);
       if (!mounted) return;
       if (e is TimeoutException || e is IOException) {
         _showScrollUpMaterialBanner(eventContextId!);
@@ -689,8 +681,6 @@ class ChatController extends State<ChatPageWithRoom>
       (timeline as ThreadTimeline).getThreadEvents();
     }
   }
-
-  void _onNewEvent() {}
 
   Future<void> _getTimeline({String? eventContextId}) async {
     _scrollAnchorEventId = null;
