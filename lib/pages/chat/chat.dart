@@ -1912,7 +1912,52 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
+  /// Pins the scroll anchor to the newest event so that incoming messages
+  /// are routed to the pre-center sliver (below the viewport) instead of
+  /// shifting the visible content. Used while the message context menu is
+  /// open to prevent the list from auto-scrolling down when new events arrive.
+  /// Returns true if this call set the anchor (i.e. the user was at the
+  /// bottom before opening the menu); false if it was already pinned because
+  /// the user had scrolled up.
+  bool _menuSetAnchor = false;
+
+  void _setScrollAnchorForMenu() {
+    if (_scrollAnchorEventId == null && filteredEvents.isNotEmpty) {
+      _scrollAnchorEventId = filteredEvents.first.eventId;
+      _menuSetAnchor = true;
+    }
+  }
+
+  /// Restores normal scroll behaviour after the context menu closes. If the
+  /// menu itself pinned the anchor (the user was at the bottom) the view
+  /// scrolls back down when new events arrived while it was open. If the user
+  /// had scrolled up before opening the menu, the anchor stays managed by the
+  /// normal scroll handler.
+  void _onMenuClosed() {
+    if (!_menuSetAnchor) return;
+    _menuSetAnchor = false;
+    // Compute newEventCount before clearing the anchor, since it depends on it.
+    final hasNew = newEventCount > 0;
+    _scrollAnchorEventId = null;
+    if (hasNew) {
+      _scrolledUp.value = false;
+      _cachedFilteredEvents = null;
+      _cachedEventsKeyMap = null;
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted || !scrollController.hasClients) return;
+        await scrollController.scrollToIndex(
+          bottomPaddingAutoScrollIndex,
+          duration: FluffyThemes.animationDuration,
+          preferPosition: AutoScrollPosition.begin,
+        );
+        setReadMarker();
+      });
+    }
+  }
+
   void _openMenu(Event event, Offset? tapPosition) {
+    _setScrollAnchorForMenu();
     if (PlatformInfos.isMobile) {
       showAdaptiveBottomSheet(
         context: context,
@@ -1920,7 +1965,7 @@ class ChatController extends State<ChatPageWithRoom>
           return MessageContextMenu(controller: this, event: event);
         },
         useRootNavigator: false,
-      );
+      ).whenComplete(_onMenuClosed);
     } else {
       _contextMenuController?.remove();
       _contextMenuController = ContextMenuController(
@@ -1929,6 +1974,7 @@ class ChatController extends State<ChatPageWithRoom>
             selectedEventId = null;
             eventGlobalKeys.removeWhere((_, key) => key.currentContext == null);
           });
+          _onMenuClosed();
         },
       );
 
