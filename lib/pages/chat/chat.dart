@@ -2383,30 +2383,61 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: widget.onDismiss,
-          behavior: HitTestBehavior.translucent,
-          child: ClipPath(
-            clipper: MultiHoleClipper(holes: [?_messageRect]),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: AnimatedOpacity(
-                opacity: _messageRect == null ? 0 : 1,
-                duration: FluffyThemes.animationDuration,
-                curve: FluffyThemes.animationCurve,
-                child: Container(color: Colors.black.withValues(alpha: 0.5)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest;
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: widget.onDismiss,
+              behavior: HitTestBehavior.translucent,
+              child: ClipPath(
+                clipper: MultiHoleClipper(holes: [?_messageRect]),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                  child: AnimatedOpacity(
+                    opacity: _messageRect == null ? 0 : 1,
+                    duration: FluffyThemes.animationDuration,
+                    curve: FluffyThemes.animationCurve,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        CustomSingleChildLayout(
-          delegate: _ContextMenuLayoutDelegate(tapPosition: widget.tapPosition),
-          child: widget.child,
-        ),
-      ],
+            CustomSingleChildLayout(
+              delegate: _ContextMenuLayoutDelegate(
+                tapPosition: widget.tapPosition,
+              ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.3, end: 1.0),
+                duration: FluffyThemes.animationDuration,
+                curve: FluffyThemes.animationCurve,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.scale(
+                      scale: value,
+                      alignment: _expansionAlignment(widget.tapPosition, size),
+                      child: child,
+                    ),
+                  );
+                },
+                child: widget.child,
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  Alignment _expansionAlignment(Offset tap, Size size) {
+    if (size.isEmpty) return Alignment.topLeft;
+    final fx = (tap.dx / size.width).clamp(0.0, 1.0);
+    final fy = (tap.dy / size.height).clamp(0.0, 1.0);
+    return Alignment(fx * 2 - 1, fy * 2 - 1);
   }
 }
 
@@ -2427,18 +2458,14 @@ class _ContextMenuLayoutDelegate extends SingleChildLayoutDelegate {
     var left = tapPosition.dx;
     var top = tapPosition.dy;
 
-    // If menu would overflow right edge, shift left
     if (left + childSize.width > size.width - margin) {
       left = size.width - childSize.width - margin;
     }
-    // If menu would overflow left edge, clamp
     if (left < margin) left = margin;
 
-    // If menu would overflow bottom edge, show above tap position
     if (top + childSize.height > size.height - margin) {
       top = tapPosition.dy - childSize.height;
     }
-    // If menu would overflow top edge, clamp
     if (top < margin) top = margin;
 
     return Offset(left, top);
