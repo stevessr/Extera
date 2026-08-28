@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -87,6 +89,7 @@ typedef ChatTileDeps = ({
   bool selected,
   bool singleSelected,
   bool longPressSelect,
+  bool selectable,
   bool hasBeenRead,
   bool displayReadMarker,
   bool highlightMarker,
@@ -538,8 +541,6 @@ class ChatController extends State<ChatPageWithRoom>
     context.go('/rooms');
   }
 
-  EmojiPickerType emojiPickerType = EmojiPickerType.keyboard;
-
   void requestHistory([_]) async {
     Logs().v('Requesting history...');
     await timeline?.requestHistory(historyCount: _loadHistoryCount);
@@ -877,16 +878,12 @@ class ChatController extends State<ChatPageWithRoom>
       timeline?.cancelSubscriptions();
       timeline = await room.getTimeline(
         onUpdate: updateView,
-        onNewEvent: _onNewEvent,
         eventContextId: eventContextId,
       );
     } catch (e, s) {
       Logs().w('Unable to load timeline on event ID $eventContextId', e, s);
       // if (!mounted) return;
-      timeline = await room.getTimeline(
-        onUpdate: updateView,
-        onNewEvent: _onNewEvent,
-      );
+      timeline = await room.getTimeline(onUpdate: updateView);
       if (!mounted) return;
       if (e is TimeoutException || e is IOException) {
         _showScrollUpMaterialBanner(eventContextId!);
@@ -904,7 +901,6 @@ class ChatController extends State<ChatPageWithRoom>
       timeline?.cancelSubscriptions();
       timeline = await thread!.getTimeline(
         onUpdate: updateView,
-        onNewEvent: _onNewEvent,
         eventContextId: eventContextId,
       );
       Logs().v("Thread timeline loaded ${timeline?.events.length}");
@@ -915,10 +911,7 @@ class ChatController extends State<ChatPageWithRoom>
         s,
       );
       if (!mounted) return;
-      timeline = await thread!.getTimeline(
-        onUpdate: updateView,
-        onNewEvent: _onNewEvent,
-      );
+      timeline = await thread!.getTimeline(onUpdate: updateView);
       if (!mounted) return;
       if (e is TimeoutException || e is IOException) {
         _showScrollUpMaterialBanner(eventContextId!);
@@ -928,8 +921,6 @@ class ChatController extends State<ChatPageWithRoom>
       (timeline as ThreadTimeline).getThreadEvents();
     }
   }
-
-  void _onNewEvent() {}
 
   Future<void> _getTimeline({String? eventContextId}) async {
     _scrollAnchorEventId = null;
@@ -1487,7 +1478,6 @@ class ChatController extends State<ChatPageWithRoom>
     } else {
       inputFocus.unfocus();
     }
-    emojiPickerType = EmojiPickerType.keyboard;
     setState(() {
       initiallyShowStickerPicker = sendController.text.isEmpty;
       showEmojiPicker = !showEmojiPicker;
@@ -1496,7 +1486,6 @@ class ChatController extends State<ChatPageWithRoom>
 
   void _inputFocusListener() {
     if (showEmojiPicker && inputFocus.hasFocus) {
-      emojiPickerType = EmojiPickerType.keyboard;
       setState(() => showEmojiPicker = false);
     }
   }
@@ -2406,7 +2395,52 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
+  /// Pins the scroll anchor to the newest event so that incoming messages
+  /// are routed to the pre-center sliver (below the viewport) instead of
+  /// shifting the visible content. Used while the message context menu is
+  /// open to prevent the list from auto-scrolling down when new events arrive.
+  /// Returns true if this call set the anchor (i.e. the user was at the
+  /// bottom before opening the menu); false if it was already pinned because
+  /// the user had scrolled up.
+  bool _menuSetAnchor = false;
+
+  void _setScrollAnchorForMenu() {
+    if (_scrollAnchorEventId == null && filteredEvents.isNotEmpty) {
+      _scrollAnchorEventId = filteredEvents.first.eventId;
+      _menuSetAnchor = true;
+    }
+  }
+
+  /// Restores normal scroll behaviour after the context menu closes. If the
+  /// menu itself pinned the anchor (the user was at the bottom) the view
+  /// scrolls back down when new events arrived while it was open. If the user
+  /// had scrolled up before opening the menu, the anchor stays managed by the
+  /// normal scroll handler.
+  void _onMenuClosed() {
+    if (!_menuSetAnchor) return;
+    _menuSetAnchor = false;
+    // Compute newEventCount before clearing the anchor, since it depends on it.
+    final hasNew = newEventCount > 0;
+    _scrollAnchorEventId = null;
+    if (hasNew) {
+      _scrolledUp.value = false;
+      _cachedFilteredEvents = null;
+      _cachedEventsKeyMap = null;
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted || !scrollController.hasClients) return;
+        await scrollController.scrollToIndex(
+          bottomPaddingAutoScrollIndex,
+          duration: FluffyThemes.animationDuration,
+          preferPosition: AutoScrollPosition.begin,
+        );
+        setReadMarker();
+      });
+    }
+  }
+
   void _openMenu(Event event, Offset? tapPosition) {
+    _setScrollAnchorForMenu();
     if (PlatformInfos.isMobile) {
       showAdaptiveBottomSheet(
         context: context,
@@ -2414,23 +2448,38 @@ class ChatController extends State<ChatPageWithRoom>
           return MessageContextMenu(controller: this, event: event);
         },
         useRootNavigator: false,
-      );
+      ).whenComplete(_onMenuClosed);
     } else {
       _contextMenuController?.remove();
-      _contextMenuController = ContextMenuController();
-
-      _contextMenuController!.show(
-        context: context,
-        contextMenuBuilder: (context) {
-          return _ContextMenuOverlay(
-            tapPosition: tapPosition ?? Offset.zero,
-            onDismiss: () => _contextMenuController?.remove(),
-            child: MessageContextMenu(controller: this, event: event),
-          );
+      _contextMenuController = ContextMenuController(
+        onRemove: () {
+          setState(() {
+            selectedEventId = null;
+            eventGlobalKeys.removeWhere((_, key) => key.currentContext == null);
+          });
+          _onMenuClosed();
         },
       );
+
+      setState(() {
+        selectedEventId = event.eventId;
+        _contextMenuController!.show(
+          context: context,
+          contextMenuBuilder: (context) {
+            return _ContextMenuOverlay(
+              tapPosition: tapPosition ?? Offset.zero,
+              onDismiss: () => _contextMenuController?.remove(),
+              selectedEventKey:
+                  eventGlobalKeys[event.transactionId ?? event.eventId]!,
+              child: MessageContextMenu(controller: this, event: event),
+            );
+          },
+        );
+      });
     }
   }
+
+  String? selectedEventId;
 
   void onSelectMessage(Event event, Offset? tapPosition) {
     if (selectedEvents.isEmpty) {
@@ -2607,6 +2656,8 @@ class ChatController extends State<ChatPageWithRoom>
       }
     }
   }
+
+  final Map<String, GlobalKey> eventGlobalKeys = {};
 
   bool _inputTextIsEmpty = true;
 
@@ -2794,34 +2845,120 @@ class ChatController extends State<ChatPageWithRoom>
   }
 }
 
-enum EmojiPickerType { reaction, keyboard }
-
-class _ContextMenuOverlay extends StatelessWidget {
+class _ContextMenuOverlay extends StatefulWidget {
   final Offset tapPosition;
   final VoidCallback onDismiss;
   final Widget child;
+  final GlobalKey selectedEventKey;
 
   const _ContextMenuOverlay({
     required this.tapPosition,
     required this.onDismiss,
     required this.child,
+    required this.selectedEventKey,
   });
 
   @override
+  State<_ContextMenuOverlay> createState() => _ContextMenuOverlayState();
+}
+
+class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
+  Rect? _messageRect;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateRect();
+  }
+
+  @override
+  void didUpdateWidget(_ContextMenuOverlay old) {
+    super.didUpdateWidget(old);
+    if (widget.selectedEventKey != old.selectedEventKey) {
+      _updateRect();
+    }
+  }
+
+  void _updateRect() {
+    final ctx = widget.selectedEventKey.currentContext;
+    if (ctx == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateRect();
+      });
+      return;
+    }
+
+    final box = ctx.findRenderObject() as RenderBox;
+    if (!box.hasSize) return;
+
+    final pos = box.localToGlobal(Offset.zero);
+    setState(() {
+      _messageRect = Rect.fromLTWH(
+        pos.dx,
+        pos.dy,
+        box.size.width,
+        box.size.height,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: onDismiss,
-          behavior: HitTestBehavior.translucent,
-          child: Container(color: Colors.transparent),
-        ),
-        CustomSingleChildLayout(
-          delegate: _ContextMenuLayoutDelegate(tapPosition: tapPosition),
-          child: child,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest;
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: widget.onDismiss,
+              behavior: HitTestBehavior.translucent,
+              child: ClipPath(
+                clipper: MultiHoleClipper(holes: [?_messageRect]),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                  child: AnimatedOpacity(
+                    opacity: _messageRect == null ? 0 : 1,
+                    duration: FluffyThemes.animationDuration,
+                    curve: FluffyThemes.animationCurve,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            CustomSingleChildLayout(
+              delegate: _ContextMenuLayoutDelegate(
+                tapPosition: widget.tapPosition,
+              ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.3, end: 1.0),
+                duration: FluffyThemes.animationDuration,
+                curve: FluffyThemes.animationCurve,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.scale(
+                      scale: value,
+                      alignment: _expansionAlignment(widget.tapPosition, size),
+                      child: child,
+                    ),
+                  );
+                },
+                child: widget.child,
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  Alignment _expansionAlignment(Offset tap, Size size) {
+    if (size.isEmpty) return Alignment.topLeft;
+    final fx = (tap.dx / size.width).clamp(0.0, 1.0);
+    final fy = (tap.dy / size.height).clamp(0.0, 1.0);
+    return Alignment(fx * 2 - 1, fy * 2 - 1);
   }
 }
 
@@ -2842,18 +2979,14 @@ class _ContextMenuLayoutDelegate extends SingleChildLayoutDelegate {
     var left = tapPosition.dx;
     var top = tapPosition.dy;
 
-    // If menu would overflow right edge, shift left
     if (left + childSize.width > size.width - margin) {
       left = size.width - childSize.width - margin;
     }
-    // If menu would overflow left edge, clamp
     if (left < margin) left = margin;
 
-    // If menu would overflow bottom edge, show above tap position
     if (top + childSize.height > size.height - margin) {
       top = tapPosition.dy - childSize.height;
     }
-    // If menu would overflow top edge, clamp
     if (top < margin) top = margin;
 
     return Offset(left, top);

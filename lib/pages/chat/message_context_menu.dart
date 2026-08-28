@@ -156,12 +156,13 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
     return Material(
       elevation: 8.0,
       borderRadius: BorderRadius.circular(12),
+      color: PlatformInfos.isMobile ? null : Colors.transparent,
       clipBehavior: Clip.antiAlias, // Ensures ink splashes don't bleed
       child: ConstrainedBox(
         constraints: BoxConstraints(
           minWidth: 200,
           maxWidth: PlatformInfos.isMobile ? double.infinity : 280,
-          maxHeight: 580,
+          maxHeight: PlatformInfos.isMobile ? 580 : double.infinity,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
