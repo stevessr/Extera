@@ -15,4 +15,3 @@ void Function()? registerWebDropListener({
   required WebDragStateCallback onDragStateChanged,
   required WebDropFilesCallback onDrop,
 }) => null;
-
