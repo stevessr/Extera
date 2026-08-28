@@ -2516,5 +2516,9 @@
   "@pleaseTryAgainLaterOrChooseDifferentServer": {},
   "notAnImage": "یک فایل تصویری نیست.",
   "@notAnImage": {},
-  "@@locale": "fa"
+  "@@locale": "fa",
+  "messageLayout": "چیدمان پیام",
+  "bubblesLayout": "حباب‌های جدید",
+  "legacyBubblesLayout": "حباب‌ها",
+  "modernLayout": "مدرن"
 }

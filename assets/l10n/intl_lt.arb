@@ -2420,5 +2420,9 @@
   "hideUnimportantStateEvents": "Slėpti nesvarbius būsenos įvykius",
   "@hideUnimportantStateEvents": {},
   "@@last_modified": "2025-06-05 12:38:37.885451",
-  "@@locale": "lt"
+  "@@locale": "lt",
+  "messageLayout": "Pranešimų išdėstymas",
+  "bubblesLayout": "Nauji burbuliukai",
+  "legacyBubblesLayout": "Burbuliukai",
+  "modernLayout": "Šiuolaikinis"
 }

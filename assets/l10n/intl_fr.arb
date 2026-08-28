@@ -3093,5 +3093,9 @@
     }
   },
   "loginWithMatrixId": "Connexion avec l'identifiant Matrix",
-  "@loginWithMatrixId": {}
+  "@loginWithMatrixId": {},
+  "messageLayout": "Disposition des messages",
+  "bubblesLayout": "Nouvelles bulles",
+  "legacyBubblesLayout": "Bulles",
+  "modernLayout": "Moderne"
 }

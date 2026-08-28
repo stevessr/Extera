@@ -2514,5 +2514,9 @@
   "@pleaseTryAgainLaterOrChooseDifferentServer": {},
   "signInWithPassword": "Conectați-vă cu parolă",
   "@signInWithPassword": {},
-  "@@locale": "ro"
+  "@@locale": "ro",
+  "messageLayout": "Aspectul mesajelor",
+  "bubblesLayout": "Bule noi",
+  "legacyBubblesLayout": "Bule",
+  "modernLayout": "Modern"
 }

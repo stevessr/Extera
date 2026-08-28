@@ -3190,5 +3190,9 @@
   "previous": "السابق",
   "@previous": {},
   "otherPartyNotLoggedIn": "لم يقم الطرف الآخر بتسجيل الدخول حالياً وبالتالي لا يمكنه تلقي الرسائل!",
-  "@otherPartyNotLoggedIn": {}
+  "@otherPartyNotLoggedIn": {},
+  "messageLayout": "تخطيط الرسائل",
+  "bubblesLayout": "فقاعات جديدة",
+  "legacyBubblesLayout": "فقاعات",
+  "modernLayout": "حديث"
 }

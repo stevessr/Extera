@@ -2106,7 +2106,11 @@
     "type": "String",
     "placeholders": {
       "senderName": {
-        "type": "String"
+        "type": "String",
+        "messageLayout": "संदेश लेआउट",
+        "bubblesLayout": "नए बुलबुले",
+        "legacyBubblesLayout": "बुलबुले",
+        "modernLayout": "आधुनिक"
       }
     }
   }

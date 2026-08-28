@@ -2124,6 +2124,10 @@
   },
   "@extremeOffensive": {
     "type": "String",
-    "placeholders": {}
+    "placeholders": {},
+    "messageLayout": "Disposição das mensagens",
+    "bubblesLayout": "Novas bolhas",
+    "legacyBubblesLayout": "Bolhas",
+    "modernLayout": "Moderno"
   }
 }

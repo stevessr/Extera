@@ -3265,5 +3265,9 @@
   "chatWallpaperFollowsGlobal": "此聊天跟隨外觀設定中的全域桌布。",
   "hideChatWallpaper": "此聊天不顯示桌布",
   "useGlobalWallpaper": "改用全域桌布",
-  "@@locale": "zh_Hant"
+  "@@locale": "zh_Hant",
+  "messageLayout": "訊息版面配置",
+  "bubblesLayout": "新氣泡",
+  "legacyBubblesLayout": "傳統氣泡",
+  "modernLayout": "現代"
 }

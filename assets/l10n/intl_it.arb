@@ -3333,5 +3333,9 @@
   "@previous": {},
   "otherPartyNotLoggedIn": "L'altra parte non è attualmente connessa e quindi non può ricevere messaggi!",
   "@otherPartyNotLoggedIn": {},
-  "@@locale": "it"
+  "@@locale": "it",
+  "messageLayout": "Disposizione dei messaggi",
+  "bubblesLayout": "Nuove bolle",
+  "legacyBubblesLayout": "Bolle",
+  "modernLayout": "Moderno"
 }

@@ -728,7 +728,11 @@
     "type": "String",
     "placeholders": {
       "senderName": {
-        "type": "String"
+        "type": "String",
+        "messageLayout": "Bố cục tin nhắn",
+        "bubblesLayout": "Bong bóng mới",
+        "legacyBubblesLayout": "Bong bóng",
+        "modernLayout": "Hiện đại"
       }
     }
   }

@@ -3337,5 +3337,9 @@
   "allDevices": "Wszystkie urządzenia",
   "@allDevices": {},
   "notSupportedOnThisDevice": "Niewspierane na tym urządzeniu",
-  "@notSupportedOnThisDevice": {}
+  "@notSupportedOnThisDevice": {},
+  "messageLayout": "Układ wiadomości",
+  "bubblesLayout": "Nowe bąbelki",
+  "legacyBubblesLayout": "Bąbelki",
+  "modernLayout": "Nowoczesny"
 }

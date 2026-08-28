@@ -1061,5 +1061,9 @@
     }
   },
   "@@last_modified": "2025-06-05 12:38:37.885451",
-  "@@locale": "fil"
+  "@@locale": "fil",
+  "messageLayout": "Layout ng mga mensahe",
+  "bubblesLayout": "Mga bagong bubol",
+  "legacyBubblesLayout": "Mga bubol",
+  "modernLayout": "Modern"
 }

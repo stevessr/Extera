@@ -1818,5 +1818,9 @@
   },
   "notAnImage": "Ikke en bildefil.",
   "@notAnImage": {},
-  "@@locale": "nb"
+  "@@locale": "nb",
+  "messageLayout": "Meldingsoppsett",
+  "bubblesLayout": "Nye bobler",
+  "legacyBubblesLayout": "Bobler",
+  "modernLayout": "Moderne"
 }

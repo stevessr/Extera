@@ -3339,5 +3339,9 @@
   "optionalMessage": "Mezua (aukerakoa)…",
   "@optionalMessage": {},
   "notSupportedOnThisDevice": "Ez da gailu honekin bateragarria",
-  "@notSupportedOnThisDevice": {}
+  "@notSupportedOnThisDevice": {},
+  "messageLayout": "Mezu-antolamendua",
+  "bubblesLayout": "Burbaila berriak",
+  "legacyBubblesLayout": "Burbailak",
+  "modernLayout": "Modernoa"
 }

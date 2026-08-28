@@ -3182,5 +3182,9 @@
     }
   },
   "welcomeText": "Hey Hey 👋 Karşınızda Extera. https://matrix.org ile uyumlu herhangi bir homeserver'a giriş yapabilirsiniz. Ve herkesle konuşabilirsiniz. Bu koca bir merkeziyetsiz mesajlaşma ağı!",
-  "@welcomeText": {}
+  "@welcomeText": {},
+  "messageLayout": "Mesaj düzeni",
+  "bubblesLayout": "Yeni baloncuklar",
+  "legacyBubblesLayout": "Baloncuklar",
+  "modernLayout": "Modern"
 }

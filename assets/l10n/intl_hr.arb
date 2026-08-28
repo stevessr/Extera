@@ -2993,7 +2993,11 @@
         "type": "int"
       },
       "length": {
-        "type": "int"
+        "type": "int",
+        "messageLayout": "Raspored poruka",
+        "bubblesLayout": "Novi mjehurići",
+        "legacyBubblesLayout": "Mjehurići",
+        "modernLayout": "Moderno"
       }
     }
   }

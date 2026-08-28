@@ -2860,5 +2860,9 @@
   "@stickers": {},
   "discover": "Upptäck",
   "@discover": {},
-  "@@locale": "sv"
+  "@@locale": "sv",
+  "messageLayout": "Meddelandelayout",
+  "bubblesLayout": "Nya bubblor",
+  "legacyBubblesLayout": "Bubblor",
+  "modernLayout": "Modern"
 }

@@ -827,6 +827,10 @@
   "editDisplayname": "ნაჩვენები სახელის შეცვლა",
   "@editDisplayname": {
     "type": "String",
-    "placeholders": {}
+    "placeholders": {},
+    "messageLayout": "შეტყობინების განლაგება",
+    "bubblesLayout": "ახალი ბუშტები",
+    "legacyBubblesLayout": "ბუშტები",
+    "modernLayout": "მოდერნული"
   }
 }

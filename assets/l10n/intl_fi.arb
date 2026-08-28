@@ -2638,5 +2638,9 @@
   "noMoreChatsFound": "Lisää keskusteluja ei löytynyt...",
   "@noMoreChatsFound": {},
   "@@last_modified": "2025-06-05 12:38:37.885451",
-  "@@locale": "fi"
+  "@@locale": "fi",
+  "messageLayout": "Viestien asettelu",
+  "bubblesLayout": "Uudet kuplat",
+  "legacyBubblesLayout": "Kuplat",
+  "modernLayout": "Moderni"
 }

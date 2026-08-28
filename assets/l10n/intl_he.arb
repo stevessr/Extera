@@ -1426,5 +1426,9 @@
     "type": "String",
     "placeholders": {}
   },
-  "@@locale": "he"
+  "@@locale": "he",
+  "messageLayout": "פריסת הודעות",
+  "bubblesLayout": "בועות חדשות",
+  "legacyBubblesLayout": "בועות",
+  "modernLayout": "מודרני"
 }

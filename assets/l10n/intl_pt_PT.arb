@@ -1713,5 +1713,9 @@
   "dehydrateTorLong": "Para utilizadores do TOR, é recomendado exportar a sessão antes de fechar a janela.",
   "@dehydrateTorLong": {},
   "@@last_modified": "2025-06-05 12:38:37.885451",
-  "@@locale": "pt_PT"
+  "@@locale": "pt_PT",
+  "messageLayout": "Disposição das mensagens",
+  "bubblesLayout": "Novas bolhas",
+  "legacyBubblesLayout": "Bolhas",
+  "modernLayout": "Moderno"
 }

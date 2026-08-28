@@ -654,6 +654,10 @@
   "deactivateAccountWarning": "S tem boste deaktivirali vaš uporabniški račun. Tega ni mogoče razveljaviti! Ali si prepričan?",
   "@deactivateAccountWarning": {
     "type": "String",
-    "placeholders": {}
+    "placeholders": {},
+    "messageLayout": "Razporeditev sporočil",
+    "bubblesLayout": "Novi mehurčki",
+    "legacyBubblesLayout": "Mehurčki",
+    "modernLayout": "Moderno"
   }
 }

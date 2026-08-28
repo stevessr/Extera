@@ -2974,5 +2974,9 @@
   "@gallery": {},
   "files": "Arquivos",
   "@files": {},
-  "@@locale": "pt_BR"
+  "@@locale": "pt_BR",
+  "messageLayout": "Layout das mensagens",
+  "bubblesLayout": "Novas bolhas",
+  "legacyBubblesLayout": "Bolhas",
+  "modernLayout": "Moderno"
 }

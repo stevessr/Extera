@@ -1968,5 +1968,9 @@
     "type": "String",
     "placeholders": {}
   },
-  "@@locale": "sr"
+  "@@locale": "sr",
+  "messageLayout": "Раслед порука",
+  "bubblesLayout": "Нови мехурићи",
+  "legacyBubblesLayout": "Мехурићи",
+  "modernLayout": "Модерно"
 }

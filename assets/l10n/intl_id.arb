@@ -3345,5 +3345,9 @@
   "@enterNewChat": {},
   "commandHint_roomupgrade": "Tingkatkan ruangan ini ke versi ruangan yang ditentukan",
   "@commandHint_roomupgrade": {},
-  "@@locale": "id"
+  "@@locale": "id",
+  "messageLayout": "Tata letak pesan",
+  "bubblesLayout": "Gelembung baru",
+  "legacyBubblesLayout": "Gelembung",
+  "modernLayout": "Modern"
 }
