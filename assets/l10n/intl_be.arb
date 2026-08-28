@@ -1,1 +1,6 @@
-{}
+{
+  "messageLayout": "Расклад паведамленняў",
+  "bubblesLayout": "Новыя бурбалкі",
+  "legacyBubblesLayout": "Бурбалкі",
+  "modernLayout": "Сучасны"
+}

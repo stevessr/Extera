@@ -97,6 +97,9 @@ class ChatEventList extends StatelessWidget {
             controller.selectedEvents.length == 1 &&
             controller.selectedEvents.first.eventId == event.eventId,
         longPressSelect: controller.selectedEvents.isNotEmpty,
+        selectable:
+            controller.selectedEvents.isNotEmpty ||
+            controller.selectedEventId == event.eventId,
         hasBeenRead:
             latestReadEventIndex != -1 && latestReadEventIndex <= eventIndex,
         displayReadMarker:
@@ -139,6 +142,7 @@ class ChatEventList extends StatelessWidget {
           onSelect: controller.onSelectMessage,
           scrollToEventId: controller.scrollToEventId,
           longPressSelect: deps.longPressSelect,
+          selectable: deps.selectable,
           selected: selected,
           timeline: timeline,
           displayReadMarker: deps.displayReadMarker,
@@ -155,7 +159,13 @@ class ChatEventList extends StatelessWidget {
         key: ValueKey(event.transactionId ?? event.eventId),
         index: controller.autoScrollIndexForEvent(eventIndex),
         controller: controller.scrollController,
-        child: RepaintBoundary(child: message),
+        child: RepaintBoundary(
+          key: controller.eventGlobalKeys.putIfAbsent(
+            event.transactionId ?? event.eventId,
+            () => GlobalKey(),
+          ),
+          child: message,
+        ),
       );
     }
 
@@ -163,6 +173,9 @@ class ChatEventList extends StatelessWidget {
       controller: controller.scrollController,
       reverse: true,
       center: _centerKey,
+      physics: controller.selectedEventId != null
+          ? const NeverScrollableScrollPhysics()
+          : null,
       keyboardDismissBehavior: PlatformInfos.isIOS
           ? ScrollViewKeyboardDismissBehavior.onDrag
           : ScrollViewKeyboardDismissBehavior.manual,

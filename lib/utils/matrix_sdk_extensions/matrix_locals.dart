@@ -32,6 +32,11 @@ class MatrixLocals extends MatrixLocalizations {
   }
 
   @override
+  String incomingCallFrom(String senderName) {
+    return '${l10n.incomingCall}: $senderName';
+  }
+
+  @override
   String get anyoneCanJoin => l10n.anyoneCanJoin;
 
   @override

@@ -43,18 +43,18 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.pub-cache
-        # v2 avoids reusing the cache created by the failed Dart 3.12/Pub
-        # resolution, which left package_graph.json inconsistent with the
-        # checked-out dependency graph.
-        key: pub-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}
-        restore-keys: pub-v2-${{ runner.os }}-${{ runner.arch }}-
+        # Keep Pub caches isolated by Flutter SDK. Reusing the old cache across
+        # Dart/Pub versions can leave package_graph.json inconsistent with the
+        # checked-out dependency graph (for example, random_string missing).
+        key: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-${{ hashFiles('pubspec.lock') }}
+        restore-keys: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-
 
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}
       shell: bash
-      # Flutter 3.44.x bundles a Pub version whose default example traversal
-      # can leave package_graph.json incomplete for transitive packages such
-      # as random_string. CI never needs package examples, so skip them.
+      # Skip dependency example traversal: it is unneeded for CI and older
+      # Pub versions could leave package_graph.json incomplete for transitive
+      # packages such as random_string.
       run: flutter pub get --no-example
 
     # The animated emoji are shipped as assets but not checked in, so every

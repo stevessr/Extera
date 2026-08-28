@@ -30,6 +30,7 @@ class Message extends StatelessWidget {
   final List<Color> colors;
   final bool gradient;
   final bool singleSelected;
+  final bool selectable;
   final bool? exampleMessage;
   final Thread? thread;
   final bool hasBeenRead;
@@ -45,6 +46,7 @@ class Message extends StatelessWidget {
     this.singleSelected = false,
     this.hasBeenRead = false,
     this.exampleMessage = false,
+    this.selectable = true,
     this.thread,
     required this.onSelect,
     required this.onInfoTab,
@@ -91,6 +93,7 @@ class Message extends StatelessWidget {
         singleSelected: singleSelected,
         thread: thread,
         wallpaperMode: wallpaperMode,
+        selectable: selectable,
       ),
       .bubblesLegacy => MessageBubbleLegacy(
         event,
@@ -143,6 +146,7 @@ class Message extends StatelessWidget {
         singleSelected: singleSelected,
         thread: thread,
         wallpaperMode: wallpaperMode,
+        selectable: selectable,
       ),
     };
 

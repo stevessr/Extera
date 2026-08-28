@@ -3276,5 +3276,9 @@
   "notificationRuleContainsDisplayNameDescription": "Сповіщає користувача, коли повідомлення містить показуване ім'я.",
   "@notificationRuleContainsDisplayNameDescription": {},
   "notificationRuleIsRoomMention": "Згадки кімнати",
-  "@notificationRuleIsRoomMention": {}
+  "@notificationRuleIsRoomMention": {},
+  "messageLayout": "Розташування повідомлень",
+  "bubblesLayout": "Нові бульбашки",
+  "legacyBubblesLayout": "Бульбашки",
+  "modernLayout": "Сучасний"
 }

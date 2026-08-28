@@ -1,3 +1,9 @@
+## Extera 26.5.0
+- Remove legacy bubbles layout.
+- Remove mediakit video player.
+- Update message context menu: now it has animation and backdrop with blur.
+- Fixed quick action tap not working sometimes.
+
 ## Extera 26.4.9
 - View nested reactions (reactions to reactions). To add a reaction, reply to reaction with `/react <reaction>` command.
 - Remove unneccessary paddings for media content in modern message layout.

@@ -3345,5 +3345,9 @@
   "enterNewChat": "Entrar na nova conversa",
   "@enterNewChat": {},
   "commandHint_roomupgrade": "Actualizar esta sala á versión de sala indicada",
-  "@commandHint_roomupgrade": {}
+  "@commandHint_roomupgrade": {},
+  "messageLayout": "Deseño das mensaxes",
+  "bubblesLayout": "Burbullas novas",
+  "legacyBubblesLayout": "Burbullas",
+  "modernLayout": "Moderno"
 }

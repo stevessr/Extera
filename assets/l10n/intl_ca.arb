@@ -3329,5 +3329,9 @@
   "@shareKeysWith": {},
   "crossVerifiedDevicesIfEnabled": "Els dispositius verificats mútuament, si està activat",
   "@crossVerifiedDevicesIfEnabled": {},
-  "@@locale": "ca"
+  "@@locale": "ca",
+  "messageLayout": "Disposició dels missatges",
+  "bubblesLayout": "Bombolles noves",
+  "legacyBubblesLayout": "Bombolles",
+  "modernLayout": "Modern"
 }

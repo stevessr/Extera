@@ -3085,5 +3085,9 @@
   "noMoreChatsFound": "Nincs több csevegés...",
   "@noMoreChatsFound": {},
   "joinedChats": "Csatlakozott csevegések",
-  "@joinedChats": {}
+  "@joinedChats": {},
+  "messageLayout": "Üzenetek elrendezése",
+  "bubblesLayout": "Új buborékok",
+  "legacyBubblesLayout": "Buborékok",
+  "modernLayout": "Modern"
 }

@@ -14,8 +14,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   handy_window
   hotkey_manager_linux
   livekit_client
-  media_kit_libs_linux
-  media_kit_video
   open_file_linux
   pasteboard
   record_linux

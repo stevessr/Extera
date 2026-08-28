@@ -10,6 +10,10 @@
   "remove": "తొలగించు",
   "@remove": {
     "type": "String",
-    "placeholders": {}
+    "placeholders": {},
+    "messageLayout": "సందేశ లేఅవుట్",
+    "bubblesLayout": "కొత్త బుడగలు",
+    "legacyBubblesLayout": "బుడగలు",
+    "modernLayout": "ఆధునిక"
   }
 }

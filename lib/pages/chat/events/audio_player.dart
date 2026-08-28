@@ -26,6 +26,7 @@ class AudioPlayerWidget extends StatefulWidget {
   final void Function()? onLoadMedia;
   final void Function()? onRevealHiddenMedia;
   final String? contentWarning;
+  final bool selectable;
 
   static const int wavesCount = 40;
 
@@ -35,6 +36,7 @@ class AudioPlayerWidget extends StatefulWidget {
     required this.linkColor,
     required this.fontSize,
     required this.layout,
+    this.selectable = true,
     this.trailingSpan,
     this.loadMedia = false,
     this.showHiddenMedia = false,
@@ -466,6 +468,7 @@ class AudioPlayerState extends State<AudioPlayerWidget> {
                                       textColor: textColor,
                                       room: widget.event.room,
                                       trailingSpan: widget.trailingSpan,
+                                      selectable: widget.selectable,
                                       fontSize:
                                           AppSettings.fontSizeFactor.value *
                                           AppSettings.messageFontSize.value,

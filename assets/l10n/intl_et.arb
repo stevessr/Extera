@@ -3345,5 +3345,9 @@
   "enterNewChat": "Liitu uue vestlusega",
   "@enterNewChat": {},
   "commandHint_roomupgrade": "Uuenda see jututuba antud jututoa versioonini",
-  "@commandHint_roomupgrade": {}
+  "@commandHint_roomupgrade": {},
+  "messageLayout": "Sõnumite paigutus",
+  "bubblesLayout": "Uued mullid",
+  "legacyBubblesLayout": "Mullid",
+  "modernLayout": "Moodne"
 }

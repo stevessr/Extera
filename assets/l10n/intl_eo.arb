@@ -2079,5 +2079,9 @@
   "@homeserver": {},
   "sendOnEnter": "Sendi per eniga klavo",
   "@sendOnEnter": {},
-  "@@locale": "eo"
+  "@@locale": "eo",
+  "messageLayout": "Mesaĝa aranĝo",
+  "bubblesLayout": "Novaj bubaloj",
+  "legacyBubblesLayout": "Bubaloj",
+  "modernLayout": "Moderna"
 }

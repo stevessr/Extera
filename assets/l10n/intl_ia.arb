@@ -56,5 +56,9 @@
       }
     }
   },
-  "@custom": {}
+  "@custom": {},
+  "messageLayout": "Disposition del messages",
+  "bubblesLayout": "Nove bullas",
+  "legacyBubblesLayout": "Bullas",
+  "modernLayout": "Moderne"
 }

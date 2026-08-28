@@ -4,19 +4,26 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:chewie/chewie.dart';
 import 'package:matrix/matrix.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:video_player/video_player.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import '../../../utils/error_reporter.dart';
 import '../../widgets/mxc_image.dart';
 
+/// Persistent on-disk cache for downloaded video attachments.
+///
+/// Downloads are shared between playback sessions and survive restarts, so a
+/// video opened twice (or once per viewer recreation) is fetched from the
+/// homeserver only once.
 final _videoPlaybackCache = _VideoPlaybackCache();
 
 class _VideoPlaybackCache {
@@ -226,130 +233,130 @@ class EventVideoPlayer extends StatefulWidget {
 class EventVideoPlayerState extends State<EventVideoPlayer> {
   static const String fallbackBlurHash = 'L5H2EC=PM+yV0g-mq.wG9c010J}I';
 
-  Player? _mediaKitPlayer;
-  VideoController? _mediaKitController;
-  StreamSubscription<String>? _errorSubscription;
+  ChewieController? _chewieController;
+  VideoPlayerController? _videoPlayerController;
 
   double? _downloadProgress;
   String? _playbackError;
   String? _activeVideoPath;
   int _loadGeneration = 0;
 
-  VideoControllerConfiguration get _videoControllerConfiguration =>
-      PlatformInfos.isAndroid
-      // Some Android hardware decoders produce audio but never provide a
-      // frame to Flutter's texture. Software decoding keeps the output path
-      // working across those devices.
-      ? const VideoControllerConfiguration(enableHardwareAcceleration: false)
-      : const VideoControllerConfiguration();
+  // The video_player package doesn't support Windows and Linux.
+  final _supportsVideoPlayer =
+      !PlatformInfos.isWindows && !PlatformInfos.isLinux;
 
-  bool _isCurrent(int generation, Player player) =>
-      mounted &&
-      generation == _loadGeneration &&
-      identical(_mediaKitPlayer, player);
+  bool _isCurrent(int generation) => mounted && generation == _loadGeneration;
 
   Future<void> _downloadAction() async {
+    if (!_supportsVideoPlayer) {
+      widget.event.saveFile(context);
+      return;
+    }
+
     final generation = ++_loadGeneration;
     await _disposeControllers();
-    if (!mounted || generation != _loadGeneration) return;
+    if (!_isCurrent(generation)) return;
 
     setState(() {
       _downloadProgress = null;
       _playbackError = null;
     });
 
-    final player = Player();
-    _mediaKitPlayer = player;
-
     try {
-      final controller = VideoController(
-        player,
-        configuration: _videoControllerConfiguration,
-      );
-      _errorSubscription = player.stream.error.listen((message) {
-        if (!mounted ||
-            generation != _loadGeneration ||
-            !identical(_mediaKitPlayer, player)) {
-          return;
-        }
-        setState(() {
-          _playbackError = message.isEmpty ? 'Unable to play video' : message;
-          _downloadProgress = null;
-        });
-      });
-
-      final media = await _mediaForPlayback(generation);
-      if (!_isCurrent(generation, player)) {
-        if (identical(_mediaKitPlayer, player)) {
-          await _disposeControllers();
-        }
+      final videoPlayerController = await _controllerForPlayback(generation);
+      if (!_isCurrent(generation)) {
+        // A newer load or disposal owns the state now; this controller was
+        // never assigned to the widget so only it is released here.
+        unawaited(videoPlayerController.dispose());
         return;
       }
 
-      await player.open(media);
-      // VideoController initializes its Android surface asynchronously. Wait
-      // for it before mounting Video so a failed native surface is handled by
-      // the error UI instead of leaving an empty widget on screen.
-      await controller.platform.future;
-      if (!_isCurrent(generation, player)) {
-        if (identical(_mediaKitPlayer, player)) {
-          await _disposeControllers();
-        }
-        return;
-      }
+      _videoPlayerController = videoPlayerController;
+      await videoPlayerController.initialize();
 
-      if (widget.ivController.currentEvent.eventId != widget.event.eventId) {
+      if (!_isCurrent(generation) ||
+          widget.ivController.currentEvent.eventId != widget.event.eventId) {
         await _disposeControllers();
         return;
       }
 
+      final chewieController = ChewieController(
+        videoPlayerController: videoPlayerController,
+        useRootNavigator: !kIsWeb,
+        autoPlay: true,
+        looping: true,
+      );
+
       setState(() {
-        _mediaKitController = controller;
+        _chewieController = chewieController;
         _downloadProgress = null;
       });
     } on IOException catch (e, s) {
-      await _handlePlaybackFailure(generation, player, e, s);
+      await _handlePlaybackFailure(generation, e, s);
     } catch (e, s) {
-      await _handlePlaybackFailure(generation, player, e, s);
+      await _handlePlaybackFailure(generation, e, s);
     }
   }
 
-  Future<Media> _mediaForPlayback(int generation) async {
+  Future<VideoPlayerController> _controllerForPlayback(int generation) async {
     final event = widget.event;
 
-    // Downloading to a local file on Android avoids media_kit having to
-    // follow Matrix media redirects and preserves the authenticated download
-    // path for both encrypted and unencrypted rooms.
-    final useLocalFile = PlatformInfos.isAndroid || event.room.encrypted;
+    // Playing from a local file on Android avoids the platform player having
+    // to follow Matrix media redirects, keeps network playback from being cut
+    // mid-stream by viewer lifecycle changes, and preserves the authenticated
+    // download path for both encrypted and unencrypted rooms. Encrypted rooms
+    // always need a local decrypt step anyway.
+    final useLocalFile =
+        !kIsWeb && (PlatformInfos.isAndroid || event.room.encrypted);
     if (!useLocalFile) {
+      if (kIsWeb) {
+        final fileSize = event.content
+            .tryGetMap<String, dynamic>('info')
+            ?.tryGet<int>('size');
+        final videoFile = await event.downloadAndDecryptAttachment(
+          onDownloadProgress: fileSize == null || fileSize <= 0
+              ? null
+              : (progress) {
+                  if (!_isCurrent(generation)) return;
+                  final percentage = (progress / fileSize).clamp(0.0, 1.0);
+                  setState(() {
+                    _downloadProgress = percentage < 1
+                        ? percentage.toDouble()
+                        : null;
+                  });
+                },
+        );
+        if (!_isCurrent(generation)) {
+          throw StateError('Video loading was cancelled');
+        }
+        final blob = html.Blob([videoFile.bytes]);
+        final networkUri = Uri.parse(html.Url.createObjectUrlFromBlob(blob));
+        return VideoPlayerController.networkUrl(networkUri);
+      }
+
       final attachment = event.attachmentMxcUrl;
       if (attachment == null) {
         throw StateError('Video event has no attachment URL');
       }
       final videoUrl = await attachment.getDownloadUri(event.room.client);
       Logs().d('Video url: $videoUrl');
-      final accessToken = event.room.client.accessToken;
-      return Media(
-        videoUrl.toString(),
-        httpHeaders: accessToken == null
-            ? null
-            : {'authorization': 'Bearer $accessToken'},
+      return VideoPlayerController.networkUrl(
+        videoUrl,
+        httpHeaders: {
+          'authorization': 'Bearer ${event.room.client.accessToken}',
+        },
       );
     }
 
-    if (!kIsWeb) {
-      final cachedFile = await _videoPlaybackCache.acquire(event);
-      if (!mounted || generation != _loadGeneration) {
-        if (cachedFile != null) {
-          _videoPlaybackCache.release(cachedFile.path);
-        }
-        throw StateError('Video loading was cancelled');
-      }
-      if (cachedFile != null) {
-        _activeVideoPath = cachedFile.path;
-        _videoPlaybackCache.scheduleCleanup();
-        return Media(cachedFile.path);
-      }
+    final cachedFile = await _videoPlaybackCache.acquire(event);
+    if (!_isCurrent(generation)) {
+      if (cachedFile != null) _videoPlaybackCache.release(cachedFile.path);
+      throw StateError('Video loading was cancelled');
+    }
+    if (cachedFile != null) {
+      _activeVideoPath = cachedFile.path;
+      _videoPlaybackCache.scheduleCleanup();
+      return VideoPlayerController.file(cachedFile);
     }
 
     final fileSize = event.content
@@ -359,7 +366,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       onDownloadProgress: fileSize == null || fileSize <= 0
           ? null
           : (progress) {
-              if (!mounted || generation != _loadGeneration) return;
+              if (!_isCurrent(generation)) return;
               final percentage = (progress / fileSize).clamp(0.0, 1.0);
               setState(() {
                 _downloadProgress = percentage < 1
@@ -368,31 +375,26 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
               });
             },
     );
-    if (!mounted || generation != _loadGeneration) {
+    if (!_isCurrent(generation)) {
       throw StateError('Video loading was cancelled');
     }
 
-    if (kIsWeb) {
-      return Media.memory(videoFile.bytes, type: videoFile.mimeType);
-    }
-
     final file = await _videoPlaybackCache.store(event, videoFile.bytes);
-    if (!mounted || generation != _loadGeneration) {
+    if (!_isCurrent(generation)) {
       _videoPlaybackCache.release(file.path);
       throw StateError('Video loading was cancelled');
     }
     _activeVideoPath = file.path;
     _videoPlaybackCache.scheduleCleanup();
-    return Media(file.path);
+    return VideoPlayerController.file(file);
   }
 
   Future<void> _handlePlaybackFailure(
     int generation,
-    Player player,
     Object error,
     StackTrace stackTrace,
   ) async {
-    if (!_isCurrent(generation, player)) return;
+    if (!_isCurrent(generation)) return;
 
     final message = error is IOException
         ? error.toLocalizedString(context)
@@ -404,7 +406,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       // an explicit playback failure to trigger a fresh download on retry.
       await _videoPlaybackCache.invalidate(widget.event);
     }
-    if (!mounted || generation != _loadGeneration) return;
+    if (!_isCurrent(generation)) return;
 
     setState(() {
       _playbackError = message;
@@ -424,24 +426,26 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
   }
 
   Future<void> _disposeControllers() async {
-    final player = _mediaKitPlayer;
-    final errorSubscription = _errorSubscription;
+    final chewieController = _chewieController;
+    final videoPlayerController = _videoPlayerController;
     final activeVideoPath = _activeVideoPath;
 
-    _mediaKitPlayer = null;
-    _mediaKitController = null;
-    _errorSubscription = null;
+    _chewieController = null;
+    _videoPlayerController = null;
     _activeVideoPath = null;
 
-    await errorSubscription?.cancel();
     try {
-      await player?.dispose();
+      chewieController?.dispose();
     } finally {
-      if (activeVideoPath != null) {
-        // The file belongs to the persistent cache, not to this Player
-        // instance. Release the reference but let cache cleanup decide when
-        // it is safe and worthwhile to remove it.
-        _videoPlaybackCache.release(activeVideoPath);
+      try {
+        await videoPlayerController?.dispose();
+      } finally {
+        if (activeVideoPath != null) {
+          // The file belongs to the persistent cache, not to this player
+          // instance. Release the reference but let cache cleanup decide when
+          // it is safe and worthwhile to remove it.
+          _videoPlaybackCache.release(activeVideoPath);
+        }
       }
     }
   }
@@ -483,6 +487,8 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
 
   @override
   void dispose() {
+    // Invalidate in-flight loads first so no pending continuation can touch
+    // the controllers while they are being disposed below.
     _loadGeneration++;
     unawaited(_disposeControllers());
     super.dispose();
@@ -499,7 +505,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
-    final infoMap = event.content.tryGetMap<String, dynamic>('info');
+    final infoMap = event.content.tryGetMap<String, Object?>('info');
     final widthValue = infoMap?.tryGet<int>('w');
     final heightValue = infoMap?.tryGet<int>('h');
     final videoWidth = widthValue != null && widthValue > 0
@@ -511,6 +517,9 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     final blurHash =
         infoMap?.tryGet<String>('xyz.amorgan.blurhash') ?? fallbackBlurHash;
 
+    // Fit the preview/player into the viewport instead of deriving the width
+    // from the height alone: very tall or narrow videos would otherwise
+    // overflow the screen.
     final viewport = MediaQuery.sizeOf(context);
     final maxWidth = viewport.width > 0 ? viewport.width : videoWidth;
     final maxHeight = (viewport.height - 52)
@@ -522,19 +531,15 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       Size(maxWidth, maxHeight),
     ).destination;
 
-    final mediaKitController = _mediaKitController;
-    if (mediaKitController != null) {
+    final chewieController = _chewieController;
+    if (chewieController != null) {
       return Stack(
         children: [
           Center(
             child: SizedBox(
               width: videoSize.width,
               height: videoSize.height,
-              child: Video(
-                controller: mediaKitController,
-                fit: BoxFit.contain,
-                controls: MaterialVideoControls,
-              ),
+              child: Chewie(controller: chewieController),
             ),
           ),
           if (_playbackError != null) _buildPlaybackError(context),

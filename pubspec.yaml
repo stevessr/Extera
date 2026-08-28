@@ -2,7 +2,7 @@ name: extera_next
 description: Chat with your friends.
 publish_to: none
 # Version schema: <YEAR>.<MAJOR UPDATE>.<MINOR><PATCH>
-version: 26.4.9
+version: 26.5.0
 
 environment:
   sdk: ">=3.11.1 <4.0.0"
@@ -20,6 +20,7 @@ dependencies:
   badges: ^3.2.0
   blurhash_dart: ^1.2.1
   camera: ^0.12.0+2
+  chewie: ^1.13.0
   collection: ^1.19.1
   cross_file: ^0.3.5+4
   cupertino_icons: any
@@ -101,9 +102,7 @@ dependencies:
   url_launcher: ^6.3.2
   visibility_detector: ^0.4.0+2
   video_compress: ^3.1.4
-  media_kit: ^1.2.6
-  media_kit_video: ^2.0.1
-  media_kit_libs_video: ^1.0.7
+  video_player: ^2.11.1
   vodozemac: ^0.7.0
   wakelock_plus: ^1.7.0
   web: ^1.1.1

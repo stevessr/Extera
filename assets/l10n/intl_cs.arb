@@ -2671,7 +2671,11 @@
     "type": "String",
     "placeholders": {
       "homeserver": {
-        "type": "String"
+        "type": "String",
+        "messageLayout": "Rozvržení zpráv",
+        "bubblesLayout": "Nové bubliny",
+        "legacyBubblesLayout": "Bubliny",
+        "modernLayout": "Moderní"
       }
     }
   }

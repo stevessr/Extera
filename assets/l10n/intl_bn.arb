@@ -2106,6 +2106,10 @@
   "@placeCall": {},
   "@extremeOffensive": {
     "type": "String",
-    "placeholders": {}
+    "placeholders": {},
+    "messageLayout": "মেসেজ লেআউট",
+    "bubblesLayout": "নতুন বাবল",
+    "legacyBubblesLayout": "বাবল",
+    "modernLayout": "মডার্ন"
   }
 }

@@ -1458,5 +1458,9 @@
     "placeholders": {}
   },
   "importNow": "Importovať teraz",
-  "@importNow": {}
+  "@importNow": {},
+  "messageLayout": "Rozloženie správ",
+  "bubblesLayout": "Nové bubliny",
+  "legacyBubblesLayout": "Bubliny",
+  "modernLayout": "Moderné"
 }

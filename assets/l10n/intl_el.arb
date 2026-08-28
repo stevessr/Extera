@@ -2149,7 +2149,11 @@
     "type": "String",
     "placeholders": {
       "senderName": {
-        "type": "String"
+        "type": "String",
+        "messageLayout": "Διάταξη μηνυμάτων",
+        "bubblesLayout": "Νέες φυσαλίδες",
+        "legacyBubblesLayout": "Φυσαλίδες",
+        "modernLayout": "Μοντέρνο"
       }
     }
   }

@@ -2154,5 +2154,9 @@
     }
   },
   "@@last_modified": "2025-06-05 12:38:37.885451",
-  "@@locale": "th"
+  "@@locale": "th",
+  "messageLayout": "เลย์เอาต์ข้อความ",
+  "bubblesLayout": "ฟองใหม่",
+  "legacyBubblesLayout": "ฟอง",
+  "modernLayout": "โมเดิร์น"
 }

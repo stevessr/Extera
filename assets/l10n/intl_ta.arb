@@ -3169,5 +3169,9 @@
     "type": "String",
     "placeholders": {}
   },
-  "@@locale": "ta"
+  "@@locale": "ta",
+  "messageLayout": "செய்தி தளவமைப்பு",
+  "bubblesLayout": "புதிய குமிழ்கள்",
+  "legacyBubblesLayout": "குமிழ்கள்",
+  "modernLayout": "நவீன"
 }

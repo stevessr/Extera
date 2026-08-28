@@ -9,7 +9,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
-import 'package:media_kit/media_kit.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,8 +48,6 @@ void main() async {
     // handlers (message context menu, image viewer, ...) can take over.
     await BrowserContextMenu.disableContextMenu();
   }
-
-  MediaKit.ensureInitialized();
 
   // IndexedDB/config loading and the vodozemac WebAssembly download are
   // independent. Start both before parsing timezone data so browser I/O can
