@@ -124,6 +124,14 @@ dependencies:
   phone_numbers_parser: ^9.0.21
   defer_pointer: ^0.0.2
 
+dependency_overrides:
+  # flutter_avif_platform_interface 3.1.0 still declares protobuf ^3.1.0,
+  # while livekit_client 2.11.0 requires protobuf ^6.0.0. Its generated
+  # messages remain compatible with protobuf 6, so resolve the app on the
+  # newer runtime instead of making these otherwise independent packages
+  # mutually exclusive.
+  protobuf: ^6.0.0
+
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.7
