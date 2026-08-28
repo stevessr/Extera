@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
 
@@ -116,26 +119,61 @@ class _ThreadChatPageWithRoom extends ChatPageWithRoom {
 }
 
 class _ThreadChatController extends ChatController {
+  Future<void>? _threadReadMarkerFuture;
+
   @override
   void setReadMarker({String? eventId}) {
+    if (_threadReadMarkerFuture != null) return;
+    if (scrolledUpNotifier.value) return;
+    if (scrollUpBannerEventId != null) return;
+
+    final currentTimeline = timeline;
+    final currentThread = thread;
+    if (currentTimeline == null ||
+        currentTimeline.events.isEmpty ||
+        currentThread == null) {
+      return;
+    }
+
     if (eventId == null) {
-      final currentTimeline = timeline;
-      if (currentTimeline != null) {
-        for (final event in currentTimeline.events) {
-          if (event.status.isSynced) {
-            eventId = event.eventId;
-            break;
-          }
+      for (final event in currentTimeline.events) {
+        if (event.status.isSynced) {
+          eventId = event.eventId;
+          break;
         }
       }
     }
+    if (eventId == null) return;
 
-    // The base controller's no-event fast path checks room-level unread state.
-    // A room can be fully read while this thread is still unread, so always
-    // pass the latest synced thread event and let the thread timeline post its
-    // threaded receipt explicitly.
-    if (eventId != null) {
-      super.setReadMarker(eventId: eventId);
-    }
+    Logs().d(
+      'Set thread read marker ${currentThread.rootEvent.eventId}...',
+      eventId,
+    );
+
+    // A room can already be fully read while one of its threads is still
+    // unread. Do not reuse ChatController's room-level unread fast path here:
+    // post a threaded receipt for the latest synced thread event explicitly.
+    _threadReadMarkerFuture = currentTimeline
+        .setReadMarker(
+          eventId: eventId,
+          public: shouldSendPublicReadReceipts(room.client, roomId),
+        )
+        .then((_) {
+          // Remove the local unread indicator immediately instead of waiting
+          // for the next /sync response to echo the threaded receipt.
+          currentThread.notificationCount = 0;
+          currentThread.highlightCount = 0;
+          if (mounted) setState(() {});
+        })
+        .catchError((Object error, StackTrace stackTrace) {
+          Logs().w('Unable to set thread read marker', error, stackTrace);
+        })
+        .whenComplete(() {
+          // Always unlock so a transient receipt failure can be retried by the
+          // next existing read-marker trigger.
+          _threadReadMarkerFuture = null;
+        });
+
+    unawaited(_threadReadMarkerFuture);
   }
 }
