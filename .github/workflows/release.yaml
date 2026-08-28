@@ -54,6 +54,18 @@ on:
           - 'amd64'
           - 'arm64'
           - 'amd64 & arm64'
+      apple:
+        description: 'Build Apple targets'
+        type: boolean
+        default: false
+      apple_target:
+        description: 'Apple target(s) to build'
+        type: choice
+        default: 'ios & macos'
+        options:
+          - 'ios'
+          - 'macos'
+          - 'ios & macos'
 
 concurrency:
   group: release-${{ inputs.tag || github.ref }}
@@ -77,8 +89,8 @@ jobs:
       matrix: ${{ steps.matrices.outputs.matrix }}
       any: ${{ steps.matrices.outputs.any }}
     steps:
-      #The JS actions below declare runs.using: node24, which older runner
-      #images do not ship. Must come before the first one of them.
+      # The JS actions below declare runs.using: node24, which older runner
+      # images do not ship. Must come before the first one of them.
       - name: Ensure Node 24
         run: |
           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
@@ -95,7 +107,7 @@ jobs:
 
       # Emit one build-matrix covering every requested platform, so all builds
       # fan out from a single job. Tag pushes carry no inputs and always get
-      # the full spread: every Android ABI, amd64 Linux, JS web.
+      # the full spread: every Android ABI, amd64 Linux, JS web, iOS and macOS.
       - id: matrices
         env:
           EVENT: ${{ github.event_name }}
@@ -105,14 +117,17 @@ jobs:
           LINUX_ARCH_INPUT: ${{ inputs.linux_arch }}
           WEB_ENABLED: ${{ inputs.web }}
           WEB_TARGET_INPUT: ${{ inputs.web_target }}
+          APPLE_ENABLED: ${{ inputs.apple }}
+          APPLE_TARGET_INPUT: ${{ inputs.apple_target }}
           ARM64_RUNNER: ${{ vars.ENABLE_ARM64_RUNNER }}
         run: |
           if [ "$EVENT" = push ]; then
-            ANDROID_ENABLED=true LINUX_ENABLED=true WEB_ENABLED=true
-            ANDROID_ARCH=full LINUX_ARCH=amd64 WEB_TARGET=js
+            ANDROID_ENABLED=true LINUX_ENABLED=true WEB_ENABLED=true APPLE_ENABLED=true
+            ANDROID_ARCH=full LINUX_ARCH=amd64 WEB_TARGET=js APPLE_TARGET='ios & macos'
           else
             ANDROID_ARCH=$ANDROID_ARCH_INPUT
             LINUX_ARCH=$LINUX_ARCH_INPUT
+            APPLE_TARGET=$APPLE_TARGET_INPUT
             case "$WEB_TARGET_INPUT" in js|wasm) WEB_TARGET=$WEB_TARGET_INPUT ;; *) WEB_TARGET=js ;; esac
           fi
 
@@ -168,6 +183,21 @@ jobs:
             entries+=("{\"name\":\"$artifact\",\"platform\":\"web\",\"web_target\":\"$WEB_TARGET\",\"runner\":\"ubuntu-latest\"}")
           fi
 
+          if [ "$APPLE_ENABLED" = true ]; then
+            case "$APPLE_TARGET" in
+              ios)
+                entries+=('{"name":"ios","platform":"ios","runner":"macos-15"}')
+                ;;
+              macos)
+                entries+=('{"name":"macos","platform":"macos","runner":"macos-15"}')
+                ;;
+              *)
+                entries+=('{"name":"ios","platform":"ios","runner":"macos-15"}')
+                entries+=('{"name":"macos","platform":"macos","runner":"macos-15"}')
+                ;;
+            esac
+          fi
+
           {
             echo "matrix=$(IFS=,; printf '[%s]' "${entries[*]}")"
             echo "any=$([ "${#entries[@]}" -gt 0 ] && echo true || echo false)"
@@ -178,22 +208,36 @@ jobs:
   build:
     name: ${{ matrix.name }}
     needs: prepare
-    if: ${{ (github.event_name == 'push' || inputs.android || inputs.linux || inputs.web) && needs.prepare.outputs.any == 'true' }}
+    if: ${{ (github.event_name == 'push' || inputs.android || inputs.linux || inputs.web || inputs.apple) && needs.prepare.outputs.any == 'true' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 8
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Ensure Node 24
+      - name: Ensure Node 24 (Linux)
+        if: ${{ runner.os != 'macOS' }}
         run: |
           node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
           command -v sudo >/dev/null && sudo=sudo || sudo=
           curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
           $sudo apt-get install -y nodejs
 
+      - name: Ensure Node 24 (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
+          brew install node@24
+          echo "$(brew --prefix node@24)/bin" >>"$GITHUB_PATH"
+
       - uses: actions/checkout@v4
+
+      - id: provenance
+        name: Resolve artifact provenance
+        run: |
+          echo "build_date=$(date -u +%Y%m%d)" >>"$GITHUB_OUTPUT"
+          echo "commit_hash=$(git rev-parse --short=8 HEAD)" >>"$GITHUB_OUTPUT"
 
       # --- Android APK ---
       - uses: ./.github/actions/build-android-apk
@@ -208,13 +252,16 @@ jobs:
 
       - run: ./scripts/ci/package-artifacts.sh apk "${{ needs.prepare.outputs.tag }}" "${{ matrix.name }}"
         if: ${{ matrix.platform == 'apk' }}
+        env:
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
         if: ${{ matrix.platform == 'apk' }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'apk' }}
         with:
-          name: apk-${{ matrix.name }}
+          name: apk-${{ matrix.name }}-${{ steps.provenance.outputs.build_date }}-${{ steps.provenance.outputs.commit_hash }}
           path: artifacts/*.apk
           retention-days: 14
           if-no-files-found: error
@@ -229,17 +276,22 @@ jobs:
       - name: Package tarball
         if: ${{ matrix.platform == 'linux' }}
         run: ./scripts/ci/package-artifacts.sh linux "${{ needs.prepare.outputs.tag }}" "${{ matrix.arch }}"
+        env:
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
 
       - name: Package AppImage
         if: ${{ matrix.platform == 'linux' }}
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
         run: ./scripts/ci/package-artifacts.sh appimage "${{ needs.prepare.outputs.tag }}" "${{ matrix.arch }}"
 
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'linux' }}
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.name }}-${{ steps.provenance.outputs.build_date }}-${{ steps.provenance.outputs.commit_hash }}
           path: |
             artifacts/*.tar.gz
             artifacts/*.AppImage
@@ -255,12 +307,75 @@ jobs:
 
       - run: ./scripts/ci/package-artifacts.sh web "${{ needs.prepare.outputs.tag }}" "${{ matrix.web_target }}"
         if: ${{ matrix.platform == 'web' }}
+        env:
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.platform == 'web' }}
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.name }}-${{ steps.provenance.outputs.build_date }}-${{ steps.provenance.outputs.commit_hash }}
           path: artifacts/*.tar.gz
+          retention-days: 14
+          if-no-files-found: error
+
+      # --- Apple targets ---
+      - name: Select Xcode
+        if: ${{ matrix.platform == 'ios' || matrix.platform == 'macos' }}
+        uses: maxim-lobanov/setup-xcode@v1.7.0
+        with:
+          xcode-version: latest-stable
+
+      - uses: ./.github/actions/setup-flutter
+        if: ${{ matrix.platform == 'ios' || matrix.platform == 'macos' }}
+
+      - name: Restore CocoaPods specs
+        if: ${{ matrix.platform == 'ios' || matrix.platform == 'macos' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cocoapods
+          key: cocoapods-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock', 'macos/Podfile.lock') }}
+          restore-keys: cocoapods-${{ runner.os }}-
+
+      - name: Install Apple native dependencies
+        if: ${{ matrix.platform == 'ios' || matrix.platform == 'macos' }}
+        run: brew install sqlcipher
+
+      - name: Build unsigned iOS
+        if: ${{ matrix.platform == 'ios' }}
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        if: ${{ matrix.platform == 'ios' }}
+        run: ./scripts/ci/package-artifacts.sh ios "${{ needs.prepare.outputs.tag }}"
+        env:
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'ios' }}
+        with:
+          name: ios-unsigned-${{ steps.provenance.outputs.build_date }}-${{ steps.provenance.outputs.commit_hash }}
+          path: artifacts/*.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Build macOS
+        if: ${{ matrix.platform == 'macos' }}
+        run: flutter build macos --release
+
+      - name: Package macOS app
+        if: ${{ matrix.platform == 'macos' }}
+        run: ./scripts/ci/package-artifacts.sh macos "${{ needs.prepare.outputs.tag }}"
+        env:
+          BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
+          COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ matrix.platform == 'macos' }}
+        with:
+          name: macos-${{ steps.provenance.outputs.build_date }}-${{ steps.provenance.outputs.commit_hash }}
+          path: artifacts/*.zip
           retention-days: 14
           if-no-files-found: error
 
