@@ -16,7 +16,10 @@ DateFormat _cachedDateFormat(String key, DateFormat Function() build) =>
     _dateFormatCache.putIfAbsent(key, build);
 
 DateFormat _cachedPatternFormat(String pattern, String locale) =>
-    _cachedDateFormat('$pattern\u0000$locale', () => DateFormat(pattern, locale));
+    _cachedDateFormat(
+      '$pattern\u0000$locale',
+      () => DateFormat(pattern, locale),
+    );
 
 /// Provides extra functionality for formatting the time.
 extension DateTimeExtension on DateTime {
@@ -49,18 +52,24 @@ extension DateTimeExtension on DateTime {
   String localizedTimeOfDaySeconds(BuildContext context) =>
       (MediaQuery.alwaysUse24HourFormatOf(context) ||
           L10n.of(context).alwaysUse24HourFormat == 'true')
-      ? _cachedPatternFormat('HH:mm:ss', L10n.of(context).localeName)
-            .format(this)
-      : _cachedPatternFormat('h:mm:ss a', L10n.of(context).localeName).format(
-          this,
-        );
+      ? _cachedPatternFormat(
+          'HH:mm:ss',
+          L10n.of(context).localeName,
+        ).format(this)
+      : _cachedPatternFormat(
+          'h:mm:ss a',
+          L10n.of(context).localeName,
+        ).format(this);
 
   /// Returns a simple time String.
   String localizedTimeOfDay(BuildContext context) =>
       (MediaQuery.alwaysUse24HourFormatOf(context) ||
           L10n.of(context).alwaysUse24HourFormat == 'true')
       ? _cachedPatternFormat('HH:mm', L10n.of(context).localeName).format(this)
-      : _cachedPatternFormat('h:mm a', L10n.of(context).localeName).format(this);
+      : _cachedPatternFormat(
+          'h:mm a',
+          L10n.of(context).localeName,
+        ).format(this);
 
   /// Returns [localizedTimeOfDay()] if the ChatTime is today, the name of the week
   /// day if the ChatTime is this week and a date string else.

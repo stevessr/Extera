@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -189,22 +190,21 @@ class _HtmlMessageState extends State<HtmlMessage> {
   );
 
   // to fix issue 7
+  //
+  /// Links are rendered as [TextSpan]s with a [TapGestureRecognizer] — the
+  /// same pattern the plain-text path uses — instead of
+  /// `WidgetSpan(GestureDetector(...))`: inline widget gestures are
+  /// unreliable on touch devices (links stay dead on Android), while span
+  /// recognizers are handled by the text pipeline everywhere.
   TextSpan _buildLinkifySpan(BuildContext context, {required String text}) {
     final elements = _linkifyCached(text);
     return TextSpan(
       children: elements.map((element) {
         if (element is LinkableElement) {
-          return WidgetSpan(
-            child: GestureDetector(
-              onTap: () => onOpen(element),
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: element.url));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(L10n.of(context).copiedToClipboard)),
-                );
-              },
-              child: Text(element.text, style: linkStyle),
-            ),
+          return TextSpan(
+            text: element.text,
+            style: linkStyle,
+            recognizer: TapGestureRecognizer()..onTap = () => onOpen(element),
           );
         } else {
           return TextSpan(
@@ -332,6 +332,36 @@ class _HtmlMessageState extends State<HtmlMessage> {
               ),
             );
           }
+        }
+        // Text-only anchors render as a plain [TextSpan] with a tap
+        // recognizer: inline-widget gestures (WidgetSpan + InkWell) are
+        // unreliable on touch devices. Anchors containing elements (images,
+        // line breaks, ...) keep the widget-based rendering below.
+        if (node.nodes.every((child) => child is! dom.Element)) {
+          TapGestureRecognizer makeRecognizer() =>
+              TapGestureRecognizer()
+                ..onTap = () =>
+                    UrlLauncher(context, href, node.text).launchUrl();
+          // The recognizer only covers the text carried by its own span, so
+          // it must sit on the same span as the link text — a textless parent
+          // span would never fire.
+          final emojiSpans = buildAnimatedEmojiSpans(
+            node.text,
+            fontSize: fontSize,
+          );
+          return TextSpan(
+            style: linkStyle,
+            children: [
+              for (final span in emojiSpans)
+                span is TextSpan
+                    ? TextSpan(
+                        text: span.text,
+                        style: span.style,
+                        recognizer: makeRecognizer(),
+                      )
+                    : span,
+            ],
+          );
         }
         return WidgetSpan(
           child: Tooltip(

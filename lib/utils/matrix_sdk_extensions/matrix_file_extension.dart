@@ -95,3 +95,34 @@ extension MatrixFileExtension on MatrixFile {
 
   String get sizeString => size.sizeString;
 }
+
+extension MatrixImageFileShrinkExtension on MatrixImageFile {
+  /// Shrinks the image to [maxDimension], but falls back to the original
+  /// if shrinking fails or the result is not smaller than the source.
+  Future<MatrixImageFile> shrinkWithSizeCheck({
+    required int maxDimension,
+    required Client client,
+  }) async {
+    try {
+      final shrunk = await MatrixImageFile.shrink(
+        bytes: bytes,
+        name: name,
+        maxDimension: maxDimension,
+        mimeType: mimeType,
+        customImageResizer: client.customImageResizer,
+        nativeImplementations: client.nativeImplementations,
+      );
+      if (shrunk.bytes.length >= bytes.length) {
+        Logs().i(
+          'Shrunk image (${shrunk.bytes.length} bytes) is not smaller than '
+          'original (${bytes.length} bytes), sending original',
+        );
+        return this;
+      }
+      return shrunk;
+    } catch (e, s) {
+      Logs().w('Unable to shrink image, sending original', e, s);
+      return this;
+    }
+  }
+}

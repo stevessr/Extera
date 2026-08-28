@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cross_file/cross_file.dart';
 import 'package:matrix/matrix.dart';
 import 'package:video_compress/video_compress.dart';
@@ -19,13 +21,37 @@ extension ResizeImage on XFile {
     } catch (e, s) {
       Logs().w('Error while compressing video', e, s);
     }
+
+    final compressedFile = mediaInfo?.file;
+    Uint8List bytes;
+    var width = mediaInfo?.width;
+    var height = mediaInfo?.height;
+    var duration = mediaInfo?.duration?.round();
+    if (compressedFile != null) {
+      final compressedBytes = await compressedFile.readAsBytes();
+      if (compressedBytes.length < await length()) {
+        bytes = compressedBytes;
+      } else {
+        Logs().i(
+          'Compressed video (${compressedBytes.length} bytes) is not smaller '
+          'than original (${await length()} bytes), sending original',
+        );
+        bytes = await readAsBytes();
+        width = null;
+        height = null;
+        duration = null;
+      }
+    } else {
+      bytes = await readAsBytes();
+    }
+
     return MatrixVideoFile(
-      bytes: (await mediaInfo?.file?.readAsBytes()) ?? await readAsBytes(),
+      bytes: bytes,
       name: name,
       mimeType: mimeType,
-      width: mediaInfo?.width,
-      height: mediaInfo?.height,
-      duration: mediaInfo?.duration?.round(),
+      width: width,
+      height: height,
+      duration: duration,
     );
   }
 

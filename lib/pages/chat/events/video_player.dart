@@ -171,7 +171,6 @@ class EventVideoPlayer extends StatelessWidget {
                     if (!isHidden && event.hasThumbnail && loadThumbnail)
                       MxcImage(
                         event: event,
-                        uri: event.thumbnailMxcUrl,
                         isThumbnail: true,
                         width: bubbleWidth,
                         fit: BoxFit.cover,
