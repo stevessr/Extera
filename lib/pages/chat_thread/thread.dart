@@ -88,7 +88,7 @@ class _ThreadPageState extends State<ThreadPage> {
           return _messageScaffold(L10n.of(context).unableToOpenThread);
         }
 
-        return ChatPageWithRoom(
+        return _ThreadChatPageWithRoom(
           key: Key(
             'chat_page_${widget.roomId}_${widget.threadRootEventId}_${widget.eventId}',
           ),
@@ -99,5 +99,43 @@ class _ThreadPageState extends State<ThreadPage> {
         );
       },
     );
+  }
+}
+
+class _ThreadChatPageWithRoom extends ChatPageWithRoom {
+  const _ThreadChatPageWithRoom({
+    super.key,
+    required super.room,
+    required super.thread,
+    super.shareItems,
+    super.eventId,
+  });
+
+  @override
+  ChatController createState() => _ThreadChatController();
+}
+
+class _ThreadChatController extends ChatController {
+  @override
+  void setReadMarker({String? eventId}) {
+    if (eventId == null) {
+      final currentTimeline = timeline;
+      if (currentTimeline != null) {
+        for (final event in currentTimeline.events) {
+          if (event.status.isSynced) {
+            eventId = event.eventId;
+            break;
+          }
+        }
+      }
+    }
+
+    // The base controller's no-event fast path checks room-level unread state.
+    // A room can be fully read while this thread is still unread, so always
+    // pass the latest synced thread event and let the thread timeline post its
+    // threaded receipt explicitly.
+    if (eventId != null) {
+      super.setReadMarker(eventId: eventId);
+    }
   }
 }
