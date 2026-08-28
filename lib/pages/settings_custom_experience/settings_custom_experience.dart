@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
 
+import 'package:extera_next/utils/dynamic_emoji.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -20,17 +21,31 @@ class SettingsCustomExperience extends StatefulWidget {
 class SettingsCustomExperienceController
     extends State<SettingsCustomExperience> {
   Future<List<Room>> _customizedRooms = Future.value(const []);
+  DynamicEmojiFormat _dynamicEmojiFormat = DynamicEmojiFormat.avif;
 
   /// Chats in which the user applied at least one of the per-chat
   /// customizations: an own wallpaper, privacy settings or a profile that
   /// differs from the account profile. Recomputed after visiting a room's
   /// customization screen, see [openRoom].
   Future<List<Room>> get customizedRooms => _customizedRooms;
+  DynamicEmojiFormat get dynamicEmojiFormat => _dynamicEmojiFormat;
 
   @override
   void initState() {
     super.initState();
     _reload();
+    _loadDynamicEmojiFormat();
+  }
+
+  Future<void> _loadDynamicEmojiFormat() async {
+    final format = await DynamicEmojiPreferences.load();
+    if (!mounted) return;
+    setState(() => _dynamicEmojiFormat = format);
+  }
+
+  Future<void> setDynamicEmojiFormat(DynamicEmojiFormat format) async {
+    setState(() => _dynamicEmojiFormat = format);
+    await DynamicEmojiPreferences.save(format);
   }
 
   void _reload() {

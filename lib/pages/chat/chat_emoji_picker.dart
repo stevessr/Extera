@@ -9,6 +9,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/sticker_picker_dialog.dart';
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
+import 'package:extera_next/utils/dynamic_emoji.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -49,7 +50,48 @@ class ChatEmojiPicker extends StatelessWidget {
                         child: TabBarView(
                           children: [
                             MatrixEmojiPicker(
-                              onEmojiSelected: controller.onEmojiSelected,
+                              onEmojiSelected: (category, emoji) async {
+                                if (emoji.type != PickerEmojiType.custom ||
+                                    emoji.customData == null) {
+                                  controller.onEmojiSelected(category, emoji);
+                                  return;
+                                }
+
+                                final proceed = await showTrustUserInRoomDialog(
+                                  context,
+                                  controller.room,
+                                );
+                                if (!proceed) return;
+
+                                try {
+                                  final format =
+                                      await DynamicEmojiPreferences.load();
+                                  await sendDynamicEmoji(
+                                    room: controller.room,
+                                    source: emoji.customData!,
+                                    name:
+                                        emoji.customId ?? emoji.displayName,
+                                    format: format,
+                                    replyEvent: controller.replyEvent,
+                                    thread: controller.thread,
+                                  );
+                                  controller.room.client.addRecentEmoji(
+                                    emoji.customData!,
+                                  );
+                                  controller.cancelReplyEventAction();
+                                  controller.hideEmojiPicker();
+                                } catch (error) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Unable to send dynamic emoji: $error',
+                                      ),
+                                      showCloseIcon: true,
+                                    ),
+                                  );
+                                }
+                              },
                               onBackspacePressed:
                                   controller.emojiPickerBackspace,
                               recentEmojis: recentEmojis.map((recent) {
