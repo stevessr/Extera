@@ -34,7 +34,11 @@ dependencies:
   file_selector: ^1.1.0
   flutter:
     sdk: flutter
-  flutter_avif: ^3.1.0
+  flutter_avif:
+    git:
+      url: https://github.com/h-sumiya/flutter_avif.git
+      ref: 9f98c0c89f3b5d584f1219ed94ead8685cf2f50b
+      path: flutter_avif
   flutter_cache_manager: ^3.4.1
   flutter_foreground_task: ^11.0.1
   flutter_highlighter: ^0.1.1
@@ -125,12 +129,14 @@ dependencies:
   defer_pointer: ^0.0.2
 
 dependency_overrides:
-  # flutter_avif_platform_interface 3.1.0 still declares protobuf ^3.1.0,
-  # while livekit_client 2.11.0 requires protobuf ^6.0.0. Its generated
-  # messages remain compatible with protobuf 6, so resolve the app on the
-  # newer runtime instead of making these otherwise independent packages
-  # mutually exclusive.
-  protobuf: ^6.0.0
+  # Upstream PR #96 removes protobuf from flutter_avif's platform bridge while
+  # preserving the public API and wire compatibility with the bundled native
+  # libraries. Pin the exact reviewed commit until it lands in a release.
+  flutter_avif_platform_interface:
+    git:
+      url: https://github.com/h-sumiya/flutter_avif.git
+      ref: 9f98c0c89f3b5d584f1219ed94ead8685cf2f50b
+      path: flutter_avif_platform_interface
 
 dev_dependencies:
   flutter_lints: ^6.0.0
