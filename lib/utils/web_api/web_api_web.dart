@@ -26,6 +26,20 @@ void downloadBytes(Uint8List bytes, {required String name, String? mimeType}) {
   web.URL.revokeObjectURL(url);
 }
 
+/// Creates a browser object URL for [bytes].
+Uri? createObjectUrl(Uint8List bytes, {String? mimeType}) {
+  final blob = web.Blob(
+    [bytes.toJS].toJS,
+    web.BlobPropertyBag(type: mimeType ?? 'application/octet-stream'),
+  );
+  return Uri.parse(web.URL.createObjectURL(blob));
+}
+
+/// Releases a browser object URL previously returned by [createObjectUrl].
+void revokeObjectUrl(Uri url) {
+  web.URL.revokeObjectURL(url.toString());
+}
+
 /// The URL of the page the app is running in, without query and fragment.
 Uri? currentPageUrl() =>
     Uri.parse(web.window.location.href.split('#').first.split('?').first);

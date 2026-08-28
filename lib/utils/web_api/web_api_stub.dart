@@ -13,6 +13,12 @@ void requestPersistentStorage() {}
 /// Saves [bytes] to the user's downloads.
 void downloadBytes(Uint8List bytes, {required String name, String? mimeType}) {}
 
+/// Creates a browser object URL for [bytes].
+Uri? createObjectUrl(Uint8List bytes, {String? mimeType}) => null;
+
+/// Releases a browser object URL previously returned by [createObjectUrl].
+void revokeObjectUrl(Uri url) {}
+
 /// The URL of the page the app is running in, without query and fragment.
 Uri? currentPageUrl() => null;
 

@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
 import 'package:matrix/matrix.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:video_player/video_player.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -15,6 +14,7 @@ import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/web_api/web_api.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import '../../../utils/error_reporter.dart';
 import '../../widgets/mxc_image.dart';
@@ -239,6 +239,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
   double? _downloadProgress;
   String? _playbackError;
   String? _activeVideoPath;
+  Uri? _activeVideoObjectUrl;
   int _loadGeneration = 0;
 
   // The video_player package doesn't support Windows and Linux.
@@ -263,16 +264,23 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     });
 
     try {
-      final videoPlayerController = await _controllerForPlayback(generation);
+      final playback = await _controllerForPlayback(generation);
       if (!_isCurrent(generation)) {
         // A newer load or disposal owns the state now; this controller was
         // never assigned to the widget so only it is released here.
-        unawaited(videoPlayerController.dispose());
+        try {
+          await playback.controller.dispose();
+        } finally {
+          if (playback.objectUrl != null) {
+            revokeObjectUrl(playback.objectUrl!);
+          }
+        }
         return;
       }
 
-      _videoPlayerController = videoPlayerController;
-      await videoPlayerController.initialize();
+      _videoPlayerController = playback.controller;
+      _activeVideoObjectUrl = playback.objectUrl;
+      await playback.controller.initialize();
 
       if (!_isCurrent(generation) ||
           widget.ivController.currentEvent.eventId != widget.event.eventId) {
@@ -281,7 +289,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       }
 
       final chewieController = ChewieController(
-        videoPlayerController: videoPlayerController,
+        videoPlayerController: playback.controller,
         useRootNavigator: !kIsWeb,
         autoPlay: true,
         looping: true,
@@ -298,7 +306,8 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     }
   }
 
-  Future<VideoPlayerController> _controllerForPlayback(int generation) async {
+  Future<({VideoPlayerController controller, Uri? objectUrl})>
+  _controllerForPlayback(int generation) async {
     final event = widget.event;
 
     // Playing from a local file on Android avoids the platform player having
@@ -329,9 +338,22 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
         if (!_isCurrent(generation)) {
           throw StateError('Video loading was cancelled');
         }
-        final blob = html.Blob([videoFile.bytes]);
-        final networkUri = Uri.parse(html.Url.createObjectUrlFromBlob(blob));
-        return VideoPlayerController.networkUrl(networkUri);
+        final objectUrl = createObjectUrl(
+          videoFile.bytes,
+          mimeType: videoFile.mimeType,
+        );
+        if (objectUrl == null) {
+          throw StateError('Unable to create video object URL');
+        }
+        try {
+          return (
+            controller: VideoPlayerController.networkUrl(objectUrl),
+            objectUrl: objectUrl,
+          );
+        } catch (_) {
+          revokeObjectUrl(objectUrl);
+          rethrow;
+        }
       }
 
       final attachment = event.attachmentMxcUrl;
@@ -340,11 +362,14 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       }
       final videoUrl = await attachment.getDownloadUri(event.room.client);
       Logs().d('Video url: $videoUrl');
-      return VideoPlayerController.networkUrl(
-        videoUrl,
-        httpHeaders: {
-          'authorization': 'Bearer ${event.room.client.accessToken}',
-        },
+      return (
+        controller: VideoPlayerController.networkUrl(
+          videoUrl,
+          httpHeaders: {
+            'authorization': 'Bearer ${event.room.client.accessToken}',
+          },
+        ),
+        objectUrl: null,
       );
     }
 
@@ -356,7 +381,10 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     if (cachedFile != null) {
       _activeVideoPath = cachedFile.path;
       _videoPlaybackCache.scheduleCleanup();
-      return VideoPlayerController.file(cachedFile);
+      return (
+        controller: VideoPlayerController.file(cachedFile),
+        objectUrl: null,
+      );
     }
 
     final fileSize = event.content
@@ -386,7 +414,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     }
     _activeVideoPath = file.path;
     _videoPlaybackCache.scheduleCleanup();
-    return VideoPlayerController.file(file);
+    return (controller: VideoPlayerController.file(file), objectUrl: null);
   }
 
   Future<void> _handlePlaybackFailure(
@@ -429,10 +457,12 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     final chewieController = _chewieController;
     final videoPlayerController = _videoPlayerController;
     final activeVideoPath = _activeVideoPath;
+    final activeVideoObjectUrl = _activeVideoObjectUrl;
 
     _chewieController = null;
     _videoPlayerController = null;
     _activeVideoPath = null;
+    _activeVideoObjectUrl = null;
 
     try {
       chewieController?.dispose();
@@ -440,11 +470,17 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
       try {
         await videoPlayerController?.dispose();
       } finally {
-        if (activeVideoPath != null) {
-          // The file belongs to the persistent cache, not to this player
-          // instance. Release the reference but let cache cleanup decide when
-          // it is safe and worthwhile to remove it.
-          _videoPlaybackCache.release(activeVideoPath);
+        try {
+          if (activeVideoObjectUrl != null) {
+            revokeObjectUrl(activeVideoObjectUrl);
+          }
+        } finally {
+          if (activeVideoPath != null) {
+            // The file belongs to the persistent cache, not to this player
+            // instance. Release the reference but let cache cleanup decide when
+            // it is safe and worthwhile to remove it.
+            _videoPlaybackCache.release(activeVideoPath);
+          }
         }
       }
     }
