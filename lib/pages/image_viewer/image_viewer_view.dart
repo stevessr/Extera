@@ -114,14 +114,32 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                     final event = widget.controller.allEvents[i];
                     switch (event.messageType) {
                       case MessageTypes.Video:
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 52.0),
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: EventVideoPlayer(event, widget.controller),
-                            ),
-                          ),
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            // EventVideoPlayer uses MediaQuery to calculate its
+                            // contain-fit target. Feed it the actual PageView
+                            // render area instead of the global window size so
+                            // split views/dialogs don't leave the video's long
+                            // edge short of the available long edge.
+                            final mediaQuery = MediaQuery.of(context);
+                            final renderSize = Size(
+                              constraints.maxWidth,
+                              constraints.maxHeight,
+                            );
+                            return MediaQuery(
+                              data: mediaQuery.copyWith(size: renderSize),
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 52.0),
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  child: EventVideoPlayer(
+                                    event,
+                                    widget.controller,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         );
                       case MessageTypes.Image:
                       case MessageTypes.Sticker:
