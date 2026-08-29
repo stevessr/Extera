@@ -45,58 +45,34 @@ jobs:
           text = text.replace('    - /lib/pages/notifications/notifications_view\\.dart$\n', '', 1)
           pubspec.write_text(text)
 
-          # Matrix renamed the public-room model; keep the app on the public API.
           for path in Path('lib').rglob('*.dart'):
               text = path.read_text()
               if 'PublicRoomsChunk' in text:
                   path.write_text(text.replace('PublicRoomsChunk', 'PublishedRoomsChunk'))
 
-          # timeline_chunk is publicly exported by matrix.dart in the current fork.
-          replace(
-              'lib/pages/notifications/notifications_view.dart',
-              "// ignore_for_file: implementation_imports\n\n",
-              '',
-          )
-          replace(
-              'lib/pages/notifications/notifications_view.dart',
-              "import 'package:matrix/src/models/timeline_chunk.dart' show TimelineChunk;\n",
-              '',
-          )
-          replace(
-              'lib/pages/notifications/notifications_view.dart',
-              "// TimelineChunk is required by RoomTimeline's public constructor but is not\n// exported by matrix.dart.\n",
-              '',
-          )
+          replace('lib/pages/notifications/notifications_view.dart', '// ignore_for_file: implementation_imports\n\n', '')
+          replace('lib/pages/notifications/notifications_view.dart', "import 'package:matrix/src/models/timeline_chunk.dart' show TimelineChunk;\n", '')
+          replace('lib/pages/notifications/notifications_view.dart', "// TimelineChunk is required by RoomTimeline's public constructor but is not\n// exported by matrix.dart.\n", '')
 
-          # The asynchronous presence future already owns this data; avoid the
-          # deprecated synchronous Client.presences cache entirely.
           replace(
               'lib/pages/chat_list/status_msg_list.dart',
               "            initialData: [\n              for (final userId in client.interestingPresences)\n                if (client.presences[userId] != null) client.presences[userId]!,\n            ],\n",
               '',
           )
 
-          # Flutter moved Radio selection state to the RadioGroup ancestor.
           replace(
               'lib/pages/chat/events/poll_content.dart',
               "                                          Radio<bool>(\n                                            value: true,\n                                            groupValue: isSelected,\n                                            onChanged: (_) => _onAnswerSelected(\n                                              answerId,\n                                              !isSelected,\n                                            ),\n                                            visualDensity:\n                                                VisualDensity.compact,\n                                          )",
               "                                          RadioGroup<bool>(\n                                            groupValue: isSelected,\n                                            onChanged: (_) => _onAnswerSelected(\n                                              answerId,\n                                              !isSelected,\n                                            ),\n                                            child: Radio<bool>(\n                                              value: true,\n                                              visualDensity:\n                                                  VisualDensity.compact,\n                                            ),\n                                          )",
           )
 
-          # FilePicker 12 deprecates allowMultiple/withData on pickFiles.
-          replace(
-              'lib/utils/file_selector.dart',
-              "import 'package:flutter/foundation.dart';\n",
-              '',
-          )
+          replace('lib/utils/file_selector.dart', "import 'package:flutter/foundation.dart';\n", '')
           replace(
               'lib/utils/file_selector.dart',
               "      future: () => FilePicker.pickFiles(\n        compressionQuality: 0,\n        allowMultiple: allowMultiple,\n        type: type,\n        withData: kIsWeb,\n      ),",
               "      future: () async {\n        if (allowMultiple) {\n          return FilePicker.pickFiles(\n            compressionQuality: 0,\n            type: type,\n          );\n        }\n        final file = await FilePicker.pickFile(\n          compressionQuality: 0,\n          type: type,\n        );\n        return file == null ? <PlatformFile>[] : [file];\n      },",
           )
 
-          # The Matrix fork does not export markdown yet. Keep this one private
-          # import explicitly scoped instead of a stale file-wide ignore.
           replace(
               'lib/pages/chat/send_file_dialog.dart',
               "import 'package:matrix/src/utils/markdown.dart';",
@@ -108,9 +84,6 @@ jobs:
               '\n',
           )
 
-          # Dart's RegExp engine does not implement JavaScript-style Unicode
-          # property escapes. Grapheme iteration is both valid and better for
-          # flags, keycaps, skin tones and ZWJ sequences.
           emoji = Path('lib/utils/animated_emoji.dart')
           text = emoji.read_text()
           text = text.replace(
@@ -129,56 +102,56 @@ jobs:
               raise SystemExit('failed to remove _emojiPattern')
           start = text.index('List<InlineSpan> buildAnimatedEmojiSpans(')
           end = text.index('\n/// Replaces the emoji of every [TextSpan]', start)
-          replacement = '''List<InlineSpan> buildAnimatedEmojiSpans(
-  String text, {
-  required double fontSize,
-  TextStyle? style,
-}) {
-  if (!animatedEmojiEnabled || text.isEmpty) {
-    return [TextSpan(text: text, style: style)];
-  }
+          lines = [
+              'List<InlineSpan> buildAnimatedEmojiSpans(',
+              '  String text, {',
+              '  required double fontSize,',
+              '  TextStyle? style,',
+              '}) {',
+              '  if (!animatedEmojiEnabled || text.isEmpty) {',
+              '    return [TextSpan(text: text, style: style)];',
+              '  }',
+              '',
+              '  final spans = <InlineSpan>[];',
+              '  var plainText = StringBuffer();',
+              '  var hasAnimatedEmoji = false;',
+              '',
+              '  void flushText() {',
+              '    if (plainText.length == 0) return;',
+              '    spans.add(TextSpan(text: plainText.toString(), style: style));',
+              '    plainText = StringBuffer();',
+              '  }',
+              '',
+              '  for (final grapheme in text.characters) {',
+              '    final codepoint = animatedEmojiCodepoint(grapheme);',
+              '    if (codepoint == null) {',
+              '      plainText.write(grapheme);',
+              '      continue;',
+              '    }',
+              '',
+              '    hasAnimatedEmoji = true;',
+              '    flushText();',
+              '    spans.add(',
+              '      WidgetSpan(',
+              '        alignment: PlaceholderAlignment.middle,',
+              '        child: AnimatedEmojiImage(',
+              '          emoji: grapheme,',
+              '          codepoint: codepoint,',
+              '          fontSize: fontSize,',
+              '          style: style,',
+              '        ),',
+              '      ),',
+              '    );',
+              '  }',
+              '',
+              '  if (!hasAnimatedEmoji) return [TextSpan(text: text, style: style)];',
+              '  flushText();',
+              '  return spans;',
+              '}',
+              '',
+          ]
+          emoji.write_text(text[:start] + '\n'.join(lines) + text[end:])
 
-  final spans = <InlineSpan>[];
-  var plainText = StringBuffer();
-  var hasAnimatedEmoji = false;
-
-  void flushText() {
-    if (plainText.length == 0) return;
-    spans.add(TextSpan(text: plainText.toString(), style: style));
-    plainText = StringBuffer();
-  }
-
-  for (final grapheme in text.characters) {
-    final codepoint = animatedEmojiCodepoint(grapheme);
-    if (codepoint == null) {
-      plainText.write(grapheme);
-      continue;
-    }
-
-    hasAnimatedEmoji = true;
-    flushText();
-    spans.add(
-      WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: AnimatedEmojiImage(
-          emoji: grapheme,
-          codepoint: codepoint,
-          fontSize: fontSize,
-          style: style,
-        ),
-      ),
-    );
-  }
-
-  if (!hasAnimatedEmoji) return [TextSpan(text: text, style: style)];
-  flushText();
-  return spans;
-}
-'''
-          emoji.write_text(text[:start] + replacement + text[end:])
-
-          # Avoid retrying two codepoints that Google's current Noto Emoji
-          # metadata lists but its Lottie CDN consistently does not publish.
           downloader = Path('tool/download_animated_emoji.dart')
           text = downloader.read_text()
           text = text.replace(
