@@ -8,6 +8,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/pages/chat_list/client_chooser_button.dart';
 import 'package:extera_next/utils/sync_status_localization.dart';
+
 import '../../widgets/matrix.dart';
 
 class ChatListHeader extends StatelessWidget {

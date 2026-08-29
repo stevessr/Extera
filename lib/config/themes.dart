@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+
 import 'app_config.dart';
 
 abstract class FluffyThemes {

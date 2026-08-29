@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:google_fonts/google_fonts.dart';
+
 // Deferred imports may not expose extension declarations, so hide them all;
 // this file only constructs config/widget classes through the prefix.
 import 'package:pro_image_editor/pro_image_editor.dart'

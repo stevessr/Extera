@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:file_picker/file_picker.dart';
@@ -16,12 +15,16 @@ Future<List<XFile>> selectFiles(
   final result = await AppLock.of(context).pauseWhile(
     showFutureLoadingDialog(
       context: context,
-      future: () => FilePicker.pickFiles(
-        compressionQuality: 0,
-        allowMultiple: allowMultiple,
-        type: type,
-        withData: kIsWeb,
-      ),
+      future: () async {
+        if (allowMultiple) {
+          return FilePicker.pickFiles(compressionQuality: 0, type: type);
+        }
+        final file = await FilePicker.pickFile(
+          compressionQuality: 0,
+          type: type,
+        );
+        return file == null ? <PlatformFile>[] : [file];
+      },
     ),
   );
   return result.result?.map((file) => file.xFile).toList() ?? [];

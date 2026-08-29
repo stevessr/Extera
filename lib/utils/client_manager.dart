@@ -19,6 +19,7 @@ import 'package:extera_next/utils/custom_image_resizer.dart';
 import 'package:extera_next/utils/init_with_restore.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/poll_events.dart';
+
 import 'matrix_sdk_extensions/flutter_matrix_dart_sdk_database/builder.dart';
 
 abstract class ClientManager {

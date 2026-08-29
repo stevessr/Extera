@@ -19,10 +19,7 @@ typedef AnimatedEmojiSelectionCallback = Future<void> Function(Emoji emoji);
 class AnimatedEmojiPicker extends StatefulWidget {
   final AnimatedEmojiSelectionCallback onEmojiSelected;
 
-  const AnimatedEmojiPicker({
-    super.key,
-    required this.onEmojiSelected,
-  });
+  const AnimatedEmojiPicker({super.key, required this.onEmojiSelected});
 
   @override
   State<AnimatedEmojiPicker> createState() => _AnimatedEmojiPickerState();

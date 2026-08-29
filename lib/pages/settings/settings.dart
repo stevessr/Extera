@@ -13,18 +13,19 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/client_profile_extension.dart';
 import 'package:extera_next/utils/file_selector.dart';
-import 'package:extera_next/utils/timezone_init.dart';
-import 'package:extera_next/utils/avatar_history.dart';
-import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/timezone_init.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/app_lock.dart';
+import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import '../../widgets/matrix.dart';
 import 'settings_view.dart';
 

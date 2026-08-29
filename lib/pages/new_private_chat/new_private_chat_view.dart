@@ -15,6 +15,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import '../../widgets/qr_code_viewer.dart';
 
 class NewPrivateChatView extends StatelessWidget {

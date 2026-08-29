@@ -11,6 +11,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/fluffy_share.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import '../config/themes.dart';
 
 Future<void> showQrCodeViewer(BuildContext context, String content) =>

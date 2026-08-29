@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:particles_network/particles_network.dart';
-import 'package:extera_next/utils/url_launcher.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 
 class LoginScaffold extends StatelessWidget {
   final Widget body;

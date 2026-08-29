@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
-// TimelineChunk is required by RoomTimeline's public constructor but is not
-// exported by matrix.dart.
-// ignore: implementation_imports
-import 'package:matrix/src/models/timeline_chunk.dart' show TimelineChunk;
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';

@@ -21,7 +21,7 @@ runs:
     # otherwise recompile every run. Its install tracker lives in .crates.toml /
     # .crates2.json, so those are cached alongside it.
     - name: Restore cargo cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.cargo/bin
@@ -40,7 +40,7 @@ runs:
 
     - name: Restore cargo target directory
       if: ${{ inputs.cache-target-dir == 'true' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.cargo-target
         key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock', '.tool_versions.yaml') }}

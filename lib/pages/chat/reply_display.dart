@@ -9,6 +9,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.da
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import '../../config/app_config.dart';
 import '../../config/themes.dart';
 import 'chat.dart';

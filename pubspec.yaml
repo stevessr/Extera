@@ -2,7 +2,7 @@ name: extera_next
 description: Chat with your friends.
 publish_to: none
 # Version schema: <YEAR>.<MAJOR UPDATE>.<MINOR><PATCH>
-version: 26.5.0
+version: 26.5.1
 
 environment:
   sdk: ">=3.11.1 <4.0.0"
@@ -17,6 +17,7 @@ dependencies:
   archive: ^4.0.9
   async: ^2.13.0
   audioplayers: ^6.5.1
+  audioplayers_linux: ^4.2.1
   badges: ^3.1.2
   blurhash_dart: ^1.2.1
   camera: ^0.12.0+1
@@ -24,9 +25,12 @@ dependencies:
   collection: ^1.18.0
   cross_file: ^0.3.5+2
   cupertino_icons: any
+  defer_pointer: ^0.0.2
   desktop_drop: ^0.8.0
   desktop_notifications: ^0.6.3
+  desktop_webview_window: ^0.3.0
   device_info_plus: ^13.2.0
+  dio: ^5.9.2
   dynamic_color: ^2.1.0
   emojis: ^3.2.0
   #fcm_shared_isolate: ^0.2.0
@@ -47,8 +51,10 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_map: ^8.2.2
+  flutter_material_design_icons: ^3.1.0+7447
   flutter_new_badger: ^2.0.0
   flutter_openssl_crypto: ^0.5.0
+  flutter_ringtone_player: ^4.0.0+4
   flutter_rust_bridge: ^2.11.1
   flutter_secure_storage: ^11.0.0
   flutter_shortcuts_new: ^2.0.0
@@ -61,10 +67,12 @@ dependencies:
   flutter_webrtc: 1.6.0
   geolocator: ^14.0.2
   go_router: ^17.2.3
+  google_fonts: ^8.0.2
   handy_window: ^0.4.2
   highlight_selectable: ^0.2.1
   hotkey_manager: ^0.2.3
   html: ^0.15.4
+  html_unescape: ^2.0.0
   http: ^1.6.0
   image: ^4.8.0
   image_picker: ^1.2.2
@@ -75,6 +83,7 @@ dependencies:
   livekit_client: ^2.11.0
   local_auth: ^3.0.2
   lottie: ^3.5.1
+  marquee: ^2.3.0
   matrix:
     # path: ../matrix-dart-sdk
      git:
@@ -82,13 +91,17 @@ dependencies:
        ref: Extera
   mime: ^2.0.0
   native_imaging: ^0.5.0
+  open_file: ^4.0.0
   opus_caf_converter_dart: ^1.0.1
   package_info_plus: ^10.2.1
+  particles_network: ^1.9.3
   pasteboard: ^0.5.0
   path: ^1.9.0
   path_provider: ^2.1.2
   permission_handler: ^13.0.1
+  phone_numbers_parser: ^9.0.21
   pretty_qr_code: ^3.6.0
+  pro_image_editor: ^13.2.3
   provider: ^6.0.2
   punycode: ^1.0.0
   qr_code_scanner_plus: ^2.1.1
@@ -106,27 +119,15 @@ dependencies:
   unifiedpush_ui: ^0.2.0
   universal_html: ^2.3.0
   url_launcher: ^6.3.2
-  visibility_detector: ^0.4.0+2
+  uuid: ^4.5.3
   video_compress: ^3.1.4
   video_player: ^2.11.1
+  visibility_detector: ^0.4.0+2
   vodozemac: ^0.7.0
   wakelock_plus: ^1.4.0
   web: ^1.1.1
   webrtc_interface: ^1.4.0
   webview_flutter: ^4.10.0
-  desktop_webview_window: ^0.3.0
-  dio: ^5.9.2
-  uuid: ^4.5.3
-  flutter_ringtone_player: ^4.0.0+4
-  audioplayers_linux: ^4.2.1
-  pro_image_editor: ^13.2.3
-  google_fonts: ^8.0.2
-  marquee: ^2.3.0
-  particles_network: ^1.9.3
-  flutter_material_design_icons: ^3.1.0+7447
-  open_file: ^4.0.0
-  phone_numbers_parser: ^9.0.21
-  defer_pointer: ^0.0.2
 
 dependency_overrides:
   # Upstream PR #96 removes protobuf from flutter_avif's platform bridge while
@@ -143,12 +144,23 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_test:
     sdk: flutter
-  import_sorter: ^4.6.0
-  #  integration_test:
-  #    sdk: flutter
+  integration_test:
+    sdk: flutter
   license_checker: ^1.6.2
   msix: ^3.6.13
+  tidy_imports: ^1.3.0
   translations_cleaner: ^0.2.1
+  url_launcher_platform_interface: ^2.3.2
+
+# Generated localization files are owned by flutter gen-l10n and must remain
+# byte-for-byte reproducible from the generator. Source and test imports are
+# checked by tidy_imports; the implementation-import exception below remains
+# formatter/analyzer-owned because its file-level suppression is significant.
+tidy_imports:
+  comments: false
+  separate_relative_imports: true
+  ignored_files:
+    - /lib/generated/l10n/
 
 hooks:
   user_defines:

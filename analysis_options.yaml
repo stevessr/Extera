@@ -16,6 +16,7 @@ analyzer:
     todo: ignore
     use_build_context_synchronously: ignore
   exclude:
+    - lib/generated/l10n/**
     - lib/generated_plugin_registrant.dart
     - lib/l10n/*.dart
     - build/**

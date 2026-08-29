@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +10,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/chat/events/poll_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/chat/events/video_player.dart';
@@ -444,7 +444,7 @@ class MessageContent extends StatelessWidget {
                   : AppSettings.chatFallbackFonts.value.split(','),
             );
             final spanChildren = <InlineSpan>[
-              ...?replaceEmojiInSpans(
+              ...replaceEmojiInSpans(
                 buildTextSpanChildren(
                       linkify(
                         messageText,

@@ -2,12 +2,20 @@ import 'package:flutter/widgets.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/widgets/animated_emoji_image.dart';
 
 void main() {
+  setUpAll(() {
+    // VisibilityDetector batches callbacks with a timer by default. Widget
+    // tests must deliver them immediately so the binding has no pending timer
+    // when it verifies teardown invariants.
+    VisibilityDetectorController.instance.updateInterval = Duration.zero;
+  });
+
   group('animated emoji', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({

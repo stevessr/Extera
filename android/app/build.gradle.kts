@@ -3,8 +3,8 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Flutter 3.47 applies/configures Kotlin through its Gradle plugin. Keep the
+    // app plugin list aligned with the current Flutter template for AGP 9.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -15,8 +15,6 @@ if (file("google-services.json").exists()) {
 configurations.all {
     // Use the latest version published: https://central.sonatype.com/artifact/com.google.crypto.tink/tink-android
     val tink = "com.google.crypto.tink:tink-android:1.17.0"
-    // You can also use the library declaration catalog
-    // val tink = libs.google.tink
     resolutionStrategy {
         force(tink)
         dependencySubstitution {
@@ -31,17 +29,17 @@ dependencies {
 
 android {
     namespace = "xyz.extera.next"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = "28.2.13676358"
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-        isCoreLibraryDesugaringEnabled = true
+    buildFeatures {
+        resValues = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     signingConfigs {
@@ -73,16 +71,14 @@ android {
         versionName = flutter.versionName
     }
 
-
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-
 
     flavorDimensions += "type"
     productFlavors {
@@ -97,7 +93,12 @@ android {
             dimension = "type"
         }
     }
+}
 
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
 }
 
 flutter {

@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import 'package:matrix/matrix.dart';
+
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -6,8 +10,6 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:flutter/material.dart';
-import 'package:matrix/matrix.dart';
 
 import 'settings_custom_experience.dart';
 
@@ -42,7 +44,9 @@ class SettingsCustomExperienceView extends StatelessWidget {
                   borderRadius: borderRadius,
                   child: ListTile(
                     leading: const Icon(Icons.animation_outlined),
-                    title: Text(isZh ? '动态 Emoji 发送格式' : 'Dynamic emoji format'),
+                    title: Text(
+                      isZh ? '动态 Emoji 发送格式' : 'Dynamic emoji format',
+                    ),
                     subtitle: Text(
                       isZh
                           ? '点击自定义动态 Emoji 时按此格式转码并发送'

@@ -9,12 +9,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../lib/config/animated_emoji_data.dart';
+import 'package:extera_next/config/animated_emoji_data.dart';
 
 const _outputDirectory = 'assets/animated_emoji';
 const _concurrency = 8;
 const _attempts = 3;
 const _timeout = Duration(seconds: 30);
+const _knownUnavailable = {'ae_fe0f', 'a9_fe0f'};
 
 /// Thrown when Google lists an emoji in its metadata but ships no animation
 /// for it. Nothing we can do about those, the app falls back to the glyph.
@@ -30,7 +31,8 @@ Future<void> main(List<String> args) async {
 
   final pending = <String>[
     for (final codepoint in kAnimatedEmojiCodepoints)
-      if (force || !File('$_outputDirectory/$codepoint.json').existsSync())
+      if (!_knownUnavailable.contains(codepoint) &&
+          (force || !File('$_outputDirectory/$codepoint.json').existsSync()))
         codepoint,
   ];
 

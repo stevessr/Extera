@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
+
+import 'package:matrix/matrix.dart';
+
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/string_color.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:extera_next/widgets/presence_builder.dart';
-import 'package:flutter/material.dart';
-import 'package:matrix/matrix.dart';
 
 class Avatar extends StatelessWidget {
   final Uri? mxContent;

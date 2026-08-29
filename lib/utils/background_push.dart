@@ -37,6 +37,7 @@ import 'package:extera_next/main.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/push_helper.dart';
 import 'package:extera_next/widgets/fluffy_chat_app.dart';
+
 import '../config/app_config.dart';
 import '../config/app_settings.dart';
 import '../widgets/matrix.dart';
@@ -135,7 +136,7 @@ class BackgroundPush {
       //<GOOGLE_SERVICES>    clients: clients,
       //<GOOGLE_SERVICES>    l10n: l10n,
       //<GOOGLE_SERVICES>    activeRoomId: matrix?.activeRoomId,
-      //<GOOGLE_SERVICES>    activeclients: clients,
+      //<GOOGLE_SERVICES>    activeClient: clients.firstOrNull,
       //<GOOGLE_SERVICES>    flutterLocalNotificationsPlugin: _flutterLocalNotificationsPlugin,
       //<GOOGLE_SERVICES>  ),
       //<GOOGLE_SERVICES>);

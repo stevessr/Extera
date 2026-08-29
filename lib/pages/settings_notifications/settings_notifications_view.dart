@@ -8,6 +8,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/settings_notifications/push_rule_extensions.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+
 import '../../utils/localized_exception_extension.dart';
 import '../../widgets/matrix.dart';
 import 'settings_notifications.dart';

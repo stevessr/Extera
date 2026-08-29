@@ -21,6 +21,7 @@ import 'package:extera_next/utils/show_profile.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mini_audio_player.dart';
+
 import '../../config/themes.dart';
 import '../../widgets/matrix.dart';
 import 'chat_list_header.dart';
@@ -273,7 +274,7 @@ class ChatListViewBody extends StatelessWidget {
 class PublicRoomsHorizontalList extends StatelessWidget {
   const PublicRoomsHorizontalList({super.key, required this.publicRooms});
 
-  final List<PublicRoomsChunk>? publicRooms;
+  final List<PublishedRoomsChunk>? publicRooms;
 
   @override
   Widget build(BuildContext context) {

@@ -15,6 +15,7 @@ import 'package:extera_next/widgets/chat_settings_popup_menu.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import '../../utils/url_launcher.dart';
 import '../../widgets/mxc_image_viewer.dart';
 import '../../widgets/qr_code_viewer.dart';

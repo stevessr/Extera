@@ -8,6 +8,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/settings_switch_list_tile.dart';
+
 import 'settings_navigation.dart';
 
 class SettingsNavigationView extends StatelessWidget {

@@ -9,6 +9,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import 'image_viewer.dart';
 
 class ImageViewerView extends StatefulWidget {

@@ -4,9 +4,9 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 
 class ReplyContent extends StatelessWidget {
   final Event replyEvent;

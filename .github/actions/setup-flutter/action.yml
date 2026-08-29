@@ -14,20 +14,13 @@ runs:
       shell: bash
       run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
 
-    # Every job runs this action, so this is the one place that reliably
-    # reports a runner whose cache service is off or unreachable.
-    - name: Check cache service
-      shell: bash
-      run: ./scripts/ci/check-cache.sh
-
     # Set before flutter-action so it adopts this location rather than picking
     # its own, which keeps the cache path below correct by construction.
     - name: Pin pub cache location
       shell: bash
       run: echo "PUB_CACHE=$HOME/.pub-cache" >>"$GITHUB_ENV"
 
-    # pub-cache is off because the step below already caches that directory,
-    # with restore-keys that flutter-action's own pub cache does not have.
+    # pub-cache is off because the step below already caches that directory.
     - name: Install Flutter
       uses: subosito/flutter-action@v2
       with:
@@ -39,30 +32,31 @@ runs:
       shell: bash
       run: ./scripts/ci/verify-flutter-version.sh
 
+    # Pub's global cache contains checked-out git dependencies. A fallback
+    # cache from a different lockfile can therefore pair a new resolved-ref
+    # with stale dependency metadata. Use exact lockfile keys only; a miss is
+    # deliberately safer than restoring a cache from another dependency graph.
     - name: Restore pub cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.pub-cache
-        # Keep Pub caches isolated by Flutter SDK. Reusing the old cache across
-        # Dart/Pub versions can leave package_graph.json inconsistent with the
-        # checked-out dependency graph (for example, random_string missing).
-        key: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-${{ hashFiles('pubspec.lock') }}
-        restore-keys: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-
+        key: pub-v4-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-${{ hashFiles('pubspec.lock') }}
 
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}
       shell: bash
-      # Skip dependency example traversal: it is unneeded for CI and older
-      # Pub versions could leave package_graph.json incomplete for transitive
-      # packages such as random_string.
-      run: flutter pub get --no-example
+      # package_graph.json is project-local generated state. Always regenerate
+      # it after resolving the exact git dependency revisions from the lockfile.
+      run: |
+        rm -rf .dart_tool
+        flutter pub get --no-example
 
     # The animated emoji are shipped as assets but not checked in, so every
     # build has to fetch them. The tool skips files it already has, which makes
     # this a no-op on a cache hit.
     - name: Restore animated emoji
       if: ${{ inputs.pub-get == 'true' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: assets/animated_emoji
         key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}

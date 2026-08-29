@@ -9,6 +9,7 @@ import 'package:extera_next/pages/chat_encryption_settings/chat_encryption_setti
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import '../key_verification/key_verification_dialog.dart';
 
 class ChatEncryptionSettings extends StatefulWidget {

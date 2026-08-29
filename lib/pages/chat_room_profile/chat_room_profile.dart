@@ -1,14 +1,15 @@
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
+
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' show FileType;
-import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
-import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/avatar_history_picker.dart';

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,11 +47,11 @@ import 'package:extera_next/utils/matrix_sdk_extensions/synapse_admin_extension.
 import 'package:extera_next/utils/neurogate.dart';
 import 'package:extera_next/utils/other_party_can_receive.dart';
 import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
+import 'package:extera_next/utils/stream_extension.dart';
+import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -61,7 +60,9 @@ import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/future_loading_snackbar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
+
 import '../../utils/account_bundles.dart';
 import '../../utils/localized_exception_extension.dart';
 import '../../utils/memoized_tile_cache.dart';
