@@ -136,7 +136,7 @@ class BackgroundPush {
       //<GOOGLE_SERVICES>    clients: clients,
       //<GOOGLE_SERVICES>    l10n: l10n,
       //<GOOGLE_SERVICES>    activeRoomId: matrix?.activeRoomId,
-      //<GOOGLE_SERVICES>    activeclients: clients,
+      //<GOOGLE_SERVICES>    activeClient: clients.firstOrNull,
       //<GOOGLE_SERVICES>    flutterLocalNotificationsPlugin: _flutterLocalNotificationsPlugin,
       //<GOOGLE_SERVICES>  ),
       //<GOOGLE_SERVICES>);
