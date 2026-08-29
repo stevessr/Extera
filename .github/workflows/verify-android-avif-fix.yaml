@@ -25,6 +25,7 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # Exercise the exact arm64 APK path that failed in Release #32.
       - uses: ./.github/actions/build-android-apk
         with:
           target-platform: android-arm64
