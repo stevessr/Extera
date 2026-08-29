@@ -1,0 +1,81 @@
+name: Normalize lockfile once
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+    paths:
+      - .github/workflows/normalize-lock-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/android-avif-web-ci
+
+      - name: Remove obsolete Matrix transitive lock entries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('pubspec.lock')
+          lines = path.read_text().splitlines(keepends=True)
+          obsolete = {'base58check', 'canonical_json', 'random_string', 'unorm_dart'}
+          output = []
+          skipping = False
+          removed = set()
+
+          for line in lines:
+              match = re.match(r'^  ([A-Za-z0-9_]+):\s*$', line)
+              if match:
+                  name = match.group(1)
+                  if name in obsolete:
+                      skipping = True
+                      removed.add(name)
+                      continue
+                  skipping = False
+              if not skipping:
+                  output.append(line)
+
+          missing = obsolete - removed
+          if missing:
+              raise SystemExit(f'expected obsolete lock entries not found: {sorted(missing)}')
+          path.write_text(''.join(output))
+          print('Removed obsolete entries:', ', '.join(sorted(removed)))
+          PY
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .tool_versions.yaml
+          channel: stable
+          cache: true
+
+      - name: Resolve from clean project state
+        run: |
+          rm -rf .dart_tool
+          flutter pub get --no-example
+
+      - name: Verify normalized lockfile is stable
+        run: |
+          git diff --check
+          cp pubspec.lock /tmp/pubspec.lock
+          rm -rf .dart_tool
+          flutter pub get --no-example
+          cmp -s pubspec.lock /tmp/pubspec.lock
+
+      - name: Verify analyzer
+        run: flutter analyze
+
+      - name: Commit normalized lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.lock
+          git commit -m "fix: normalize Matrix dependency lockfile"
+          git push origin HEAD:fix/android-avif-web-ci
