@@ -37,12 +37,55 @@ jobs:
                   raise SystemExit(f'expected text not found in {path_name}: {old[:120]!r}')
               path.write_text(text.replace(old, new, count))
 
+          def sort_top_level_yaml_section(text, section, next_section):
+              marker = f'{section}:\n'
+              start = text.index(marker) + len(marker)
+              end = text.index(f'\n{next_section}:', start)
+              raw = text[start:end]
+              lines = raw.splitlines(keepends=True)
+              entries = []
+              pending = []
+              current_key = None
+              current_lines = []
+
+              def flush():
+                  nonlocal current_key, current_lines
+                  if current_key is not None:
+                      entries.append((current_key, current_lines))
+                  current_key = None
+                  current_lines = []
+
+              for line in lines:
+                  match = re.match(r'^  ([A-Za-z0-9_]+):', line)
+                  if match:
+                      flush()
+                      current_key = match.group(1)
+                      current_lines = pending + [line]
+                      pending = []
+                  elif current_key is None:
+                      pending.append(line)
+                  elif line.startswith('  #') and not line.startswith('    '):
+                      flush()
+                      pending.append(line)
+                  else:
+                      current_lines.append(line)
+              flush()
+              if pending:
+                  if entries:
+                      entries[-1][1].extend(pending)
+                  else:
+                      raise SystemExit(f'no entries found in {section}')
+
+              sorted_raw = ''.join(''.join(item_lines) for _, item_lines in sorted(entries, key=lambda item: item[0].lower()))
+              return text[:start] + sorted_raw + text[end:]
+
           pubspec = Path('pubspec.yaml')
           text = pubspec.read_text()
-          text = text.replace('  collection: ^1.18.0\n', '  collection: ^1.18.0\n  characters: ^1.4.1\n', 1)
           text = text.replace('  html: ^0.15.4\n', '  html: ^0.15.4\n  html_unescape: ^2.0.0\n', 1)
           text = text.replace('  translations_cleaner: ^0.2.1\n', '  translations_cleaner: ^0.2.1\n  url_launcher_platform_interface: ^2.3.2\n', 1)
           text = text.replace('    - /lib/pages/notifications/notifications_view\\.dart$\n', '', 1)
+          text = sort_top_level_yaml_section(text, 'dependencies', 'dependency_overrides')
+          text = sort_top_level_yaml_section(text, 'dev_dependencies', 'tidy_imports')
           pubspec.write_text(text)
 
           for path in Path('lib').rglob('*.dart'):
@@ -75,8 +118,8 @@ jobs:
 
           replace(
               'lib/pages/chat/send_file_dialog.dart',
-              "import 'package:matrix/src/utils/markdown.dart';",
-              "// ignore: implementation_imports\nimport 'package:matrix/src/utils/markdown.dart';",
+              "import 'package:matrix/src/utils/markdown.dart';\n",
+              '',
           )
           replace(
               'lib/pages/chat/send_file_dialog.dart',
@@ -86,11 +129,6 @@ jobs:
 
           emoji = Path('lib/utils/animated_emoji.dart')
           text = emoji.read_text()
-          text = text.replace(
-              "import 'package:flutter/widgets.dart';\n",
-              "import 'package:flutter/widgets.dart';\n\nimport 'package:characters/characters.dart';\n",
-              1,
-          )
           text, n = re.subn(
               r"/// Matches a single emoji, including ZWJ sequences, skin tone modifiers,\n/// keycaps and regional indicator \(flag\) pairs\.\nfinal RegExp _emojiPattern = RegExp\(.*?\n\);\n\n",
               '',
@@ -169,9 +207,6 @@ jobs:
 
       - name: Resolve dependencies
         run: flutter pub get --no-example
-
-      - name: Sort pub dependencies
-        run: dart fix --apply --code=sort_pub_dependencies
 
       - name: Normalize sources
         run: |
