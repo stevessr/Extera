@@ -2,9 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
-import 'package:fluffychat/pages/chat_list/chat_list_body.dart';
-import 'package:fluffychat/pages/homeserver_picker/homeserver_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:extera_next/pages/chat_list/chat_list_body.dart';
+import 'package:extera_next/pages/intro/intro_page.dart';
+import 'package:extera_next/pages/login/login_view.dart';
 
 import '../users.dart';
 import 'wait_for.dart';
@@ -15,51 +17,25 @@ extension DefaultFlowExtensions on WidgetTester {
 
     await tester.pumpAndSettle();
 
-    await tester.waitFor(find.text('Let\'s start'));
+    // The current onboarding starts on IntroPage. Use the direct Matrix ID
+    // flow so the integration test can still target its local homeserver.
+    if (find.byType(IntroPage).evaluate().isNotEmpty) {
+      await tester.tap(find.text('Login with Matrix ID'));
+      await tester.pumpAndSettle();
+    }
 
-    expect(find.text('Let\'s start'), findsOneWidget);
-
-    final input = find.byType(TextField);
-
-    expect(input, findsOneWidget);
-
-    // getting the placeholder in place
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-    await tester.enterText(input, homeserver);
-    await tester.pumpAndSettle();
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-
-    // in case registration is allowed
-    // try {
-    await Future.delayed(const Duration(milliseconds: 50));
-
-    await tester.scrollUntilVisible(
-      find.text('Login'),
-      500,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('ConnectPageListView')),
-        matching: find.byType(Scrollable).first,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Login'));
-    await tester.pumpAndSettle();
-    /*} catch (e) {
-      log('Registration is not allowed. Proceeding with login...');
-    }*/
-    await tester.pumpAndSettle();
-
-    await Future.delayed(const Duration(milliseconds: 50));
-
+    await tester.waitFor(find.byType(LoginView));
     final inputs = find.byType(TextField);
+    expect(inputs, findsNWidgets(2));
 
-    await tester.enterText(inputs.first, Users.user1.name);
+    final homeserverAuthority = Uri.parse(homeserver).authority;
+    await tester.enterText(
+      inputs.first,
+      '@${Users.user1.name}:$homeserverAuthority',
+    );
     await tester.enterText(inputs.last, Users.user1.password);
     await tester.pumpAndSettle();
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.testTextInput.receiveAction(TextInputAction.go);
 
     try {
       // pumpAndSettle does not work in here as setState is called
@@ -133,29 +109,32 @@ extension DefaultFlowExtensions on WidgetTester {
     final tester = this;
     await tester.pumpAndSettle();
 
-    final homeserverPickerFinder = find.byType(HomeserverPicker);
+    final introFinder = find.byType(IntroPage);
+    final loginFinder = find.byType(LoginView);
     final chatListFinder = find.byType(ChatListViewBody);
 
     final end = DateTime.now().add(timeout);
 
     log(
-      'Waiting for HomeserverPicker or ChatListViewBody...',
+      'Waiting for IntroPage, LoginView or ChatListViewBody...',
       name: 'Test Runner',
     );
     do {
       if (DateTime.now().isAfter(end)) {
         throw Exception(
-          'Timed out waiting for HomeserverPicker or ChatListViewBody',
+          'Timed out waiting for IntroPage, LoginView or ChatListViewBody',
         );
       }
 
       await pumpAndSettle();
       await Future.delayed(const Duration(milliseconds: 100));
-    } while (homeserverPickerFinder.evaluate().isEmpty &&
+    } while (introFinder.evaluate().isEmpty &&
+        loginFinder.evaluate().isEmpty &&
         chatListFinder.evaluate().isEmpty);
 
-    if (homeserverPickerFinder.evaluate().isNotEmpty) {
-      log('Found HomeserverPicker, performing login.', name: 'Test Runner');
+    if (introFinder.evaluate().isNotEmpty ||
+        loginFinder.evaluate().isNotEmpty) {
+      log('Found logged-out UI, performing login.', name: 'Test Runner');
       await tester.login();
     } else {
       log('Found ChatListViewBody, skipping login.', name: 'Test Runner');
