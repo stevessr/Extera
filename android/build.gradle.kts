@@ -16,10 +16,13 @@ subprojects {
     // Java and once as Kotlin under the same package/class name. Recent Kotlin
     // (K2) therefore fails with a redeclaration error. Keep the Kotlin plugin
     // implementation and exclude the stale Java source until upstream removes
-    // it. The native libraries and plugin registration are unaffected.
+    // it. The same upstream Android module also hard-codes compileSdkVersion 31,
+    // while its current AndroidX dependency graph requires API 34+. Align it
+    // with the app's compileSdk so AAR metadata validation remains compatible.
     if (name == "flutter_avif_android") {
         plugins.withId("com.android.library") {
             extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+                compileSdk = 37
                 sourceSets.getByName("main").java.setSrcDirs(emptyList<String>())
             }
         }
