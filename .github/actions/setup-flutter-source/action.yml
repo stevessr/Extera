@@ -26,13 +26,13 @@ runs:
     # so restoring it turns a full SDK clone into a cache hit. Key matches the
     # CI arm64 job so release and debug builds share warm caches.
     - name: Restore Flutter SDK
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/flutter
         key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.flutter.outputs.version }}
 
     - name: Restore pub cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.pub-cache
         # Keep Pub caches isolated by Flutter SDK; a cache from another
@@ -54,7 +54,7 @@ runs:
     # build has to fetch them. The tool skips files it already has, which makes
     # this a no-op on a cache hit.
     - name: Restore animated emoji
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: assets/animated_emoji
         key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}
