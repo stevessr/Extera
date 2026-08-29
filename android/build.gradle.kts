@@ -48,6 +48,8 @@ subprojects {
     }
 }
 subprojects {
+    // CI verification branch intentionally touches this Android build file so
+    // the pull_request workflow exercises every Android ABI.
     project.evaluationDependsOn(":app")
 }
 
