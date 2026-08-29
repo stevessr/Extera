@@ -2,5 +2,5 @@
 flutter pub upgrade --major-versions
 flutter pub get
 dart fix --apply
-flutter format lib test
-flutter pub run import_sorter:main --no-comments
+dart run tidy_imports --no-comments
+dart format lib test
