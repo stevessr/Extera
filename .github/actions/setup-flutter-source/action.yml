@@ -7,12 +7,6 @@ description: >
 runs:
   using: composite
   steps:
-    # Mirrors setup-flutter's cache check: this action runs in every job that
-    # cannot use setup-flutter, so it is the place to report a broken cache.
-    - name: Check cache service
-      shell: bash
-      run: ./scripts/ci/check-cache.sh
-
     - name: Resolve Flutter version
       id: flutter
       shell: bash
@@ -24,7 +18,8 @@ runs:
 
     # install-flutter-source.sh skips the clone when the directory is there,
     # so restoring it turns a full SDK clone into a cache hit. Key matches the
-    # CI arm64 job so release and debug builds share warm caches.
+    # CI arm64 job so release and debug builds share warm caches. actions/cache
+    # itself is the authoritative cache-service diagnostic.
     - name: Restore Flutter SDK
       uses: actions/cache@v5
       with:
