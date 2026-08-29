@@ -1,0 +1,40 @@
+name: Refresh dependency lockfile once
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+    paths:
+      - .github/workflows/refresh-lock-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/android-avif-web-ci
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .tool_versions.yaml
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get --no-example
+
+      - name: Commit generated lockfile
+        run: |
+          if git diff --quiet -- pubspec.lock; then
+            echo "pubspec.lock is already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.lock
+          git commit -m "chore: refresh dependency lockfile"
+          git push origin HEAD:fix/android-avif-web-ci
