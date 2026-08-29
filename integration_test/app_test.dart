@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:fluffychat/main.dart' as app;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/main.dart' as app;
 import 'package:extera_next/pages/chat/chat_view.dart';
 import 'package:extera_next/pages/chat_list/chat_list_body.dart';
 import 'package:extera_next/pages/chat_list/search_title.dart';
@@ -22,11 +21,7 @@ void main() {
   group('Integration Test', () {
     setUpAll(() async {
       // this random dialog popping up is super hard to cover in tests
-      SharedPreferences.setMockInitialValues({SettingKeys.showNoGoogle: false});
-      try {
-        Hive.deleteFromDisk();
-        Hive.initFlutter();
-      } catch (_) {}
+      SharedPreferences.setMockInitialValues({AppSettings.showNoGoogle.key: false});
     });
 
     testWidgets('Start app, login and logout', (WidgetTester tester) async {
