@@ -274,7 +274,7 @@ class ChatListViewBody extends StatelessWidget {
 class PublicRoomsHorizontalList extends StatelessWidget {
   const PublicRoomsHorizontalList({super.key, required this.publicRooms});
 
-  final List<PublicRoomsChunk>? publicRooms;
+  final List<PublishedRoomsChunk>? publicRooms;
 
   @override
   Widget build(BuildContext context) {

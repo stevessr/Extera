@@ -1,10 +1,7 @@
-// ignore_for_file: implementation_imports
-
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
-import 'package:matrix/src/models/timeline_chunk.dart' show TimelineChunk;
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -14,8 +11,6 @@ import 'package:extera_next/pages/notifications/notifications.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
-// TimelineChunk is required by RoomTimeline's public constructor but is not
-// exported by matrix.dart.
 class NotificationsView extends StatelessWidget {
   final NotificationsController controller;
   const NotificationsView(this.controller, {super.key});

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:matrix/matrix.dart';
-import 'package:matrix/src/utils/markdown.dart';
 import 'package:mime/mime.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -24,9 +23,6 @@ import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 import '../../utils/resize_video.dart';
-
-// ignore: implementation_imports
-// ignore: depend_on_referenced_packages
 
 class SendFileDialog extends StatefulWidget {
   final Room room;

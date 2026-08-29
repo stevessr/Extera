@@ -81,10 +81,6 @@ class _StatusMessageListState extends State<StatusMessageList> {
           curve: Curves.easeInOut,
           child: FutureBuilder<List<CachedPresence>>(
             future: _getPresenceFuture(client),
-            initialData: [
-              for (final userId in client.interestingPresences)
-                if (client.presences[userId] != null) client.presences[userId]!,
-            ],
             builder: (context, snapshot) {
               final presences = snapshot.data
                   ?.where(isInterestingPresence)

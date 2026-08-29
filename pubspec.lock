@@ -1332,7 +1332,7 @@ packages:
     source: hosted
     version: "0.15.6"
   html_unescape:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html_unescape
       sha256: "15362d7a18f19d7b742ef8dcb811f5fd2a2df98db9f80ea393c075189e0b61e3"
@@ -1677,7 +1677,7 @@ packages:
     description:
       path: "."
       ref: Extera
-      resolved-ref: "55aca51ce29c12faac66b75cba524df7cfe75af2"
+      resolved-ref: d0070b981f757f0f0a7fd82705bf2a447d798dc2
       url: "https://github.com/stevessr/matrix-dart-sdk.git"
     source: git
     version: "10.2.1"
@@ -2855,7 +2855,7 @@ packages:
     source: hosted
     version: "3.2.5"
   url_launcher_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: url_launcher_platform_interface
       sha256: "552f8a1e663569be95a8190206a38187b531910283c3e982193e4f2733f01029"
