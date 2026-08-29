@@ -11,6 +11,7 @@ import 'package:extera_next/pages/chat/sticker_picker_dialog.dart';
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/dynamic_emoji.dart';
+import 'package:extera_next/widgets/animated_emoji_image.dart';
 import 'package:extera_next/widgets/animated_emoji_picker.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -21,15 +22,77 @@ class ChatEmojiPicker extends StatelessWidget {
   final ChatController controller;
   const ChatEmojiPicker(this.controller, {super.key});
 
+  Future<bool> _confirmAnimatedEmojiSend(
+    BuildContext context,
+    Emoji emoji,
+    String codepoint,
+    DynamicEmojiFormat format,
+  ) async {
+    final isZh = Localizations.localeOf(context).languageCode == 'zh';
+    return await showDialog<bool>(
+          context: context,
+          useRootNavigator: false,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(isZh ? '发送动态表情？' : 'Send animated emoji?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 112,
+                  height: 112,
+                  child: Center(
+                    child: AnimatedEmojiImage(
+                      emoji: emoji.char,
+                      codepoint: codepoint,
+                      fontSize: 80,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  isZh
+                      ? '将以 ${format.label} 图片发送'
+                      : 'This will be sent as a ${format.label} image.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(isZh ? '取消' : 'Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(isZh ? '发送' : 'Send'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Future<void> _sendAnimatedEmoji(BuildContext context, Emoji emoji) async {
     final codepoint = animatedEmojiCodepoint(emoji.char);
     if (codepoint == null) return;
+
+    final format = await DynamicEmojiPreferences.load();
+    if (!context.mounted) return;
+
+    // Dynamic emoji are sent immediately as media rather than inserted into
+    // the composer, so always require an explicit second tap before upload.
+    final confirmed = await _confirmAnimatedEmojiSend(
+      context,
+      emoji,
+      codepoint,
+      format,
+    );
+    if (!confirmed || !context.mounted) return;
 
     final proceed = await showTrustUserInRoomDialog(context, controller.room);
     if (!proceed) return;
 
     try {
-      final format = await DynamicEmojiPreferences.load();
       await sendDynamicEmoji(
         room: controller.room,
         source: animatedEmojiGifUrl(codepoint).toString(),
@@ -75,14 +138,14 @@ class ChatEmojiPicker extends StatelessWidget {
                 height: MediaQuery.sizeOf(context).height / 2,
                 child: DefaultTabController(
                   length: 3,
-                  initialIndex: controller.initiallyShowStickerPicker ? 2 : 0,
+                  initialIndex: controller.initiallyShowStickerPicker ? 1 : 0,
                   child: Column(
                     children: [
                       TabBar(
                         tabs: [
                           Tab(text: L10n.of(context).emojis),
-                          Tab(text: isZh ? '动态表情' : 'Animated'),
                           Tab(text: L10n.of(context).stickers),
+                          Tab(text: isZh ? '动态表情' : 'Animated'),
                         ],
                       ),
                       Expanded(
@@ -182,10 +245,6 @@ class ChatEmojiPicker extends StatelessWidget {
                                 );
                               },
                             ),
-                            AnimatedEmojiPicker(
-                              onEmojiSelected: (emoji) =>
-                                  _sendAnimatedEmoji(context, emoji),
-                            ),
                             StickerPickerDialog(
                               room: controller.room,
                               onSelected: (sticker) async {
@@ -208,6 +267,10 @@ class ChatEmojiPicker extends StatelessWidget {
                                 controller.cancelReplyEventAction();
                                 controller.hideEmojiPicker();
                               },
+                            ),
+                            AnimatedEmojiPicker(
+                              onEmojiSelected: (emoji) =>
+                                  _sendAnimatedEmoji(context, emoji),
                             ),
                           ],
                         ),
