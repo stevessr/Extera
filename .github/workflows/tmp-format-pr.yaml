@@ -1,0 +1,46 @@
+name: Temporary PR formatter
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.13.1'
+      - name: Format files reported by CI
+        run: |
+          dart format \
+            lib/pages/chat/chat_emoji_picker.dart \
+            lib/pages/dialer/livekit_call_screen.dart \
+            lib/pages/settings_custom_experience/settings_custom_experience_view.dart \
+            lib/utils/dynamic_emoji.dart \
+            lib/utils/error_reporter.dart \
+            lib/widgets/animated_emoji_picker.dart \
+            test/html_message_link_test.dart
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            echo "No formatter changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/pages/chat/chat_emoji_picker.dart \
+            lib/pages/dialer/livekit_call_screen.dart \
+            lib/pages/settings_custom_experience/settings_custom_experience_view.dart \
+            lib/utils/dynamic_emoji.dart \
+            lib/utils/error_reporter.dart \
+            lib/widgets/animated_emoji_picker.dart \
+            test/html_message_link_test.dart
+          git commit -m "style: apply Dart 3.13 formatter"
+          git push
