@@ -1,0 +1,226 @@
+name: Modernize remaining analyzer issues once
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+    paths:
+      - .github/workflows/modernize-analyzer-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  modernize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/android-avif-web-ci
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .tool_versions.yaml
+          channel: stable
+          cache: true
+
+      - name: Apply Dart and dependency migrations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace(path_name, old, new, count=1):
+              path = Path(path_name)
+              text = path.read_text()
+              if old not in text:
+                  raise SystemExit(f'expected text not found in {path_name}: {old[:120]!r}')
+              path.write_text(text.replace(old, new, count))
+
+          pubspec = Path('pubspec.yaml')
+          text = pubspec.read_text()
+          text = text.replace('  collection: ^1.18.0\n', '  collection: ^1.18.0\n  characters: ^1.4.1\n', 1)
+          text = text.replace('  html: ^0.15.4\n', '  html: ^0.15.4\n  html_unescape: ^2.0.0\n', 1)
+          text = text.replace('  translations_cleaner: ^0.2.1\n', '  translations_cleaner: ^0.2.1\n  url_launcher_platform_interface: ^2.3.2\n', 1)
+          text = text.replace('    - /lib/pages/notifications/notifications_view\\.dart$\n', '', 1)
+          pubspec.write_text(text)
+
+          # Matrix renamed the public-room model; keep the app on the public API.
+          for path in Path('lib').rglob('*.dart'):
+              text = path.read_text()
+              if 'PublicRoomsChunk' in text:
+                  path.write_text(text.replace('PublicRoomsChunk', 'PublishedRoomsChunk'))
+
+          # timeline_chunk is publicly exported by matrix.dart in the current fork.
+          replace(
+              'lib/pages/notifications/notifications_view.dart',
+              "// ignore_for_file: implementation_imports\n\n",
+              '',
+          )
+          replace(
+              'lib/pages/notifications/notifications_view.dart',
+              "import 'package:matrix/src/models/timeline_chunk.dart' show TimelineChunk;\n",
+              '',
+          )
+          replace(
+              'lib/pages/notifications/notifications_view.dart',
+              "// TimelineChunk is required by RoomTimeline's public constructor but is not\n// exported by matrix.dart.\n",
+              '',
+          )
+
+          # The asynchronous presence future already owns this data; avoid the
+          # deprecated synchronous Client.presences cache entirely.
+          replace(
+              'lib/pages/chat_list/status_msg_list.dart',
+              "            initialData: [\n              for (final userId in client.interestingPresences)\n                if (client.presences[userId] != null) client.presences[userId]!,\n            ],\n",
+              '',
+          )
+
+          # Flutter moved Radio selection state to the RadioGroup ancestor.
+          replace(
+              'lib/pages/chat/events/poll_content.dart',
+              "                                          Radio<bool>(\n                                            value: true,\n                                            groupValue: isSelected,\n                                            onChanged: (_) => _onAnswerSelected(\n                                              answerId,\n                                              !isSelected,\n                                            ),\n                                            visualDensity:\n                                                VisualDensity.compact,\n                                          )",
+              "                                          RadioGroup<bool>(\n                                            groupValue: isSelected,\n                                            onChanged: (_) => _onAnswerSelected(\n                                              answerId,\n                                              !isSelected,\n                                            ),\n                                            child: Radio<bool>(\n                                              value: true,\n                                              visualDensity:\n                                                  VisualDensity.compact,\n                                            ),\n                                          )",
+          )
+
+          # FilePicker 12 deprecates allowMultiple/withData on pickFiles.
+          replace(
+              'lib/utils/file_selector.dart',
+              "import 'package:flutter/foundation.dart';\n",
+              '',
+          )
+          replace(
+              'lib/utils/file_selector.dart',
+              "      future: () => FilePicker.pickFiles(\n        compressionQuality: 0,\n        allowMultiple: allowMultiple,\n        type: type,\n        withData: kIsWeb,\n      ),",
+              "      future: () async {\n        if (allowMultiple) {\n          return FilePicker.pickFiles(\n            compressionQuality: 0,\n            type: type,\n          );\n        }\n        final file = await FilePicker.pickFile(\n          compressionQuality: 0,\n          type: type,\n        );\n        return file == null ? <PlatformFile>[] : [file];\n      },",
+          )
+
+          # The Matrix fork does not export markdown yet. Keep this one private
+          # import explicitly scoped instead of a stale file-wide ignore.
+          replace(
+              'lib/pages/chat/send_file_dialog.dart',
+              "import 'package:matrix/src/utils/markdown.dart';",
+              "// ignore: implementation_imports\nimport 'package:matrix/src/utils/markdown.dart';",
+          )
+          replace(
+              'lib/pages/chat/send_file_dialog.dart',
+              "\n// ignore: implementation_imports\n// ignore: depend_on_referenced_packages\n",
+              '\n',
+          )
+
+          # Dart's RegExp engine does not implement JavaScript-style Unicode
+          # property escapes. Grapheme iteration is both valid and better for
+          # flags, keycaps, skin tones and ZWJ sequences.
+          emoji = Path('lib/utils/animated_emoji.dart')
+          text = emoji.read_text()
+          text = text.replace(
+              "import 'package:flutter/widgets.dart';\n",
+              "import 'package:flutter/widgets.dart';\n\nimport 'package:characters/characters.dart';\n",
+              1,
+          )
+          text, n = re.subn(
+              r"/// Matches a single emoji, including ZWJ sequences, skin tone modifiers,\n/// keycaps and regional indicator \(flag\) pairs\.\nfinal RegExp _emojiPattern = RegExp\(.*?\n\);\n\n",
+              '',
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if n != 1:
+              raise SystemExit('failed to remove _emojiPattern')
+          start = text.index('List<InlineSpan> buildAnimatedEmojiSpans(')
+          end = text.index('\n/// Replaces the emoji of every [TextSpan]', start)
+          replacement = '''List<InlineSpan> buildAnimatedEmojiSpans(
+  String text, {
+  required double fontSize,
+  TextStyle? style,
+}) {
+  if (!animatedEmojiEnabled || text.isEmpty) {
+    return [TextSpan(text: text, style: style)];
+  }
+
+  final spans = <InlineSpan>[];
+  var plainText = StringBuffer();
+  var hasAnimatedEmoji = false;
+
+  void flushText() {
+    if (plainText.length == 0) return;
+    spans.add(TextSpan(text: plainText.toString(), style: style));
+    plainText = StringBuffer();
+  }
+
+  for (final grapheme in text.characters) {
+    final codepoint = animatedEmojiCodepoint(grapheme);
+    if (codepoint == null) {
+      plainText.write(grapheme);
+      continue;
+    }
+
+    hasAnimatedEmoji = true;
+    flushText();
+    spans.add(
+      WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: AnimatedEmojiImage(
+          emoji: grapheme,
+          codepoint: codepoint,
+          fontSize: fontSize,
+          style: style,
+        ),
+      ),
+    );
+  }
+
+  if (!hasAnimatedEmoji) return [TextSpan(text: text, style: style)];
+  flushText();
+  return spans;
+}
+'''
+          emoji.write_text(text[:start] + replacement + text[end:])
+
+          # Avoid retrying two codepoints that Google's current Noto Emoji
+          # metadata lists but its Lottie CDN consistently does not publish.
+          downloader = Path('tool/download_animated_emoji.dart')
+          text = downloader.read_text()
+          text = text.replace(
+              "const _timeout = Duration(seconds: 30);\n",
+              "const _timeout = Duration(seconds: 30);\nconst _knownUnavailable = {'ae_fe0f', 'a9_fe0f'};\n",
+              1,
+          )
+          text = text.replace(
+              "      if (force || !File('$_outputDirectory/$codepoint.json').existsSync())\n        codepoint,",
+              "      if (!_knownUnavailable.contains(codepoint) &&\n          (force || !File('$_outputDirectory/$codepoint.json').existsSync()))\n        codepoint,",
+              1,
+          )
+          downloader.write_text(text)
+          PY
+
+      - name: Resolve dependencies
+        run: flutter pub get --no-example
+
+      - name: Sort pub dependencies
+        run: dart fix --apply --code=sort_pub_dependencies
+
+      - name: Normalize sources
+        run: |
+          dart format lib test integration_test tool
+          dart run tidy_imports --no-comments
+          dart format lib test integration_test tool
+          dart run tidy_imports --no-comments --exit-if-changed
+
+      - name: Verify analyzer is clean
+        run: flutter analyze
+
+      - name: Verify licenses after direct dependencies
+        run: dart run license_checker check-licenses -c licenses.yaml --problematic
+
+      - name: Commit modernization
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml pubspec.lock lib test integration_test tool
+          git commit -m "fix: modernize Dart APIs for Flutter 3.47"
+          git push origin HEAD:fix/android-avif-web-ci
