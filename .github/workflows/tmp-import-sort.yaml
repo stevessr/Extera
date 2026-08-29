@@ -1,0 +1,29 @@
+name: Temporary project-aware import sorter
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+
+permissions:
+  contents: write
+
+jobs:
+  sort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-flutter
+      - name: Sort imports
+        run: dart run import_sorter:main --no-comments
+      - name: Commit import sorting
+        run: |
+          if git diff --quiet; then
+            echo "No import sorting changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib test
+          git commit -m "style: sort Dart imports"
+          git push
