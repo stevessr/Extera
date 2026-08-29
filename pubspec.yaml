@@ -150,15 +150,15 @@ dev_dependencies:
   msix: ^3.6.13
   translations_cleaner: ^0.2.1
 
-# tidy_imports is the Dart 3 successor to import_sorter. Dart 3.13 formats
-# package/project and relative imports as separate sections, so opt into the
-# matching layout to keep the sorter and formatter idempotent. Keep the
-# implementation-import exception formatter/analyzer-owned because its
-# file-level suppression is semantically significant.
+# Generated localization files are owned by flutter gen-l10n and must remain
+# byte-for-byte reproducible from the generator. Source and test imports are
+# checked by tidy_imports; the implementation-import exception below remains
+# formatter/analyzer-owned because its file-level suppression is significant.
 tidy_imports:
   comments: false
   separate_relative_imports: true
   ignored_files:
+    - /lib/generated/l10n/
     - /lib/pages/notifications/notifications_view\.dart$
 
 hooks:
