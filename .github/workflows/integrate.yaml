@@ -89,13 +89,16 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
+      - name: Check dependency lockfile is up to date
+        run: git diff --exit-code -- pubspec.lock
+
       - run: flutter gen-l10n
 
       - name: Check formatting
         run: dart format lib/ test/ --set-exit-if-changed
 
       - name: Check import ordering
-        run: dart run import_sorter:main --no-comments --exit-if-changed
+        run: dart run tidy_imports --no-comments --exit-if-changed
 
       - name: Check license compliance
         run: dart run license_checker check-licenses -c licenses.yaml --problematic
