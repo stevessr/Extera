@@ -19,4 +19,4 @@ class User {
 }
 
 const homeserver =
-    'http://${const String.fromEnvironment('HOMESERVER', defaultValue: 'localhost')}';
+    'http://${String.fromEnvironment('HOMESERVER', defaultValue: 'localhost')}';

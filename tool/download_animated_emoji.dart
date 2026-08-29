@@ -9,7 +9,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../lib/config/animated_emoji_data.dart';
+import 'package:extera_next/config/animated_emoji_data.dart';
 
 const _outputDirectory = 'assets/animated_emoji';
 const _concurrency = 8;

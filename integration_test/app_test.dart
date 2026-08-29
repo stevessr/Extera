@@ -21,7 +21,9 @@ void main() {
   group('Integration Test', () {
     setUpAll(() async {
       // this random dialog popping up is super hard to cover in tests
-      SharedPreferences.setMockInitialValues({AppSettings.showNoGoogle.key: false});
+      SharedPreferences.setMockInitialValues({
+        AppSettings.showNoGoogle.key: false,
+      });
     });
 
     testWidgets('Start app, login and logout', (WidgetTester tester) async {

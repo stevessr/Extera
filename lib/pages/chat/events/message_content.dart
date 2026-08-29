@@ -444,7 +444,7 @@ class MessageContent extends StatelessWidget {
                   : AppSettings.chatFallbackFonts.value.split(','),
             );
             final spanChildren = <InlineSpan>[
-              ...?replaceEmojiInSpans(
+              ...replaceEmojiInSpans(
                 buildTextSpanChildren(
                       linkify(
                         messageText,
