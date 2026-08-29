@@ -150,6 +150,15 @@ dev_dependencies:
   msix: ^3.6.13
   translations_cleaner: ^0.2.1
 
+# import_sorter 4.6.0 predates current Dart formatting and rewrites the
+# implementation-import suppression in this file into a form that Dart 3.13
+# immediately reformats again. Keep the imports manually sorted and let the
+# formatter/analyzer own this single exceptional file.
+import_sorter:
+  comments: false
+  ignored_files:
+    - /lib/pages/notifications/notifications_view\.dart$
+
 hooks:
   user_defines:
     sqlite3:
