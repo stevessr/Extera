@@ -13,6 +13,19 @@ on:
       # wasm branch: build the dart2wasm bundle and publish it as the
       # development (preview) Worker instead of touching production.
       - wasm
+    # Keep automatic web builds/deploys aligned with CI: only Dart source or
+    # YAML/YML configuration that directly affects Flutter/web builds should
+    # spend a web build. workflow_dispatch remains available for forced deploys.
+    paths:
+      - '**/*.dart'
+      - 'pubspec.yaml'
+      - 'analysis_options.yaml'
+      - 'l10n.yaml'
+      - '.tool_versions.yaml'
+      - '.github/workflows/deploy-cloudflare-pages.yaml'
+      - '.github/actions/build-web-app/action.yml'
+      - '.github/actions/setup-flutter/action.yml'
+      - '.github/actions/setup-rust/action.yml'
 
 concurrency:
   group: cloudflare-pages-${{ github.workflow }}-${{ inputs.ref || github.ref_name }}
