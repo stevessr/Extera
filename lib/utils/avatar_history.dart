@@ -1,5 +1,4 @@
 import 'package:matrix/matrix.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Locally cached list of mxc URIs that were ever used as an avatar (global

@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 

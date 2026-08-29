@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:extera_next/utils/url_launcher.dart';
 import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
+
+import 'package:extera_next/utils/url_launcher.dart';
 
 class _RecordingPlatform extends UrlLauncherPlatform {
   String? lastUrl;

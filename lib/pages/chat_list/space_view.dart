@@ -13,11 +13,12 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
-import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
-import 'package:extera_next/utils/room_status_extension.dart';
-import 'package:extera_next/utils/memoized_tile_cache.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
+import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/memoized_tile_cache.dart';
+import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
+import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -26,7 +27,6 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:extera_next/utils/wallpaper.dart';
 
 enum AddRoomType { chat, subspace }
 

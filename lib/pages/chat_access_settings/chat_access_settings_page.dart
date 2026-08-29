@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide Visibility;
-import 'package:go_router/go_router.dart';
 
+import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';

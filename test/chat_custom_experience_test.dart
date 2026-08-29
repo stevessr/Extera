@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
+
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_custom_experience/chat_custom_experience.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('hub lists profile, wallpaper and privacy entries', (

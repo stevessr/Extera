@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/utils/dynamic_emoji.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/matrix.dart';
-
 import 'settings_custom_experience_view.dart';
 
 const String _roomPrivacySettingsPrefix = 'xyz.extera.room_privacy_settings.';

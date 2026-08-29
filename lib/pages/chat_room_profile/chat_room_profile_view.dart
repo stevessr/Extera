@@ -1,12 +1,13 @@
+import 'package:flutter/material.dart';
+
+import 'package:matrix/matrix.dart';
+
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/mxc_image_viewer.dart' show MxcImageViewer;
-import 'package:flutter/material.dart';
-import 'package:matrix/matrix.dart';
-
 import 'chat_room_profile.dart';
 
 class ChatRoomProfileView extends StatelessWidget {

@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:extera_next/utils/foreground_task_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cross_file/cross_file.dart';
@@ -11,9 +10,10 @@ import 'package:mime/mime.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
-import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/clean_exif.dart';
+import 'package:extera_next/utils/content_warning.dart';
+import 'package:extera_next/utils/foreground_task_manager.dart';
 import 'package:extera_next/utils/loading_snackbar_extension.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';

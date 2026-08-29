@@ -5,18 +5,18 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/image_viewer/image_viewer_view.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/avatar_history.dart';
 import 'package:extera_next/utils/client_profile_extension.dart';
-import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/favourite_stickers_extension.dart';
-import 'package:extera_next/widgets/avatar.dart';
-import 'package:extera_next/pages/image_viewer/image_viewer_view.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
+import 'package:extera_next/widgets/avatar.dart';
+import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
-import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import '../../utils/matrix_sdk_extensions/event_extension.dart';
+import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 
 class ImageViewer extends StatefulWidget {
   final Event event;

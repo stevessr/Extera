@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +10,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/chat/events/poll_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/chat/events/video_player.dart';
@@ -22,7 +22,6 @@ import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
-
 import '../../../utils/platform_infos.dart';
 import '../../../utils/url_launcher.dart';
 import 'audio_player.dart';

@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,11 +9,11 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/html_message.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
-
 import '../../../widgets/blur_hash.dart';
 
 class ImageBubble extends StatelessWidget {

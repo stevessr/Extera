@@ -2,9 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:extera_next/config/themes.dart';
-import 'package:extera_next/utils/foreground_task_manager.dart';
-import 'package:extera_next/utils/error_reporter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -12,17 +9,20 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:matrix/matrix.dart' show Client, Logs, DeviceKeys;
 
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/dialer/dialer.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/pages/dialer/livekit_service.dart';
+import 'package:extera_next/utils/error_reporter.dart';
+import 'package:extera_next/utils/foreground_task_manager.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
 
 class LiveKitCallScreen extends StatefulWidget {
   final String roomId;

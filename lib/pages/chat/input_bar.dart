@@ -1,4 +1,3 @@
-import 'package:extera_next/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,6 +11,7 @@ import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/emote_shortcode.dart';
 import 'package:extera_next/utils/markdown_context_builder.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/matrix.dart';
