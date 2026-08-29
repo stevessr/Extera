@@ -14,12 +14,6 @@ runs:
       shell: bash
       run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
 
-    # Every job runs this action, so this is the one place that reliably
-    # reports a runner whose cache service is off or unreachable.
-    - name: Check cache service
-      shell: bash
-      run: ./scripts/ci/check-cache.sh
-
     # Set before flutter-action so it adopts this location rather than picking
     # its own, which keeps the cache path below correct by construction.
     - name: Pin pub cache location
@@ -39,6 +33,9 @@ runs:
       shell: bash
       run: ./scripts/ci/verify-flutter-version.sh
 
+    # Let actions/cache report cache availability directly. Runtime cache URLs
+    # are not reliably exported to ordinary shell `run:` steps, so probing
+    # ACTIONS_CACHE_URL from a script produces false warnings on hosted runners.
     - name: Restore pub cache
       uses: actions/cache@v5
       with:
