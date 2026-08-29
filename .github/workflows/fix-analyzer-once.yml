@@ -1,0 +1,83 @@
+name: Apply analyzer compatibility fixes once
+
+on:
+  push:
+    branches:
+      - fix/android-avif-web-ci
+    paths:
+      - .github/workflows/fix-analyzer-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/android-avif-web-ci
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .tool_versions.yaml
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies and lockfile
+        run: flutter pub get --no-example
+
+      - name: Apply targeted analyzer fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'lib/pages/chat/events/message_content.dart': [
+                  ('...?replaceEmojiInSpans(', '...replaceEmojiInSpans('),
+              ],
+              'lib/pages/chat_wallpaper/chat_wallpaper_view.dart': [
+                  ("import 'package:extera_next/utils/wallpaper.dart';\n", ''),
+              ],
+              'lib/utils/web_paste/web_paste_web.dart': [
+                  ("import 'dart:typed_data';\n", ''),
+              ],
+              'test/html_message_link_test.dart': [
+                  ("import 'package:shared_preferences/shared_preferences.dart';\n", ''),
+              ],
+              'tool/download_animated_emoji.dart': [
+                  ("import '../lib/config/animated_emoji_data.dart';", "import 'package:extera_next/config/animated_emoji_data.dart';"),
+              ],
+              'integration_test/users.dart': [
+                  ("'http://${const String.fromEnvironment('HOMESERVER', defaultValue: 'localhost')}'", "'http://${String.fromEnvironment('HOMESERVER', defaultValue: 'localhost')}'"),
+              ],
+          }
+
+          for name, edits in replacements.items():
+              path = Path(name)
+              text = path.read_text()
+              for old, new in edits:
+                  if old not in text:
+                      raise SystemExit(f'expected text not found in {name}: {old!r}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text)
+          PY
+
+      - name: Normalize Dart sources
+        run: |
+          dart format lib test integration_test tool
+          dart run tidy_imports --no-comments
+          dart format lib test integration_test tool
+          dart run tidy_imports --no-comments --exit-if-changed
+
+      - name: Commit fixes and lockfile
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.lock lib test integration_test tool
+          git commit -m "fix: resolve Flutter 3.47 analyzer blockers"
+          git push origin HEAD:fix/android-avif-web-ci
