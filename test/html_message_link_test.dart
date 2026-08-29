@@ -61,10 +61,7 @@ void main() {
     final room = Room(id: '!room:example.invalid', client: client);
     await pumpContent(
       tester,
-      makeEvent(
-        room,
-        '<a href="https://example.com">https://example.com</a>',
-      ),
+      makeEvent(room, '<a href="https://example.com">https://example.com</a>'),
     );
     // No InkWell anymore for text-only anchors.
     expect(find.byType(InkWell), findsNothing);

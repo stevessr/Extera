@@ -72,7 +72,10 @@ Future<void> sendDynamicEmoji({
 
   final extraContent = <String, dynamic>{
     'body': name,
-    'info': <String, dynamic>{'mimetype': format.mimeType, 'size': bytes.length},
+    'info': <String, dynamic>{
+      'mimetype': format.mimeType,
+      'size': bytes.length,
+    },
   };
   if (replyEvent != null) {
     extraContent['m.relates_to'] = {

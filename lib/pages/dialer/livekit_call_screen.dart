@@ -54,6 +54,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   DateTime? _keyCreatedAt;
   Uint8List? _lastKey;
   Timer? _membershipRefreshTimer;
+
   /// Latest encryption key index received per remote membership identity.
   /// Used to drop out-of-order keys and to resync receiver frame cryptors.
   final Map<String, int> _latestRemoteKeyIndex = {};
@@ -450,9 +451,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final ownMemberId = '${client.userID}:${client.deviceID}';
       final otherActiveMembers = matrixRoom
           ?.getActiveMatrixRtcMembers()
-          .where(
-            (m) => m.membershipId != null && m.membershipId != ownMemberId,
-          )
+          .where((m) => m.membershipId != null && m.membershipId != ownMemberId)
           .toList();
       Logs().d(
         'DEBUG: livekit service url candidates: ${widget.liveKitServiceUrls}, '
@@ -1799,9 +1798,8 @@ class _CallSettingsSheetState extends State<_CallSettingsSheet> {
               ..._audioInputs.map(
                 (d) => _deviceTile(
                   label: d.label.isEmpty
-                      ? L10n.of(
-                          context,
-                        ).microphoneN(_audioInputs.indexOf(d) + 1)
+                      ? L10n.of(context)
+                            .microphoneN(_audioInputs.indexOf(d) + 1)
                       : d.label,
                   selected: manager.selectedAudioInput == d.deviceId,
                   onTap: () => _switchAudioInput(d),

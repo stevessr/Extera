@@ -16,6 +16,7 @@ import 'package:extera_next/widgets/animated_emoji_picker.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import 'chat.dart';
 
 class ChatEmojiPicker extends StatelessWidget {
@@ -109,9 +110,7 @@ class ChatEmojiPicker extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isZh
-                ? '无法发送动态表情：$error'
-                : 'Unable to send animated emoji: $error',
+            isZh ? '无法发送动态表情：$error' : 'Unable to send animated emoji: $error',
           ),
           showCloseIcon: true,
         ),

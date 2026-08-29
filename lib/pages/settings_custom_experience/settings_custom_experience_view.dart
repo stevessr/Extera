@@ -42,11 +42,11 @@ class SettingsCustomExperienceView extends StatelessWidget {
                   borderRadius: borderRadius,
                   child: ListTile(
                     leading: const Icon(Icons.animation_outlined),
-                    title: Text(isZh ? '动态 Emoji 发送格式' : 'Dynamic emoji format'),
+                    title: Text(
+                      isZh ? '动态 Emoji 发送格式' : 'Dynamic emoji format',
+                    ),
                     subtitle: Text(
-                      isZh
-                          ? '点击自定义动态 Emoji 时按此格式转码并发送'
-                          : 'Transcode custom animated emoji to this format when sending',
+                      isZh ? '点击自定义动态 Emoji 时按此格式转码并发送' : 'Transcode custom animated emoji to this format when sending',
                     ),
                     trailing: DropdownButtonHideUnderline(
                       child: DropdownButton<DynamicEmojiFormat>(
