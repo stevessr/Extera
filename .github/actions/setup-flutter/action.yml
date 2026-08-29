@@ -40,7 +40,7 @@ runs:
       run: ./scripts/ci/verify-flutter-version.sh
 
     - name: Restore pub cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.pub-cache
         # Keep Pub caches isolated by Flutter SDK. Reusing the old cache across
@@ -62,7 +62,7 @@ runs:
     # this a no-op on a cache hit.
     - name: Restore animated emoji
       if: ${{ inputs.pub-get == 'true' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: assets/animated_emoji
         key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}
