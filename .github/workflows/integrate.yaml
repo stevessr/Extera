@@ -34,6 +34,10 @@ defaults:
   run:
     shell: bash
 
+# actions/checkout@v5 and actions/cache@v5 use the runner-managed Node 24
+# action runtime. Installing a system Node package does not upgrade that
+# runtime; self-hosted runners must instead stay on Actions Runner >= 2.327.1.
+
 jobs:
   changes:
     name: Detect changes
@@ -45,15 +49,6 @@ jobs:
       linux: ${{ steps.detect.outputs.linux }}
       ios: ${{ steps.detect.outputs.ios }}
     steps:
-      # The JS actions below declare runs.using: node24, which older runner
-      # images do not ship. Must come before the first one of them.
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
@@ -73,13 +68,6 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
 
       - name: Check locale config is up to date
@@ -95,7 +83,7 @@ jobs:
       - run: flutter gen-l10n
 
       - name: Check formatting
-        run: dart format lib/ test/ --set-exit-if-changed
+        run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
       - name: Check import ordering
         run: dart run tidy_imports --no-comments --exit-if-changed
@@ -129,13 +117,6 @@ jobs:
           - name: x86_64
             target_platform: android-x64
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
       - uses: ./.github/actions/build-android-apk
         with:
@@ -149,13 +130,6 @@ jobs:
     if: ${{ needs.changes.outputs.web == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
 
       # Debug parity check for the release web bundle (target js).
@@ -170,13 +144,6 @@ jobs:
     if: ${{ needs.changes.outputs.linux == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
       - uses: ./.github/actions/build-linux-app
         with:
@@ -184,40 +151,28 @@ jobs:
           mode: debug
 
   # Opt-in: set the repository variable ENABLE_ARM64_RUNNER to "true" once a
-  # self-hosted arm64 runner exists. Skipped otherwise, so a missing runner
-  # never leaves a pull request waiting.
+  # self-hosted arm64 runner running Actions Runner >= 2.327.1 exists. Skipped
+  # otherwise, so a missing runner never leaves a pull request waiting.
   build-linux-arm64:
     name: Debug Linux (arm64)
     needs: changes
     if: ${{ needs.changes.outputs.linux == 'true' && vars.ENABLE_ARM64_RUNNER == 'true' }}
     runs-on: self-hosted
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
       - uses: actions/checkout@v5
       - uses: ./.github/actions/build-linux-app
         with:
           arch: arm64
           mode: debug
 
-  # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true".
+  # Opt-in: set the repository variable ENABLE_MACOS_RUNNER to "true". The
+  # runner must support the Node 24 action runtime (Actions Runner >= 2.327.1).
   build-ios:
     name: Debug iOS
     needs: changes
     if: ${{ needs.changes.outputs.ios == 'true' && vars.ENABLE_MACOS_RUNNER == 'true' }}
     runs-on: macos-15
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          brew install node@24
-          echo "$(brew --prefix node@24)/bin" >>"$GITHUB_PATH"
-
       - uses: actions/checkout@v5
 
       - name: Select Xcode
@@ -245,15 +200,6 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v5
-
       - name: Report aggregate status
         env:
           JOBS: ${{ toJson(needs) }}
