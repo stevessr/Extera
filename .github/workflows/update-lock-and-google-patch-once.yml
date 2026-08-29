@@ -71,6 +71,7 @@ jobs:
           print(f'Enabled {count} Google services source markers')
           PY
           git diff -- lib/utils/background_push.dart pubspec.yaml > scripts/enable-android-google-services.patch
+          sed -i 's/[[:space:]]\+$//' scripts/enable-android-google-services.patch
           git restore --worktree lib/utils/background_push.dart pubspec.yaml
           git apply --check scripts/enable-android-google-services.patch
           git add scripts/enable-android-google-services.patch
