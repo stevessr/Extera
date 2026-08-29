@@ -143,19 +143,21 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_test:
     sdk: flutter
-  import_sorter: ^4.6.0
+  tidy_imports: ^1.3.0
   #  integration_test:
   #    sdk: flutter
   license_checker: ^1.6.2
   msix: ^3.6.13
   translations_cleaner: ^0.2.1
 
-# import_sorter 4.6.0 predates current Dart formatting and rewrites the
-# implementation-import suppression in this file into a form that Dart 3.13
-# immediately reformats again. Keep the imports manually sorted and let the
-# formatter/analyzer own this single exceptional file.
-import_sorter:
+# tidy_imports is the Dart 3 successor to import_sorter. Dart 3.13 formats
+# package/project and relative imports as separate sections, so opt into the
+# matching layout to keep the sorter and formatter idempotent. Keep the
+# implementation-import exception formatter/analyzer-owned because its
+# file-level suppression is semantically significant.
+tidy_imports:
   comments: false
+  separate_relative_imports: true
   ignored_files:
     - /lib/pages/notifications/notifications_view\.dart$
 
