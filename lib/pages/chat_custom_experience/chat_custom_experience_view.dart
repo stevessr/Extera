@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
+
 import 'chat_custom_experience.dart';
 
 class ChatCustomExperienceView extends StatelessWidget {

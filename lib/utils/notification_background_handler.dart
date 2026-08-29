@@ -16,6 +16,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/push_helper.dart';
+
 import '../config/app_config.dart';
 
 bool _vodInitialized = false;

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import 'chat_wallpaper_view.dart';
 
 class ChatWallpaperPage extends StatefulWidget {

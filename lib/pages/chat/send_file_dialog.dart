@@ -22,6 +22,7 @@ import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/dialog_text_field.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import '../../utils/resize_video.dart';
 
 // ignore: implementation_imports

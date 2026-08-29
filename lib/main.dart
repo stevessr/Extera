@@ -19,6 +19,7 @@ import 'package:extera_next/utils/noto_emoji_font.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
+
 import 'config/app_settings.dart';
 import 'utils/background_push.dart';
 import 'widgets/fluffy_chat_app.dart';

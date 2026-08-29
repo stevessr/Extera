@@ -15,6 +15,7 @@ import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart
 import 'package:extera_next/widgets/avatar_history_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import 'chat_room_profile_view.dart';
 
 enum _AvatarChoice { file, history }

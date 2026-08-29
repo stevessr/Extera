@@ -31,6 +31,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/future_loading_snackbar.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
+
 import '../../../utils/account_bundles.dart';
 import '../../config/app_settings.dart';
 import '../../utils/url_launcher.dart';

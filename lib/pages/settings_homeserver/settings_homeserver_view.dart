@@ -13,6 +13,7 @@ import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+
 import '../../widgets/matrix.dart';
 import 'settings_homeserver.dart';
 

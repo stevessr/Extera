@@ -37,6 +37,7 @@ import 'package:extera_next/main.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/push_helper.dart';
 import 'package:extera_next/widgets/fluffy_chat_app.dart';
+
 import '../config/app_config.dart';
 import '../config/app_settings.dart';
 import '../widgets/matrix.dart';

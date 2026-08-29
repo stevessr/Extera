@@ -12,6 +12,7 @@ import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:extera_next/widgets/settings_switch_list_tile.dart';
+
 import 'settings_chat.dart';
 
 class SettingsChatView extends StatelessWidget {

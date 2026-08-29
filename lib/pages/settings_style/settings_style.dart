@@ -16,6 +16,7 @@ import 'package:extera_next/widgets/adaptive_dialogs/show_list_choose_dialog.dar
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
+
 import 'settings_style_view.dart';
 
 class SettingsStyle extends StatefulWidget {

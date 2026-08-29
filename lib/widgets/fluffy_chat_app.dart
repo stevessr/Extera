@@ -15,6 +15,7 @@ import 'package:extera_next/pages/download_manager/download_manager.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/background_audio_player.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
+
 import '../config/app_config.dart';
 import '../utils/custom_scroll_behaviour.dart';
 import '../utils/platform_infos.dart';

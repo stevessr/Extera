@@ -8,6 +8,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/mxc_image_viewer.dart' show MxcImageViewer;
+
 import 'chat_room_profile.dart';
 
 class ChatRoomProfileView extends StatelessWidget {

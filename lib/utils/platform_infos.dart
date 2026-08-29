@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+
 import '../config/app_config.dart';
 
 abstract class PlatformInfos {

@@ -10,6 +10,7 @@ import 'package:extera_next/pages/key_verification/key_verification_dialog.dart'
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import '../../widgets/matrix.dart';
 
 class DevicesSettings extends StatefulWidget {

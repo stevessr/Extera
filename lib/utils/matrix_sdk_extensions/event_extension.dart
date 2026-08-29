@@ -10,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:extera_next/pages/download_manager/download_manager.dart';
 import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import 'matrix_file_extension.dart';
 
 extension LocalizedBody on Event {

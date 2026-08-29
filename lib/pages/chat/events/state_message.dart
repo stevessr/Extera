@@ -7,6 +7,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat/events/message_reactions.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+
 import '../../../config/app_config.dart';
 
 class StateMessage extends StatefulWidget {

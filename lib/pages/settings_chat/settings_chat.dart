@@ -12,6 +12,7 @@ import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import 'settings_chat_view.dart';
 
 class SettingsChat extends StatefulWidget {

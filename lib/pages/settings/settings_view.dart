@@ -17,6 +17,7 @@ import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:extera_next/widgets/navigation_rail.dart';
+
 import '../../widgets/mxc_image_viewer.dart';
 import 'settings.dart';
 

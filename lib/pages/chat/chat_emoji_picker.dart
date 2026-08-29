@@ -16,6 +16,7 @@ import 'package:extera_next/widgets/animated_emoji_picker.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import 'chat.dart';
 
 class ChatEmojiPicker extends StatelessWidget {

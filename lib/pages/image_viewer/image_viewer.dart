@@ -15,6 +15,7 @@ import 'package:extera_next/utils/show_scaffold_dialog.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
+
 import '../../utils/matrix_sdk_extensions/event_extension.dart';
 import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 

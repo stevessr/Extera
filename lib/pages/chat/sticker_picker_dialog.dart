@@ -7,6 +7,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/favourite_stickers_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/recent_stickers_extension.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import '../../widgets/avatar.dart';
 
 class StickerPickerDialog extends StatefulWidget {
