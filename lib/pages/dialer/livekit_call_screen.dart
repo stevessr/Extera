@@ -1798,8 +1798,9 @@ class _CallSettingsSheetState extends State<_CallSettingsSheet> {
               ..._audioInputs.map(
                 (d) => _deviceTile(
                   label: d.label.isEmpty
-                      ? L10n.of(context)
-                            .microphoneN(_audioInputs.indexOf(d) + 1)
+                      ? L10n.of(
+                          context,
+                        ).microphoneN(_audioInputs.indexOf(d) + 1)
                       : d.label,
                   selected: manager.selectedAudioInput == d.deviceId,
                   onTap: () => _switchAudioInput(d),
