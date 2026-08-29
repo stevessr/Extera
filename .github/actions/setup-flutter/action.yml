@@ -20,8 +20,7 @@ runs:
       shell: bash
       run: echo "PUB_CACHE=$HOME/.pub-cache" >>"$GITHUB_ENV"
 
-    # pub-cache is off because the step below already caches that directory,
-    # with restore-keys that flutter-action's own pub cache does not have.
+    # pub-cache is off because the step below already caches that directory.
     - name: Install Flutter
       uses: subosito/flutter-action@v2
       with:
@@ -33,26 +32,21 @@ runs:
       shell: bash
       run: ./scripts/ci/verify-flutter-version.sh
 
-    # Let actions/cache report cache availability directly. Runtime cache URLs
-    # are not reliably exported to ordinary shell `run:` steps, so probing
-    # ACTIONS_CACHE_URL from a script produces false warnings on hosted runners.
+    # Pub's global cache contains checked-out git dependencies. A fallback
+    # cache from a different lockfile can therefore pair a new resolved-ref
+    # with stale dependency metadata. Use exact lockfile keys only; a miss is
+    # deliberately safer than restoring a cache from another dependency graph.
     - name: Restore pub cache
       uses: actions/cache@v5
       with:
         path: ~/.pub-cache
-        # Keep Pub caches isolated by Flutter SDK. Reusing the old cache across
-        # Dart/Pub versions can leave cached git package metadata incompatible
-        # with the checked-out dependency graph.
-        key: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-${{ hashFiles('pubspec.lock') }}
-        restore-keys: pub-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-
+        key: pub-v4-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.tool_versions.yaml') }}-${{ hashFiles('pubspec.lock') }}
 
     - name: Resolve dependencies
       if: ${{ inputs.pub-get == 'true' }}
       shell: bash
-      # package_graph.json is project-local generated state. Never reuse it
-      # across a git dependency revision change: Pub can otherwise observe a
-      # graph whose package list came from the new lockfile while dependency
-      # edges still came from the previous git checkout.
+      # package_graph.json is project-local generated state. Always regenerate
+      # it after resolving the exact git dependency revisions from the lockfile.
       run: |
         rm -rf .dart_tool
         flutter pub get --no-example
