@@ -54,6 +54,16 @@ Uri animatedEmojiUrl(String codepoint) => Uri.parse(
   'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/lottie.json',
 );
 
+/// Raster animation published alongside the Lottie source.
+///
+/// Dynamic-emoji sending uses this GIF as the source animation and then
+/// transcodes it to the user's selected AVIF/GIF/APNG format. Keeping sending
+/// separate from the Lottie preview avoids expensive frame-by-frame Flutter
+/// canvas capture on every platform.
+Uri animatedEmojiGifUrl(String codepoint) => Uri.parse(
+  'https://fonts.gstatic.com/s/e/notoemoji/latest/$codepoint/512.gif',
+);
+
 /// The codepoint of the animation Google ships for [emoji], or `null` if there
 /// is none.
 String? animatedEmojiCodepoint(String emoji) {
