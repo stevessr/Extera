@@ -731,18 +731,19 @@ packages:
     dependency: "direct main"
     description:
       path: flutter_avif
-      ref: "9f98c0c89f3b5d584f1219ed94ead8685cf2f50b"
-      resolved-ref: "9f98c0c89f3b5d584f1219ed94ead8685cf2f50b"
-      url: "https://github.com/h-sumiya/flutter_avif.git"
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      resolved-ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      url: "https://github.com/stevessr/flutter_avif.git"
     source: git
     version: "3.1.0"
   flutter_avif_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: flutter_avif_android
-      sha256: "1da135ea0d74225fae3154f954f9ba4cf7aa5e56b30d9851fcfc0ddecab9d8c5"
-      url: "https://pub.dev"
-    source: hosted
+      path: flutter_avif_android
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      resolved-ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      url: "https://github.com/stevessr/flutter_avif.git"
+    source: git
     version: "3.1.0"
   flutter_avif_ios:
     dependency: transitive
@@ -772,9 +773,9 @@ packages:
     dependency: "direct overridden"
     description:
       path: flutter_avif_platform_interface
-      ref: "9f98c0c89f3b5d584f1219ed94ead8685cf2f50b"
-      resolved-ref: "9f98c0c89f3b5d584f1219ed94ead8685cf2f50b"
-      url: "https://github.com/h-sumiya/flutter_avif.git"
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      resolved-ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      url: "https://github.com/stevessr/flutter_avif.git"
     source: git
     version: "3.1.0"
   flutter_avif_web:

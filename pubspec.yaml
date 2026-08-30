@@ -40,8 +40,8 @@ dependencies:
     sdk: flutter
   flutter_avif:
     git:
-      url: https://github.com/h-sumiya/flutter_avif.git
-      ref: 9f98c0c89f3b5d584f1219ed94ead8685cf2f50b
+      url: https://github.com/stevessr/flutter_avif.git
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
       path: flutter_avif
   flutter_cache_manager: ^3.4.1
   flutter_foreground_task: ^11.0.1
@@ -130,13 +130,17 @@ dependencies:
   webview_flutter: ^4.10.0
 
 dependency_overrides:
-  # Upstream PR #96 removes protobuf from flutter_avif's platform bridge while
-  # preserving the public API and wire compatibility with the bundled native
-  # libraries. Pin the exact reviewed commit until it lands in a release.
+  # Use the maintained fork for the native Android implementation and the
+  # protobuf-free platform bridge. Pin the exact integration-tested commit.
+  flutter_avif_android:
+    git:
+      url: https://github.com/stevessr/flutter_avif.git
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
+      path: flutter_avif_android
   flutter_avif_platform_interface:
     git:
-      url: https://github.com/h-sumiya/flutter_avif.git
-      ref: 9f98c0c89f3b5d584f1219ed94ead8685cf2f50b
+      url: https://github.com/stevessr/flutter_avif.git
+      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
       path: flutter_avif_platform_interface
 
 dev_dependencies:
