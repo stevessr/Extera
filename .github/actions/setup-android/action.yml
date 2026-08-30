@@ -46,6 +46,9 @@ runs:
           ~/.gradle/caches
           ~/.gradle/wrapper
         key: gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties', 'android/gradle.properties', 'pubspec.lock', '.tool_versions.yaml') }}
+        # Keep fallback restores within the same ABI. Restoring a multi-gigabyte
+        # armv7 cache into an armv8/x86_64 job costs more than the small amount
+        # of reusable metadata it contributes and then creates another full
+        # architecture-specific cache on save.
         restore-keys: |
           gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-
-          gradle-${{ runner.os }}-${{ runner.arch }}-
