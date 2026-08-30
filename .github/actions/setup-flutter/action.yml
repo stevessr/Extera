@@ -51,17 +51,18 @@ runs:
         rm -rf .dart_tool
         flutter pub get --no-example
 
-    # The animated emoji are shipped as assets but not checked in, so every
-    # build has to fetch them. The tool skips files it already has, which makes
-    # this a no-op on a cache hit.
+    # The animated emoji are immutable generated assets for a given source list
+    # and downloader implementation. Avoid running the downloader on cache hits:
+    # on hosted runners it otherwise spends over a minute verifying 881 files.
     - name: Restore animated emoji
+      id: animated_emoji_cache
       if: ${{ inputs.pub-get == 'true' }}
       uses: actions/cache@v5
       with:
         path: assets/animated_emoji
-        key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart') }}
+        key: animated-emoji-${{ hashFiles('lib/config/animated_emoji_data.dart', 'tool/download_animated_emoji.dart') }}
 
     - name: Download animated emoji
-      if: ${{ inputs.pub-get == 'true' }}
+      if: ${{ inputs.pub-get == 'true' && steps.animated_emoji_cache.outputs.cache-hit != 'true' }}
       shell: bash
       run: dart run tool/download_animated_emoji.dart
