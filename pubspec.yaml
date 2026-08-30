@@ -38,11 +38,6 @@ dependencies:
   file_selector: ^1.1.0
   flutter:
     sdk: flutter
-  flutter_avif:
-    git:
-      url: https://github.com/stevessr/flutter_avif.git
-      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
-      path: flutter_avif
   flutter_cache_manager: ^3.4.1
   flutter_foreground_task: ^11.0.1
   flutter_highlighter: ^0.1.1
@@ -128,20 +123,6 @@ dependencies:
   web: ^1.1.1
   webrtc_interface: ^1.4.0
   webview_flutter: ^4.10.0
-
-dependency_overrides:
-  # Use the maintained fork for the native Android implementation and the
-  # protobuf-free platform bridge. Pin the exact integration-tested commit.
-  flutter_avif_android:
-    git:
-      url: https://github.com/stevessr/flutter_avif.git
-      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
-      path: flutter_avif_android
-  flutter_avif_platform_interface:
-    git:
-      url: https://github.com/stevessr/flutter_avif.git
-      ref: a40ab086d6ce6333e4b2e2c6b7768349c581c81e
-      path: flutter_avif_platform_interface
 
 dev_dependencies:
   flutter_lints: ^6.0.0

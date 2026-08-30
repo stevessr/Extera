@@ -5,7 +5,6 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/utils/dynamic_emoji.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
@@ -22,7 +21,6 @@ class SettingsCustomExperienceView extends StatelessWidget {
     final theme = Theme.of(context);
     final client = Matrix.of(context).client;
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius);
-    final isZh = Localizations.localeOf(context).languageCode == 'zh';
 
     return Scaffold(
       appBar: AppBar(
@@ -38,41 +36,6 @@ class SettingsCustomExperienceView extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Column(
               children: [
-                Material(
-                  clipBehavior: Clip.hardEdge,
-                  color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: borderRadius,
-                  child: ListTile(
-                    leading: const Icon(Icons.animation_outlined),
-                    title: Text(
-                      isZh ? '动态 Emoji 发送格式' : 'Dynamic emoji format',
-                    ),
-                    subtitle: Text(
-                      isZh
-                          ? '点击自定义动态 Emoji 时按此格式转码并发送'
-                          : 'Transcode custom animated emoji to this format when sending',
-                    ),
-                    trailing: DropdownButtonHideUnderline(
-                      child: DropdownButton<DynamicEmojiFormat>(
-                        value: controller.dynamicEmojiFormat,
-                        items: DynamicEmojiFormat.values
-                            .map(
-                              (format) => DropdownMenuItem(
-                                value: format,
-                                child: Text(format.label),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (format) {
-                          if (format != null) {
-                            controller.setDynamicEmojiFormat(format);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Material(
                   clipBehavior: Clip.hardEdge,
                   color: theme.colorScheme.surfaceContainerHigh,
