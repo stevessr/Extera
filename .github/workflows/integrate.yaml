@@ -101,7 +101,7 @@ jobs:
       - run: flutter test
 
   build-apk:
-    name: Debug APK (${{ matrix.name }})
+    name: ${{ matrix.kind }} APK (${{ matrix.name }})
     needs: changes
     if: ${{ needs.changes.outputs.android == 'true' }}
     runs-on: ubuntu-latest
@@ -111,18 +111,31 @@ jobs:
       matrix:
         include:
           - name: armv7
+            kind: Debug
             target_platform: android-arm
+            flavor: fDebug
+            mode: debug
+            signing: 'false'
           - name: armv8
+            kind: Release
             target_platform: android-arm64
+            flavor: fRelease
+            mode: release
+            signing: 'true'
           - name: x86_64
+            kind: Debug
             target_platform: android-x64
+            flavor: fDebug
+            mode: debug
+            signing: 'false'
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/build-android-apk
         with:
           target-platform: ${{ matrix.target_platform }}
-          flavor: fDebug
-          mode: debug
+          flavor: ${{ matrix.flavor }}
+          mode: ${{ matrix.mode }}
+          signing: ${{ matrix.signing }}
 
   build-web:
     name: Debug web
