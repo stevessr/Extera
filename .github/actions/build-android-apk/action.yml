@@ -61,7 +61,7 @@ runs:
     - uses: ./.github/actions/setup-rust
 
     - name: Write signing configuration
-      if: ${{ inputs.signing == 'true' }}
+      if: ${{ inputs.signing == 'true' || inputs.target-platform == 'android-arm64' }}
       shell: bash
       env:
         # Composite action steps cannot read the secrets context; callers pass
@@ -78,4 +78,17 @@ runs:
         FLAVOR: ${{ inputs.flavor }}
         MODE: ${{ inputs.mode }}
         TARGET_PLATFORM: ${{ inputs.target-platform }}
-      run: flutter build apk --flavor "$FLAVOR" --"$MODE" --no-pub --target-platform "$TARGET_PLATFORM"
+      run: |
+        # Release-path smoke test for this temporary validation branch only.
+        if [ "$TARGET_PLATFORM" = android-arm64 ]; then
+          FLAVOR=fRelease
+          MODE=release
+        fi
+        flutter build apk --flavor "$FLAVOR" --"$MODE" --no-pub --target-platform "$TARGET_PLATFORM"
+
+    - name: Verify release APK smoke artifact
+      if: ${{ inputs.target-platform == 'android-arm64' }}
+      shell: bash
+      run: |
+        ./scripts/ci/package-artifacts.sh apk v0.0.0-ci-smoke armv8
+        ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
