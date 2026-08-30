@@ -78,6 +78,10 @@ defaults:
   run:
     shell: bash
 
+# JavaScript actions use the runner-managed action runtime. Installing a system
+# Node package does not change that runtime, so keep Node setup out of jobs and
+# require a current GitHub-hosted/self-hosted Actions runner instead.
+
 jobs:
   prepare:
     name: Resolve release metadata
@@ -89,16 +93,7 @@ jobs:
       matrix: ${{ steps.matrices.outputs.matrix }}
       any: ${{ steps.matrices.outputs.any }}
     steps:
-      # The JS actions below declare runs.using: node24, which older runner
-      # images do not ship. Must come before the first one of them.
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - id: meta
         run: ./scripts/ci/resolve-release-meta.sh
@@ -216,22 +211,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Ensure Node 24 (Linux)
-        if: ${{ runner.os != 'macOS' }}
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - name: Ensure Node 24 (macOS)
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          brew install node@24
-          echo "$(brew --prefix node@24)/bin" >>"$GITHUB_PATH"
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - id: provenance
         name: Resolve artifact provenance
@@ -255,6 +235,7 @@ jobs:
         env:
           BUILD_DATE: ${{ steps.provenance.outputs.build_date }}
           COMMIT_HASH: ${{ steps.provenance.outputs.commit_hash }}
+
       - run: ./scripts/ci/verify-apk-signature.sh artifacts/*.apk
         if: ${{ matrix.platform == 'apk' }}
 
@@ -331,7 +312,7 @@ jobs:
 
       - name: Restore CocoaPods specs
         if: ${{ matrix.platform == 'ios' || matrix.platform == 'macos' }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cocoapods
           key: cocoapods-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock', 'macos/Podfile.lock') }}
@@ -385,14 +366,7 @@ jobs:
     if: ${{ always() && (github.event_name == 'push' || inputs.publish) }}
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure Node 24
-        run: |
-          node -p process.versions.node 2>/dev/null | grep -qE '^(2[4-9]|[3-9][0-9])\.' && exit 0 || true
-          command -v sudo >/dev/null && sudo=sudo || sudo=
-          curl -fsSL https://deb.nodesource.com/setup_24.x | $sudo bash -
-          $sudo apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:
