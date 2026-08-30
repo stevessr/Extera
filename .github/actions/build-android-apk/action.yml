@@ -56,12 +56,6 @@ runs:
       with:
         cache_scope: android-${{ steps.scope.outputs.scope }}
     - uses: ./.github/actions/setup-flutter
-    # Flutter tool regression #169336 can leave integration_test in the Android
-    # GeneratedPluginRegistrant when a later release build uses --no-pub.
-    # Refresh platform build configuration after pub get before that build.
-    - name: Refresh Flutter build configuration
-      shell: bash
-      run: flutter build --config-only
     # cargokit compiles the vodozemac Rust crate during the Gradle build, so
     # this action needs the toolchain and its cache as much as anything else.
     - uses: ./.github/actions/setup-rust
@@ -90,7 +84,10 @@ runs:
           FLAVOR=fRelease
           MODE=release
         fi
-        flutter build apk --flavor "$FLAVOR" --"$MODE" --no-pub --target-platform "$TARGET_PLATFORM"
+        # Do not pass --no-pub here. Flutter needs the build-time pub/configure
+        # phase to regenerate Android plugin registration correctly when
+        # integration_test is a dev dependency (flutter/flutter#169336).
+        flutter build apk --flavor "$FLAVOR" --"$MODE" --target-platform "$TARGET_PLATFORM"
 
     - name: Verify release APK smoke artifact
       if: ${{ inputs.target-platform == 'android-arm64' }}
