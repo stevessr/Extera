@@ -116,6 +116,30 @@ InlineSpan _replaceEmojiInSpan(InlineSpan span, double fontSize) {
   final children = span.children;
   final text = span.text;
 
+  // A recognizer only receives pointer events for glyphs owned by the exact
+  // TextSpan it is attached to. Moving that span's text into child spans leaves
+  // the recognizer on a textless parent, which makes linkified plain m.text
+  // URLs look like links but stops taps from firing. Keep recognized text on
+  // the original span; animated emoji inside links are less important than a
+  // working link, while any existing child spans can still be rewritten.
+  if (span.recognizer != null && text != null && text.isNotEmpty) {
+    if (children == null || children.isEmpty) return span;
+    return TextSpan(
+      text: text,
+      style: span.style,
+      recognizer: span.recognizer,
+      mouseCursor: span.mouseCursor,
+      onEnter: span.onEnter,
+      onExit: span.onExit,
+      semanticsLabel: span.semanticsLabel,
+      locale: span.locale,
+      spellOut: span.spellOut,
+      children: [
+        for (final child in children) _replaceEmojiInSpan(child, fontSize),
+      ],
+    );
+  }
+
   // A span cannot hold both its own emoji spans and its existing children, so
   // fold the text into the children list.
   final newChildren = <InlineSpan>[
