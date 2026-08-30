@@ -79,6 +79,13 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
       final fontLoader = FontLoader('SystemFont');
       fontLoader.addFont(_readFileBytes(fontFilePath));
       await fontLoader.load();
+
+      // ThemeData may already have been built while SystemFont was still
+      // unavailable, causing Flutter to render the whole UI with a fallback
+      // font. Rebuild after registration so every SystemFont user resolves to
+      // the actual Android system font instead of keeping the first-frame
+      // fallback for the lifetime of the app.
+      if (mounted) setState(() {});
     } on PlatformException {
       // The system font is optional; keep the app usable if Android does not
       // expose a readable font path.
