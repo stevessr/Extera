@@ -36,7 +36,10 @@ void main() {
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: Text.rich(TextSpan(children: spans)),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Text.rich(TextSpan(children: spans)),
+        ),
       ),
     );
 
