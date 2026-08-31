@@ -330,11 +330,8 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
                   ),
                 )
                 .toList(),
-            customEmojiBuilder: (context, name, size) => MxcImage(
-              uri: Uri.parse(name),
-              width: 32,
-              height: 32,
-            ),
+            customEmojiBuilder: (context, name, size) =>
+                MxcImage(uri: Uri.parse(name), width: 32, height: 32),
           ),
         ),
       ),
@@ -432,9 +429,7 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
                                           chatController?.replyAction(event);
                                           Navigator.of(context).pop();
                                         },
-                                        icon: const Icon(
-                                          Icons.reply_outlined,
-                                        ),
+                                        icon: const Icon(Icons.reply_outlined),
                                       ),
                                     if (chatController != null &&
                                         event.canRedact)
