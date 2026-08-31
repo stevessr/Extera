@@ -83,7 +83,12 @@ jobs:
       - run: flutter gen-l10n
 
       - name: Check formatting
-        run: dart format lib/ test/ integration_test/ --set-exit-if-changed
+        run: |
+          set +e
+          dart format lib/ test/ integration_test/ --set-exit-if-changed
+          status=$?
+          git diff -- lib/pages/chat/events/message_reactions.dart test/animated_emoji_link_test.dart
+          exit $status
 
       - name: Check import ordering
         run: dart run tidy_imports --no-comments --exit-if-changed
