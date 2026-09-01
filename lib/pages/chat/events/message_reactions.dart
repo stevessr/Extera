@@ -248,9 +248,7 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
 
     final room = targetEvent.room;
     final imagePacks = room.getImagePacks(ImagePackUsage.emoticon);
-    final recentEmojiEntries = room.client.recentEmojis.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final recentEmojis = recentEmojiEntries.map((entry) => entry.key).toList();
+    final recentEmojis = room.client.recentEmojis.keys.toList(growable: false);
     final customCategories = imagePacks.entries
         .map(
           (entry) => CustomCategory(

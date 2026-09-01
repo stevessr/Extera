@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:collection/collection.dart';
 import 'package:emojis/emoji.dart';
 import 'package:matrix/matrix.dart';
 
@@ -124,10 +123,7 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius);
     final imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
 
-    final recentEmojisAll = client.recentEmojis.entries
-        .sortedByCompare((element) => element.value, (a, b) => b - a)
-        .map((entry) => entry.key)
-        .toList();
+    final recentEmojisAll = client.recentEmojis.keys.toList(growable: false);
     final recentEmojis = recentEmojisAll.take(5).toList();
 
     final receipts = room
