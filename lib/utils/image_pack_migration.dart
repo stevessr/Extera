@@ -21,6 +21,7 @@ Map<String, dynamic> normalizeStableImagePackContent(
   final pack = rawPack is Map
       ? Map<String, dynamic>.from(rawPack)
       : <String, dynamic>{};
+  final hasExplicitPackUsage = pack.containsKey('usage');
   final packUsage = _readUsage(pack['usage']);
 
   final rawImages = content['images'];
@@ -34,7 +35,7 @@ Map<String, dynamic> normalizeStableImagePackContent(
       final image = Map<String, dynamic>.from(entry.value as Map);
       final imageUsage = _readUsage(image.remove('usage'));
 
-      if (packUsage == null || packUsage.isEmpty) {
+      if (!hasExplicitPackUsage) {
         if (imageUsage == null || imageUsage.isEmpty) {
           hasUnrestrictedImage = true;
         } else {
@@ -46,12 +47,18 @@ Map<String, dynamic> normalizeStableImagePackContent(
     }
   }
 
-  if ((packUsage == null || packUsage.isEmpty) &&
+  if (!hasExplicitPackUsage &&
       !hasUnrestrictedImage &&
       inferredUsage.isNotEmpty) {
     pack['usage'] = [
       if (inferredUsage.contains('emoticon')) 'emoticon',
       if (inferredUsage.contains('sticker')) 'sticker',
+    ];
+  } else if (hasExplicitPackUsage && packUsage != null) {
+    // Keep stable values deterministic and discard unknown legacy values.
+    pack['usage'] = [
+      if (packUsage.contains('emoticon')) 'emoticon',
+      if (packUsage.contains('sticker')) 'sticker',
     ];
   }
 
