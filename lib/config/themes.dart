@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/utils/font_family.dart';
 
 import 'app_config.dart';
 
@@ -79,6 +80,15 @@ abstract class FluffyThemes {
         : colorScheme.surfaceContainer;
 
     final isColumnMode = FluffyThemes.isColumnMode(context);
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.uiFont.value,
+    );
+    final fontFamilyFallback = resolveFontFallbacks(
+      configuredFallbacks: AppSettings.fallbackFonts.value,
+      primaryFont: fontFamily,
+      includeNotoEmoji: notoEmoji == true,
+    );
 
     return ThemeData(
       visualDensity: VisualDensity.standard,
@@ -86,16 +96,8 @@ abstract class FluffyThemes {
       brightness: brightness,
       colorScheme: colorScheme,
       useSystemColors: true,
-      fontFamily: AppSettings.systemFont.value
-          ? 'SystemFont'
-          : AppSettings.uiFont.value.isEmpty
-          ? null
-          : AppSettings.uiFont.value,
-      fontFamilyFallback: notoEmoji == true
-          ? ['Noto Color Emoji', ...AppSettings.fallbackFonts.value.split(',')]
-          : AppSettings.fallbackFonts.value.isEmpty
-          ? null
-          : AppSettings.fallbackFonts.value.split(','),
+      fontFamily: fontFamily,
+      fontFamilyFallback: fontFamilyFallback,
       dividerColor: dividerColor,
       popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(
