@@ -563,6 +563,7 @@ class StickerPickerDialogState extends State<StickerPickerDialog> {
             // Main sticker grid area — fully virtualized
             Expanded(
               child: CustomScrollView(
+                scrollCacheExtent: const ScrollCacheExtent.viewport(1.0),
                 controller: _scrollController,
                 slivers: <Widget>[
                   // Favourites section
@@ -677,10 +678,13 @@ class _StickerTile extends StatelessWidget {
             uri: image.url,
             cacheKey: image.url.toString(),
             fit: BoxFit.contain,
-            width: 128,
-            height: 128,
+            // Grid cells are at most 84 logical pixels. Loading the original
+            // sticker here wastes the global MXC byte cache and causes reloads when
+            // virtualized rows are rebuilt while scrolling.
+            width: 96,
+            height: 96,
             animated: true,
-            isThumbnail: false,
+            isThumbnail: true,
           ),
         ),
       ),

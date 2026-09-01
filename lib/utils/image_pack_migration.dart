@@ -71,8 +71,5 @@ Map<String, dynamic> normalizeStableImagePackContent(
 
 Set<String>? _readUsage(Object? raw) {
   if (raw is! Iterable) return null;
-  return raw
-      .whereType<String>()
-      .where(_stableImagePackUsages.contains)
-      .toSet();
+  return raw.whereType<String>().where(_stableImagePackUsages.contains).toSet();
 }

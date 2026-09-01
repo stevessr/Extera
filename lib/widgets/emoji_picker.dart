@@ -200,6 +200,45 @@ class _StandardEmojiIndex {
 
 final _standardEmojiIndex = _StandardEmojiIndex.build();
 
+bool _sameCustomCategories(
+  List<CustomCategory> left,
+  List<CustomCategory> right,
+) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+
+  for (var i = 0; i < left.length; i++) {
+    final a = left[i];
+    final b = right[i];
+    if (a.id != b.id ||
+        a.name != b.name ||
+        a.emojis.length != b.emojis.length) {
+      return false;
+    }
+    for (final entry in a.emojis.entries) {
+      if (b.emojis[entry.key] != entry.value) return false;
+    }
+  }
+  return true;
+}
+
+bool _samePickerEmojis(List<PickerEmoji> left, List<PickerEmoji> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+
+  for (var i = 0; i < left.length; i++) {
+    final a = left[i];
+    final b = right[i];
+    if (identical(a, b)) continue;
+    if (a.searchIdentity != b.searchIdentity ||
+        a.customData != b.customData ||
+        a.categoryId != b.categoryId) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Internal Tab Abstraction
 abstract class _PickerTab {
   Widget get icon;
@@ -278,24 +317,12 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   late TabController _tabController;
   int _selectedTabIndex = 0;
   bool _isLoading = true;
-  bool _initialLoadStarted = false;
 
   @override
   void initState() {
     super.initState();
     _initTabs();
-
-    // The picker is embedded in the chat panel rather than presented as its
-    // own route. Waiting for ModalRoute.animation to complete can therefore
-    // miss the completion edge (or wait on an unrelated route transition),
-    // leaving the grid on its loading spinner indefinitely. Build the cached
-    // index after the first frame instead: this keeps the opening frame cheap
-    // while making initialization deterministic.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _initialLoadStarted) return;
-      _initialLoadStarted = true;
-      _loadEmojis();
-    });
+    _loadEmojis();
   }
 
   void _initTabs() {
@@ -321,19 +348,21 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   void didUpdateWidget(MatrixEmojiPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final customCategoriesChanged =
-        widget.customCategories != oldWidget.customCategories;
+    final customCategoriesChanged = !_sameCustomCategories(
+      widget.customCategories,
+      oldWidget.customCategories,
+    );
     if (customCategoriesChanged) {
       _tabController.dispose();
       _initTabs();
-      if (_initialLoadStarted) _loadEmojis();
+      _loadEmojis();
       return;
     }
 
-    // Recent changes do not invalidate the expensive standard/custom indexes.
-    // Only recalculate the current result set when it can affect the screen.
-    if (widget.recentEmojis != oldWidget.recentEmojis && _initialLoadStarted) {
-      setState(_calculateDisplayedEmojis);
+    // Chat rebuilds recreate these lists even when their contents are unchanged.
+    // Compare values so unrelated timeline updates do not reset picker state.
+    if (!_samePickerEmojis(widget.recentEmojis, oldWidget.recentEmojis)) {
+      _calculateDisplayedEmojis();
     }
   }
 
@@ -373,13 +402,11 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         : Set<String>.unmodifiable(custom.map((emoji) => emoji.searchIdentity));
 
     if (!mounted) return;
-    setState(() {
-      _customByCategoryId = Map.unmodifiable(customByCategoryId);
-      _customSearchIdentities = customIdentities;
-      _searchableEmojis = searchable;
-      _isLoading = false;
-      _calculateDisplayedEmojis();
-    });
+    _customByCategoryId = Map.unmodifiable(customByCategoryId);
+    _customSearchIdentities = customIdentities;
+    _searchableEmojis = searchable;
+    _isLoading = false;
+    _calculateDisplayedEmojis();
   }
 
   // Pure logic function to filter emojis based on current state

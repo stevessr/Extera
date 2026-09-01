@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:http/http.dart' show ClientException;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -74,6 +76,29 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
+class _MxcImageError extends StatelessWidget {
+  final double? width;
+  final double? height;
+
+  const _MxcImageError({required this.width, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        child: Icon(
+          Icons.broken_image_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+}
+
 class _MxcImageState extends State<MxcImage> {
   /// Global in-memory cache of decoded-input image bytes.
   ///
@@ -85,12 +110,13 @@ class _MxcImageState extends State<MxcImage> {
   static const int _cacheMaxBytes = 64 * 1024 * 1024;
   static const int _cacheMaxEntries = 1024;
 
-  /// Upper bound for [_tryLoad] retries on persistent IO failures.
+  /// Maximum number of actual load attempts for one image generation.
   static const int _maxLoadAttempts = 4;
   static final Map<String, Uint8List> _imageDataLru = <String, Uint8List>{};
   static int _imageDataBytes = 0;
 
   Uint8List? _imageDataNoCache;
+  bool _loadFailed = false;
 
   // Incremented whenever the image source changes. Async media requests keep
   // the generation they started with so stale completions cannot populate a
@@ -106,10 +132,19 @@ class _MxcImageState extends State<MxcImage> {
       _imageDataNoCache = data;
       return;
     }
-    _store(cacheKey, data);
+    _store(data);
   }
 
-  String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
+  String get _lruKey {
+    final namespace = widget.cacheName ?? '';
+    final cacheKey = widget.cacheKey!;
+    if (!widget.isThumbnail) {
+      return '$namespace::\u0000$cacheKey::full';
+    }
+    return '$namespace::\u0000$cacheKey::thumbnail:'
+        '${widget.width}x${widget.height}:'
+        '${widget.thumbnailMethod.name}:${widget.animated}';
+  }
 
   static Uint8List? _touch(String lruKey) {
     final data = _imageDataLru.remove(lruKey);
@@ -118,8 +153,8 @@ class _MxcImageState extends State<MxcImage> {
     return data;
   }
 
-  void _store(String cacheKey, Uint8List data) {
-    final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
+  void _store(Uint8List data) {
+    final lruKey = _lruKey;
     final previous = _imageDataLru.remove(lruKey);
     if (previous != null) {
       _imageDataBytes -= previous.length;
@@ -146,11 +181,13 @@ class _MxcImageState extends State<MxcImage> {
     return ClipRRect(
       borderRadius: widget.borderRadius,
       child: !hasData
-          ? _MxcImagePlaceholder(
-              width: widget.width,
-              height: widget.height,
-              placeholder: widget.placeholder,
-            )
+          ? _loadFailed
+                ? _MxcImageError(width: widget.width, height: widget.height)
+                : _MxcImagePlaceholder(
+                    width: widget.width,
+                    height: widget.height,
+                    placeholder: widget.placeholder,
+                  )
           : Image.memory(
               data,
               width: widget.width,
@@ -161,17 +198,9 @@ class _MxcImageState extends State<MxcImage> {
                   : FilterQuality.medium,
               errorBuilder: (context, e, s) {
                 Logs().d('Unable to render mxc image', e, s);
-                return SizedBox(
+                return _MxcImageError(
                   width: widget.width,
                   height: widget.height,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
                 );
               },
             ),
@@ -206,6 +235,7 @@ class _MxcImageState extends State<MxcImage> {
 
     _loadGeneration++;
     _imageDataNoCache = null;
+    _loadFailed = false;
     final generation = _loadGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && generation == _loadGeneration) {
@@ -260,29 +290,50 @@ class _MxcImageState extends State<MxcImage> {
         setState(() {
           _imageData = data.bytes;
         });
-        return;
       }
     }
   }
 
-  Future<void> _tryLoad(int generation, [int attempt = 0]) async {
-    if (!mounted || generation != _loadGeneration || _imageData != null) {
+  void _markLoadFailed(int generation) {
+    if (!mounted || generation != _loadGeneration || _loadFailed) return;
+    setState(() => _loadFailed = true);
+  }
+
+  Future<void> _tryLoad(int generation, [int attempt = 1]) async {
+    if (!mounted ||
+        generation != _loadGeneration ||
+        _loadFailed ||
+        _imageData != null) {
       return;
     }
     try {
       await _load(generation);
+      if (!mounted || generation != _loadGeneration) return;
+      final data = _imageData;
+      if (data == null || data.isEmpty) {
+        _markLoadFailed(generation);
+      }
     } catch (error, stackTrace) {
-      // Media failures are not limited to dart:io IOException: HTTP status
-      // errors, Matrix media errors and cache/database failures can all be
-      // transient. Retry all load failures, but keep the existing hard bound.
+      final retryable =
+          error is IOException ||
+          error is ClientException ||
+          (error is MxcDownloadException && error.isRetryable);
       Logs().d(
-        'Unable to load mxc image (attempt ${attempt + 1})',
+        retryable
+            ? 'Unable to load mxc image (attempt $attempt)'
+            : 'Unable to load mxc image',
         error,
         stackTrace,
       );
-      if (attempt >= _maxLoadAttempts ||
+
+      // Retry transport errors plus explicitly transient HTTP responses. A
+      // missing/forbidden media URI should fail once rather than fan out into a
+      // request burst every time a virtualized picker cell is rebuilt.
+      if (!retryable ||
+          attempt >= _maxLoadAttempts ||
           !mounted ||
           generation != _loadGeneration) {
+        if (_imageData == null) _markLoadFailed(generation);
         return;
       }
       await Future.delayed(widget.retryDuration);
