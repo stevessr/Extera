@@ -148,13 +148,47 @@ class _MxcImageState extends State<MxcImage> {
   // newer MxcImage with bytes from the previous grid cell.
   int _loadGeneration = 0;
 
-  _MxcImageMemoryCache get _cache => _imageDataCaches[widget.cacheCategory]!;
+  MxcImageCacheCategory get _effectiveCacheCategory {
+    if (widget.cacheCategory != MxcImageCacheCategory.general) {
+      return widget.cacheCategory;
+    }
+    if (widget.event?.messageType == MessageTypes.Sticker ||
+        (widget.cacheKey != null && widget.animated)) {
+      return MxcImageCacheCategory.sticker;
+    }
+    return MxcImageCacheCategory.general;
+  }
 
-  Uint8List? get _imageData =>
-      widget.cacheKey == null ? _imageDataNoCache : _cache.touch(_lruKey);
+  String? get _effectiveCacheKey {
+    final explicitKey = widget.cacheKey;
+    if (explicitKey != null) return explicitKey;
+    if (_effectiveCacheCategory != MxcImageCacheCategory.sticker) return null;
+
+    final dimensions = '${widget.width}x${widget.height}';
+    final variant = '$dimensions:${widget.isThumbnail}:${widget.animated}';
+    final uri = widget.uri;
+    if (uri != null) return 'uri:$uri:$variant';
+
+    final event = widget.event;
+    if (event == null) return null;
+    final contentUrl = event.content['url'];
+    if (contentUrl is String && contentUrl.isNotEmpty) {
+      return 'event-url:$contentUrl:$variant';
+    }
+    return 'event:${event.eventId}:$variant';
+  }
+
+  _MxcImageMemoryCache get _cache =>
+      _imageDataCaches[_effectiveCacheCategory]!;
+
+  Uint8List? get _imageData {
+    final cacheKey = _effectiveCacheKey;
+    return cacheKey == null ? _imageDataNoCache : _cache.touch(_lruKey(cacheKey));
+  }
+
   set _imageData(Uint8List? data) {
     if (data == null) return;
-    final cacheKey = widget.cacheKey;
+    final cacheKey = _effectiveCacheKey;
     if (cacheKey == null) {
       _imageDataNoCache = data;
       return;
@@ -162,11 +196,11 @@ class _MxcImageState extends State<MxcImage> {
     _store(cacheKey, data);
   }
 
-  String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
+  String _lruKey(String cacheKey) =>
+      '${widget.cacheName ?? ''}::\u0000$cacheKey';
 
   void _store(String cacheKey, Uint8List data) {
-    final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
-    _cache.store(lruKey, data);
+    _cache.store(_lruKey(cacheKey), data);
   }
 
   @override
