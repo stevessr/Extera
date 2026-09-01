@@ -17,20 +17,16 @@ void main() {
     await AppSettings.store.reload();
   });
 
-  testWidgets('link recognizer stays attached to linkified text', (tester) async {
+  testWidgets('link recognizer stays attached to linkified text', (
+    tester,
+  ) async {
     var taps = 0;
     final recognizer = TapGestureRecognizer()..onTap = () => taps++;
     addTearDown(recognizer.dispose);
 
-    final spans = replaceEmojiInSpans(
-      [
-        TextSpan(
-          text: 'https://example.com',
-          recognizer: recognizer,
-        ),
-      ],
-      fontSize: 14,
-    );
+    final spans = replaceEmojiInSpans([
+      TextSpan(text: 'https://example.com', recognizer: recognizer),
+    ], fontSize: 14);
 
     final linkSpan = spans.single as TextSpan;
     expect(linkSpan.text, 'https://example.com');
@@ -40,7 +36,10 @@ void main() {
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: Text.rich(TextSpan(children: spans)),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Text.rich(TextSpan(children: spans)),
+        ),
       ),
     );
 
