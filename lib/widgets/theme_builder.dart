@@ -74,6 +74,7 @@ class ThemeController extends State<ThemeBuilder> {
         preferences.getInt(widget.schemeVariantSettingsKey) ??
         DynamicSchemeVariant.values.indexOf(.tonalSpot);
 
+    if (!mounted) return;
     setState(() {
       _themeMode = ThemeMode.values.singleWhereOrNull(
         (value) => value.name == rawThemeMode,
@@ -89,6 +90,7 @@ class ThemeController extends State<ThemeBuilder> {
     final preferences = _sharedPreferences ??=
         await SharedPreferences.getInstance();
     await preferences.setString(widget.themeModeSettingsKey, newThemeMode.name);
+    if (!mounted) return;
     setState(() {
       _themeMode = newThemeMode;
     });
@@ -105,6 +107,7 @@ class ThemeController extends State<ThemeBuilder> {
         newPrimaryColor.hexValue,
       );
     }
+    if (!mounted) return;
     setState(() {
       _primaryColor = newPrimaryColor;
     });
@@ -121,6 +124,7 @@ class ThemeController extends State<ThemeBuilder> {
         DynamicSchemeVariant.values.indexOf(newVariant),
       );
     }
+    if (!mounted) return;
     setState(() {
       _variant = newVariant;
     });
@@ -130,6 +134,7 @@ class ThemeController extends State<ThemeBuilder> {
     final preferences = _sharedPreferences ??=
         await SharedPreferences.getInstance();
     await preferences.setBool(widget.pureBlackSettingsKey, newPureBlack);
+    if (!mounted) return;
     setState(() {
       _pureBlack = newPureBlack;
     });
@@ -140,8 +145,19 @@ class ThemeController extends State<ThemeBuilder> {
         await SharedPreferences.getInstance();
     await preferences.setBool(widget.notoEmojiSettingsKey, newNotoEmoji);
     await preferences.remove('xyz.extera.next.twemojiFont');
+    refreshTypography(notoEmoji: newNotoEmoji);
+  }
+
+  /// Forces MaterialApp to rebuild its ThemeData after font settings change.
+  ///
+  /// Font preferences live outside ThemeController, so rebuilding only the
+  /// settings page leaves existing routes with the old TextTheme until another
+  /// theme change happens. Keeping the refresh here makes UI, chat and overlay
+  /// routes switch typography in the same frame.
+  void refreshTypography({bool? notoEmoji}) {
+    if (!mounted) return;
     setState(() {
-      _notoEmoji = newNotoEmoji;
+      if (notoEmoji != null) _notoEmoji = notoEmoji;
     });
   }
 
