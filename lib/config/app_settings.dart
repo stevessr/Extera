@@ -31,10 +31,7 @@ enum AppSettings<T> {
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
-  fallbackFonts<String>(
-    'xyz.extera.fallbackFonts',
-    'sans-serif',
-  ),
+  fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),
 
   monospaceFont<String>('xyz.extera.monospaceFont', 'Roboto Mono'),
   monospaceFallbackFonts<String>(
@@ -43,10 +40,7 @@ enum AppSettings<T> {
   ),
 
   chatFont<String>('xyz.extera.chatFont', 'Roboto'),
-  chatFallbackFonts<String>(
-    'xyz.extera.chatFallbackFonts',
-    'sans-serif',
-  ),
+  chatFallbackFonts<String>('xyz.extera.chatFallbackFonts', 'sans-serif'),
 
   doubleTapAction<String>(
     'xyz.extera.doubleTapAction',
