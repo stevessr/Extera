@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:collection/collection.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -24,10 +23,7 @@ class ChatEmojiPicker extends StatelessWidget {
     final client = Matrix.of(context).client;
     final imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
     final recentEmojis = showEmojiPicker
-        ? client.recentEmojis.entries
-              .sortedByCompare((element) => element.value, (a, b) => b - a)
-              .map((entry) => entry.key)
-              .toList()
+        ? client.recentEmojis.keys.toList(growable: false)
         : const <String>[];
     final customCategories = showEmojiPicker
         ? imagePacks.entries
