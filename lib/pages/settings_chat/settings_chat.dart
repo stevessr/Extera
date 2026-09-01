@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:collection/collection.dart';
 import 'package:matrix/matrix.dart';
 import 'package:slugify/slugify.dart';
 
@@ -45,18 +44,26 @@ class SettingsChatController extends State<SettingsChat> {
     Client client, [
     ImagePackUsage? usage,
   ]) {
-    final allMxcs = <Uri>{}; // used for easy deduplication
+    final allMxcs = <Uri>{};
     final packs = <String, ImagePackContent>{};
 
     void addImagePack(BasicEvent? event, {Room? room, String? slug}) {
       if (event == null) return;
       final imagePack = event.parsedImagePackContent;
-      final finalSlug = slugify(slug ?? 'pack');
+      final rawSlug = slug ?? 'pack';
+      var finalSlug = slugify(rawSlug);
+      if (finalSlug.isEmpty) finalSlug = rawSlug;
+      if (packs.containsKey(finalSlug)) {
+        var suffix = 2;
+        while (packs.containsKey('$finalSlug-$suffix')) {
+          suffix++;
+        }
+        finalSlug = '$finalSlug-$suffix';
+      }
+
       for (final entry in imagePack.images.entries) {
         final image = entry.value;
-        if (allMxcs.contains(image.url)) {
-          continue;
-        }
+        if (allMxcs.contains(image.url)) continue;
         final imageUsage = image.usage ?? imagePack.pack.usage;
         if (usage != null &&
             imageUsage != null &&
@@ -80,40 +87,46 @@ class SettingsChatController extends State<SettingsChat> {
       }
     }
 
-    // first we add the user image pack
-    addImagePack(client.accountData['im.ponies.user_emotes'], slug: 'user');
-    // next we add all the external image packs
-    final packRooms = client.accountData['im.ponies.emote_rooms'];
-    final rooms = packRooms?.content.tryGetMap<String, Object?>('rooms');
-    if (packRooms != null && rooms != null) {
+    void addReferencedPacks(BasicEvent? references, {required bool stable}) {
+      final rooms = references?.content.tryGetMap<String, Object?>('rooms');
+      if (rooms == null) return;
       for (final roomEntry in rooms.entries) {
-        final roomId = roomEntry.key;
-        final room = client.getRoomById(roomId);
-        final roomEntryValue = roomEntry.value;
-        if (room != null && roomEntryValue is Map<String, Object?>) {
-          for (final stateKeyEntry in roomEntryValue.entries) {
-            final stateKey = stateKeyEntry.key;
-            final fallbackSlug =
-                '${room.getLocalizedDisplayname()}-${stateKey.isNotEmpty ? '$stateKey-' : ''}${room.id}';
-            addImagePack(
-              room.getState('im.ponies.room_emotes', stateKey),
-              room: room,
-              slug: fallbackSlug,
-            );
-          }
+        final room = client.getRoomById(roomEntry.key);
+        final stateKeys = roomEntry.value;
+        if (room == null || stateKeys is! Map<String, Object?>) continue;
+        for (final stateKey in stateKeys.keys) {
+          final stableEvent = room.getState(EventTypes.RoomImagePack, stateKey);
+          final legacyEvent = room.getState('im.ponies.room_emotes', stateKey);
+          final event = stable
+              ? stableEvent ?? legacyEvent
+              : legacyEvent ?? stableEvent;
+          final fallbackSlug =
+              '${room.getLocalizedDisplayname()}-${stateKey.isNotEmpty ? '$stateKey-' : ''}${room.id}';
+          addImagePack(event, room: room, slug: fallbackSlug);
         }
       }
     }
+
+    // Stable MSC2545 globally-enabled packs are authoritative.
+    addReferencedPacks(
+      client.accountData[EventTypes.ImagePackRooms],
+      stable: true,
+    );
+
+    // Preserve compatibility with the historical Element image-pack events.
+    addImagePack(client.accountData['im.ponies.user_emotes'], slug: 'user');
+    addReferencedPacks(
+      client.accountData['im.ponies.emote_rooms'],
+      stable: false,
+    );
+
     return packs;
   }
 
   void changeDefaultReaction() async {
     final client = Matrix.of(context).client;
     final imagePacks = getImagePacks(client, ImagePackUsage.emoticon);
-    final recentEmojisAll = client.recentEmojis.entries
-        .sortedByCompare((element) => element.value, (a, b) => b - a)
-        .map((entry) => entry.key)
-        .toList();
+    final recentEmojisAll = client.recentEmojis.keys.toList(growable: false);
     final customCategories = imagePacks.entries
         .map(
           (entry) => CustomCategory(
