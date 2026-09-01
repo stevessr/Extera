@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/font_family.dart';
 
 class EventRedactedContent extends StatelessWidget {
   final Event event;
@@ -32,17 +33,19 @@ class EventRedactedContent extends StatelessWidget {
             ? L10n.of(context).redactedBy(redactedBy)
             : L10n.of(context).redactedByBecause(redactedBy, reason);
 
+        final fontFamily = resolveFontFamily(
+          useSystemFont: AppSettings.systemFont.value,
+          configuredFont: AppSettings.chatFont.value,
+        );
         final textStyle = TextStyle(
           color: textColor.withAlpha(128),
           fontSize: fontSize,
-          fontFamily: AppSettings.systemFont.value
-              ? 'SystemFont'
-              : AppSettings.chatFont.value.isNotEmpty
-              ? AppSettings.systemFont.value
-                    ? 'SystemFont'
-                    : AppSettings.chatFont.value
-              : null,
-          fontFamilyFallback: AppSettings.chatFallbackFonts.value.split(','),
+          fontFamily: fontFamily,
+          fontFamilyFallback: resolveFontFallbacks(
+            configuredFallbacks: AppSettings.chatFallbackFonts.value,
+            primaryFont: fontFamily,
+            includeNotoEmoji: AppSettings.notoEmojiFont.value,
+          ),
         );
 
         return Padding(
