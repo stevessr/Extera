@@ -1,0 +1,74 @@
+name: Apply stable MSC app patch
+
+on:
+  push:
+    branches:
+      - feat/stable-msc-image-packs-recents
+    paths:
+      - .github/workflows/apply-stable-msc-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'chore: apply stable MSC app patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/stable-msc-image-packs-recents
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Preserve stable recent emoji ordering
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('lib/pages/chat/events/message_reactions.dart'): (
+                  """    final recentEmojiEntries = room.client.recentEmojis.entries.toList()\n      ..sort((a, b) => b.value.compareTo(a.value));\n    final recentEmojis = recentEmojiEntries.map((entry) => entry.key).toList();\n""",
+                  """    final recentEmojis = room.client.recentEmojis.keys.toList(\n      growable: false,\n    );\n""",
+              ),
+              Path('lib/pages/chat/message_context_menu.dart'): (
+                  """    final recentEmojisAll = client.recentEmojis.entries\n        .sortedByCompare((element) => element.value, (a, b) => b - a)\n        .map((entry) => entry.key)\n        .toList();\n""",
+                  """    final recentEmojisAll = client.recentEmojis.keys.toList(\n      growable: false,\n    );\n""",
+              ),
+          }
+
+          for path, (old, new) in replacements.items():
+              text = path.read_text()
+              if old not in text:
+                  raise SystemExit(f'expected recent emoji block not found in {path}')
+              path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Format touched Dart files
+        run: |
+          dart format \
+            lib/pages/chat/chat_emoji_picker.dart \
+            lib/pages/chat/events/message_reactions.dart \
+            lib/pages/chat/message_context_menu.dart \
+            lib/pages/settings_chat/settings_chat.dart
+
+      - name: Verify stable MSC integration
+        run: |
+          flutter analyze
+          flutter test test/emoji_picker_recent_test.dart
+
+      - name: Commit resolved SDK and app changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            pubspec.lock \
+            lib/pages/chat/chat_emoji_picker.dart \
+            lib/pages/chat/events/message_reactions.dart \
+            lib/pages/chat/message_context_menu.dart \
+            lib/pages/settings_chat/settings_chat.dart
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'feat: integrate stable image packs and recent emoji'
+          git push origin HEAD:feat/stable-msc-image-packs-recents
