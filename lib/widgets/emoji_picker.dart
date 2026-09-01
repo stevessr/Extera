@@ -165,7 +165,9 @@ class _StandardEmojiIndex {
       if (pickerEmoji.isSkinToneVariation) {
         final baseName = pickerEmoji.variationBaseName;
         if (baseName != null) {
-          variations.putIfAbsent(baseName, () => <PickerEmoji>[]).add(pickerEmoji);
+          variations
+              .putIfAbsent(baseName, () => <PickerEmoji>[])
+              .add(pickerEmoji);
         }
         continue;
       }
@@ -315,7 +317,9 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     for (var i = 0; i < previous.length; i++) {
       final a = previous[i];
       final b = next[i];
-      if (a.id != b.id || a.name != b.name || a.emojis.length != b.emojis.length) {
+      if (a.id != b.id ||
+          a.name != b.name ||
+          a.emojis.length != b.emojis.length) {
         return false;
       }
       for (final entry in a.emojis.entries) {
@@ -332,7 +336,8 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     for (var i = 0; i < previous.length; i++) {
       final a = previous[i];
       final b = next[i];
-      if (a.searchIdentity != b.searchIdentity || a.customData != b.customData) {
+      if (a.searchIdentity != b.searchIdentity ||
+          a.customData != b.customData) {
         return false;
       }
     }
