@@ -43,10 +43,8 @@ class PickerEmoji {
   final bool isSkinToneVariation;
   final String? variationBaseName;
 
-  factory PickerEmoji.standard(Emoji emoji) => _standardCache.putIfAbsent(
-    emoji,
-    () => PickerEmoji._standard(emoji),
-  );
+  factory PickerEmoji.standard(Emoji emoji) =>
+      _standardCache.putIfAbsent(emoji, () => PickerEmoji._standard(emoji));
 
   PickerEmoji._standard(Emoji emoji)
     : type = PickerEmojiType.standard,
@@ -170,10 +168,7 @@ class _StandardEmojiIndex {
 
       if (pickerEmoji.isSkinToneVariation) {
         variations
-            .putIfAbsent(
-              pickerEmoji.variationBaseName!,
-              () => <PickerEmoji>[],
-            )
+            .putIfAbsent(pickerEmoji.variationBaseName!, () => <PickerEmoji>[])
             .add(pickerEmoji);
         continue;
       }
@@ -355,8 +350,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
 
     // Recent changes do not invalidate the expensive standard/custom indexes.
     // Only recalculate the current result set when it can affect the screen.
-    if (widget.recentEmojis != oldWidget.recentEmojis &&
-        _initialLoadStarted) {
+    if (widget.recentEmojis != oldWidget.recentEmojis && _initialLoadStarted) {
       setState(_calculateDisplayedEmojis);
     }
   }
@@ -427,7 +421,8 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
       // currently loaded custom packs. This avoids rebuilding/copying a full
       // identity set on every search keystroke.
       for (final recent in widget.recentEmojis) {
-        final alreadyIndexed = recent.type == PickerEmojiType.standard ||
+        final alreadyIndexed =
+            recent.type == PickerEmojiType.standard ||
             _customSearchIdentities.contains(recent.searchIdentity);
         if (!alreadyIndexed &&
             !recent.isSkinToneVariation &&

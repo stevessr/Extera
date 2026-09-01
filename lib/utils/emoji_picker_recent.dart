@@ -32,11 +32,7 @@ List<PickerEmoji> buildRecentPickerEmojis({
     if (standard != null) return PickerEmoji.standard(standard);
 
     // Keep unknown historical values visible instead of dropping them.
-    return PickerEmoji.custom(
-      name: value,
-      customData: value,
-      categoryId: null,
-    );
+    return PickerEmoji.custom(name: value, customData: value, categoryId: null);
   }
 
   return List.unmodifiable(recent.map(resolve));
