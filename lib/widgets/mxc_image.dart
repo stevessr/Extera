@@ -9,6 +9,8 @@ import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
+enum MxcImageCacheCategory { general, sticker, userAvatar, roomAvatar }
+
 class MxcImage extends StatefulWidget {
   final Uri? uri;
   final Event? event;
@@ -24,6 +26,7 @@ class MxcImage extends StatefulWidget {
   final Widget Function(BuildContext context)? placeholder;
   final String? cacheKey;
   final String? cacheName;
+  final MxcImageCacheCategory cacheCategory;
   final Client? client;
   final BorderRadius borderRadius;
 
@@ -44,6 +47,7 @@ class MxcImage extends StatefulWidget {
     this.client,
     this.borderRadius = BorderRadius.zero,
     this.cacheName,
+    this.cacheCategory = MxcImageCacheCategory.general,
     super.key,
   });
 
@@ -74,21 +78,68 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
+class _MxcImageMemoryCache {
+  final int maxBytes;
+  final int maxEntries;
+  final Map<String, Uint8List> _lru = <String, Uint8List>{};
+  int _bytes = 0;
+
+  _MxcImageMemoryCache({required this.maxBytes, required this.maxEntries});
+
+  Uint8List? touch(String key) {
+    final data = _lru.remove(key);
+    if (data == null) return null;
+    _lru[key] = data;
+    return data;
+  }
+
+  void store(String key, Uint8List data) {
+    final previous = _lru.remove(key);
+    if (previous != null) {
+      _bytes -= previous.length;
+    }
+    _lru[key] = data;
+    _bytes += data.length;
+    _evictOverflow();
+  }
+
+  void _evictOverflow() {
+    while (_lru.length > maxEntries ||
+        (_bytes > maxBytes && _lru.isNotEmpty)) {
+      final oldestKey = _lru.keys.first;
+      final evicted = _lru.remove(oldestKey)!;
+      _bytes -= evicted.length;
+    }
+  }
+}
+
 class _MxcImageState extends State<MxcImage> {
-  /// Global in-memory cache of decoded-input image bytes.
-  ///
-  /// Raw bytes accumulate quickly (message thumbnails, avatars, stickers),
-  /// so the cache is bounded both by total bytes and entry count; the
-  /// least-recently-used entries are dropped first. Evicted data is still
-  /// available through the on-disk HTTP/media cache, so an eviction only
-  /// costs a disk read plus decode, not a network round trip.
-  static const int _cacheMaxBytes = 64 * 1024 * 1024;
-  static const int _cacheMaxEntries = 1024;
+  /// General media keeps the existing conservative bound. Stickers and
+  /// avatars live in independent protected pools so ordinary timeline media
+  /// cannot evict them. Their limits are deliberately much larger and serve
+  /// only as hard safety ceilings for unusually large sessions.
+  static final Map<MxcImageCacheCategory, _MxcImageMemoryCache>
+  _imageDataCaches = <MxcImageCacheCategory, _MxcImageMemoryCache>{
+    MxcImageCacheCategory.general: _MxcImageMemoryCache(
+      maxBytes: 64 * 1024 * 1024,
+      maxEntries: 1024,
+    ),
+    MxcImageCacheCategory.sticker: _MxcImageMemoryCache(
+      maxBytes: 384 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+    MxcImageCacheCategory.userAvatar: _MxcImageMemoryCache(
+      maxBytes: 128 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+    MxcImageCacheCategory.roomAvatar: _MxcImageMemoryCache(
+      maxBytes: 128 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+  };
 
   /// Upper bound for [_tryLoad] retries on persistent IO failures.
   static const int _maxLoadAttempts = 4;
-  static final Map<String, Uint8List> _imageDataLru = <String, Uint8List>{};
-  static int _imageDataBytes = 0;
 
   Uint8List? _imageDataNoCache;
 
@@ -97,8 +148,10 @@ class _MxcImageState extends State<MxcImage> {
   // newer MxcImage with bytes from the previous grid cell.
   int _loadGeneration = 0;
 
+  _MxcImageMemoryCache get _cache => _imageDataCaches[widget.cacheCategory]!;
+
   Uint8List? get _imageData =>
-      widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
+      widget.cacheKey == null ? _imageDataNoCache : _cache.touch(_lruKey);
   set _imageData(Uint8List? data) {
     if (data == null) return;
     final cacheKey = widget.cacheKey;
@@ -111,31 +164,9 @@ class _MxcImageState extends State<MxcImage> {
 
   String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
 
-  static Uint8List? _touch(String lruKey) {
-    final data = _imageDataLru.remove(lruKey);
-    if (data == null) return null;
-    _imageDataLru[lruKey] = data; // move to most-recently-used position
-    return data;
-  }
-
   void _store(String cacheKey, Uint8List data) {
     final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
-    final previous = _imageDataLru.remove(lruKey);
-    if (previous != null) {
-      _imageDataBytes -= previous.length;
-    }
-    _imageDataLru[lruKey] = data;
-    _imageDataBytes += data.length;
-    _evictOverflow();
-  }
-
-  static void _evictOverflow() {
-    while (_imageDataLru.length > _cacheMaxEntries ||
-        (_imageDataBytes > _cacheMaxBytes && _imageDataLru.isNotEmpty)) {
-      final oldestKey = _imageDataLru.keys.first;
-      final evicted = _imageDataLru.remove(oldestKey)!;
-      _imageDataBytes -= evicted.length;
-    }
+    _cache.store(lruKey, data);
   }
 
   @override
@@ -201,6 +232,7 @@ class _MxcImageState extends State<MxcImage> {
         oldWidget.thumbnailMethod != widget.thumbnailMethod ||
         oldWidget.cacheKey != widget.cacheKey ||
         oldWidget.cacheName != widget.cacheName ||
+        oldWidget.cacheCategory != widget.cacheCategory ||
         oldWidget.client != widget.client;
     if (!sourceChanged) return;
 
