@@ -22,6 +22,7 @@ class Avatar extends StatelessWidget {
   final BorderSide? border;
   final Color? backgroundColor;
   final Color? textColor;
+  final MxcImageCacheCategory cacheCategory;
 
   const Avatar({
     this.mxContent,
@@ -37,6 +38,7 @@ class Avatar extends StatelessWidget {
     this.icon,
     this.backgroundColor,
     this.textColor,
+    this.cacheCategory = MxcImageCacheCategory.userAvatar,
     super.key,
   });
 
@@ -75,6 +77,7 @@ class Avatar extends StatelessWidget {
               borderRadius: borderRadius,
               key: ValueKey(mxContent.toString()),
               cacheKey: '${mxContent}_$size',
+              cacheCategory: cacheCategory,
               uri: mxContent,
               fit: BoxFit.cover,
               width: size,
