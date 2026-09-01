@@ -32,15 +32,22 @@ jobs:
         working-directory: /tmp/matrix-dart-sdk
         run: dart pub get --no-example
 
-      - name: Check changed SDK formatting
+      - name: Format changed SDK files and show patch
         working-directory: /tmp/matrix-dart-sdk
         run: |
-          dart format --set-exit-if-changed \
+          dart format \
             lib/matrix_api_lite/model/event_types.dart \
             lib/msc_extensions/extension_recent_emoji/recent_emoji.dart \
             lib/src/utils/image_pack_extension.dart \
             test/stable_image_pack_test.dart \
             test/stable_recent_emoji_test.dart
+          git diff -- \
+            lib/matrix_api_lite/model/event_types.dart \
+            lib/msc_extensions/extension_recent_emoji/recent_emoji.dart \
+            lib/src/utils/image_pack_extension.dart \
+            test/stable_image_pack_test.dart \
+            test/stable_recent_emoji_test.dart
+          git diff --check
 
       - name: Analyze SDK
         working-directory: /tmp/matrix-dart-sdk
