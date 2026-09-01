@@ -20,39 +20,46 @@ class ChatEmojiPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showEmojiPicker = controller.showEmojiPicker;
     final client = Matrix.of(context).client;
     final imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
-    final recentEmojis = client.recentEmojis.entries
-        .sortedByCompare((element) => element.value, (a, b) => b - a)
-        .map((entry) => entry.key)
-        .toList();
-    final customCategories = imagePacks.entries
-        .map(
-          (entry) => CustomCategory(
-            id: entry.key,
-            name: entry.value.pack.displayName!,
-            icon: MxcImage(
-              uri: entry.value.images.values.first.url,
-              width: 32,
-              height: 32,
-              cacheKey: entry.value.images.values.first.url.toString(),
-            ),
-            emojis: entry.value.images.map((name, content) {
-              return MapEntry(name, content.url.toString());
-            }),
-          ),
-        )
-        .toList(growable: false);
-    final recentPickerEmojis = buildRecentPickerEmojis(
-      recent: recentEmojis,
-      customCategories: customCategories,
-    );
+    final recentEmojis = showEmojiPicker
+        ? client.recentEmojis.entries
+              .sortedByCompare((element) => element.value, (a, b) => b - a)
+              .map((entry) => entry.key)
+              .toList()
+        : const <String>[];
+    final customCategories = showEmojiPicker
+        ? imagePacks.entries
+              .map(
+                (entry) => CustomCategory(
+                  id: entry.key,
+                  name: entry.value.pack.displayName!,
+                  icon: MxcImage(
+                    uri: entry.value.images.values.first.url,
+                    width: 32,
+                    height: 32,
+                    cacheKey: entry.value.images.values.first.url.toString(),
+                  ),
+                  emojis: entry.value.images.map((name, content) {
+                    return MapEntry(name, content.url.toString());
+                  }),
+                ),
+              )
+              .toList(growable: false)
+        : const <CustomCategory>[];
+    final recentPickerEmojis = showEmojiPicker
+        ? buildRecentPickerEmojis(
+            recent: recentEmojis,
+            customCategories: customCategories,
+          )
+        : const <PickerEmoji>[];
 
     return ClipRect(
       child: AnimatedSize(
         duration: FluffyThemes.animationDuration,
         curve: FluffyThemes.animationCurve,
-        child: controller.showEmojiPicker
+        child: showEmojiPicker
             ? SizedBox(
                 height: MediaQuery.sizeOf(context).height / 2,
                 child: DefaultTabController(
