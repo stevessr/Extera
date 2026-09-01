@@ -20,6 +20,9 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
+      - name: Refresh Matrix SDK revision
+        run: flutter pub upgrade matrix --no-example
+
       - name: Preserve stable recent emoji ordering
         run: |
           python3 - <<'PY'
@@ -41,6 +44,11 @@ jobs:
               if old not in text:
                   raise SystemExit(f'expected recent emoji block not found in {path}')
               path.write_text(text.replace(old, new, 1))
+
+          path = Path('lib/pages/chat/message_context_menu.dart')
+          text = path.read_text()
+          text = text.replace("import 'package:collection/collection.dart';\n", '', 1)
+          path.write_text(text)
           PY
 
       - name: Format touched Dart files
