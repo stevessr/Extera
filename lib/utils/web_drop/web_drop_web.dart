@@ -4,6 +4,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:web/web.dart' as web;
 
 import 'web_drop_stub.dart' show WebDropFilesCallback, WebDragStateCallback;
+
 export 'web_drop_stub.dart' show WebDropFilesCallback, WebDragStateCallback;
 
 /// Registers listeners for browser drag-and-drop events.

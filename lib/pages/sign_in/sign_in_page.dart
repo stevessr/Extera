@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:extera_next/utils/url_launcher.dart';
-
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -9,6 +7,7 @@ import 'package:extera_next/pages/sign_in/view_model/model/public_homeserver_dat
 import 'package:extera_next/pages/sign_in/view_model/sign_in_view_model.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/sign_in_flows/check_homeserver.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/layouts/login_scaffold.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/view_model_builder.dart';

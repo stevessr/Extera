@@ -17,6 +17,7 @@ import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
+
 import '../../config/app_config.dart';
 import '../../widgets/settings_switch_list_tile.dart';
 import 'settings_style.dart';

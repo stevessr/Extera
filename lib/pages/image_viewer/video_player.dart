@@ -16,6 +16,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/web_api/web_api.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
+
 import '../../../utils/error_reporter.dart';
 import '../../widgets/mxc_image.dart';
 

@@ -4,20 +4,6 @@ import 'package:extera_next/config/animated_emoji_data.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/widgets/animated_emoji_image.dart';
 
-/// Matches a single emoji, including ZWJ sequences, skin tone modifiers,
-/// keycaps and regional indicator (flag) pairs.
-final RegExp _emojiPattern = RegExp(
-  // Flags are pairs of regional indicators.
-  r'(?:[\u{1F1E6}-\u{1F1FF}]{2})'
-  // Keycaps, e.g. 1️⃣.
-  r'|(?:[0-9#*]️?⃣)'
-  // Everything else, optionally followed by a variation selector or skin tone
-  // modifier and joined into a sequence with zero width joiners.
-  r'|(?:\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}])*'
-  r'(?:‍\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}])*)*)',
-  unicode: true,
-);
-
 const String _variationSelector16 = 'fe0f';
 
 /// Maps a codepoint key without variation selectors to the key Google actually
@@ -76,35 +62,39 @@ List<InlineSpan> buildAnimatedEmojiSpans(
   }
 
   final spans = <InlineSpan>[];
-  var index = 0;
+  var plainText = StringBuffer();
+  var hasAnimatedEmoji = false;
 
-  void addText(String value) {
-    if (value.isEmpty) return;
-    spans.add(TextSpan(text: value, style: style));
+  void flushText() {
+    if (plainText.length == 0) return;
+    spans.add(TextSpan(text: plainText.toString(), style: style));
+    plainText = StringBuffer();
   }
 
-  for (final match in _emojiPattern.allMatches(text)) {
-    final emoji = match.group(0)!;
-    final codepoint = animatedEmojiCodepoint(emoji);
-    if (codepoint == null) continue;
+  for (final grapheme in text.characters) {
+    final codepoint = animatedEmojiCodepoint(grapheme);
+    if (codepoint == null) {
+      plainText.write(grapheme);
+      continue;
+    }
 
-    addText(text.substring(index, match.start));
+    hasAnimatedEmoji = true;
+    flushText();
     spans.add(
       WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: AnimatedEmojiImage(
-          emoji: emoji,
+          emoji: grapheme,
           codepoint: codepoint,
           fontSize: fontSize,
           style: style,
         ),
       ),
     );
-    index = match.end;
   }
 
-  if (spans.isEmpty) return [TextSpan(text: text, style: style)];
-  addText(text.substring(index));
+  if (!hasAnimatedEmoji) return [TextSpan(text: text, style: style)];
+  flushText();
   return spans;
 }
 
@@ -125,6 +115,30 @@ InlineSpan _replaceEmojiInSpan(InlineSpan span, double fontSize) {
 
   final children = span.children;
   final text = span.text;
+
+  // A recognizer only receives pointer events for glyphs owned by the exact
+  // TextSpan it is attached to. Moving that span's text into child spans leaves
+  // the recognizer on a textless parent, which makes linkified plain m.text
+  // URLs look like links but stops taps from firing. Keep recognized text on
+  // the original span; animated emoji inside links are less important than a
+  // working link, while any existing child spans can still be rewritten.
+  if (span.recognizer != null && text != null && text.isNotEmpty) {
+    if (children == null || children.isEmpty) return span;
+    return TextSpan(
+      text: text,
+      style: span.style,
+      recognizer: span.recognizer,
+      mouseCursor: span.mouseCursor,
+      onEnter: span.onEnter,
+      onExit: span.onExit,
+      semanticsLabel: span.semanticsLabel,
+      locale: span.locale,
+      spellOut: span.spellOut,
+      children: [
+        for (final child in children) _replaceEmojiInSpan(child, fontSize),
+      ],
+    );
+  }
 
   // A span cannot hold both its own emoji spans and its existing children, so
   // fold the text into the children list.

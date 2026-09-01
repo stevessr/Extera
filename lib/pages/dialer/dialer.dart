@@ -18,6 +18,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/voip/video_renderer.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import 'pip/pip_view.dart';
 
 // Add this outside of the Calling class

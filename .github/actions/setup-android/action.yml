@@ -14,20 +14,6 @@ runs:
       shell: bash
       run: grep -Ev '^[[:space:]]*(#|$)' .github/workflows/versions.env >>"$GITHUB_ENV"
 
-    - name: Resolve tool cache location
-      id: toolcache
-      shell: bash
-      run: ./scripts/ci/tool-cache-info.sh
-
-    # setup-java keeps the JDK in the runner tool cache, which lives inside the
-    # job container and is gone by the next run. Restoring it first turns the
-    # ~200 MB Zulu download into a tool-cache hit.
-    - name: Restore JDK
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.toolcache.outputs.java }}
-        key: java-zulu-${{ runner.os }}-${{ runner.arch }}-${{ env.JAVA_VERSION }}
-
     - name: Install JDK
       uses: actions/setup-java@v5
       with:
@@ -35,9 +21,8 @@ runs:
         distribution: zulu
 
     # packages defaults to "tools platform-tools", and the obsolete "tools"
-    # package drags in the whole Android Emulator — several hundred megabytes
-    # downloaded and unzipped on every run, for a headless APK build. Ask for
-    # platform-tools only.
+    # package drags in the Android Emulator. APK builds only need platform-tools
+    # plus the exact SDK/NDK components installed by setup-android-sdk.sh.
     - name: Install Android command line tools
       uses: android-actions/setup-android@v4
       with:
@@ -45,37 +30,25 @@ runs:
         accept-android-sdk-licenses: true
         log-accepted-android-sdk-licenses: false
 
-    # Resolving the location into a step output keeps it out of the cache
-    # path expression, where an unset value would silently become "/platforms".
-    - name: Resolve Android SDK location
-      id: sdk
-      shell: bash
-      run: ./scripts/ci/android-sdk-cache-info.sh
-
-    - name: Restore Android SDK components
-      uses: actions/cache@v4
-      with:
-        path: |
-          ${{ steps.sdk.outputs.path }}/platforms
-          ${{ steps.sdk.outputs.path }}/build-tools
-          ${{ steps.sdk.outputs.path }}/platform-tools
-          ${{ steps.sdk.outputs.path }}/ndk
-          ${{ steps.sdk.outputs.path }}/licenses
-        key: android-sdk-${{ runner.os }}-${{ runner.arch }}-${{ steps.sdk.outputs.key }}
-        restore-keys: android-sdk-${{ runner.os }}-${{ runner.arch }}-
-
     - name: Install Android SDK components
       shell: bash
       run: ./scripts/ci/setup-android-sdk.sh
 
+    # Gradle's cache is the high-value Android cache. Avoid separately caching
+    # the hosted runner's JDK and SDK directories: those caches are large,
+    # frequently miss as runner images/tool versions rotate, and duplicate the
+    # setup actions' own installation/version resolution work.
     - name: Restore Gradle cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           android/.gradle
           ~/.gradle/caches
           ~/.gradle/wrapper
         key: gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties', 'android/gradle.properties', 'pubspec.lock', '.tool_versions.yaml') }}
+        # Keep fallback restores within the same ABI. Restoring a multi-gigabyte
+        # armv7 cache into an armv8/x86_64 job costs more than the small amount
+        # of reusable metadata it contributes and then creates another full
+        # architecture-specific cache on save.
         restore-keys: |
           gradle-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache_scope }}-
-          gradle-${{ runner.os }}-${{ runner.arch }}-

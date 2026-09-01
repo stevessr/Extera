@@ -7,6 +7,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+
 import 'chat_wallpaper.dart';
 
 class ChatWallpaperView extends StatelessWidget {

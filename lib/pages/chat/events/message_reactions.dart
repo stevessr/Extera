@@ -1,16 +1,20 @@
-import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:emojis/emoji.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/config/themes.dart';
+import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
+import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -236,6 +240,123 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
     useRootNavigator: false,
   );
 
+  Future<void> _addReaction(BuildContext context, Event targetEvent) async {
+    if (timeline == null ||
+        targetEvent.redacted ||
+        !targetEvent.room.canSendEvent(EventTypes.Reaction)) {
+      return;
+    }
+
+    final room = targetEvent.room;
+    final imagePacks = room.getImagePacks(ImagePackUsage.emoticon);
+    final recentEmojiEntries = room.client.recentEmojis.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final recentEmojis = recentEmojiEntries.map((entry) => entry.key).toList();
+
+    final emoji = await showAdaptiveBottomSheet<String>(
+      context: context,
+      builder: (context) => Scaffold(
+        appBar: AppBar(
+          title: Text(L10n.of(context).customReaction),
+          leading: CloseButton(
+            onPressed: () => Navigator.of(context).pop(null),
+          ),
+        ),
+        body: SizedBox(
+          height: double.infinity,
+          child: MatrixEmojiPicker(
+            onEmojiSelected: (_, emoji) => Navigator.of(
+              context,
+            ).pop(emoji.customData ?? emoji.standardEmoji!.char),
+            onBackspacePressed: () {},
+            recentEmojis: recentEmojis.map((recent) {
+              if (recent.startsWith('mxc://')) {
+                for (final entry in imagePacks.entries) {
+                  for (final imgEntry in entry.value.images.entries) {
+                    final url = imgEntry.value.url.toString();
+                    if (url == recent) {
+                      return PickerEmoji.custom(
+                        name: imgEntry.key,
+                        customData: url,
+                        categoryId: entry.key,
+                      );
+                    }
+                  }
+                }
+
+                return PickerEmoji.custom(
+                  name: recent,
+                  customData: recent,
+                  categoryId: null,
+                );
+              }
+
+              Emoji? found;
+              final all = EmojiData.all();
+              try {
+                found = all.firstWhere(
+                  (e) =>
+                      e.char == recent ||
+                      e.name == recent ||
+                      e.shortName == recent,
+                );
+              } catch (_) {
+                found = null;
+              }
+
+              if (found != null) {
+                return PickerEmoji.standard(found);
+              }
+
+              return PickerEmoji.custom(
+                name: recent,
+                customData: recent,
+                categoryId: null,
+              );
+            }).toList(),
+            customCategories: imagePacks.entries
+                .map(
+                  (entry) => CustomCategory(
+                    id: entry.key,
+                    name: entry.value.pack.displayName!,
+                    icon: MxcImage(
+                      uri: entry.value.images.values.first.url,
+                      width: 32,
+                      height: 32,
+                    ),
+                    emojis: entry.value.images.map(
+                      (name, content) => MapEntry(name, content.url.toString()),
+                    ),
+                  ),
+                )
+                .toList(),
+            customEmojiBuilder: (context, name, size) =>
+                MxcImage(uri: Uri.parse(name), width: 32, height: 32),
+          ),
+        ),
+      ),
+      useRootNavigator: false,
+    );
+
+    if (emoji == null) {
+      return;
+    }
+
+    final alreadyReacted = targetEvent
+        .aggregatedEvents(timeline!, RelationshipTypes.reaction)
+        .any(
+          (event) =>
+              event.senderId == room.client.userID &&
+              event.content.tryGetMap('m.relates_to')?['key'] == emoji,
+        );
+    if (alreadyReacted) {
+      return;
+    }
+
+    room.client.addRecentEmoji(emoji);
+    await room.sendReaction(targetEvent.eventId, emoji);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -264,6 +385,10 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
                   itemBuilder: (context, i) {
                     final event = reactionEvents[i];
                     final user = event.senderFromMemoryOrFallback;
+                    final canReact =
+                        timeline != null &&
+                        !event.redacted &&
+                        event.room.canSendEvent(EventTypes.Reaction);
 
                     return Column(
                       children: [
@@ -279,19 +404,35 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
                             event.originServerTs.localizedMessageTime(context),
                           ),
                           visualDensity: .compact,
-                          trailing: chatController == null
+                          onTap: canReact
+                              ? () => _addReaction(context, event)
+                              : null,
+                          trailing: !canReact && chatController == null
                               ? null
                               : Row(
                                   mainAxisSize: .min,
                                   children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        chatController?.replyAction(event);
-                                        Navigator.of(context).pop();
-                                      },
-                                      icon: const Icon(Icons.reply_outlined),
-                                    ),
-                                    if (event.canRedact)
+                                    if (canReact)
+                                      IconButton(
+                                        tooltip: L10n.of(
+                                          context,
+                                        ).customReaction,
+                                        onPressed: () =>
+                                            _addReaction(context, event),
+                                        icon: const Icon(
+                                          Icons.add_reaction_outlined,
+                                        ),
+                                      ),
+                                    if (chatController != null)
+                                      IconButton(
+                                        onPressed: () {
+                                          chatController?.replyAction(event);
+                                          Navigator.of(context).pop();
+                                        },
+                                        icon: const Icon(Icons.reply_outlined),
+                                      ),
+                                    if (chatController != null &&
+                                        event.canRedact)
                                       IconButton(
                                         onPressed: () {
                                           Navigator.of(context).pop();

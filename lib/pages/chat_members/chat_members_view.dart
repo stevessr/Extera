@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
+
 import '../../widgets/layouts/max_width_body.dart';
 import '../../widgets/matrix.dart';
 import '../chat_details/participant_list_item.dart';

@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/filtered_timeline_extension.dart';
+
 import '../config/app_config.dart';
 
 extension RoomStatusExtension on Room {

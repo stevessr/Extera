@@ -12,6 +12,7 @@ import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import 'chat.dart';
 
 class ChatEmojiPicker extends StatelessWidget {

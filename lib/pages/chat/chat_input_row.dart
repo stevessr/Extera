@@ -14,6 +14,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/filtered_timeline_extens
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+
 import '../../config/app_config.dart';
 import '../../config/themes.dart';
 import 'chat.dart';

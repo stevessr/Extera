@@ -19,6 +19,7 @@ import 'package:extera_next/utils/latex_renderer.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/message_selection_area.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import '../../../utils/url_launcher.dart';
 
 class HtmlMessage extends StatefulWidget {

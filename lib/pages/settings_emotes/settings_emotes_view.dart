@@ -9,6 +9,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:extera_next/widgets/mxc_image_viewer.dart';
+
 import '../../widgets/matrix.dart';
 import 'settings_emotes.dart';
 

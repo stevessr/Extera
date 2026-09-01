@@ -18,11 +18,11 @@ import 'package:extera_next/pages/chat_list/invite_dialog.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/check_updates.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
 import 'package:extera_next/utils/show_update_snackbar.dart';
+import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/set_status_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -31,6 +31,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/future_loading_snackbar.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
+
 import '../../../utils/account_bundles.dart';
 import '../../config/app_settings.dart';
 import '../../utils/url_launcher.dart';
@@ -269,7 +270,7 @@ class ChatListController extends State<ChatList>
         final roomId = response.roomId;
         if (roomId != null) {
           roomSearchResult.chunk.add(
-            PublicRoomsChunk(
+            PublishedRoomsChunk(
               name: searchQuery,
               guestCanJoin: false,
               numJoinedMembers: 0,

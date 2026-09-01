@@ -78,4 +78,7 @@ runs:
         FLAVOR: ${{ inputs.flavor }}
         MODE: ${{ inputs.mode }}
         TARGET_PLATFORM: ${{ inputs.target-platform }}
-      run: flutter build apk --flavor "$FLAVOR" --"$MODE" --no-pub --target-platform "$TARGET_PLATFORM"
+      # Do not pass --no-pub here. Flutter 3.47 must run its build-time pub
+      # configure phase so Android plugin registration excludes dev-only
+      # integration_test from release variants (flutter/flutter#169336).
+      run: flutter build apk --flavor "$FLAVOR" --"$MODE" --target-platform "$TARGET_PLATFORM"

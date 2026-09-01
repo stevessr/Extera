@@ -65,8 +65,15 @@ files=$(git diff --name-only "$merge_base" HEAD) ||
 
 [ -n "$files" ] && printf 'Changed files:\n%s\n\n' "$files"
 
-# Anything that can change how every platform is built.
+# Anything that can change how the native platform builds are assembled.
 shared='^(pubspec\.(yaml|lock)|\.github/|scripts/ci/|analysis_options\.yaml)'
+
+# Web is intentionally much stricter than the native targets. Building web is
+# expensive, so only Dart source changes or YAML/YML files that directly define
+# Flutter/web CI behavior should enable it. In particular, assets, native-only
+# files and unrelated GitHub configuration no longer trigger a web build.
+web_config='^(pubspec\.yaml|analysis_options\.yaml|l10n\.yaml|\.tool_versions\.yaml|\.github/workflows/(integrate|release|deploy-cloudflare-pages)\.ya?ml|\.github/actions/(build-web-app|setup-flutter|setup-rust)/action\.ya?ml)$'
+web_dart='(^|/).*\.dart$'
 
 # A here-string rather than a pipe: `grep -q` exits on its first match, and a
 # pipe writer would then take SIGPIPE once the file list outgrows the buffer.
@@ -78,9 +85,7 @@ linux=false
 ios=false
 
 matches "$shared|^(android/|assets/l10n/|scripts/generate-locale-config\.sh)" && android=true
-# Dart changes are included here because dart:io usage that analysis accepts
-# still breaks the web build.
-matches "$shared|^(web/|lib/|assets/|scripts/prepare-web\.sh)" && web=true
+matches "$web_dart|$web_config" && web=true
 matches "$shared|^(linux/|appimage/|scripts/build-(linux|appimage)\.sh)" && linux=true
 # Shared Dart code and iOS-specific changes affect iOS builds.
 matches "$shared|^(ios/|lib/|assets/)" && ios=true

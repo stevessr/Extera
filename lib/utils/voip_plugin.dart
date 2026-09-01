@@ -15,6 +15,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/pages/dialer/dialer.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+
 import '../widgets/matrix.dart';
 
 class VoipPlugin with WidgetsBindingObserver implements WebRTCDelegate {

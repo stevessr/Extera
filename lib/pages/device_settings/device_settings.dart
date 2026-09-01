@@ -11,6 +11,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/crypto_backup_extension.
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
+
 import '../../widgets/matrix.dart';
 
 class DevicesSettings extends StatefulWidget {

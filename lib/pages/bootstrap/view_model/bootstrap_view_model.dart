@@ -16,6 +16,7 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/error_reporter.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+
 import 'bootstrap_state.dart';
 
 class BootstrapViewModel extends ValueNotifier<BootstrapViewModelState> {

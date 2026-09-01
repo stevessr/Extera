@@ -7,6 +7,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
+
 import '../../config/themes.dart';
 import '../../utils/url_launcher.dart';
 import '../avatar.dart';
@@ -18,7 +19,7 @@ import 'adaptive_dialog_action.dart';
 
 class PublicRoomDialog extends StatelessWidget {
   final String? roomAlias;
-  final PublicRoomsChunk? chunk;
+  final PublishedRoomsChunk? chunk;
   final List<String>? via;
 
   const PublicRoomDialog({super.key, this.roomAlias, this.chunk, this.via});
@@ -67,9 +68,9 @@ class PublicRoomDialog extends StatelessWidget {
     return;
   }
 
-  bool _testRoom(PublicRoomsChunk r) => r.canonicalAlias == roomAlias;
+  bool _testRoom(PublishedRoomsChunk r) => r.canonicalAlias == roomAlias;
 
-  Future<PublicRoomsChunk> _search(BuildContext context) async {
+  Future<PublishedRoomsChunk> _search(BuildContext context) async {
     final chunk = this.chunk;
     if (chunk != null) return chunk;
     final query = await Matrix.of(context).client.queryPublicRooms(
@@ -97,7 +98,7 @@ class PublicRoomDialog extends StatelessWidget {
       ),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 256, maxHeight: 256),
-        child: FutureBuilder<PublicRoomsChunk>(
+        child: FutureBuilder<PublishedRoomsChunk>(
           future: _search(context),
           builder: (context, snapshot) {
             final theme = Theme.of(context);

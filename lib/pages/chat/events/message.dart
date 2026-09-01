@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/pages/chat/chat.dart';
+
 import 'message_bubble.dart';
 import 'message_bubble_legacy.dart';
 import 'message_modern.dart';

@@ -1,4 +1,3 @@
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,8 +8,10 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/html_message.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/background_audio_player.dart';
+
 import '../../../utils/matrix_sdk_extensions/event_extension.dart';
 
 class AudioPlayerWidget extends StatefulWidget {

@@ -6,6 +6,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/widgets/hover_builder.dart';
 import 'package:extera_next/widgets/unread_rooms_badge.dart';
+
 import '../../config/themes.dart';
 
 class NaviRailItem extends StatelessWidget {

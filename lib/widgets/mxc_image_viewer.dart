@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
+
 import 'mxc_image.dart';
 
 class MxcImageViewer extends StatelessWidget {
