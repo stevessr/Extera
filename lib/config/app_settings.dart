@@ -10,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 
 const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
+const _legacyUiChatFallbackFonts = 'Roboto,SystemFont,sans-serif';
+const _legacyMonospaceFallbackFonts =
+    'Roboto Mono,monospace,SystemFont,sans-serif';
 
 abstract class SettingKeys {
   static const String appLockKey = 'chat.fluffy.app_lock';
@@ -28,22 +31,16 @@ enum AppSettings<T> {
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
-  fallbackFonts<String>(
-    'xyz.extera.fallbackFonts',
-    'Roboto,SystemFont,sans-serif',
-  ),
+  fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),
 
   monospaceFont<String>('xyz.extera.monospaceFont', 'Roboto Mono'),
   monospaceFallbackFonts<String>(
     'xyz.extera.monospaceFallbackFonts',
-    'Roboto Mono,monospace,SystemFont,sans-serif',
+    'monospace,sans-serif',
   ),
 
   chatFont<String>('xyz.extera.chatFont', 'Roboto'),
-  chatFallbackFonts<String>(
-    'xyz.extera.chatFallbackFonts',
-    'Roboto,SystemFont,sans-serif',
-  ),
+  chatFallbackFonts<String>('xyz.extera.chatFallbackFonts', 'sans-serif'),
 
   doubleTapAction<String>(
     'xyz.extera.doubleTapAction',
@@ -180,6 +177,33 @@ enum AppSettings<T> {
         await store.remove(_legacyEmojiFontKey);
       }
     }
+
+    // Older releases put SystemFont into the default fallback chains. Once
+    // Android's SystemFont is dynamically registered, missing glyphs such as
+    // CJK would therefore switch to it even while systemFont=false. Only
+    // discard the exact legacy defaults so user-defined fallback lists remain
+    // untouched.
+    Future<void> migrateLegacyFontFallback(
+      AppSettings<String> setting,
+      String legacyDefault,
+    ) async {
+      if (store.getString(setting.key) == legacyDefault) {
+        await store.remove(setting.key);
+      }
+    }
+
+    await migrateLegacyFontFallback(
+      AppSettings.fallbackFonts,
+      _legacyUiChatFallbackFonts,
+    );
+    await migrateLegacyFontFallback(
+      AppSettings.chatFallbackFonts,
+      _legacyUiChatFallbackFonts,
+    );
+    await migrateLegacyFontFallback(
+      AppSettings.monospaceFallbackFonts,
+      _legacyMonospaceFallbackFonts,
+    );
 
     // Migrate wrong datatype for fontSizeFactor
     final fontSizeFactorString = Result(
