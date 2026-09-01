@@ -74,7 +74,7 @@ class PickerEmoji {
        displayName = name,
        keywords = [name],
        searchText = name.toLowerCase(),
-       searchIdentity = '${PickerEmojiType.custom.index}:$name',
+       searchIdentity = '${PickerEmojiType.custom.index}:$categoryId:$name',
        isSkinToneVariation = false,
        variationBaseName = null;
 }
@@ -138,8 +138,7 @@ enum Category {
 ///
 /// [EmojiData.all] does not change while the app is running, so rebuilding
 /// wrappers, variation maps and category filters for every picker instance is
-/// pure duplicate work. This top-level final is lazily initialized on first
-/// access (after the picker route animation settles) and reused afterwards.
+/// pure duplicate work.
 class _StandardEmojiIndex {
   final List<PickerEmoji> all;
   final Map<Category, List<PickerEmoji>> byCategory;
@@ -159,17 +158,15 @@ class _StandardEmojiIndex {
     final variations = <String, List<PickerEmoji>>{};
     final baseByName = <String, PickerEmoji>{};
 
-    // One pass over the full Unicode table. The previous implementation made
-    // two full passes on every picker open, then filtered the full list again
-    // on every category switch.
     for (final emoji in EmojiData.all()) {
       final pickerEmoji = PickerEmoji.standard(emoji);
       all.add(pickerEmoji);
 
       if (pickerEmoji.isSkinToneVariation) {
-        variations
-            .putIfAbsent(pickerEmoji.variationBaseName!, () => <PickerEmoji>[])
-            .add(pickerEmoji);
+        final baseName = pickerEmoji.variationBaseName;
+        if (baseName != null) {
+          variations.putIfAbsent(baseName, () => <PickerEmoji>[]).add(pickerEmoji);
+        }
         continue;
       }
 
@@ -177,8 +174,6 @@ class _StandardEmojiIndex {
       byCategory[Category.fromEmojiGroup(emoji.emojiGroup)]!.add(pickerEmoji);
     }
 
-    // Variation lists are tiny compared with the full emoji table, so attach
-    // each base emoji after the single main scan instead of rescanning all data.
     for (final entry in variations.entries) {
       final base = baseByName[entry.key];
       if (base != null) entry.value.insert(0, base);
@@ -277,25 +272,19 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   late List<_PickerTab> _tabs;
   late TabController _tabController;
   int _selectedTabIndex = 0;
-  bool _isLoading = true;
-  bool _initialLoadStarted = false;
+  bool _loadFailed = false;
 
   @override
   void initState() {
     super.initState();
     _initTabs();
 
-    // The picker is embedded in the chat panel rather than presented as its
-    // own route. Waiting for ModalRoute.animation to complete can therefore
-    // miss the completion edge (or wait on an unrelated route transition),
-    // leaving the grid on its loading spinner indefinitely. Build the cached
-    // index after the first frame instead: this keeps the opening frame cheap
-    // while making initialization deterministic.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _initialLoadStarted) return;
-      _initialLoadStarted = true;
-      _loadEmojis();
-    });
+    // Emoji indexing is entirely synchronous. Deferring it behind a post-frame
+    // callback created a fake loading state that could become permanent when
+    // initialization threw. Build the cached index before the first paint so
+    // the picker either has data or a recoverable failure state, never an
+    // unbounded spinner.
+    _loadEmojis();
   }
 
   void _initTabs() {
@@ -305,7 +294,6 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
       ...widget.customCategories.map((c) => _CustomTab(c)),
     ];
 
-    // Reset index if out of bounds (e.g. if categories removed)
     if (_selectedTabIndex >= _tabs.length) {
       _selectedTabIndex = 0;
     }
@@ -317,23 +305,60 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     );
   }
 
+  bool _sameCustomCategories(
+    List<CustomCategory> previous,
+    List<CustomCategory> next,
+  ) {
+    if (identical(previous, next)) return true;
+    if (previous.length != next.length) return false;
+
+    for (var i = 0; i < previous.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.id != b.id || a.name != b.name || a.emojis.length != b.emojis.length) {
+        return false;
+      }
+      for (final entry in a.emojis.entries) {
+        if (b.emojis[entry.key] != entry.value) return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameRecentEmojis(List<PickerEmoji> previous, List<PickerEmoji> next) {
+    if (identical(previous, next)) return true;
+    if (previous.length != next.length) return false;
+
+    for (var i = 0; i < previous.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.searchIdentity != b.searchIdentity || a.customData != b.customData) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   void didUpdateWidget(MatrixEmojiPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final customCategoriesChanged =
-        widget.customCategories != oldWidget.customCategories;
+    final customCategoriesChanged = !_sameCustomCategories(
+      oldWidget.customCategories,
+      widget.customCategories,
+    );
     if (customCategoriesChanged) {
       _tabController.dispose();
       _initTabs();
-      if (_initialLoadStarted) _loadEmojis();
+      _loadEmojis();
       return;
     }
 
-    // Recent changes do not invalidate the expensive standard/custom indexes.
-    // Only recalculate the current result set when it can affect the screen.
-    if (widget.recentEmojis != oldWidget.recentEmojis && _initialLoadStarted) {
-      setState(_calculateDisplayedEmojis);
+    // ChatEmojiPicker constructs fresh list instances on normal parent rebuilds.
+    // Compare contents instead of identity so typing/room updates do not rebuild
+    // the complete emoji index and TabController over and over.
+    if (!_sameRecentEmojis(oldWidget.recentEmojis, widget.recentEmojis)) {
+      _calculateDisplayedEmojis();
     }
   }
 
@@ -345,41 +370,51 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   }
 
   void _loadEmojis() {
-    // Accessing the lazily initialized standard index is the only standard-data
-    // work here. After the first picker instance, this is just a cached lookup.
-    final standardIndex = _standardEmojiIndex;
-    final custom = <PickerEmoji>[];
-    final customByCategoryId = <String, List<PickerEmoji>>{};
+    try {
+      final standardIndex = _standardEmojiIndex;
+      final custom = <PickerEmoji>[];
+      final customByCategoryId = <String, List<PickerEmoji>>{};
 
-    for (final category in widget.customCategories) {
-      final categoryEmojis = <PickerEmoji>[];
-      for (final entry in category.emojis.entries) {
-        final emoji = PickerEmoji.custom(
-          name: entry.key,
-          customData: entry.value,
-          categoryId: category.id,
-        );
-        categoryEmojis.add(emoji);
-        custom.add(emoji);
+      for (final category in widget.customCategories) {
+        final categoryEmojis = <PickerEmoji>[];
+        for (final entry in category.emojis.entries) {
+          final emoji = PickerEmoji.custom(
+            name: entry.key,
+            customData: entry.value,
+            categoryId: category.id,
+          );
+          categoryEmojis.add(emoji);
+          custom.add(emoji);
+        }
+        customByCategoryId[category.id] = List.unmodifiable(categoryEmojis);
       }
-      customByCategoryId[category.id] = List.unmodifiable(categoryEmojis);
-    }
 
-    final searchable = custom.isEmpty
-        ? standardIndex.all
-        : List<PickerEmoji>.unmodifiable([...standardIndex.all, ...custom]);
-    final customIdentities = custom.isEmpty
-        ? const <String>{}
-        : Set<String>.unmodifiable(custom.map((emoji) => emoji.searchIdentity));
+      final searchable = custom.isEmpty
+          ? standardIndex.all
+          : List<PickerEmoji>.unmodifiable([...standardIndex.all, ...custom]);
+      final customIdentities = custom.isEmpty
+          ? const <String>{}
+          : Set<String>.unmodifiable(
+              custom.map((emoji) => emoji.searchIdentity),
+            );
 
-    if (!mounted) return;
-    setState(() {
       _customByCategoryId = Map.unmodifiable(customByCategoryId);
       _customSearchIdentities = customIdentities;
       _searchableEmojis = searchable;
-      _isLoading = false;
+      _loadFailed = false;
       _calculateDisplayedEmojis();
-    });
+    } catch (error, stackTrace) {
+      debugPrint('Unable to initialize emoji picker: $error\n$stackTrace');
+      _customByCategoryId = const {};
+      _customSearchIdentities = const {};
+      _searchableEmojis = const [];
+      _displayedEmojis = const [];
+      _loadFailed = true;
+    }
+  }
+
+  void _retryLoad() {
+    setState(_loadEmojis);
   }
 
   // Pure logic function to filter emojis based on current state
@@ -397,10 +432,6 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         }
       }
 
-      // Every standard recent already exists in the process-wide standard
-      // index. For custom recent values, only add entries not present in the
-      // currently loaded custom packs. This avoids rebuilding/copying a full
-      // identity set on every search keystroke.
       for (final recent in widget.recentEmojis) {
         final alreadyIndexed =
             recent.type == PickerEmojiType.standard ||
@@ -417,8 +448,6 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     }
 
     if (currentTab is _StandardTab) {
-      // O(1) category lookup instead of filtering the full emoji table on every
-      // tab switch.
       _displayedEmojis =
           _standardEmojiIndex.byCategory[currentTab.category] ?? const [];
     } else if (currentTab is _CustomTab) {
@@ -432,18 +461,15 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   void _onTabTapped(int index) {
     setState(() {
       _selectedTabIndex = index;
-      _searchController.clear(); // Clear search to show category contents
+      _searchController.clear();
       _calculateDisplayedEmojis();
     });
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _calculateDisplayedEmojis();
-    });
+    setState(_calculateDisplayedEmojis);
   }
 
-  // ... _handleEmojiTap and _showSkinToneMenu remain the same ...
   void _handleEmojiTap(PickerEmoji emoji) {
     Category? cat;
     if (emoji.type == PickerEmojiType.standard) {
@@ -465,7 +491,6 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     final variations = _standardEmojiIndex.variationsByBaseName[lookupName];
     if (variations == null || variations.isEmpty) return;
 
-    // ... Menu showing logic same as before ...
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final position = RelativeRect.fromRect(
       Rect.fromPoints(globalPosition - const Offset(0, 50), globalPosition),
@@ -530,7 +555,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
                   height: 40,
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (_) => _onSearchChanged(), // Updated handler
+                    onChanged: (_) => _onSearchChanged(),
                     decoration: InputDecoration(
                       hintText: L10n.of(context).search,
                       prefixIcon: const Icon(Icons.search, size: 20),
@@ -580,12 +605,16 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
 
         // --- Grid Area ---
         Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+          child: _loadFailed
+              ? Center(
+                  child: IconButton(
+                    onPressed: _retryLoad,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                )
               : _displayedEmojis.isEmpty
               ? Center(child: Text(L10n.of(context).nothingFound))
               : CustomScrollView(
-                  // Add a Key based on tab index to force scroll position reset on tab switch
                   key: ValueKey(_selectedTabIndex),
                   slivers: [
                     SliverPadding(
