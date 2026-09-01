@@ -53,8 +53,7 @@ extension ClientDownloadContentExtension on Client {
     // not race each other into duplicate database reads or HTTP requests. Keep
     // requests client-scoped because authenticated media access can differ
     // between accounts even when the MXC URI is identical.
-    final inFlightKey =
-        '${identityHashCode(this)}|$cacheKey|rounded=$rounded';
+    final inFlightKey = '${identityHashCode(this)}|$cacheKey|rounded=$rounded';
     final pending = _inFlightMxcDownloads[inFlightKey];
     if (pending != null) return pending;
 
