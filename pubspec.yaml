@@ -80,10 +80,11 @@ dependencies:
   lottie: ^3.5.1
   marquee: ^2.3.0
   matrix:
-    # path: ../matrix-dart-sdk
-     git:
-       url: https://github.com/stevessr/matrix-dart-sdk.git
-       ref: Extera
+    # Pin the stable-MSC snapshot from the Extera SDK branch so `pub get`
+    # cannot silently keep using an older branch commit from pubspec.lock.
+    git:
+      url: https://github.com/stevessr/matrix-dart-sdk.git
+      ref: d672ed667dfaecc4553264ce6b83b6d2614bbcba
   mime: ^2.0.0
   native_imaging: ^0.5.0
   open_file: ^4.0.0

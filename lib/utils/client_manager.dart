@@ -120,7 +120,9 @@ abstract class ClientManager {
           KeyVerificationMethod.emoji,
       },
       importantStateEvents: <String>{
-        // To make room emotes work
+        // Keep both stable MSC2545 state and its historical predecessor so
+        // migrated rooms and older rooms are equally available to pickers.
+        EventTypes.RoomImagePack,
         'im.ponies.room_emotes',
       },
       roomPreviewLastEvents: <String>{
@@ -172,7 +174,6 @@ abstract class ClientManager {
       );
       return;
     }
-
     final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
     await flutterLocalNotificationsPlugin.initialize(
