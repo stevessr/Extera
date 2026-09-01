@@ -14,6 +14,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/font_family.dart';
 import 'package:extera_next/utils/katex_fonts.dart';
 import 'package:extera_next/utils/latex_renderer.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -174,22 +175,33 @@ class _HtmlMessageState extends State<HtmlMessage> {
   TextStyle get linkStyle => widget.linkStyle;
   void Function(LinkableElement) get onOpen => widget.onOpen;
 
+  String? get _chatFontFamily => resolveFontFamily(
+    useSystemFont: AppSettings.systemFont.value,
+    configuredFont: AppSettings.chatFont.value,
+  );
+
+  List<String>? get _chatFontFamilyFallback => resolveFontFallbacks(
+    configuredFallbacks: AppSettings.chatFallbackFonts.value,
+    primaryFont: _chatFontFamily,
+    includeNotoEmoji: AppSettings.notoEmojiFont.value,
+  );
+
+  String? get _monospaceFontFamily => resolveFontFamily(
+    useSystemFont: false,
+    configuredFont: AppSettings.monospaceFont.value,
+  );
+
+  List<String>? get _monospaceFontFamilyFallback => resolveFontFallbacks(
+    configuredFallbacks: AppSettings.monospaceFallbackFonts.value,
+    primaryFont: _monospaceFontFamily,
+    includeNotoEmoji: AppSettings.notoEmojiFont.value,
+  );
+
   TextStyle get _baseTextStyle => TextStyle(
     fontSize: fontSize,
     color: textColor,
-    fontFamily: AppSettings.systemFont.value
-        ? 'SystemFont'
-        : AppSettings.chatFont.value.isNotEmpty
-        ? AppSettings.systemFont.value
-              ? 'SystemFont'
-              : AppSettings.chatFont.value
-        : null,
-    fontFamilyFallback: AppSettings.notoEmojiFont.value
-        ? [
-            'Noto Color Emoji',
-            ...AppSettings.chatFallbackFonts.value.split(','),
-          ]
-        : AppSettings.chatFallbackFonts.value.split(','),
+    fontFamily: _chatFontFamily,
+    fontFamilyFallback: _chatFontFamilyFallback,
   );
 
   // to fix issue 7
@@ -442,15 +454,8 @@ class _HtmlMessageState extends State<HtmlMessage> {
             ? TextSpan(
                 text: node.text,
                 style: TextStyle(
-                  fontFamily: AppSettings.monospaceFont.value,
-                  fontFamilyFallback: AppSettings.notoEmojiFont.value
-                      ? [
-                          'Noto Color Emoji',
-                          ...AppSettings.monospaceFallbackFonts.value.split(
-                            ',',
-                          ),
-                        ]
-                      : AppSettings.monospaceFallbackFonts.value.split(','),
+                  fontFamily: _monospaceFontFamily,
+                  fontFamilyFallback: _monospaceFontFamilyFallback,
                 ),
               )
             : WidgetSpan(
@@ -470,15 +475,8 @@ class _HtmlMessageState extends State<HtmlMessage> {
                   showCopyButton: true,
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   textStyle: TextStyle(
-                    fontFamily: AppSettings.monospaceFont.value,
-                    fontFamilyFallback: AppSettings.notoEmojiFont.value
-                        ? [
-                            'Noto Color Emoji',
-                            ...AppSettings.monospaceFallbackFonts.value.split(
-                              ',',
-                            ),
-                          ]
-                        : AppSettings.monospaceFallbackFonts.value.split(','),
+                    fontFamily: _monospaceFontFamily,
+                    fontFamilyFallback: _monospaceFontFamilyFallback,
                   ),
                 ),
               );
@@ -811,6 +809,23 @@ class MatrixPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.chatFont.value,
+    );
+    final textStyle = TextStyle(
+      color: color,
+      decoration: .none,
+      fontSize: fontSize,
+      height: 1.2,
+      fontFamily: fontFamily,
+      fontFamilyFallback: resolveFontFallbacks(
+        configuredFallbacks: AppSettings.chatFallbackFonts.value,
+        primaryFont: fontFamily,
+        includeNotoEmoji: AppSettings.notoEmojiFont.value,
+      ),
+    );
+
     return InkWell(
       splashColor: Colors.transparent,
       onTap: UrlLauncher(outerContext, uri).launchUrl,
@@ -824,48 +839,9 @@ class MatrixPill extends StatelessWidget {
               ),
             ),
             TextSpan(
-              style: TextStyle(
-                color: color,
-                decoration: .none,
-                fontSize: fontSize,
-                height: 1.2,
-                fontFamily: AppSettings.systemFont.value
-                    ? 'SystemFont'
-                    : AppSettings.chatFont.value.isNotEmpty
-                    ? AppSettings.systemFont.value
-                          ? 'SystemFont'
-                          : AppSettings.chatFont.value
-                    : null,
-                fontFamilyFallback: AppSettings.notoEmojiFont.value
-                    ? [
-                        'Noto Color Emoji',
-                        ...AppSettings.chatFallbackFonts.value.split(','),
-                      ]
-                    : AppSettings.chatFallbackFonts.value.split(','),
-              ),
+              style: textStyle,
               children: [
-                TextSpan(
-                  text: name,
-                  style: TextStyle(
-                    color: color,
-                    decoration: .none,
-                    fontSize: fontSize,
-                    height: 1.2,
-                    fontFamily: AppSettings.systemFont.value
-                        ? 'SystemFont'
-                        : AppSettings.chatFont.value.isNotEmpty
-                        ? AppSettings.systemFont.value
-                              ? 'SystemFont'
-                              : AppSettings.chatFont.value
-                        : null,
-                    fontFamilyFallback: AppSettings.notoEmojiFont.value
-                        ? [
-                            'Noto Color Emoji',
-                            ...AppSettings.chatFallbackFonts.value.split(','),
-                          ]
-                        : AppSettings.chatFallbackFonts.value.split(','),
-                  ),
-                ),
+                TextSpan(text: name),
                 if (withEventLink)
                   WidgetSpan(
                     baseline: TextBaseline.alphabetic,
@@ -912,22 +888,19 @@ class LatexSpan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.chatFont.value,
+    );
     final style = TextStyle(
       color: color,
       fontSize: fontSize,
-      fontFamily: AppSettings.systemFont.value
-          ? 'SystemFont'
-          : AppSettings.chatFont.value.isNotEmpty
-          ? AppSettings.systemFont.value
-                ? 'SystemFont'
-                : AppSettings.chatFont.value
-          : null,
-      fontFamilyFallback: AppSettings.notoEmojiFont.value
-          ? [
-              'Noto Color Emoji',
-              ...AppSettings.chatFallbackFonts.value.split(','),
-            ]
-          : AppSettings.chatFallbackFonts.value.split(','),
+      fontFamily: fontFamily,
+      fontFamilyFallback: resolveFontFallbacks(
+        configuredFallbacks: AppSettings.chatFallbackFonts.value,
+        primaryFont: fontFamily,
+        includeNotoEmoji: AppSettings.notoEmojiFont.value,
+      ),
     );
 
     // Native builds compile deferred libraries in eagerly, so LaTexT stays
