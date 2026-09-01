@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart';
-import 'package:emojis/emoji.dart';
 import 'package:matrix/matrix.dart';
 
-import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/sticker_picker_dialog.dart';
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
+import 'package:extera_next/utils/emoji_picker_recent.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -21,18 +20,46 @@ class ChatEmojiPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showEmojiPicker = controller.showEmojiPicker;
     final client = Matrix.of(context).client;
     final imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
-    final recentEmojis = client.recentEmojis.entries
-        .sortedByCompare((element) => element.value, (a, b) => b - a)
-        .map((entry) => entry.key)
-        .toList();
+    final recentEmojis = showEmojiPicker
+        ? client.recentEmojis.entries
+              .sortedByCompare((element) => element.value, (a, b) => b - a)
+              .map((entry) => entry.key)
+              .toList()
+        : const <String>[];
+    final customCategories = showEmojiPicker
+        ? imagePacks.entries
+              .map(
+                (entry) => CustomCategory(
+                  id: entry.key,
+                  name: entry.value.pack.displayName!,
+                  icon: MxcImage(
+                    uri: entry.value.images.values.first.url,
+                    width: 32,
+                    height: 32,
+                    cacheKey: entry.value.images.values.first.url.toString(),
+                  ),
+                  emojis: entry.value.images.map((name, content) {
+                    return MapEntry(name, content.url.toString());
+                  }),
+                ),
+              )
+              .toList(growable: false)
+        : const <CustomCategory>[];
+    final recentPickerEmojis = showEmojiPicker
+        ? buildRecentPickerEmojis(
+            recent: recentEmojis,
+            customCategories: customCategories,
+          )
+        : const <PickerEmoji>[];
 
     return ClipRect(
       child: AnimatedSize(
         duration: FluffyThemes.animationDuration,
         curve: FluffyThemes.animationCurve,
-        child: controller.showEmojiPicker
+        child: showEmojiPicker
             ? SizedBox(
                 height: MediaQuery.sizeOf(context).height / 2,
                 child: DefaultTabController(
@@ -53,86 +80,8 @@ class ChatEmojiPicker extends StatelessWidget {
                               onEmojiSelected: controller.onEmojiSelected,
                               onBackspacePressed:
                                   controller.emojiPickerBackspace,
-                              recentEmojis: recentEmojis.map((recent) {
-                                // MXC custom emoji
-                                if (recent.startsWith('mxc://')) {
-                                  for (final entry in imagePacks.entries) {
-                                    for (final imgEntry
-                                        in entry.value.images.entries) {
-                                      final url = imgEntry.value.url.toString();
-                                      if (url == recent) {
-                                        return PickerEmoji.custom(
-                                          name: imgEntry.key,
-                                          customData: url,
-                                          categoryId: entry.key,
-                                        );
-                                      }
-                                    }
-                                  }
-
-                                  // fallback: keep the MXC url as custom data
-                                  return PickerEmoji.custom(
-                                    name: recent,
-                                    customData: recent,
-                                    categoryId: null,
-                                  );
-                                }
-
-                                // Try to find a matching standard Emoji by char, name or shortName
-                                Emoji? found;
-                                final all = EmojiData.all();
-                                try {
-                                  found = all.firstWhere(
-                                    (e) =>
-                                        e.char == recent ||
-                                        e.name == recent ||
-                                        e.shortName == recent,
-                                  );
-                                } catch (_) {
-                                  found = null;
-                                }
-
-                                if (found != null) {
-                                  return PickerEmoji.standard(found);
-                                }
-
-                                // fallback: treat as custom string
-                                return PickerEmoji.custom(
-                                  name: recent,
-                                  customData: recent,
-                                  categoryId: null,
-                                );
-                              }).toList(),
-                              customCategories: imagePacks.entries
-                                  .map(
-                                    (entry) => CustomCategory(
-                                      id: entry.key,
-                                      name: entry.value.pack.displayName!,
-                                      icon: MxcImage(
-                                        uri:
-                                            entry.value.images.values.first.url,
-                                        width: 32,
-                                        height: 32,
-                                        cacheKey: entry
-                                            .value
-                                            .images
-                                            .values
-                                            .first
-                                            .url
-                                            .toString(),
-                                      ),
-                                      emojis: entry.value.images.map((
-                                        name,
-                                        content,
-                                      ) {
-                                        return MapEntry(
-                                          name,
-                                          content.url.toString(),
-                                        );
-                                      }),
-                                    ),
-                                  )
-                                  .toList(),
+                              recentEmojis: recentPickerEmojis,
+                              customCategories: customCategories,
                               customEmojiBuilder: (context, name, size) {
                                 return MxcImage(
                                   uri: Uri.parse(name),

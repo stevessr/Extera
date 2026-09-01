@@ -15,6 +15,8 @@ enum PickerEmojiType { standard, custom }
 
 /// A unified wrapper for both Standard (Unicode) and Custom (Image/Asset) emojis.
 class PickerEmoji {
+  static final Map<Emoji, PickerEmoji> _standardCache = {};
+
   final PickerEmojiType type;
 
   // Standard Data
@@ -29,13 +31,38 @@ class PickerEmoji {
   final String displayName;
   final List<String> keywords;
 
-  PickerEmoji.standard(this.standardEmoji)
+  /// Normalized once instead of lower-casing every keyword for every keystroke.
+  final String searchText;
+
+  /// Stable de-duplication key reused by search instead of allocating one on
+  /// every keystroke.
+  final String searchIdentity;
+
+  /// Skin-tone variants are searchable through their base emoji and shown only
+  /// in the long-press variation menu, not as duplicate grid cells.
+  final bool isSkinToneVariation;
+  final String? variationBaseName;
+
+  factory PickerEmoji.standard(Emoji emoji) =>
+      _standardCache.putIfAbsent(emoji, () => PickerEmoji._standard(emoji));
+
+  PickerEmoji._standard(Emoji emoji)
     : type = PickerEmojiType.standard,
+      standardEmoji = emoji,
       customData = null,
       customId = null,
       categoryId = null,
-      displayName = standardEmoji!.char,
-      keywords = standardEmoji.keywords;
+      displayName = emoji.char,
+      keywords = emoji.keywords,
+      searchText = '${emoji.char}\u0000${emoji.keywords.join('\u0000')}'
+          .toLowerCase(),
+      searchIdentity = '${PickerEmojiType.standard.index}:${emoji.char}',
+      isSkinToneVariation =
+          emoji.name.contains(':') && emoji.name.contains('skin tone'),
+      variationBaseName =
+          emoji.name.contains(':') && emoji.name.contains('skin tone')
+          ? emoji.name.split(':').first.trim()
+          : null;
 
   PickerEmoji.custom({
     required String name,
@@ -45,7 +72,11 @@ class PickerEmoji {
        standardEmoji = null,
        customId = name,
        displayName = name,
-       keywords = [name]; // Use name as keyword
+       keywords = [name],
+       searchText = name.toLowerCase(),
+       searchIdentity = '${PickerEmojiType.custom.index}:$name',
+       isSkinToneVariation = false,
+       variationBaseName = null;
 }
 
 class CustomCategory {
@@ -102,6 +133,72 @@ enum Category {
     return Category.symbols;
   }
 }
+
+/// Immutable process-wide index for Unicode emoji data.
+///
+/// [EmojiData.all] does not change while the app is running, so rebuilding
+/// wrappers, variation maps and category filters for every picker instance is
+/// pure duplicate work. This top-level final is lazily initialized on first
+/// access (after the picker route animation settles) and reused afterwards.
+class _StandardEmojiIndex {
+  final List<PickerEmoji> all;
+  final Map<Category, List<PickerEmoji>> byCategory;
+  final Map<String, List<PickerEmoji>> variationsByBaseName;
+
+  const _StandardEmojiIndex._({
+    required this.all,
+    required this.byCategory,
+    required this.variationsByBaseName,
+  });
+
+  factory _StandardEmojiIndex.build() {
+    final all = <PickerEmoji>[];
+    final byCategory = <Category, List<PickerEmoji>>{
+      for (final category in Category.values) category: <PickerEmoji>[],
+    };
+    final variations = <String, List<PickerEmoji>>{};
+    final baseByName = <String, PickerEmoji>{};
+
+    // One pass over the full Unicode table. The previous implementation made
+    // two full passes on every picker open, then filtered the full list again
+    // on every category switch.
+    for (final emoji in EmojiData.all()) {
+      final pickerEmoji = PickerEmoji.standard(emoji);
+      all.add(pickerEmoji);
+
+      if (pickerEmoji.isSkinToneVariation) {
+        variations
+            .putIfAbsent(pickerEmoji.variationBaseName!, () => <PickerEmoji>[])
+            .add(pickerEmoji);
+        continue;
+      }
+
+      baseByName[emoji.name] = pickerEmoji;
+      byCategory[Category.fromEmojiGroup(emoji.emojiGroup)]!.add(pickerEmoji);
+    }
+
+    // Variation lists are tiny compared with the full emoji table, so attach
+    // each base emoji after the single main scan instead of rescanning all data.
+    for (final entry in variations.entries) {
+      final base = baseByName[entry.key];
+      if (base != null) entry.value.insert(0, base);
+    }
+
+    return _StandardEmojiIndex._(
+      all: List.unmodifiable(all),
+      byCategory: Map.unmodifiable({
+        for (final entry in byCategory.entries)
+          entry.key: List.unmodifiable(entry.value),
+      }),
+      variationsByBaseName: Map.unmodifiable({
+        for (final entry in variations.entries)
+          entry.key: List.unmodifiable(entry.value),
+      }),
+    );
+  }
+}
+
+final _standardEmojiIndex = _StandardEmojiIndex.build();
 
 // Internal Tab Abstraction
 abstract class _PickerTab {
@@ -172,23 +269,51 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
 
-  List<PickerEmoji> _allEmojis = [];
-  List<PickerEmoji> _displayedEmojis = [];
-  final Map<String, List<PickerEmoji>> _variationsMap = {};
-  final Set<String> _variationCharSet = {};
+  List<PickerEmoji> _searchableEmojis = const [];
+  List<PickerEmoji> _displayedEmojis = const [];
+  Map<String, List<PickerEmoji>> _customByCategoryId = const {};
+  Set<String> _customSearchIdentities = const {};
 
   late List<_PickerTab> _tabs;
   late TabController _tabController;
   int _selectedTabIndex = 0;
   bool _isLoading = true;
+  bool _initialLoadStarted = false;
+  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
     super.initState();
     _initTabs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadEmojis();
+      _loadAfterRouteTransition();
     });
+  }
+
+  void _loadAfterRouteTransition() {
+    if (!mounted || _initialLoadStarted) return;
+
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.status == AnimationStatus.completed) {
+      _initialLoadStarted = true;
+      _loadEmojis();
+      return;
+    }
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    _routeAnimation = animation;
+    _routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
+  }
+
+  void _handleRouteAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    _routeAnimation = null;
+    if (!mounted || _initialLoadStarted) return;
+
+    _initialLoadStarted = true;
+    _loadEmojis();
   }
 
   void _initTabs() {
@@ -213,115 +338,113 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   @override
   void didUpdateWidget(MatrixEmojiPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.customCategories != oldWidget.customCategories ||
-        widget.recentEmojis != oldWidget.recentEmojis) {
+
+    final customCategoriesChanged =
+        widget.customCategories != oldWidget.customCategories;
+    if (customCategoriesChanged) {
       _tabController.dispose();
       _initTabs();
-      _loadEmojis();
+      if (_initialLoadStarted) _loadEmojis();
+      return;
+    }
+
+    // Recent changes do not invalidate the expensive standard/custom indexes.
+    // Only recalculate the current result set when it can affect the screen.
+    if (widget.recentEmojis != oldWidget.recentEmojis && _initialLoadStarted) {
+      setState(_calculateDisplayedEmojis);
     }
   }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   void _loadEmojis() {
-    final loadedList = <PickerEmoji>[];
-    final tempVariations = <String, List<PickerEmoji>>{};
+    // Accessing the lazily initialized standard index is the only standard-data
+    // work here. After the first picker instance, this is just a cached lookup.
+    final standardIndex = _standardEmojiIndex;
+    final custom = <PickerEmoji>[];
+    final customByCategoryId = <String, List<PickerEmoji>>{};
 
-    // 1. Load Standard
-    final rawStandard = EmojiData.all();
-    for (final emoji in rawStandard) {
-      if (emoji.name.contains(':') && emoji.name.contains('skin tone')) {
-        final baseName = emoji.name.split(':')[0].trim();
-        if (!tempVariations.containsKey(baseName)) {
-          tempVariations[baseName] = [];
-        }
-        tempVariations[baseName]!.add(PickerEmoji.standard(emoji));
-      }
-    }
-
-    for (final emoji in rawStandard) {
-      final pEmoji = PickerEmoji.standard(emoji);
-      if (tempVariations.containsKey(emoji.name)) {
-        tempVariations[emoji.name]!.insert(0, pEmoji);
-      }
-      loadedList.add(pEmoji);
-    }
-
-    // 2. Load Custom
-    for (final cat in widget.customCategories) {
-      cat.emojis.forEach((name, data) {
-        loadedList.add(
-          PickerEmoji.custom(name: name, customData: data, categoryId: cat.id),
+    for (final category in widget.customCategories) {
+      final categoryEmojis = <PickerEmoji>[];
+      for (final entry in category.emojis.entries) {
+        final emoji = PickerEmoji.custom(
+          name: entry.key,
+          customData: entry.value,
+          categoryId: category.id,
         );
-      });
+        categoryEmojis.add(emoji);
+        custom.add(emoji);
+      }
+      customByCategoryId[category.id] = List.unmodifiable(categoryEmojis);
     }
 
-    if (mounted) {
-      setState(() {
-        _allEmojis = loadedList;
-        _variationsMap.addAll(tempVariations);
-        for (final vars in tempVariations.values) {
-          for (var i = 1; i < vars.length; i++) {
-            _variationCharSet.add(vars[i].displayName);
-          }
-        }
-        _isLoading = false;
-        _calculateDisplayedEmojis();
-      });
-    }
+    final searchable = custom.isEmpty
+        ? standardIndex.all
+        : List<PickerEmoji>.unmodifiable([...standardIndex.all, ...custom]);
+    final customIdentities = custom.isEmpty
+        ? const <String>{}
+        : Set<String>.unmodifiable(custom.map((emoji) => emoji.searchIdentity));
+
+    if (!mounted) return;
+    setState(() {
+      _customByCategoryId = Map.unmodifiable(customByCategoryId);
+      _customSearchIdentities = customIdentities;
+      _searchableEmojis = searchable;
+      _isLoading = false;
+      _calculateDisplayedEmojis();
+    });
   }
 
   // Pure logic function to filter emojis based on current state
   void _calculateDisplayedEmojis() {
-    final searchText = _searchController.text.toLowerCase();
+    final searchText = _searchController.text.trim().toLowerCase();
     final currentTab = _tabs[_selectedTabIndex];
 
     if (searchText.isNotEmpty) {
-      // Include recent emojis in search results in addition to the full set
-      final source = <PickerEmoji>[];
-      source.addAll(_allEmojis);
-      for (final r in widget.recentEmojis) {
-        if (!source.any(
-          (e) => e.displayName == r.displayName && e.type == r.type,
-        )) {
-          source.add(r);
+      final results = <PickerEmoji>[];
+
+      for (final emoji in _searchableEmojis) {
+        if (!emoji.isSkinToneVariation &&
+            emoji.searchText.contains(searchText)) {
+          results.add(emoji);
         }
       }
 
-      _displayedEmojis = source.where((e) {
-        if (e.type == PickerEmojiType.standard &&
-            _variationCharSet.contains(e.displayName)) {
-          return false;
+      // Every standard recent already exists in the process-wide standard
+      // index. For custom recent values, only add entries not present in the
+      // currently loaded custom packs. This avoids rebuilding/copying a full
+      // identity set on every search keystroke.
+      for (final recent in widget.recentEmojis) {
+        final alreadyIndexed =
+            recent.type == PickerEmojiType.standard ||
+            _customSearchIdentities.contains(recent.searchIdentity);
+        if (!alreadyIndexed &&
+            !recent.isSkinToneVariation &&
+            recent.searchText.contains(searchText)) {
+          results.add(recent);
         }
-        if (e.displayName.toLowerCase().contains(searchText)) return true;
-        for (final k in e.keywords) {
-          if (k.toLowerCase().contains(searchText)) return true;
-        }
-        return false;
-      }).toList();
-    } else {
-      if (currentTab is _StandardTab) {
-        _displayedEmojis = _allEmojis.where((e) {
-          if (e.type != PickerEmojiType.standard) return false;
-          final matchesCategory = currentTab.category.groups.contains(
-            e.standardEmoji!.emojiGroup,
-          );
-          final isVariation = _variationCharSet.contains(e.displayName);
-          return matchesCategory && !isVariation;
-        }).toList();
-      } else if (currentTab is _CustomTab) {
-        _displayedEmojis = _allEmojis.where((e) {
-          if (e.type != PickerEmojiType.custom) return false;
-          return e.categoryId == currentTab.category.id;
-        }).toList();
-      } else if (currentTab is _RecentTab) {
-        _displayedEmojis = widget.recentEmojis.toList();
       }
+
+      _displayedEmojis = List.unmodifiable(results);
+      return;
+    }
+
+    if (currentTab is _StandardTab) {
+      // O(1) category lookup instead of filtering the full emoji table on every
+      // tab switch.
+      _displayedEmojis =
+          _standardEmojiIndex.byCategory[currentTab.category] ?? const [];
+    } else if (currentTab is _CustomTab) {
+      _displayedEmojis =
+          _customByCategoryId[currentTab.category.id] ?? const [];
+    } else if (currentTab is _RecentTab) {
+      _displayedEmojis = widget.recentEmojis;
     }
   }
 
@@ -358,7 +481,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     if (lookupName.contains(':')) {
       lookupName = lookupName.split(':')[0].trim();
     }
-    final variations = _variationsMap[lookupName];
+    final variations = _standardEmojiIndex.variationsByBaseName[lookupName];
     if (variations == null || variations.isEmpty) return;
 
     // ... Menu showing logic same as before ...
@@ -523,7 +646,9 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
 
     final hasVariations =
         emoji.type == PickerEmojiType.standard &&
-        _variationsMap.containsKey(emoji.standardEmoji!.name);
+        _standardEmojiIndex.variationsByBaseName.containsKey(
+          emoji.standardEmoji!.name,
+        );
 
     return Material(
       color: Colors.transparent,

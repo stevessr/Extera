@@ -12,7 +12,26 @@ abstract final class EmojiData {
     ..._unicode18,
   ]);
 
+  /// One lazily built lookup table replaces repeated `all().firstWhere(...)`
+  /// scans performed by every emoji-picker entry point.
+  ///
+  /// `putIfAbsent` deliberately preserves the old `firstWhere` semantics when
+  /// two records happen to share a name/short-name alias.
+  static final Map<String, Emoji> _lookup = () {
+    final lookup = <String, Emoji>{};
+    for (final emoji in _all) {
+      lookup.putIfAbsent(emoji.char, () => emoji);
+      lookup.putIfAbsent(emoji.name, () => emoji);
+      lookup.putIfAbsent(emoji.shortName, () => emoji);
+    }
+    return Map<String, Emoji>.unmodifiable(lookup);
+  }();
+
   static List<Emoji> all() => _all;
+
+  /// Resolves the values stored in recent-emoji history in O(1), whether the
+  /// caller persisted a Unicode glyph, full emoji name or short name.
+  static Emoji? lookup(String value) => _lookup[value];
 
   static const _unicode18 = [
     Emoji(
