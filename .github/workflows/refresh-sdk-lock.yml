@@ -17,6 +17,11 @@ jobs:
         with:
           ref: chore/matrix-sdk-v11
       - uses: ./.github/actions/setup-flutter
+        with:
+          pub-get: "false"
+      - name: Refresh Matrix SDK revision
+        shell: bash
+        run: flutter pub upgrade matrix --no-example
       - name: Commit refreshed lockfile
         shell: bash
         run: |
