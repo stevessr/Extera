@@ -5,6 +5,12 @@ import 'package:matrix/matrix.dart';
 
 final _inFlightMxcDownloads = <String, Future<Uint8List>>{};
 
+Uint8List _deriveRoundedImage(Uint8List imageData, {required bool rounded}) {
+  if (!rounded) return imageData;
+  final image = decodeImage(imageData);
+  return image == null ? imageData : encodePng(copyCropCircle(image));
+}
+
 class MxcDownloadException implements Exception {
   final int statusCode;
   final Uri uri;
@@ -59,7 +65,9 @@ extension ClientDownloadContentExtension on Client {
 
     final future = () async {
       final cachedData = await database.getFile(cacheKey);
-      if (cachedData != null) return cachedData;
+      if (cachedData != null) {
+        return _deriveRoundedImage(cachedData, rounded: rounded);
+      }
 
       final httpUri = isThumbnail
           ? await mxc.getThumbnailUri(
@@ -84,18 +92,15 @@ extension ClientDownloadContentExtension on Client {
           responseBody: response.body,
         );
       }
-      var imageData = response.bodyBytes;
+      final imageData = response.bodyBytes;
 
-      if (rounded) {
-        final image = decodeImage(imageData);
-        if (image != null) {
-          imageData = encodePng(copyCropCircle(image));
-        }
-      }
-
+      // Persist only the canonical media bytes. `rounded` is a presentation
+      // variant used by notification avatars; caching the derived PNG under
+      // the normal MXC key would make rounded and non-rounded callers corrupt
+      // each other's cache results.
       await database.storeFile(cacheKey, imageData, 0);
 
-      return imageData;
+      return _deriveRoundedImage(imageData, rounded: rounded);
     }();
 
     _inFlightMxcDownloads[inFlightKey] = future;
