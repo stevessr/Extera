@@ -74,6 +74,37 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
+class _MxcImageLoadError extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final VoidCallback onRetry;
+
+  const _MxcImageLoadError({
+    required this.width,
+    required this.height,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onRetry,
+        child: Center(
+          child: Icon(
+            Icons.refresh,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MxcImageState extends State<MxcImage> {
   /// Global in-memory cache of decoded-input image bytes.
   ///
@@ -91,6 +122,7 @@ class _MxcImageState extends State<MxcImage> {
   static int _imageDataBytes = 0;
 
   Uint8List? _imageDataNoCache;
+  bool _loadFailed = false;
 
   // Incremented whenever the image source changes. Async media requests keep
   // the generation they started with so stale completions cannot populate a
@@ -146,11 +178,17 @@ class _MxcImageState extends State<MxcImage> {
     return ClipRRect(
       borderRadius: widget.borderRadius,
       child: !hasData
-          ? _MxcImagePlaceholder(
-              width: widget.width,
-              height: widget.height,
-              placeholder: widget.placeholder,
-            )
+          ? _loadFailed
+                ? _MxcImageLoadError(
+                    width: widget.width,
+                    height: widget.height,
+                    onRetry: _retryLoad,
+                  )
+                : _MxcImagePlaceholder(
+                    width: widget.width,
+                    height: widget.height,
+                    placeholder: widget.placeholder,
+                  )
           : Image.memory(
               data,
               width: widget.width,
@@ -206,6 +244,7 @@ class _MxcImageState extends State<MxcImage> {
 
     _loadGeneration++;
     _imageDataNoCache = null;
+    _loadFailed = false;
     final generation = _loadGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && generation == _loadGeneration) {
@@ -239,6 +278,7 @@ class _MxcImageState extends State<MxcImage> {
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
+        _loadFailed = false;
       });
     }
 
@@ -259,10 +299,19 @@ class _MxcImageState extends State<MxcImage> {
         if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;
+          _loadFailed = false;
         });
         return;
       }
     }
+  }
+
+  void _retryLoad() {
+    if (_imageData != null) return;
+    _loadGeneration++;
+    final generation = _loadGeneration;
+    setState(() => _loadFailed = false);
+    _tryLoad(generation);
   }
 
   Future<void> _tryLoad(int generation, [int attempt = 0]) async {
@@ -271,6 +320,14 @@ class _MxcImageState extends State<MxcImage> {
     }
     try {
       await _load(generation);
+      if (!mounted || generation != _loadGeneration || _imageData != null) {
+        return;
+      }
+
+      // A request that completes without producing image bytes (for example a
+      // malformed source or a non-image event) is still a terminal failure.
+      // Leaving the placeholder active here would create an infinite spinner.
+      setState(() => _loadFailed = true);
     } catch (error, stackTrace) {
       // Media failures are not limited to dart:io IOException: HTTP status
       // errors, Matrix media errors and cache/database failures can all be
@@ -283,6 +340,9 @@ class _MxcImageState extends State<MxcImage> {
       if (attempt >= _maxLoadAttempts ||
           !mounted ||
           generation != _loadGeneration) {
+        if (mounted && generation == _loadGeneration && _imageData == null) {
+          setState(() => _loadFailed = true);
+        }
         return;
       }
       await Future.delayed(widget.retryDuration);
