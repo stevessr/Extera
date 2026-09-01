@@ -1,4 +1,4 @@
-name: Apply stable MSC app patch
+name: Verify stable MSC SDK tests
 
 on:
   push:
@@ -8,74 +8,47 @@ on:
       - .github/workflows/apply-stable-msc-patch.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply:
+  verify-sdk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: feat/stable-msc-image-packs-recents
 
       - uses: ./.github/actions/setup-flutter
+        with:
+          pub-get: 'false'
 
-      - name: Refresh Matrix SDK revision
-        run: flutter pub upgrade matrix --no-example
-
-      - name: Preserve stable recent emoji ordering
+      - name: Checkout Matrix SDK Extera branch
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
+          git clone --depth 1 --branch Extera \
+            https://github.com/stevessr/matrix-dart-sdk.git \
+            /tmp/matrix-dart-sdk
+          test "$(git -C /tmp/matrix-dart-sdk rev-parse HEAD)" = \
+            "30a3f6f2ec6ec45832475af57ed69b971ba15588"
 
-          replacements = {
-              Path('lib/pages/chat/events/message_reactions.dart'): (
-                  """    final recentEmojiEntries = room.client.recentEmojis.entries.toList()\n      ..sort((a, b) => b.value.compareTo(a.value));\n    final recentEmojis = recentEmojiEntries.map((entry) => entry.key).toList();\n""",
-                  """    final recentEmojis = room.client.recentEmojis.keys.toList(\n      growable: false,\n    );\n""",
-              ),
-              Path('lib/pages/chat/message_context_menu.dart'): (
-                  """    final recentEmojisAll = client.recentEmojis.entries\n        .sortedByCompare((element) => element.value, (a, b) => b - a)\n        .map((entry) => entry.key)\n        .toList();\n""",
-                  """    final recentEmojisAll = client.recentEmojis.keys.toList(\n      growable: false,\n    );\n""",
-              ),
-          }
+      - name: Resolve SDK dev dependencies
+        working-directory: /tmp/matrix-dart-sdk
+        run: dart pub get --no-example
 
-          for path, (old, new) in replacements.items():
-              text = path.read_text()
-              if old not in text:
-                  raise SystemExit(f'expected recent emoji block not found in {path}')
-              path.write_text(text.replace(old, new, 1))
-
-          path = Path('lib/pages/chat/message_context_menu.dart')
-          text = path.read_text()
-          text = text.replace("import 'package:collection/collection.dart';\n", '', 1)
-          path.write_text(text)
-          PY
-
-      - name: Format touched Dart files
+      - name: Check changed SDK formatting
+        working-directory: /tmp/matrix-dart-sdk
         run: |
-          dart format \
-            lib/pages/chat/chat_emoji_picker.dart \
-            lib/pages/chat/events/message_reactions.dart \
-            lib/pages/chat/message_context_menu.dart \
-            lib/pages/settings_chat/settings_chat.dart
+          dart format --set-exit-if-changed \
+            lib/matrix_api_lite/model/event_types.dart \
+            lib/msc_extensions/extension_recent_emoji/recent_emoji.dart \
+            lib/src/utils/image_pack_extension.dart \
+            test/stable_image_pack_test.dart \
+            test/stable_recent_emoji_test.dart
 
-      - name: Verify stable MSC integration
-        run: |
-          flutter analyze
-          flutter test test/emoji_picker_recent_test.dart
+      - name: Analyze SDK
+        working-directory: /tmp/matrix-dart-sdk
+        run: dart analyze
 
-      - name: Commit resolved SDK and app changes
+      - name: Run stable MSC protocol tests
+        working-directory: /tmp/matrix-dart-sdk
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            pubspec.lock \
-            lib/pages/chat/chat_emoji_picker.dart \
-            lib/pages/chat/events/message_reactions.dart \
-            lib/pages/chat/message_context_menu.dart \
-            lib/pages/settings_chat/settings_chat.dart
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m 'feat: integrate stable image packs and recent emoji'
-          git push origin HEAD:feat/stable-msc-image-packs-recents
+          dart test \
+            test/stable_recent_emoji_test.dart \
+            test/stable_image_pack_test.dart
