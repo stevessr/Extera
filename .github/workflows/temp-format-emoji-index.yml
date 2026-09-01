@@ -1,0 +1,34 @@
+name: Temp format emoji index
+
+on:
+  push:
+    branches:
+      - fix/reaction-panel-animation-font-consistency
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Format emoji index files
+        run: dart format lib/utils/emoji_picker_recent.dart lib/widgets/emoji_picker.dart
+
+      - name: Commit formatting
+        run: |
+          if git diff --quiet -- lib/utils/emoji_picker_recent.dart lib/widgets/emoji_picker.dart; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/utils/emoji_picker_recent.dart lib/widgets/emoji_picker.dart
+          git commit -m "style: format emoji index code"
+          git push origin HEAD:${{ github.ref_name }}
