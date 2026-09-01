@@ -40,6 +40,7 @@ class ChatEmojiPicker extends StatelessWidget {
                     width: 32,
                     height: 32,
                     cacheKey: entry.value.images.values.first.url.toString(),
+                    retryDuration: const Duration(milliseconds: 500),
                   ),
                   emojis: entry.value.images.map((name, content) {
                     return MapEntry(name, content.url.toString());
@@ -84,11 +85,15 @@ class ChatEmojiPicker extends StatelessWidget {
                               customCategories: customCategories,
                               customEmojiBuilder: (context, name, size) {
                                 return MxcImage(
+                                  key: ValueKey(name),
                                   uri: Uri.parse(name),
                                   width: 32,
                                   height: 32,
                                   cacheKey: name,
                                   animated: true,
+                                  retryDuration: const Duration(
+                                    milliseconds: 500,
+                                  ),
                                 );
                               },
                             ),
