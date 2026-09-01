@@ -100,17 +100,12 @@ class CustomCategory {
 // ==========================================
 
 /// Updated callback: returns the wrapper so you can handle both types
-typedef EmojiSelectionCallback = void Function(
-  Category? category,
-  PickerEmoji emoji,
-);
+typedef EmojiSelectionCallback =
+    void Function(Category? category, PickerEmoji emoji);
 
 /// Builder for rendering custom emoji tiles
-typedef CustomEmojiBuilder = Widget Function(
-  BuildContext context,
-  String emojiData,
-  double size,
-);
+typedef CustomEmojiBuilder =
+    Widget Function(BuildContext context, String emojiData, double size);
 
 // Standard Categories
 enum Category {
