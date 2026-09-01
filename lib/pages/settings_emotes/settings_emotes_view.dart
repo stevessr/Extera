@@ -231,14 +231,17 @@ class EmotesSettingsView extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                             ],
-                            if (!controller.readonly && imageKeys.isNotEmpty) ...[
+                            if (!controller.readonly &&
+                                imageKeys.isNotEmpty) ...[
                               SwitchListTile.adaptive(
                                 title: Text(L10n.of(context).useAsEmoji),
                                 value: controller.packUses(
                                   ImagePackUsage.emoticon,
                                 ),
                                 onChanged:
-                                    controller.packUses(ImagePackUsage.emoticon) &&
+                                    controller.packUses(
+                                          ImagePackUsage.emoticon,
+                                        ) &&
                                         !controller.packUses(
                                           ImagePackUsage.sticker,
                                         )
@@ -254,7 +257,9 @@ class EmotesSettingsView extends StatelessWidget {
                                   ImagePackUsage.sticker,
                                 ),
                                 onChanged:
-                                    controller.packUses(ImagePackUsage.sticker) &&
+                                    controller.packUses(
+                                          ImagePackUsage.sticker,
+                                        ) &&
                                         !controller.packUses(
                                           ImagePackUsage.emoticon,
                                         )
