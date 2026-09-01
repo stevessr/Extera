@@ -13,7 +13,7 @@ import 'package:extera_next/widgets/mxc_image_viewer.dart';
 import '../../widgets/matrix.dart';
 import 'settings_emotes.dart';
 
-enum PopupMenuEmojiActions { import, export }
+enum PopupMenuEmojiActions { import, export, migrateToStable }
 
 class EmotesSettingsView extends StatelessWidget {
   final EmotesSettingsController controller;
@@ -69,18 +69,34 @@ class EmotesSettingsView extends StatelessWidget {
                   case PopupMenuEmojiActions.import:
                     controller.importEmojiZip();
                     break;
+                  case PopupMenuEmojiActions.migrateToStable:
+                    controller.migrateLegacyImagePacks();
+                    break;
                 }
               },
-              enabled: !controller.readonly,
               itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: PopupMenuEmojiActions.import,
-                  child: Text(L10n.of(context).importFromZipFile),
-                ),
+                if (!controller.readonly)
+                  PopupMenuItem(
+                    value: PopupMenuEmojiActions.import,
+                    child: Text(L10n.of(context).importFromZipFile),
+                  ),
                 if (imageKeys.isNotEmpty)
                   PopupMenuItem(
                     value: PopupMenuEmojiActions.export,
                     child: Text(L10n.of(context).exportEmotePack),
+                  ),
+                if (controller.hasLegacyImagePacksToMigrate)
+                  PopupMenuItem(
+                    value: PopupMenuEmojiActions.migrateToStable,
+                    enabled: controller.canMigrateLegacyImagePacks,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.upgrade_outlined),
+                        SizedBox(width: 12),
+                        Text('Migrate to stable Matrix format'),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -115,10 +131,7 @@ class EmotesSettingsView extends StatelessWidget {
                         }
                         i--;
                         final key = packKeys[i];
-                        final event = controller.room?.getState(
-                          'im.ponies.room_emotes',
-                          packKeys[i],
-                        );
+                        final event = controller.getRoomPackEvent(key);
 
                         final eventPack = event?.content
                             .tryGetMap<String, Object?>('pack');
@@ -216,7 +229,41 @@ class EmotesSettingsView extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
+                            ],
+                            if (!controller.readonly && imageKeys.isNotEmpty) ...[
+                              SwitchListTile.adaptive(
+                                title: Text(L10n.of(context).useAsEmoji),
+                                value: controller.packUses(
+                                  ImagePackUsage.emoticon,
+                                ),
+                                onChanged:
+                                    controller.packUses(ImagePackUsage.emoticon) &&
+                                        !controller.packUses(
+                                          ImagePackUsage.sticker,
+                                        )
+                                    ? null
+                                    : (_) => controller.togglePackUsage(
+                                        ImagePackUsage.emoticon,
+                                      ),
+                              ),
+                              const ListDivider(),
+                              SwitchListTile.adaptive(
+                                title: Text(L10n.of(context).useAsSticker),
+                                value: controller.packUses(
+                                  ImagePackUsage.sticker,
+                                ),
+                                onChanged:
+                                    controller.packUses(ImagePackUsage.sticker) &&
+                                        !controller.packUses(
+                                          ImagePackUsage.emoticon,
+                                        )
+                                    ? null
+                                    : (_) => controller.togglePackUsage(
+                                        ImagePackUsage.sticker,
+                                      ),
+                              ),
+                              const ListDivider(),
                             ],
                             if (!controller.readonly) ...[
                               Padding(
@@ -264,99 +311,54 @@ class EmotesSettingsView extends StatelessWidget {
                         (PlatformInfos.isWeb || PlatformInfos.isDesktop);
 
                     return ListTile(
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Shortcuts(
-                              shortcuts: !useShortCuts
-                                  ? {}
-                                  : {
-                                      LogicalKeySet(LogicalKeyboardKey.enter):
-                                          SubmitLineIntent(),
-                                    },
-                              child: Actions(
-                                actions: !useShortCuts
-                                    ? {}
-                                    : {
-                                        SubmitLineIntent: CallbackAction(
-                                          onInvoke: (i) {
-                                            controller.submitImageAction(
-                                              imageCode,
-                                              image,
-                                              textEditingController,
-                                            );
-                                            return null;
-                                          },
-                                        ),
-                                      },
-                                child: TextField(
-                                  readOnly: controller.readonly,
-                                  controller: textEditingController,
-                                  autocorrect: false,
-                                  minLines: 1,
-                                  maxLines: 1,
-                                  maxLength: 128,
-                                  decoration: InputDecoration(
-                                    hintText: L10n.of(context).emoteShortcode,
-                                    prefixText: ': ',
-                                    suffixText: ':',
-                                    counter: const SizedBox.shrink(),
-                                    filled: false,
-                                    enabledBorder: const OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.transparent,
-                                      ),
-                                    ),
-                                  ),
-                                  onSubmitted: (s) =>
+                      title: Shortcuts(
+                        shortcuts: !useShortCuts
+                            ? {}
+                            : {
+                                LogicalKeySet(LogicalKeyboardKey.enter):
+                                    SubmitLineIntent(),
+                              },
+                        child: Actions(
+                          actions: !useShortCuts
+                              ? {}
+                              : {
+                                  SubmitLineIntent: CallbackAction(
+                                    onInvoke: (i) {
                                       controller.submitImageAction(
                                         imageCode,
                                         image,
                                         textEditingController,
-                                      ),
+                                      );
+                                      return null;
+                                    },
+                                  ),
+                                },
+                          child: TextField(
+                            readOnly: controller.readonly,
+                            controller: textEditingController,
+                            autocorrect: false,
+                            minLines: 1,
+                            maxLines: 1,
+                            maxLength: 128,
+                            decoration: InputDecoration(
+                              hintText: L10n.of(context).emoteShortcode,
+                              prefixText: ': ',
+                              suffixText: ':',
+                              counter: const SizedBox.shrink(),
+                              filled: false,
+                              enabledBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.transparent,
                                 ),
                               ),
                             ),
-                          ),
-                          if (!controller.readonly)
-                            PopupMenuButton<ImagePackUsage>(
-                              onSelected: (usage) =>
-                                  controller.toggleUsage(imageCode, usage),
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: ImagePackUsage.sticker,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (image.usage?.contains(
-                                            ImagePackUsage.sticker,
-                                          ) ??
-                                          true)
-                                        const Icon(Icons.check_outlined),
-                                      const SizedBox(width: 12),
-                                      Text(L10n.of(context).useAsSticker),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: ImagePackUsage.emoticon,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (image.usage?.contains(
-                                            ImagePackUsage.emoticon,
-                                          ) ??
-                                          true)
-                                        const Icon(Icons.check_outlined),
-                                      const SizedBox(width: 12),
-                                      Text(L10n.of(context).useAsEmoji),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              icon: const Icon(Icons.edit_outlined),
+                            onSubmitted: (s) => controller.submitImageAction(
+                              imageCode,
+                              image,
+                              textEditingController,
                             ),
-                        ],
+                          ),
+                        ),
                       ),
                       leading: _EmoteImage(image.url),
                       trailing: controller.readonly
