@@ -181,14 +181,42 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   late TabController _tabController;
   int _selectedTabIndex = 0;
   bool _isLoading = true;
+  bool _initialLoadStarted = false;
+  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
     super.initState();
     _initTabs();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadEmojis();
+      _loadAfterRouteTransition();
     });
+  }
+
+  void _loadAfterRouteTransition() {
+    if (!mounted || _initialLoadStarted) return;
+
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.status == AnimationStatus.completed) {
+      _initialLoadStarted = true;
+      _loadEmojis();
+      return;
+    }
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    _routeAnimation = animation;
+    _routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
+  }
+
+  void _handleRouteAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    _routeAnimation = null;
+    if (!mounted || _initialLoadStarted) return;
+
+    _initialLoadStarted = true;
+    _loadEmojis();
   }
 
   void _initTabs() {
@@ -217,12 +245,13 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         widget.recentEmojis != oldWidget.recentEmojis) {
       _tabController.dispose();
       _initTabs();
-      _loadEmojis();
+      if (_initialLoadStarted) _loadEmojis();
     }
   }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
