@@ -18,6 +18,9 @@ jobs:
           ref: fix/emoji-loading-reliability
       - name: Apply patch
         run: python3 scripts/ci/patch_emoji_loading.py
+      - uses: ./.github/actions/setup-flutter
+        with:
+          pub-get: 'false'
       - name: Format changed Dart files
         run: dart format lib/widgets/emoji_picker.dart lib/widgets/mxc_image.dart lib/pages/chat/chat_emoji_picker.dart
       - name: Commit patch
