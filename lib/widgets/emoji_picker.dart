@@ -15,6 +15,8 @@ enum PickerEmojiType { standard, custom }
 
 /// A unified wrapper for both Standard (Unicode) and Custom (Image/Asset) emojis.
 class PickerEmoji {
+  static final Map<Emoji, PickerEmoji> _standardCache = {};
+
   final PickerEmojiType type;
 
   // Standard Data
@@ -32,12 +34,21 @@ class PickerEmoji {
   /// Normalized once instead of lower-casing every keyword for every keystroke.
   final String searchText;
 
+  /// Stable de-duplication key reused by search instead of allocating one on
+  /// every keystroke.
+  final String searchIdentity;
+
   /// Skin-tone variants are searchable through their base emoji and shown only
   /// in the long-press variation menu, not as duplicate grid cells.
   final bool isSkinToneVariation;
   final String? variationBaseName;
 
-  PickerEmoji.standard(Emoji emoji)
+  factory PickerEmoji.standard(Emoji emoji) => _standardCache.putIfAbsent(
+    emoji,
+    () => PickerEmoji._standard(emoji),
+  );
+
+  PickerEmoji._standard(Emoji emoji)
     : type = PickerEmojiType.standard,
       standardEmoji = emoji,
       customData = null,
@@ -47,6 +58,7 @@ class PickerEmoji {
       keywords = emoji.keywords,
       searchText = '${emoji.char}\u0000${emoji.keywords.join('\u0000')}'
           .toLowerCase(),
+      searchIdentity = '${PickerEmojiType.standard.index}:${emoji.char}',
       isSkinToneVariation =
           emoji.name.contains(':') && emoji.name.contains('skin tone'),
       variationBaseName =
@@ -64,12 +76,9 @@ class PickerEmoji {
        displayName = name,
        keywords = [name],
        searchText = name.toLowerCase(),
+       searchIdentity = '${PickerEmojiType.custom.index}:$name',
        isSkinToneVariation = false,
        variationBaseName = null;
-
-  /// Matches the old recent-search de-duplication semantics without repeatedly
-  /// scanning the growing source list.
-  String get searchIdentity => '${type.index}:$displayName';
 }
 
 class CustomCategory {
@@ -268,6 +277,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   List<PickerEmoji> _searchableEmojis = const [];
   List<PickerEmoji> _displayedEmojis = const [];
   Map<String, List<PickerEmoji>> _customByCategoryId = const {};
+  Set<String> _customSearchIdentities = const {};
 
   late List<_PickerTab> _tabs;
   late TabController _tabController;
@@ -380,12 +390,18 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
       customByCategoryId[category.id] = List.unmodifiable(categoryEmojis);
     }
 
+    final searchable = custom.isEmpty
+        ? standardIndex.all
+        : List<PickerEmoji>.unmodifiable([...standardIndex.all, ...custom]);
+    final customIdentities = custom.isEmpty
+        ? const <String>{}
+        : Set<String>.unmodifiable(custom.map((emoji) => emoji.searchIdentity));
+
     if (!mounted) return;
     setState(() {
       _customByCategoryId = Map.unmodifiable(customByCategoryId);
-      _searchableEmojis = custom.isEmpty
-          ? standardIndex.all
-          : List.unmodifiable([...standardIndex.all, ...custom]);
+      _customSearchIdentities = customIdentities;
+      _searchableEmojis = searchable;
       _isLoading = false;
       _calculateDisplayedEmojis();
     });
@@ -397,23 +413,30 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     final currentTab = _tabs[_selectedTabIndex];
 
     if (searchText.isNotEmpty) {
-      // The previous source.any(...) loop was O(recent * allEmoji). A set keeps
-      // recent de-duplication linear while preserving its existing semantics.
-      final source = <PickerEmoji>[..._searchableEmojis];
-      final identities = <String>{
-        for (final emoji in _searchableEmojis) emoji.searchIdentity,
-      };
-      for (final recent in widget.recentEmojis) {
-        if (identities.add(recent.searchIdentity)) source.add(recent);
+      final results = <PickerEmoji>[];
+
+      for (final emoji in _searchableEmojis) {
+        if (!emoji.isSkinToneVariation &&
+            emoji.searchText.contains(searchText)) {
+          results.add(emoji);
+        }
       }
 
-      _displayedEmojis = source
-          .where(
-            (emoji) =>
-                !emoji.isSkinToneVariation &&
-                emoji.searchText.contains(searchText),
-          )
-          .toList(growable: false);
+      // Every standard recent already exists in the process-wide standard
+      // index. For custom recent values, only add entries not present in the
+      // currently loaded custom packs. This avoids rebuilding/copying a full
+      // identity set on every search keystroke.
+      for (final recent in widget.recentEmojis) {
+        final alreadyIndexed = recent.type == PickerEmojiType.standard ||
+            _customSearchIdentities.contains(recent.searchIdentity);
+        if (!alreadyIndexed &&
+            !recent.isSkinToneVariation &&
+            recent.searchText.contains(searchText)) {
+          results.add(recent);
+        }
+      }
+
+      _displayedEmojis = List.unmodifiable(results);
       return;
     }
 
