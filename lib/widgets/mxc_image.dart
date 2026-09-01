@@ -104,8 +104,7 @@ class _MxcImageMemoryCache {
   }
 
   void _evictOverflow() {
-    while (_lru.length > maxEntries ||
-        (_bytes > maxBytes && _lru.isNotEmpty)) {
+    while (_lru.length > maxEntries || (_bytes > maxBytes && _lru.isNotEmpty)) {
       final oldestKey = _lru.keys.first;
       final evicted = _lru.remove(oldestKey)!;
       _bytes -= evicted.length;
@@ -178,12 +177,13 @@ class _MxcImageState extends State<MxcImage> {
     return 'event:${event.eventId}:$variant';
   }
 
-  _MxcImageMemoryCache get _cache =>
-      _imageDataCaches[_effectiveCacheCategory]!;
+  _MxcImageMemoryCache get _cache => _imageDataCaches[_effectiveCacheCategory]!;
 
   Uint8List? get _imageData {
     final cacheKey = _effectiveCacheKey;
-    return cacheKey == null ? _imageDataNoCache : _cache.touch(_lruKey(cacheKey));
+    return cacheKey == null
+        ? _imageDataNoCache
+        : _cache.touch(_lruKey(cacheKey));
   }
 
   set _imageData(Uint8List? data) {
