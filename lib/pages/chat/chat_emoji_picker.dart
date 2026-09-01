@@ -31,22 +31,28 @@ class ChatEmojiPicker extends StatelessWidget {
         : const <String>[];
     final customCategories = showEmojiPicker
         ? imagePacks.entries
-              .map(
-                (entry) => CustomCategory(
+              // Empty image packs are valid state data but cannot provide a
+              // category icon or any selectable emoji. Skipping them prevents
+              // `values.first` from aborting the whole picker build.
+              .where((entry) => entry.value.images.isNotEmpty)
+              .map((entry) {
+                final firstImage = entry.value.images.values.first;
+                return CustomCategory(
                   id: entry.key,
-                  name: entry.value.pack.displayName!,
+                  // display_name is optional in image-pack state. Falling back
+                  // to the state key keeps otherwise valid packs usable.
+                  name: entry.value.pack.displayName ?? entry.key,
                   icon: MxcImage(
-                    uri: entry.value.images.values.first.url,
+                    uri: firstImage.url,
                     width: 32,
                     height: 32,
-                    cacheKey: entry.value.images.values.first.url.toString(),
-                    retryDuration: const Duration(milliseconds: 500),
+                    cacheKey: firstImage.url.toString(),
                   ),
                   emojis: entry.value.images.map((name, content) {
                     return MapEntry(name, content.url.toString());
                   }),
-                ),
-              )
+                );
+              })
               .toList(growable: false)
         : const <CustomCategory>[];
     final recentPickerEmojis = showEmojiPicker
@@ -85,15 +91,11 @@ class ChatEmojiPicker extends StatelessWidget {
                               customCategories: customCategories,
                               customEmojiBuilder: (context, name, size) {
                                 return MxcImage(
-                                  key: ValueKey(name),
                                   uri: Uri.parse(name),
                                   width: 32,
                                   height: 32,
                                   cacheKey: name,
                                   animated: true,
-                                  retryDuration: const Duration(
-                                    milliseconds: 500,
-                                  ),
                                 );
                               },
                             ),
