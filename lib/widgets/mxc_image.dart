@@ -132,7 +132,7 @@ class _MxcImageState extends State<MxcImage> {
   Uint8List? get _imageData =>
       widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
   set _imageData(Uint8List? data) {
-    if (data == null) return;
+    if (data == null || data.isEmpty) return;
     final cacheKey = widget.cacheKey;
     if (cacheKey == null) {
       _imageDataNoCache = data;
