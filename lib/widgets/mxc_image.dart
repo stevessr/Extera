@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -93,6 +92,11 @@ class _MxcImageState extends State<MxcImage> {
 
   Uint8List? _imageDataNoCache;
 
+  // Incremented whenever the image source changes. Async media requests keep
+  // the generation they started with so stale completions cannot populate a
+  // newer MxcImage with bytes from the previous grid cell.
+  int _loadGeneration = 0;
+
   Uint8List? get _imageData =>
       widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
   set _imageData(Uint8List? data) {
@@ -177,10 +181,40 @@ class _MxcImageState extends State<MxcImage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoad());
+    final generation = _loadGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _tryLoad(generation);
+    });
   }
 
-  Future<void> _load() async {
+  @override
+  void didUpdateWidget(MxcImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final sourceChanged =
+        oldWidget.uri != widget.uri ||
+        oldWidget.event != widget.event ||
+        oldWidget.width != widget.width ||
+        oldWidget.height != widget.height ||
+        oldWidget.isThumbnail != widget.isThumbnail ||
+        oldWidget.animated != widget.animated ||
+        oldWidget.thumbnailMethod != widget.thumbnailMethod ||
+        oldWidget.cacheKey != widget.cacheKey ||
+        oldWidget.cacheName != widget.cacheName ||
+        oldWidget.client != widget.client;
+    if (!sourceChanged) return;
+
+    _loadGeneration++;
+    _imageDataNoCache = null;
+    final generation = _loadGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && generation == _loadGeneration) {
+        _tryLoad(generation);
+      }
+    });
+  }
+
+  Future<void> _load(int generation) async {
     if (!mounted) return;
     final client =
         widget.client ?? widget.event?.room.client ?? Matrix.of(context).client;
@@ -202,7 +236,7 @@ class _MxcImageState extends State<MxcImage> {
         isThumbnail: widget.isThumbnail,
         animated: widget.animated,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
       });
@@ -220,8 +254,9 @@ class _MxcImageState extends State<MxcImage> {
       final data = await event.downloadAndDecryptAttachment(
         getThumbnail: useThumbnail,
       );
+      if (generation != _loadGeneration) return;
       if (data.detectFileType is MatrixImageFile) {
-        if (!mounted) return;
+        if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;
         });
@@ -230,19 +265,29 @@ class _MxcImageState extends State<MxcImage> {
     }
   }
 
-  Future<void> _tryLoad([int attempt = 0]) async {
-    if (_imageData != null) {
+  Future<void> _tryLoad(int generation, [int attempt = 0]) async {
+    if (!mounted || generation != _loadGeneration || _imageData != null) {
       return;
     }
     try {
-      await _load();
-    } on IOException catch (_) {
-      // Stop after a bounded number of attempts: retrying forever kept
-      // burning network and CPU for permanently unavailable media.
-      if (attempt >= _maxLoadAttempts) return;
-      if (!mounted) return;
+      await _load(generation);
+    } catch (error, stackTrace) {
+      // Media failures are not limited to dart:io IOException: HTTP status
+      // errors, Matrix media errors and cache/database failures can all be
+      // transient. Retry all load failures, but keep the existing hard bound.
+      Logs().d(
+        'Unable to load mxc image (attempt ${attempt + 1})',
+        error,
+        stackTrace,
+      );
+      if (attempt >= _maxLoadAttempts ||
+          !mounted ||
+          generation != _loadGeneration) {
+        return;
+      }
       await Future.delayed(widget.retryDuration);
-      await _tryLoad(attempt + 1);
+      if (!mounted || generation != _loadGeneration) return;
+      await _tryLoad(generation, attempt + 1);
     }
   }
 }

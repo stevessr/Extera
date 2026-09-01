@@ -100,12 +100,17 @@ class CustomCategory {
 // ==========================================
 
 /// Updated callback: returns the wrapper so you can handle both types
-typedef EmojiSelectionCallback =
-    void Function(Category? category, PickerEmoji emoji);
+typedef EmojiSelectionCallback = void Function(
+  Category? category,
+  PickerEmoji emoji,
+);
 
 /// Builder for rendering custom emoji tiles
-typedef CustomEmojiBuilder =
-    Widget Function(BuildContext context, String emojiData, double size);
+typedef CustomEmojiBuilder = Widget Function(
+  BuildContext context,
+  String emojiData,
+  double size,
+);
 
 // Standard Categories
 enum Category {
@@ -279,41 +284,23 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
   int _selectedTabIndex = 0;
   bool _isLoading = true;
   bool _initialLoadStarted = false;
-  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
     super.initState();
     _initTabs();
+
+    // The picker is embedded in the chat panel rather than presented as its
+    // own route. Waiting for ModalRoute.animation to complete can therefore
+    // miss the completion edge (or wait on an unrelated route transition),
+    // leaving the grid on its loading spinner indefinitely. Build the cached
+    // index after the first frame instead: this keeps the opening frame cheap
+    // while making initialization deterministic.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadAfterRouteTransition();
-    });
-  }
-
-  void _loadAfterRouteTransition() {
-    if (!mounted || _initialLoadStarted) return;
-
-    final animation = ModalRoute.of(context)?.animation;
-    if (animation == null || animation.status == AnimationStatus.completed) {
+      if (!mounted || _initialLoadStarted) return;
       _initialLoadStarted = true;
       _loadEmojis();
-      return;
-    }
-
-    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
-    _routeAnimation = animation;
-    _routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
-  }
-
-  void _handleRouteAnimationStatus(AnimationStatus status) {
-    if (status != AnimationStatus.completed) return;
-
-    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
-    _routeAnimation = null;
-    if (!mounted || _initialLoadStarted) return;
-
-    _initialLoadStarted = true;
-    _loadEmojis();
+    });
   }
 
   void _initTabs() {
@@ -357,7 +344,6 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
 
   @override
   void dispose() {
-    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
