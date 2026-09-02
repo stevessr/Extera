@@ -1602,8 +1602,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: c9c524f699a497d64324c984b2000d6ae9f9fbd5
-      resolved-ref: c9c524f699a497d64324c984b2000d6ae9f9fbd5
+      ref: "3fd2c7a80fbeec0dd62175e8a863c38544e54f2a"
+      resolved-ref: "3fd2c7a80fbeec0dd62175e8a863c38544e54f2a"
       url: "https://github.com/stevessr/matrix-dart-sdk.git"
     source: git
     version: "11.0.0"
