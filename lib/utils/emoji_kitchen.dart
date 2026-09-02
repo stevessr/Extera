@@ -30,7 +30,9 @@ class EmojiKitchenDataSource {
   bool get isLoaded => _data != null;
 
   Future<void> ensureLoaded({bool forceRefresh = false}) {
-    if (!forceRefresh && _data != null) return SynchronousFuture(null);
+    if (!forceRefresh && _data != null) {
+      return SynchronousFuture<void>(null);
+    }
     if (!forceRefresh && _loading != null) return _loading!;
 
     final loading = _load(forceRefresh: forceRefresh);
@@ -45,7 +47,8 @@ class EmojiKitchenDataSource {
     final cached = preferences.getString(_cacheKey);
     final savedAt = preferences.getInt(_cacheTimeKey);
     final now = DateTime.now();
-    final cacheIsFresh = !forceRefresh &&
+    final cacheIsFresh =
+        !forceRefresh &&
         cached != null &&
         savedAt != null &&
         now.difference(DateTime.fromMillisecondsSinceEpoch(savedAt)) <
@@ -55,8 +58,8 @@ class EmojiKitchenDataSource {
       try {
         _installData(await compute(_decodeCompatibilityData, cached));
         return;
-      } catch (_) {
-        // Corrupt/partially-written cache: fall through to the network copy.
+      } catch (error) {
+        debugPrint('Ignoring invalid Emoji Kitchen cache: $error');
       }
     }
 
@@ -79,7 +82,9 @@ class EmojiKitchenDataSource {
       try {
         await preferences.setString(_cacheKey, body);
         await preferences.setInt(_cacheTimeKey, now.millisecondsSinceEpoch);
-      } catch (_) {}
+      } catch (error) {
+        debugPrint('Could not persist Emoji Kitchen metadata cache: $error');
+      }
       return;
     } catch (error) {
       // A stale cache is much better than making the feature unavailable while
@@ -88,10 +93,15 @@ class EmojiKitchenDataSource {
         try {
           _installData(await compute(_decodeCompatibilityData, cached));
           return;
-        } catch (_) {}
+        } catch (cacheError) {
+          debugPrint('Stale Emoji Kitchen cache is invalid: $cacheError');
+        }
       }
       if (error is EmojiKitchenException) rethrow;
-      throw EmojiKitchenException('Unable to load Emoji Kitchen metadata.', error);
+      throw EmojiKitchenException(
+        'Unable to load Emoji Kitchen metadata.',
+        error,
+      );
     }
   }
 
@@ -138,7 +148,9 @@ class EmojiKitchenDataSource {
 
     final data = _data;
     if (data == null) {
-      throw const EmojiKitchenException('Emoji Kitchen metadata is not loaded.');
+      throw const EmojiKitchenException(
+        'Emoji Kitchen metadata is not loaded.',
+      );
     }
 
     final emojiTable = data[r'$e'];
