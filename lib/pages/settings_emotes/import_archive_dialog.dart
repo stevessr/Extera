@@ -81,9 +81,7 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
           child: Text(L10n.of(context).cancel),
         ),
         TextButton(
-          onPressed: _loading ||
-                  _importMap.isEmpty ||
-                  _hasInvalidImportNames
+          onPressed: _loading || _importMap.isEmpty || _hasInvalidImportNames
               ? null
               : _addEmotePack,
           child: Text(L10n.of(context).importNow),
