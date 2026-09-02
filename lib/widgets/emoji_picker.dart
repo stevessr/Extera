@@ -181,15 +181,19 @@ class _StandardEmojiIndex {
       if (base != null) entry.value.insert(0, base);
     }
 
+    // Keep all runtime generic arguments explicit. dart2js keeps the generic
+    // type of unmodifiable collections, so a bare List.unmodifiable/Map.unmodifiable
+    // can become List<dynamic>/Map<dynamic, dynamic> and fail subtype checks in
+    // minified release builds even though the analyzer accepts the assignment.
     return _StandardEmojiIndex._(
-      all: List.unmodifiable(all),
-      byCategory: Map.unmodifiable({
+      all: List<PickerEmoji>.unmodifiable(all),
+      byCategory: Map<Category, List<PickerEmoji>>.unmodifiable({
         for (final entry in byCategory.entries)
-          entry.key: List.unmodifiable(entry.value),
+          entry.key: List<PickerEmoji>.unmodifiable(entry.value),
       }),
-      variationsByBaseName: Map.unmodifiable({
+      variationsByBaseName: Map<String, List<PickerEmoji>>.unmodifiable({
         for (final entry in variations.entries)
-          entry.key: List.unmodifiable(entry.value),
+          entry.key: List<PickerEmoji>.unmodifiable(entry.value),
       }),
     );
   }
@@ -391,7 +395,8 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
           categoryEmojis.add(emoji);
           custom.add(emoji);
         }
-        customByCategoryId[category.id] = List.unmodifiable(categoryEmojis);
+        customByCategoryId[category.id] =
+            List<PickerEmoji>.unmodifiable(categoryEmojis);
       }
 
       final searchable = custom.isEmpty
@@ -403,7 +408,8 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
               custom.map((emoji) => emoji.searchIdentity),
             );
 
-      _customByCategoryId = Map.unmodifiable(customByCategoryId);
+      _customByCategoryId =
+          Map<String, List<PickerEmoji>>.unmodifiable(customByCategoryId);
       _customSearchIdentities = customIdentities;
       _searchableEmojis = searchable;
       _loadFailed = false;
@@ -448,7 +454,7 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         }
       }
 
-      _displayedEmojis = List.unmodifiable(results);
+      _displayedEmojis = List<PickerEmoji>.unmodifiable(results);
       return;
     }
 
