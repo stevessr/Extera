@@ -84,7 +84,7 @@ dependencies:
     # using an older SDK commit from pubspec.lock.
     git:
       url: https://github.com/stevessr/matrix-dart-sdk.git
-      ref: 3fd2c7a80fbeec0dd62175e8a863c38544e54f2a
+      ref: 77ca4a0895f15f955943584634b1486bc42586f6
   mime: ^2.0.0
   native_imaging: ^0.5.0
   open_file: ^4.0.0
