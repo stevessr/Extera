@@ -1,0 +1,28 @@
+name: Temporary Dart formatter
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ github.head_ref == 'fix/stable-msc2545-compliance' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: ./.github/actions/setup-flutter
+      - name: Apply pinned Dart formatter
+        run: |
+          dart format lib/ test/ integration_test/
+          if ! git diff --quiet -- lib/ test/ integration_test/; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add lib/ test/ integration_test/
+            git commit -m "style: apply pinned Dart formatter"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
