@@ -1,0 +1,161 @@
+name: Temporary Action
+run-name: >-
+  TEMP · ${{ inputs.action_type }} · ${{ inputs.purpose }} · ${{ inputs.target_branch }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: Temporary action type shown in the run title
+        required: true
+        type: choice
+        options:
+          - patch
+          - format
+          - dependency
+          - migration
+          - verification
+          - maintenance
+          - other
+      purpose:
+        description: Short purpose shown in the run title and summary
+        required: true
+        type: string
+      target_branch:
+        description: Branch containing the temporary script and receiving changes
+        required: true
+        type: string
+      commit_changes:
+        description: Commit and push changes produced by the temporary script
+        required: true
+        default: false
+        type: boolean
+      commit_message:
+        description: Commit message when commit_changes is enabled
+        required: false
+        default: "chore: apply temporary action"
+        type: string
+      allow_default_branch_write:
+        description: Explicitly allow committing directly to the default branch
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-action-${{ inputs.target_branch }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    name: ${{ inputs.action_type }} · ${{ inputs.purpose }}
+    runs-on: ubuntu-latest
+    env:
+      TEMP_ACTION_TYPE: ${{ inputs.action_type }}
+      TEMP_ACTION_PURPOSE: ${{ inputs.purpose }}
+      TEMP_ACTION_TARGET_BRANCH: ${{ inputs.target_branch }}
+      TEMP_ACTION_COMMIT_CHANGES: ${{ inputs.commit_changes }}
+      TEMP_ACTION_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+    steps:
+      - name: Validate dispatch metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git check-ref-format --branch "$TEMP_ACTION_TARGET_BRANCH" >/dev/null
+          test -n "${TEMP_ACTION_PURPOSE//[[:space:]]/}" || {
+            echo "purpose must not be empty" >&2
+            exit 1
+          }
+          if [[ "$TEMP_ACTION_COMMIT_CHANGES" == "true" \
+            && "$TEMP_ACTION_TARGET_BRANCH" == "$TEMP_ACTION_DEFAULT_BRANCH" \
+            && "${{ inputs.allow_default_branch_write }}" != "true" ]]; then
+            echo "Refusing to write to the default branch without allow_default_branch_write." >&2
+            exit 1
+          fi
+
+      - name: Check out target branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Record temporary action
+        shell: bash
+        run: |
+          {
+            echo "## Temporary Action"
+            echo
+            echo "- **Type:** \`$TEMP_ACTION_TYPE\`"
+            echo "- **Purpose:** $TEMP_ACTION_PURPOSE"
+            echo "- **Target branch:** \`$TEMP_ACTION_TARGET_BRANCH\`"
+            echo "- **Commit changes:** \`$TEMP_ACTION_COMMIT_CHANGES\`"
+            echo "- **Executor:** \`scripts/ci/temp-action.sh\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Execute temporary action
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/ci/temp-action.sh || {
+            echo "scripts/ci/temp-action.sh is missing." >&2
+            exit 1
+          }
+          bash scripts/ci/temp-action.sh
+
+      - name: Validate repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if [[ -n "$(git status --porcelain -- .github/workflows)" ]]; then
+            echo "Temporary actions must not modify or create workflow files." >&2
+            git status --short -- .github/workflows >&2
+            exit 1
+          fi
+
+      - name: Restore shared temporary script
+        if: ${{ inputs.commit_changes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$TEMP_ACTION_DEFAULT_BRANCH:refs/remotes/origin/$TEMP_ACTION_DEFAULT_BRANCH" --depth=1
+          git restore --source="origin/$TEMP_ACTION_DEFAULT_BRANCH" -- scripts/ci/temp-action.sh
+
+      - name: Commit temporary action result
+        if: ${{ inputs.commit_changes }}
+        shell: bash
+        env:
+          TEMP_ACTION_COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        run: |
+          set -euo pipefail
+          git add -A
+
+          if ! git diff --cached --quiet -- .github/workflows; then
+            echo "Temporary actions must never persist workflow changes." >&2
+            git diff --cached -- .github/workflows >&2
+            exit 1
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "$TEMP_ACTION_COMMIT_MESSAGE"
+          git push origin "HEAD:$TEMP_ACTION_TARGET_BRANCH"
+
+      - name: Summarize result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo
+            echo "### Result"
+            echo "- **Status:** \`${{ job.status }}\`"
+            echo "- Workflow identity remains \`Temporary Action\`; use the run title above to distinguish type and purpose."
+          } >> "$GITHUB_STEP_SUMMARY"
