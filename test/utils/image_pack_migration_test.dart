@@ -75,7 +75,10 @@ void main() {
       expect(images.containsKey('a_b'), isTrue);
       expect(images.containsKey('a_b_2'), isTrue);
       expect(images.containsKey('__'), isTrue);
-      expect(images.keys.any((key) => key.length == maxEmoteShortcodeBytes), true);
+      expect(
+        images.keys.any((key) => key.length == maxEmoteShortcodeBytes),
+        true,
+      );
       expect(images['a_b']['body'], 'a b');
       expect(images['a_b_2']['body'], 'a?b');
       expect(images['__']['body'], '表情');
