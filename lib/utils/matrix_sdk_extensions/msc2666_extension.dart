@@ -4,8 +4,7 @@ import 'package:http/http.dart';
 import 'package:matrix/matrix.dart' as matrix;
 
 const _msc2666Feature = 'uk.half-shot.msc2666.query_mutual_rooms';
-const _msc2666StableFeature =
-    'uk.half-shot.msc2666.query_mutual_rooms.stable';
+const _msc2666StableFeature = 'uk.half-shot.msc2666.query_mutual_rooms.stable';
 
 /// Whether the homeserver advertises a specification version which contains
 /// the stable Mutual Rooms API, or the transitional stable feature flag used
