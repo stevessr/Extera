@@ -35,5 +35,6 @@ List<PickerEmoji> buildRecentPickerEmojis({
     return PickerEmoji.custom(name: value, customData: value, categoryId: null);
   }
 
-  return List.unmodifiable(recent.map(resolve));
+  // Keep the runtime element type explicit for dart2js release builds.
+  return List<PickerEmoji>.unmodifiable(recent.map<PickerEmoji>(resolve));
 }

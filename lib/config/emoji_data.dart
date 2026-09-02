@@ -7,7 +7,10 @@ import 'package:emojis/emoji.dart';
 abstract final class EmojiData {
   static const unicodeVersion = '18.0';
 
-  static final List<Emoji> _all = List.unmodifiable([
+  // Keep the element type explicit here. `List.unmodifiable(...)` defaults to
+  // `dynamic` without an explicit type argument, which dart2js preserves in
+  // release builds and then rejects when this value is assigned to List<Emoji>.
+  static final List<Emoji> _all = List<Emoji>.unmodifiable(<Emoji>[
     ...Emoji.all(),
     ..._unicode18,
   ]);
@@ -33,7 +36,7 @@ abstract final class EmojiData {
   /// caller persisted a Unicode glyph, full emoji name or short name.
   static Emoji? lookup(String value) => _lookup[value];
 
-  static const _unicode18 = [
+  static const List<Emoji> _unicode18 = <Emoji>[
     Emoji(
       name: 'cracking face',
       char: '\u{1FAEB}',
