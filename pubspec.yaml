@@ -84,7 +84,7 @@ dependencies:
     # using an older SDK commit from pubspec.lock.
     git:
       url: https://github.com/stevessr/matrix-dart-sdk.git
-      ref: 507adcbd4ee71ed8c50e1ab4afe470d38b9ceb60
+      ref: 318c61b7e59b6d99263600cf9fea5b9d7259ff7f
   mime: ^2.0.0
   native_imaging: ^0.5.0
   open_file: ^4.0.0
@@ -134,7 +134,7 @@ dev_dependencies:
   license_checker: ^1.6.2
   msix: ^3.6.13
   tidy_imports: ^1.3.0
-  translations_cleaner: ^0.2.1
+  translations_cleaner: ^2.0.1
   url_launcher_platform_interface: ^2.3.2
 
 # Generated localization files are owned by flutter gen-l10n and must remain
@@ -185,7 +185,7 @@ msix_config:
   publisher_display_name: Extera Next
   publisher: CN=Extera, O=HQ of bad forks of good things, L=Matrix, S=Internet, C=RU
   identity_name: xyz.extera.next
-  logo_path: assets\logo.png
+  logo_path: assets\\logo.png
   capabilities: internetClient, location, microphone, webcam
   protocol_activation: https
   app_uri_handler_hosts: extera.xyz, fluffychat.im, matrix.to
