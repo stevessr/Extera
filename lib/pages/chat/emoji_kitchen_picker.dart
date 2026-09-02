@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
@@ -32,7 +33,6 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
   final _source = EmojiKitchenDataSource.instance;
 
   String? _selectedEmoji;
-  String? _selectedCodepoint;
   List<EmojiKitchenCombination> _combinations = const [];
   EmojiKitchenCombination? _sending;
   bool _loading = false;
@@ -47,16 +47,16 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
   Future<void> _warmUp() async {
     try {
       await _source.ensureLoaded();
-    } catch (_) {
+    } catch (error) {
       // Loading is retried when the user actually selects an emoji. Avoid
       // replacing the normal picker with an error before it is needed.
+      debugPrint('Emoji Kitchen warm-up failed: $error');
     }
   }
 
   Future<void> _selectEmoji(String emoji) async {
     setState(() {
       _selectedEmoji = emoji;
-      _selectedCodepoint = null;
       _combinations = const [];
       _loading = true;
       _error = null;
@@ -73,11 +73,11 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
       final combinations = _source.combinationsFor(codepoint);
       if (!mounted) return;
       setState(() {
-        _selectedCodepoint = codepoint;
         _combinations = combinations;
         _loading = false;
         if (combinations.isEmpty) {
-          _error = 'No Emoji Kitchen combinations are available for this emoji.';
+          _error =
+              'No Emoji Kitchen combinations are available for this emoji.';
         }
       });
     } catch (error) {
@@ -171,7 +171,6 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
   void _goBack() {
     setState(() {
       _selectedEmoji = null;
-      _selectedCodepoint = null;
       _combinations = const [];
       _loading = false;
       _error = null;
@@ -349,7 +348,10 @@ class _KitchenTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
                   child: Text(
                     combination.partnerEmoji,
                     style: const TextStyle(fontSize: 14),
