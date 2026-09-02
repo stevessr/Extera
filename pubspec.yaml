@@ -185,7 +185,7 @@ msix_config:
   publisher_display_name: Extera Next
   publisher: CN=Extera, O=HQ of bad forks of good things, L=Matrix, S=Internet, C=RU
   identity_name: xyz.extera.next
-  logo_path: assets\\logo.png
+  logo_path: assets\logo.png
   capabilities: internetClient, location, microphone, webcam
   protocol_activation: https
   app_uri_handler_hosts: extera.xyz, fluffychat.im, matrix.to
