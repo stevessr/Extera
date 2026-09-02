@@ -1,0 +1,36 @@
+name: Temporary WASM merge/build
+
+on:
+  push:
+    branches:
+      - automation/merge-main-into-wasm
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Merge latest main
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git merge --no-edit -X ours origin/main -m 'Merge main into wasm integration'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
+
+      - name: Build WASM web bundle
+        uses: ./.github/actions/build-web-app
+        with:
+          target: wasm
+          mode: release
