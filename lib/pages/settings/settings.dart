@@ -18,6 +18,7 @@ import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/client_profile_extension.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/profile_field_capabilities.dart';
 import 'package:extera_next/utils/timezone_init.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -127,7 +128,20 @@ class SettingsController extends State<Settings> {
     timezoneFuture = null;
   });
 
+  Future<bool> _canModifyProfileField(String field) async {
+    final canModify = await Matrix.of(context).client.canModifyOwnProfileField(
+      field,
+    );
+    if (!canModify && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L10n.of(context).profileFieldManagedByServer)),
+      );
+    }
+    return canModify;
+  }
+
   void setAboutAction() async {
+    if (!await _canModifyProfileField(AppConfig.aboutProfileField)) return;
     final about = await aboutFuture;
     final input = await showTextInputDialog(
       useRootNavigator: false,
@@ -147,8 +161,8 @@ class SettingsController extends State<Settings> {
       context: context,
       future: () => matrix.client.setProfileField(
         matrix.client.userID!,
-        'xyz.extera.about',
-        {'xyz.extera.about': input},
+        AppConfig.aboutProfileField,
+        {AppConfig.aboutProfileField: input},
       ),
     );
     if (success.error == null) {
@@ -157,6 +171,7 @@ class SettingsController extends State<Settings> {
   }
 
   void setTimezoneAction() async {
+    if (!await _canModifyProfileField('m.tz')) return;
     final currentTz = await timezoneFuture;
     final matrix = Matrix.of(context);
 
@@ -240,6 +255,7 @@ class SettingsController extends State<Settings> {
   }
 
   void setDisplaynameAction() async {
+    if (!await _canModifyProfileField('displayname')) return;
     final profile = await profileFuture;
     final input = await showTextInputDialog(
       useRootNavigator: false,
@@ -290,6 +306,7 @@ class SettingsController extends State<Settings> {
   }
 
   void setAvatarAction() async {
+    if (!await _canModifyProfileField('avatar_url')) return;
     final profile = await profileFuture;
     if (!mounted) return;
     final actions = [
@@ -385,6 +402,7 @@ class SettingsController extends State<Settings> {
   }
 
   void setBannerAction() async {
+    if (!await _canModifyProfileField(AppConfig.bannerProfileField)) return;
     final bannerUrl = await bannerFuture;
     if (!mounted) return;
     final actions = [
