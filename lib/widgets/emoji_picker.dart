@@ -100,12 +100,17 @@ class CustomCategory {
 // ==========================================
 
 /// Updated callback: returns the wrapper so you can handle both types
-typedef EmojiSelectionCallback =
-    void Function(Category? category, PickerEmoji emoji);
+typedef EmojiSelectionCallback = void Function(
+  Category? category,
+  PickerEmoji emoji,
+);
 
 /// Builder for rendering custom emoji tiles
-typedef CustomEmojiBuilder =
-    Widget Function(BuildContext context, String emojiData, double size);
+typedef CustomEmojiBuilder = Widget Function(
+  BuildContext context,
+  String emojiData,
+  double size,
+);
 
 // Standard Categories
 enum Category {
@@ -395,8 +400,9 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
           categoryEmojis.add(emoji);
           custom.add(emoji);
         }
-        customByCategoryId[category.id] =
-            List<PickerEmoji>.unmodifiable(categoryEmojis);
+        customByCategoryId[category.id] = List<PickerEmoji>.unmodifiable(
+          categoryEmojis,
+        );
       }
 
       final searchable = custom.isEmpty
@@ -408,8 +414,9 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
               custom.map((emoji) => emoji.searchIdentity),
             );
 
-      _customByCategoryId =
-          Map<String, List<PickerEmoji>>.unmodifiable(customByCategoryId);
+      _customByCategoryId = Map<String, List<PickerEmoji>>.unmodifiable(
+        customByCategoryId,
+      );
       _customSearchIdentities = customIdentities;
       _searchableEmojis = searchable;
       _loadFailed = false;
