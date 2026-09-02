@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/emoji_kitchen_picker.dart';
 import 'package:extera_next/pages/chat/sticker_picker_dialog.dart';
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
 import 'package:extera_next/utils/emoji_picker_recent.dart';
@@ -75,7 +76,7 @@ class ChatEmojiPicker extends StatelessWidget {
             ? SizedBox(
                 height: MediaQuery.sizeOf(context).height / 2,
                 child: DefaultTabController(
-                  length: 2,
+                  length: 3,
                   initialIndex: controller.initiallyShowStickerPicker ? 1 : 0,
                   child: Column(
                     children: [
@@ -83,6 +84,7 @@ class ChatEmojiPicker extends StatelessWidget {
                         tabs: [
                           Tab(text: L10n.of(context).emojis),
                           Tab(text: L10n.of(context).stickers),
+                          const Tab(text: 'Emoji Kitchen'),
                         ],
                       ),
                       Expanded(
@@ -127,6 +129,16 @@ class ChatEmojiPicker extends StatelessWidget {
                                   threadRootEventId:
                                       controller.threadRootEventId,
                                 );
+                                controller.cancelReplyEventAction();
+                                controller.hideEmojiPicker();
+                              },
+                            ),
+                            EmojiKitchenPicker(
+                              room: controller.room,
+                              replyEvent: controller.replyEvent,
+                              threadRootEventId: controller.threadRootEventId,
+                              recentEmojis: recentPickerEmojis,
+                              onSent: () {
                                 controller.cancelReplyEventAction();
                                 controller.hideEmojiPicker();
                               },
