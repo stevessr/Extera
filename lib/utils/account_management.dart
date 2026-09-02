@@ -5,8 +5,8 @@ import 'package:matrix/matrix.dart';
 /// fallback for older deployments.
 Future<String?> getAccountManagementUrl(Client client) async {
   try {
-    final accountManagementUri =
-        (await client.getAuthMetadata()).accountManagementUri;
+    final accountManagementUri = (await client.getAuthMetadata())
+        .accountManagementUri;
     if (accountManagementUri != null) return accountManagementUri.toString();
   } catch (error, stackTrace) {
     Logs().d(
