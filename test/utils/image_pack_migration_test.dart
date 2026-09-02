@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:extera_next/utils/emote_shortcode.dart';
 import 'package:extera_next/utils/image_pack_migration.dart';
 
 void main() {
@@ -55,6 +56,42 @@ void main() {
 
       expect(result['pack']['usage'], ['sticker']);
       expect(result['images']['legacy-extra'].containsKey('usage'), isFalse);
+    });
+
+    test('normalizes malformed legacy shortcodes without losing images', () {
+      final oversized = List.filled(maxEmoteShortcodeBytes + 1, 'x').join();
+      final result = normalizeStableImagePackContent({
+        'images': {
+          'a b': {'url': 'mxc://example.org/space'},
+          'a?b': {'url': 'mxc://example.org/question'},
+          '表情': {'url': 'mxc://example.org/unicode'},
+          oversized: {'url': 'mxc://example.org/long'},
+        },
+      });
+
+      final images = result['images'] as Map<String, dynamic>;
+      expect(images.length, 4);
+      expect(images.keys.every(emoteShortcodePattern.hasMatch), isTrue);
+      expect(images.containsKey('a_b'), isTrue);
+      expect(images.containsKey('a_b_2'), isTrue);
+      expect(images.containsKey('__'), isTrue);
+      expect(images.keys.any((key) => key.length == maxEmoteShortcodeBytes), true);
+      expect(images['a_b']['body'], 'a b');
+      expect(images['a_b_2']['body'], 'a?b');
+      expect(images['__']['body'], '表情');
+    });
+
+    test('does not overwrite an explicit image body while normalizing', () {
+      final result = normalizeStableImagePackContent({
+        'images': {
+          'bad code': {
+            'url': 'mxc://example.org/image',
+            'body': 'Existing description',
+          },
+        },
+      });
+
+      expect(result['images']['bad_code']['body'], 'Existing description');
     });
   });
 }
