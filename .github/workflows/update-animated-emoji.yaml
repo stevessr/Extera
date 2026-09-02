@@ -67,12 +67,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           UPDATE_BRANCH: automation/animated-emoji-data
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          PR_BODY: |
+            Automatically regenerated `lib/config/animated_emoji_data.dart` from Google's current Noto Emoji Animation metadata.
+
+            Source: `https://googlefonts.github.io/noto-emoji-animation/data/api.json`
+
+            This pull request is created by the monthly animated emoji update workflow and only appears when the generated codepoint set changes.
         run: |
           pr_number="$(
             gh pr list \
               --repo "$GITHUB_REPOSITORY" \
               --head "$UPDATE_BRANCH" \
-              --base main \
+              --base "$BASE_BRANCH" \
               --state open \
               --json number \
               --jq '.[0].number // empty'
@@ -83,18 +90,9 @@ jobs:
             exit 0
           fi
 
-          body="$(cat <<'EOF'
-Automatically regenerated `lib/config/animated_emoji_data.dart` from Google's current Noto Emoji Animation metadata.
-
-Source: `https://googlefonts.github.io/noto-emoji-animation/data/api.json`
-
-This pull request is created by the monthly animated emoji update workflow and only appears when the generated codepoint set changes.
-EOF
-          )"
-
           gh pr create \
             --repo "$GITHUB_REPOSITORY" \
-            --base main \
+            --base "$BASE_BRANCH" \
             --head "$UPDATE_BRANCH" \
             --title 'chore: update animated emoji metadata' \
-            --body "$body"
+            --body "$PR_BODY"
