@@ -1603,11 +1603,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: Extera
-      resolved-ref: d0070b981f757f0f0a7fd82705bf2a447d798dc2
+      ref: d672ed667dfaecc4553264ce6b83b6d2614bbcba
+      resolved-ref: d672ed667dfaecc4553264ce6b83b6d2614bbcba
       url: "https://github.com/stevessr/matrix-dart-sdk.git"
     source: git
-    version: "10.2.1"
+    version: "11.0.0"
   meta:
     dependency: transitive
     description:
@@ -2885,7 +2885,7 @@ packages:
     source: hosted
     version: "15.3.0"
   vodozemac:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: dart
       ref: "krille/frb-wasm-fix"

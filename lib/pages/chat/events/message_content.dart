@@ -17,6 +17,7 @@ import 'package:extera_next/pages/chat/events/video_player.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
+import 'package:extera_next/utils/font_family.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -141,6 +142,15 @@ class MessageContent extends StatelessWidget {
   Widget _buildContent(BuildContext context) {
     final fontSize =
         AppSettings.fontSizeFactor.value * AppSettings.messageFontSize.value;
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.chatFont.value,
+    );
+    final fontFamilyFallback = resolveFontFallbacks(
+      configuredFallbacks: AppSettings.chatFallbackFonts.value,
+      primaryFont: fontFamily,
+      includeNotoEmoji: AppSettings.notoEmojiFont.value,
+    );
     final buttonTextColor = textColor;
     final bigEmotes =
         event.onlyEmotes && event.numberEmotes > 0 && event.numberEmotes <= 3;

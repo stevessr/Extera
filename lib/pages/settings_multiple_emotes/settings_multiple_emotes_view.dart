@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/settings_multiple_emotes/settings_multiple_emotes.dart';
+import 'package:extera_next/utils/image_pack_migration.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 class MultipleEmotesSettingsView extends StatelessWidget {
@@ -25,11 +26,15 @@ class MultipleEmotesSettingsView extends StatelessWidget {
           (update) => update.roomId == room.id,
         ),
         builder: (context, snapshot) {
-          final packStateEvents = room.states['im.ponies.room_emotes'];
-          // we need to manually convert the map using Map.of, otherwise assigning null will throw a type error.
-          final packs = packStateEvents != null
-              ? Map<String, StrippedStateEvent?>.of(packStateEvents)
-              : <String, StrippedStateEvent?>{};
+          final legacyPacks = room.states[legacyRoomImagePackEventType];
+          final stablePacks = room.states[EventTypes.RoomImagePack];
+          // Stable state wins if both event types use the same state key.
+          final packs = <String, StrippedStateEvent?>{
+            if (legacyPacks != null)
+              ...Map<String, StrippedStateEvent?>.of(legacyPacks),
+            if (stablePacks != null)
+              ...Map<String, StrippedStateEvent?>.of(stablePacks),
+          };
           if (!packs.containsKey('')) {
             packs[''] = null;
           }
@@ -45,7 +50,7 @@ class MultipleEmotesSettingsView extends StatelessWidget {
                 'pack',
               );
               final packName =
-                  eventPack?.tryGet<String>('displayname') ??
+                  eventPack?.tryGet<String>('display_name') ??
                   eventPack?.tryGet<String>('name') ??
                   (keys[i].isNotEmpty ? keys[i] : 'Default Pack');
 
