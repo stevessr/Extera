@@ -5,8 +5,8 @@ import 'package:matrix/matrix.dart';
 /// fallback for older deployments.
 Future<String?> getAccountManagementUrl(Client client) async {
   try {
-    final accountManagementUri = (await client.getAuthMetadata())
-        .accountManagementUri;
+    final accountManagementUri =
+        (await client.getAuthMetadata()).accountManagementUri;
     if (accountManagementUri != null) return accountManagementUri.toString();
   } catch (error, stackTrace) {
     Logs().d(
@@ -17,8 +17,7 @@ Future<String?> getAccountManagementUrl(Client client) async {
   }
 
   try {
-    return (await client.getWellknown())
-        .additionalProperties
+    return (await client.getWellknown()).additionalProperties
         .tryGetMap<String, Object?>('org.matrix.msc2965.authentication')
         ?.tryGet<String>('account');
   } catch (error, stackTrace) {

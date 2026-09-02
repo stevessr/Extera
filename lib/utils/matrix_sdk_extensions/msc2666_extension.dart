@@ -55,7 +55,8 @@ extension Msc2666Extension on matrix.Client {
       request.headers['authorization'] = 'Bearer $accessToken';
       final response = await httpClient.send(request);
       final responseBody = await response.stream.toBytes();
-      if (response.statusCode != 200) unexpectedResponse(response, responseBody);
+      if (response.statusCode != 200)
+        unexpectedResponse(response, responseBody);
 
       final responseString = utf8.decode(responseBody);
       final json = jsonDecode(responseString) as Map<String, dynamic>;
