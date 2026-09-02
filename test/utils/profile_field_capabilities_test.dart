@@ -35,7 +35,10 @@ void main() {
       );
 
       expect(profileFieldCanBeModified(capability, 'avatar_url'), isFalse);
-      expect(profileFieldCanBeModified(capability, 'xyz.extera.about'), isFalse);
+      expect(
+        profileFieldCanBeModified(capability, 'xyz.extera.about'),
+        isFalse,
+      );
       expect(profileFieldCanBeModified(capability, 'displayname'), isTrue);
     });
 
@@ -43,7 +46,10 @@ void main() {
       final capability = ProfileFieldsCapability(enabled: true);
 
       expect(profileFieldCanBeModified(capability, 'displayname'), isTrue);
-      expect(profileFieldCanBeModified(capability, 'custom.example.field'), isTrue);
+      expect(
+        profileFieldCanBeModified(capability, 'custom.example.field'),
+        isTrue,
+      );
     });
   });
 }

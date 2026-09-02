@@ -129,9 +129,9 @@ class SettingsController extends State<Settings> {
   });
 
   Future<bool> _canModifyProfileField(String field) async {
-    final canModify = await Matrix.of(context).client.canModifyOwnProfileField(
-      field,
-    );
+    final canModify = await Matrix.of(
+      context,
+    ).client.canModifyOwnProfileField(field);
     if (!canModify && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context).profileFieldManagedByServer)),

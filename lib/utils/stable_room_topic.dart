@@ -15,10 +15,11 @@ Map<String, dynamic> stableRoomTopicContent(String topic) => {
 
 extension StableRoomTopicExtension on Room {
   /// Writes both the legacy topic and the stable extensible `m.topic` block.
-  Future<String> setStableDescription(String topic) => client.setRoomStateWithKey(
-    id,
-    EventTypes.RoomTopic,
-    '',
-    stableRoomTopicContent(topic),
-  );
+  Future<String> setStableDescription(String topic) =>
+      client.setRoomStateWithKey(
+        id,
+        EventTypes.RoomTopic,
+        '',
+        stableRoomTopicContent(topic),
+      );
 }

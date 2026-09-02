@@ -44,7 +44,11 @@ extension ProfileFieldCapabilitiesExtension on Client {
       // `/capabilities` is rate-limited and some older homeservers do not
       // implement it correctly. Preserve Extera's previous behaviour rather
       // than making profile editing unusable when capability discovery fails.
-      Logs().d('Unable to resolve m.profile_fields capability', error, stackTrace);
+      Logs().d(
+        'Unable to resolve m.profile_fields capability',
+        error,
+        stackTrace,
+      );
       return true;
     }
   }
