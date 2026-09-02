@@ -262,6 +262,7 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                                   final emoji = await showAdaptiveBottomSheet<String>(
                                     context: context,
                                     builder: (context) => Scaffold(
+                                      resizeToAvoidBottomInset: false,
                                       appBar: AppBar(
                                         title: Text(
                                           L10n.of(context).customReaction,

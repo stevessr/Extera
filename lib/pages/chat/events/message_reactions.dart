@@ -275,6 +275,7 @@ class _AdaptiveReactorsDialog extends StatelessWidget {
     final emoji = await showAdaptiveBottomSheet<String>(
       context: context,
       builder: (context) => Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: Text(L10n.of(context).customReaction),
           leading: CloseButton(
