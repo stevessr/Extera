@@ -4266,5 +4266,7 @@
     "@roomProfileCustomHint": {
         "type": "String",
         "placeholder": {}
-    }
+    },
+  "profileFieldManagedByServer": "This profile field is managed by your homeserver.",
+  "@profileFieldManagedByServer": {}
 }

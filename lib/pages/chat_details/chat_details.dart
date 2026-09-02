@@ -16,6 +16,7 @@ import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/stable_room_topic.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
@@ -115,7 +116,7 @@ class ChatDetailsController extends State<ChatDetails> {
     if (input == null) return;
     final success = await showFutureLoadingDialog(
       context: context,
-      future: () => room.setDescription(input),
+      future: () => room.setStableDescription(input),
     );
     if (success.error == null) {
       ScaffoldMessenger.of(context).showSnackBar(
