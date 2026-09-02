@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as image_lib;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/pages/chat/trust_user_key_dialog.dart';
@@ -134,11 +135,30 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
         throw const EmojiKitchenException('Emoji Kitchen image is too large.');
       }
 
+      final decodedImage = image_lib.decodeImage(response.bodyBytes);
+      final matrixFile = MatrixImageFile(
+        bytes: response.bodyBytes,
+        name: combination.fileName,
+        mimeType: 'image/png',
+        width: decodedImage?.width,
+        height: decodedImage?.height,
+      );
       final client = Matrix.of(context).client;
+      MatrixFile uploadFile = matrixFile;
+      EncryptedFile? encryptedFile;
+
+      // sendEvent encrypts the event envelope, but Matrix media must be
+      // encrypted separately. Mirror Room.sendFileEvent so Kitchen stickers do
+      // not become plaintext attachments in E2EE rooms.
+      if (widget.room.encrypted && client.fileEncryptionEnabled) {
+        encryptedFile = await matrixFile.encrypt();
+        uploadFile = encryptedFile.toMatrixFile();
+      }
+
       final mxc = await client.uploadContent(
-        response.bodyBytes,
-        filename: combination.fileName,
-        contentType: 'image/png',
+        uploadFile.bytes,
+        filename: uploadFile.name,
+        contentType: uploadFile.mimeType,
       );
       if (!mounted) return;
 
@@ -146,11 +166,23 @@ class _EmojiKitchenPickerState extends State<EmojiKitchenPicker> {
       await widget.room.sendEvent(
         {
           'body': '$selectedEmoji + ${combination.partnerEmoji}',
-          'info': {
-            'mimetype': 'image/png',
-            'size': response.bodyBytes.length,
-          },
-          'url': mxc.toString(),
+          'info': {...matrixFile.info},
+          if (encryptedFile == null) 'url': mxc.toString(),
+          if (encryptedFile != null)
+            'file': {
+              'url': mxc.toString(),
+              'mimetype': matrixFile.mimeType,
+              'v': 'v2',
+              'key': {
+                'alg': 'A256CTR',
+                'ext': true,
+                'k': encryptedFile.k,
+                'key_ops': ['encrypt', 'decrypt'],
+                'kty': 'oct',
+              },
+              'iv': encryptedFile.iv,
+              'hashes': {'sha256': encryptedFile.sha256},
+            },
         },
         type: EventTypes.Sticker,
         inReplyTo: widget.replyEvent,
