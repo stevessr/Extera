@@ -1,0 +1,100 @@
+name: Update animated emoji metadata
+
+on:
+  schedule:
+    # Run monthly on the first day. GitHub Actions cron uses UTC.
+    - cron: '17 3 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: animated-emoji-metadata-update
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  update:
+    name: Refresh Google animated emoji metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # The generator only needs the Dart SDK. Reuse the repository's pinned
+      # Flutter toolchain without resolving dependencies or downloading all
+      # animated emoji assets.
+      - uses: ./.github/actions/setup-flutter
+        with:
+          pub-get: 'false'
+
+      - name: Regenerate animated emoji metadata
+        run: |
+          dart run tool/generate_animated_emoji.dart
+          dart format lib/config/animated_emoji_data.dart
+
+      - name: Detect metadata changes
+        id: changes
+        run: |
+          if git diff --quiet -- lib/config/animated_emoji_data.dart; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'Animated emoji metadata is already up to date.'
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            git diff --stat -- lib/config/animated_emoji_data.dart
+          fi
+
+      - name: Commit and push update branch
+        if: ${{ steps.changes.outputs.changed == 'true' }}
+        env:
+          UPDATE_BRANCH: automation/animated-emoji-data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$UPDATE_BRANCH"
+          git add lib/config/animated_emoji_data.dart
+          git commit -m 'chore: update animated emoji metadata'
+          git push --force origin "HEAD:$UPDATE_BRANCH"
+
+      - name: Open update pull request
+        if: ${{ steps.changes.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATE_BRANCH: automation/animated-emoji-data
+        run: |
+          pr_number="$(
+            gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --head "$UPDATE_BRANCH" \
+              --base main \
+              --state open \
+              --json number \
+              --jq '.[0].number // empty'
+          )"
+
+          if [[ -n "$pr_number" ]]; then
+            echo "Updated existing pull request #$pr_number."
+            exit 0
+          fi
+
+          body="$(cat <<'EOF'
+Automatically regenerated `lib/config/animated_emoji_data.dart` from Google's current Noto Emoji Animation metadata.
+
+Source: `https://googlefonts.github.io/noto-emoji-animation/data/api.json`
+
+This pull request is created by the monthly animated emoji update workflow and only appears when the generated codepoint set changes.
+EOF
+          )"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head "$UPDATE_BRANCH" \
+            --title 'chore: update animated emoji metadata' \
+            --body "$body"
