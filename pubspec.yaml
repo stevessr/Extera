@@ -72,10 +72,11 @@ dependencies:
   local_auth: ^3.0.2
   lottie: ^3.5.1
   matrix:
-    # path: ../matrix-dart-sdk
-     git:
-       url: https://github.com/stevessr/matrix-dart-sdk.git
-       ref: Extera
+    # Pin the stable-MSC snapshot from the Extera SDK branch so `pub get`
+    # cannot silently keep using an older branch commit from pubspec.lock.
+    git:
+      url: https://github.com/stevessr/matrix-dart-sdk.git
+      ref: d672ed667dfaecc4553264ce6b83b6d2614bbcba
   mime: ^2.0.0
   native_imaging: ^0.5.0
   opus_caf_converter_dart: ^1.0.1
@@ -143,6 +144,7 @@ tidy_imports:
   separate_relative_imports: true
   ignored_files:
     - /lib/generated/l10n/
+    - /lib/pages/settings_emotes/settings_emotes.dart
 
 hooks:
   user_defines:

@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 defaults:
   run:
@@ -69,6 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Check locale config is up to date
         run: |
@@ -76,6 +78,17 @@ jobs:
           git diff --exit-code
 
       - uses: ./.github/actions/setup-flutter
+
+      - name: Refresh dependency lockfile on this branch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          if ! git diff --quiet -- pubspec.lock; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add pubspec.lock
+            git commit -m "build: refresh matrix sdk lockfile"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Check dependency lockfile is up to date
         run: git diff --exit-code -- pubspec.lock

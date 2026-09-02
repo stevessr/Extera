@@ -216,7 +216,7 @@ class ChatPermissionsSettingsView extends StatelessWidget {
           ),
           _PermissionEntry(
             title: l10n.editRoomEmotes,
-            permissionKey: 'im.ponies.room_emotes',
+            permissionKey: EventTypes.RoomImagePack,
             category: 'events',
             isStateEvent: true,
           ),

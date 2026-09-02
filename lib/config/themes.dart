@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/utils/font_family.dart';
 
 import 'app_config.dart';
 
@@ -79,6 +80,15 @@ abstract class FluffyThemes {
         : colorScheme.surfaceContainer;
 
     final isColumnMode = FluffyThemes.isColumnMode(context);
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.uiFont.value,
+    );
+    final fontFamilyFallback = resolveFontFallbacks(
+      configuredFallbacks: AppSettings.fallbackFonts.value,
+      primaryFont: fontFamily,
+      includeNotoEmoji: notoEmoji == true,
+    );
 
     return ThemeData(
       visualDensity: VisualDensity.standard,

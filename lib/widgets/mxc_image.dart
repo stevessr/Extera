@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -9,7 +8,8 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:http/http.dart' show ClientException;
+
+enum MxcImageCacheCategory { general, sticker, userAvatar, roomAvatar }
 
 class MxcImage extends StatefulWidget {
   final Uri? uri;
@@ -26,6 +26,7 @@ class MxcImage extends StatefulWidget {
   final Widget Function(BuildContext context)? placeholder;
   final String? cacheKey;
   final String? cacheName;
+  final MxcImageCacheCategory cacheCategory;
   final Client? client;
   final BorderRadius borderRadius;
 
@@ -46,6 +47,7 @@ class MxcImage extends StatefulWidget {
     this.client,
     this.borderRadius = BorderRadius.zero,
     this.cacheName,
+    this.cacheCategory = MxcImageCacheCategory.general,
     super.key,
   });
 
@@ -76,28 +78,150 @@ class _MxcImagePlaceholder extends StatelessWidget {
   }
 }
 
+class _MxcImageLoadError extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final VoidCallback onRetry;
+
+  const _MxcImageLoadError({
+    required this.width,
+    required this.height,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onRetry,
+        child: Center(
+          child: Icon(
+            Icons.refresh,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MxcImageMemoryCache {
+  final int maxBytes;
+  final int maxEntries;
+  final Map<String, Uint8List> _lru = <String, Uint8List>{};
+  int _bytes = 0;
+
+  _MxcImageMemoryCache({required this.maxBytes, required this.maxEntries});
+
+  Uint8List? touch(String key) {
+    final data = _lru.remove(key);
+    if (data == null) return null;
+    _lru[key] = data;
+    return data;
+  }
+
+  void store(String key, Uint8List data) {
+    final previous = _lru.remove(key);
+    if (previous != null) {
+      _bytes -= previous.length;
+    }
+    _lru[key] = data;
+    _bytes += data.length;
+    _evictOverflow();
+  }
+
+  void _evictOverflow() {
+    while (_lru.length > maxEntries || (_bytes > maxBytes && _lru.isNotEmpty)) {
+      final oldestKey = _lru.keys.first;
+      final evicted = _lru.remove(oldestKey)!;
+      _bytes -= evicted.length;
+    }
+  }
+}
+
 class _MxcImageState extends State<MxcImage> {
-  /// Global in-memory cache of decoded-input image bytes.
-  ///
-  /// Raw bytes accumulate quickly (message thumbnails, avatars, stickers),
-  /// so the cache is bounded both by total bytes and entry count; the
-  /// least-recently-used entries are dropped first. Evicted data is still
-  /// available through the on-disk HTTP/media cache, so an eviction only
-  /// costs a disk read plus decode, not a network round trip.
-  static const int _cacheMaxBytes = 64 * 1024 * 1024;
-  static const int _cacheMaxEntries = 1024;
+  /// General media keeps the existing conservative bound. Stickers and
+  /// avatars live in independent protected pools so ordinary timeline media
+  /// cannot evict them. Their limits are deliberately much larger and serve
+  /// only as hard safety ceilings for unusually large sessions.
+  static final Map<MxcImageCacheCategory, _MxcImageMemoryCache>
+  _imageDataCaches = <MxcImageCacheCategory, _MxcImageMemoryCache>{
+    MxcImageCacheCategory.general: _MxcImageMemoryCache(
+      maxBytes: 64 * 1024 * 1024,
+      maxEntries: 1024,
+    ),
+    MxcImageCacheCategory.sticker: _MxcImageMemoryCache(
+      maxBytes: 384 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+    MxcImageCacheCategory.userAvatar: _MxcImageMemoryCache(
+      maxBytes: 128 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+    MxcImageCacheCategory.roomAvatar: _MxcImageMemoryCache(
+      maxBytes: 128 * 1024 * 1024,
+      maxEntries: 8192,
+    ),
+  };
 
   /// Upper bound for [_tryLoad] retries on persistent transport failures.
   static const int _maxLoadRetries = 4;
   static final Map<String, Uint8List> _imageDataLru = <String, Uint8List>{};
   static int _imageDataBytes = 0;
   Uint8List? _imageDataNoCache;
+  bool _loadFailed = false;
 
-  Uint8List? get _imageData =>
-      widget.cacheKey == null ? _imageDataNoCache : _touch(_lruKey);
+  // Incremented whenever the image source changes. Async media requests keep
+  // the generation they started with so stale completions cannot populate a
+  // newer MxcImage with bytes from the previous grid cell.
+  int _loadGeneration = 0;
+
+  MxcImageCacheCategory get _effectiveCacheCategory {
+    if (widget.cacheCategory != MxcImageCacheCategory.general) {
+      return widget.cacheCategory;
+    }
+    if (widget.event?.messageType == MessageTypes.Sticker ||
+        (widget.cacheKey != null && widget.animated)) {
+      return MxcImageCacheCategory.sticker;
+    }
+    return MxcImageCacheCategory.general;
+  }
+
+  String? get _effectiveCacheKey {
+    final explicitKey = widget.cacheKey;
+    if (explicitKey != null) return explicitKey;
+    if (_effectiveCacheCategory != MxcImageCacheCategory.sticker) return null;
+
+    final dimensions = '${widget.width}x${widget.height}';
+    final variant = '$dimensions:${widget.isThumbnail}:${widget.animated}';
+    final uri = widget.uri;
+    if (uri != null) return 'uri:$uri:$variant';
+
+    final event = widget.event;
+    if (event == null) return null;
+    final contentUrl = event.content['url'];
+    if (contentUrl is String && contentUrl.isNotEmpty) {
+      return 'event-url:$contentUrl:$variant';
+    }
+    return 'event:${event.eventId}:$variant';
+  }
+
+  _MxcImageMemoryCache get _cache => _imageDataCaches[_effectiveCacheCategory]!;
+
+  Uint8List? get _imageData {
+    final cacheKey = _effectiveCacheKey;
+    return cacheKey == null
+        ? _imageDataNoCache
+        : _cache.touch(_lruKey(cacheKey));
+  }
+
   set _imageData(Uint8List? data) {
-    if (data == null) return;
-    final cacheKey = widget.cacheKey;
+    if (data == null || data.isEmpty) return;
+    final cacheKey = _effectiveCacheKey;
     if (cacheKey == null) {
       _imageDataNoCache = data;
       return;
@@ -105,33 +229,11 @@ class _MxcImageState extends State<MxcImage> {
     _store(cacheKey, data);
   }
 
-  String get _lruKey => '${widget.cacheName ?? ''}::\u0000${widget.cacheKey!}';
-
-  static Uint8List? _touch(String lruKey) {
-    final data = _imageDataLru.remove(lruKey);
-    if (data == null) return null;
-    _imageDataLru[lruKey] = data; // move to most-recently-used position
-    return data;
-  }
+  String _lruKey(String cacheKey) =>
+      '${widget.cacheName ?? ''}::\u0000$cacheKey';
 
   void _store(String cacheKey, Uint8List data) {
-    final lruKey = '${widget.cacheName ?? ''}::\u0000$cacheKey';
-    final previous = _imageDataLru.remove(lruKey);
-    if (previous != null) {
-      _imageDataBytes -= previous.length;
-    }
-    _imageDataLru[lruKey] = data;
-    _imageDataBytes += data.length;
-    _evictOverflow();
-  }
-
-  static void _evictOverflow() {
-    while (_imageDataLru.length > _cacheMaxEntries ||
-        (_imageDataBytes > _cacheMaxBytes && _imageDataLru.isNotEmpty)) {
-      final oldestKey = _imageDataLru.keys.first;
-      final evicted = _imageDataLru.remove(oldestKey)!;
-      _imageDataBytes -= evicted.length;
-    }
+    _cache.store(_lruKey(cacheKey), data);
   }
 
   @override
@@ -142,11 +244,17 @@ class _MxcImageState extends State<MxcImage> {
     return ClipRRect(
       borderRadius: widget.borderRadius,
       child: !hasData
-          ? _MxcImagePlaceholder(
-              width: widget.width,
-              height: widget.height,
-              placeholder: widget.placeholder,
-            )
+          ? _loadFailed
+                ? _MxcImageLoadError(
+                    width: widget.width,
+                    height: widget.height,
+                    onRetry: _retryLoad,
+                  )
+                : _MxcImagePlaceholder(
+                    width: widget.width,
+                    height: widget.height,
+                    placeholder: widget.placeholder,
+                  )
           : Image.memory(
               data,
               width: widget.width,
@@ -177,10 +285,42 @@ class _MxcImageState extends State<MxcImage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoad());
+    final generation = _loadGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _tryLoad(generation);
+    });
   }
 
-  Future<void> _load() async {
+  @override
+  void didUpdateWidget(MxcImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final sourceChanged =
+        oldWidget.uri != widget.uri ||
+        oldWidget.event != widget.event ||
+        oldWidget.width != widget.width ||
+        oldWidget.height != widget.height ||
+        oldWidget.isThumbnail != widget.isThumbnail ||
+        oldWidget.animated != widget.animated ||
+        oldWidget.thumbnailMethod != widget.thumbnailMethod ||
+        oldWidget.cacheKey != widget.cacheKey ||
+        oldWidget.cacheName != widget.cacheName ||
+        oldWidget.cacheCategory != widget.cacheCategory ||
+        oldWidget.client != widget.client;
+    if (!sourceChanged) return;
+
+    _loadGeneration++;
+    _imageDataNoCache = null;
+    _loadFailed = false;
+    final generation = _loadGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && generation == _loadGeneration) {
+        _tryLoad(generation);
+      }
+    });
+  }
+
+  Future<void> _load(int generation) async {
     if (!mounted) return;
     final client =
         widget.client ?? widget.event?.room.client ?? Matrix.of(context).client;
@@ -202,9 +342,10 @@ class _MxcImageState extends State<MxcImage> {
         isThumbnail: widget.isThumbnail,
         animated: widget.animated,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
+        _loadFailed = false;
       });
     }
 
@@ -220,41 +361,55 @@ class _MxcImageState extends State<MxcImage> {
       final data = await event.downloadAndDecryptAttachment(
         getThumbnail: useThumbnail,
       );
+      if (generation != _loadGeneration) return;
       if (data.detectFileType is MatrixImageFile) {
-        if (!mounted) return;
+        if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;
+          _loadFailed = false;
         });
         return;
       }
     }
   }
 
-  Future<void> _tryLoad([int attempt = 0]) async {
-    if (_imageData != null) {
+  void _retryLoad() {
+    if (_imageData != null) return;
+    _loadGeneration++;
+    final generation = _loadGeneration;
+    setState(() => _loadFailed = false);
+    _tryLoad(generation);
+  }
+
+  Future<void> _tryLoad(int generation, [int attempt = 0]) async {
+    if (!mounted || generation != _loadGeneration || _imageData != null) {
       return;
     }
     try {
-      await _load();
-    } on IOException {
-      await _retryAfterDelay(attempt);
-    } on ClientException {
-      // On the web, transport failures ("Failed to fetch") surface as
-      // package:http's ClientException, which implements Exception but not
-      // IOException. Same recoverable error class: retrying may succeed.
-      await _retryAfterDelay(attempt);
-    } catch (e, s) {
-      // Deterministic failure (e.g. HTTP error status): retrying cannot
-      // succeed. Keep the placeholder instead of crashing the app.
-      Logs().e('Failed to load image', e, s);
-    }
-  }
+      await _load(generation);
+      if (!mounted || generation != _loadGeneration || _imageData != null) {
+        return;
+      }
 
-  Future<void> _retryAfterDelay(int attempt) async {
-    // Stop after a bounded number of retries: retrying forever burns network
-    // and CPU for permanently unavailable media.
-    if (attempt >= _maxLoadRetries || !mounted) return;
-    await Future<void>.delayed(widget.retryDuration);
-    if (mounted) await _tryLoad(attempt + 1);
+      // A completed request that produced no image bytes is terminal.
+      setState(() => _loadFailed = true);
+    } catch (error, stackTrace) {
+      Logs().d(
+        'Unable to load mxc image (attempt ${attempt + 1})',
+        error,
+        stackTrace,
+      );
+      if (attempt >= _maxLoadRetries ||
+          !mounted ||
+          generation != _loadGeneration) {
+        if (mounted && generation == _loadGeneration && _imageData == null) {
+          setState(() => _loadFailed = true);
+        }
+        return;
+      }
+      await Future<void>.delayed(widget.retryDuration);
+      if (!mounted || generation != _loadGeneration) return;
+      await _tryLoad(generation, attempt + 1);
+    }
   }
 }

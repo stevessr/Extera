@@ -4,6 +4,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/font_family.dart';
 
 class EventUndecryptableContent extends StatelessWidget {
   final Event event;
@@ -21,6 +22,10 @@ class EventUndecryptableContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.chatFont.value,
+    );
     final textStyle = TextStyle(
       color: textColor.withAlpha(128),
       fontSize: fontSize,
