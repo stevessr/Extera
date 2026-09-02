@@ -29,26 +29,37 @@ class ChatEmojiPicker extends StatelessWidget {
               .map((entry) => entry.key)
               .toList()
         : const <String>[];
-    final customCategories = showEmojiPicker
-        ? imagePacks.entries
-              .map(
-                (entry) => CustomCategory(
-                  id: entry.key,
-                  name: entry.value.pack.displayName!,
-                  icon: MxcImage(
-                    uri: entry.value.images.values.first.url,
-                    width: 32,
-                    height: 32,
-                    cacheKey: entry.value.images.values.first.url.toString(),
-                    retryDuration: const Duration(milliseconds: 500),
-                  ),
-                  emojis: entry.value.images.map((name, content) {
-                    return MapEntry(name, content.url.toString());
-                  }),
-                ),
-              )
-              .toList(growable: false)
-        : const <CustomCategory>[];
+
+    // Image packs are remote state and may legitimately be incomplete while a
+    // room is syncing or after migration from an older MSC representation.
+    // Never let one malformed/empty pack take down the entire emoji panel.
+    final customCategories = <CustomCategory>[];
+    if (showEmojiPicker) {
+      for (final entry in imagePacks.entries) {
+        final images = entry.value.images;
+        if (images.isEmpty) continue;
+
+        final packName = entry.value.pack.displayName?.trim();
+        final firstImage = images.values.first;
+        customCategories.add(
+          CustomCategory(
+            id: entry.key,
+            name: packName == null || packName.isEmpty ? entry.key : packName,
+            icon: MxcImage(
+              uri: firstImage.url,
+              width: 32,
+              height: 32,
+              cacheKey: firstImage.url.toString(),
+              retryDuration: const Duration(milliseconds: 500),
+            ),
+            emojis: images.map((name, content) {
+              return MapEntry(name, content.url.toString());
+            }),
+          ),
+        );
+      }
+    }
+
     final recentPickerEmojis = showEmojiPicker
         ? buildRecentPickerEmojis(
             recent: recentEmojis,
@@ -87,8 +98,8 @@ class ChatEmojiPicker extends StatelessWidget {
                                 return MxcImage(
                                   key: ValueKey(name),
                                   uri: Uri.parse(name),
-                                  width: 32,
-                                  height: 32,
+                                  width: size,
+                                  height: size,
                                   cacheKey: name,
                                   animated: true,
                                   retryDuration: const Duration(
