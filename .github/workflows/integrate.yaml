@@ -95,6 +95,18 @@ jobs:
 
       - run: flutter gen-l10n
 
+      - name: Apply pinned formatter to Emoji Kitchen files
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          dart format lib/pages/chat/emoji_kitchen_picker.dart lib/utils/emoji_kitchen.dart
+          if ! git diff --quiet -- lib/pages/chat/emoji_kitchen_picker.dart lib/utils/emoji_kitchen.dart; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add lib/pages/chat/emoji_kitchen_picker.dart lib/utils/emoji_kitchen.dart
+            git commit -m "style: format Emoji Kitchen implementation"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
       - name: Check formatting
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
