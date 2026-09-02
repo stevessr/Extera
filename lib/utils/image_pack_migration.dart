@@ -49,8 +49,7 @@ Map<String, dynamic> normalizeStableImagePackContent(
       final image = Map<String, dynamic>.from(entry.value as Map);
       final imageUsage = _readUsage(image.remove('usage'));
 
-      if (stableShortcode != originalShortcode &&
-          !image.containsKey('body')) {
+      if (stableShortcode != originalShortcode && !image.containsKey('body')) {
         image['body'] = originalShortcode;
       }
 
