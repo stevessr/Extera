@@ -271,11 +271,8 @@ class EmojiKitchenCombination {
     }
   }
 
-  static String _gstaticPart(String codepoint) => codepoint
-      .toLowerCase()
-      .split('-')
-      .map((part) => 'u$part')
-      .join('-');
+  static String _gstaticPart(String codepoint) =>
+      codepoint.toLowerCase().split('-').map((part) => 'u$part').join('-');
 }
 
 class EmojiKitchenException implements Exception {
