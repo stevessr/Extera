@@ -8,6 +8,7 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/account_management.dart';
 import 'package:extera_next/utils/fluffy_share.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/url_launcher.dart';
@@ -328,16 +329,12 @@ class SettingsView extends StatelessWidget {
                       clipBehavior: .hardEdge,
                       child: Column(
                         children: [
-                          FutureBuilder(
-                            future: Matrix.of(context).client.getWellknown(),
+                          FutureBuilder<String?>(
+                            future: getAccountManagementUrl(
+                              Matrix.of(context).client,
+                            ),
                             builder: (context, snapshot) {
-                              final accountManageUrl = snapshot
-                                  .data
-                                  ?.additionalProperties
-                                  .tryGetMap<String, Object?>(
-                                    'org.matrix.msc2965.authentication',
-                                  )
-                                  ?.tryGet<String>('account');
+                              final accountManageUrl = snapshot.data;
                               if (accountManageUrl == null) {
                                 return const SizedBox.shrink();
                               }
