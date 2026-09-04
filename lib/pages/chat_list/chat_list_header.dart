@@ -1,3 +1,4 @@
+import 'package:extera_next/config/app_settings.dart';
 import 'package:flutter/material.dart';
 
 import 'package:matrix/matrix.dart';
@@ -86,12 +87,28 @@ class _ChatListHeaderDelegate extends SliverPersistentHeaderDelegate {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Text(
-                      AppConfig.applicationName,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    if (AppSettings.appTitleText.value == 'app')
+                      Text(
+                        AppConfig.applicationName,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                    if (AppSettings.appTitleText.value == 'user')
+                      FutureBuilder<Profile>(
+                        future: client.fetchOwnProfile(),
+                        builder: (context, snapshot) {
+                          return Text(
+                            snapshot.hasData && snapshot.data != null
+                                ? snapshot.data!.displayName ??
+                                      snapshot.data!.userId
+                                : AppConfig.applicationName,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
+                      ),
                     const Spacer(),
                     if (progress == 0.0 && !controller.isSearchMode)
                       IconButton(

@@ -217,6 +217,14 @@ class SettingsStyleController extends State<SettingsStyle> {
     });
   }
 
+  String get titleBarText => AppSettings.appTitleText.value;
+
+  void setTitleBarText(String value) {
+    setState(() {
+      AppSettings.appTitleText.setItem(value);
+    });
+  }
+
   double get wallpaperBlur => _wallpaperBlur ?? 0.0;
   double? _wallpaperBlur;
 

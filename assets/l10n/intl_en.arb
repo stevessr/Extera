@@ -4140,5 +4140,8 @@
     "callVideocam": "Video",
     "callMic": "Mic",
     "callScreenShare": "Screen",
-    "lkCallSettings": "Settings"
+    "lkCallSettings": "Settings",
+    "appBarAppearance": "App bar",
+    "appBarAppName": "App name",
+    "appBarAccountName": "Account name"
 }
