@@ -4271,5 +4271,6 @@
   "@profileFieldManagedByServer": {},
     "appBarAppearance": "App bar",
     "appBarAppName": "App name",
-    "appBarAccountName": "Account name"
+    "appBarAccountName": "Account name",
+    "sendMedia": "Send media"
 }
