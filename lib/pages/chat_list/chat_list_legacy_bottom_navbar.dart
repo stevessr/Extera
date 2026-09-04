@@ -1,3 +1,4 @@
+import 'package:extera_next/config/themes.dart';
 import 'package:flutter/material.dart';
 
 import 'package:badges/badges.dart';
@@ -51,7 +52,9 @@ class _ChatListLegacyBottomNavbarState
       if (AppSettings.separateChatTypes.value) ActiveFilter.groups,
       ActiveFilter.unread,
       if (spaceDelegateCandidates.isNotEmpty &&
-          !_c.widget.displayNavigationRail)
+          !_c.widget.displayNavigationRail &&
+          !AppSettings.displayNavigationRail.value &&
+          !FluffyThemes.isColumnMode(context))
         ActiveFilter.spaces,
       if (AppSettings.enablePeopleTab.value) ActiveFilter.people,
     ];
