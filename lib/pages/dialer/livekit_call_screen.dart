@@ -16,7 +16,6 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/dialer/dialer.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/pages/dialer/livekit_service.dart';
-import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -54,6 +53,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   DateTime? _keyCreatedAt;
   Uint8List? _lastKey;
   Timer? _membershipRefreshTimer;
+
   /// Latest encryption key index received per remote membership identity.
   /// Used to drop out-of-order keys and to resync receiver frame cryptors.
   final Map<String, int> _latestRemoteKeyIndex = {};
@@ -367,7 +367,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       );
 
       if (notify &&
-          matrixRoom.callMembersCount <= 1 &&
+          matrixRoom.getActiveMatrixRtcMembers().length <= 1 &&
           matrixRoom.canSendEvent('org.matrix.msc4075.rtc.notification')) {
         await matrixRoom.sendEvent({
           'lifetime': 30000,
@@ -450,9 +450,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final ownMemberId = '${client.userID}:${client.deviceID}';
       final otherActiveMembers = matrixRoom
           ?.getActiveMatrixRtcMembers()
-          .where(
-            (m) => m.membershipId != null && m.membershipId != ownMemberId,
-          )
+          .where((m) => m.membershipId != null && m.membershipId != ownMemberId)
           .toList();
       Logs().d(
         'DEBUG: livekit service url candidates: ${widget.liveKitServiceUrls}, '
@@ -463,12 +461,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       Future<void> rollbackMembership() async {
         if (!membershipPublished || widget.callStateKey == null) return;
         try {
-          await client.setRoomStateWithKey(
-            widget.roomId,
-            'org.matrix.msc3401.call.member',
-            widget.callStateKey!,
-            {},
-          );
+          await matrixRoom?.leaveMatrixRtcCall();
         } catch (_) {}
         membershipPublished = false;
       }
@@ -729,13 +722,9 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
 
     try {
       if (client != null && stateKey != null) {
+        final matrixRoom = client.getRoomById(widget.roomId);
         try {
-          await client.setRoomStateWithKey(
-            widget.roomId,
-            'org.matrix.msc3401.call.member',
-            stateKey,
-            {},
-          );
+          await matrixRoom?.leaveMatrixRtcCall();
         } catch (ex) {
           Logs().e("Failed to send call member state event.", ex);
         }
@@ -1611,19 +1600,10 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
     }
   }
 
-  // Fall back to our homeserver's advertised instance.
+  // Fall back to our homeserver's advertised instance (or the configured
+  // custom LiveKit instance, if set).
   try {
-    final wellKnown = await client.getWellknown();
-    final rtcFoci =
-        wellKnown.additionalProperties['org.matrix.msc4143.rtc_foci'];
-    if (rtcFoci is List) {
-      for (final f in rtcFoci) {
-        if (f is Map && f['type'] == 'livekit') {
-          final url = f['livekit_service_url'] as String?;
-          if (url != null) urls.add(url);
-        }
-      }
-    }
+    urls.addAll(await client.getLiveKitServiceUrls());
   } catch (_) {}
 
   // Last resort: scan ALL raw member state events (including expired or
