@@ -4268,5 +4268,8 @@
         "placeholder": {}
     },
   "profileFieldManagedByServer": "This profile field is managed by your homeserver.",
-  "@profileFieldManagedByServer": {}
+  "@profileFieldManagedByServer": {},
+    "appBarAppearance": "App bar",
+    "appBarAppName": "App name",
+    "appBarAccountName": "Account name"
 }
