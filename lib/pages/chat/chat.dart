@@ -2418,7 +2418,6 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.biggest;
         return Stack(
           children: [
             GestureDetector(
@@ -2448,14 +2447,7 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
                 duration: FluffyThemes.animationDuration,
                 curve: FluffyThemes.animationCurve,
                 builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.scale(
-                      scale: value,
-                      alignment: _expansionAlignment(widget.tapPosition, size),
-                      child: child,
-                    ),
-                  );
+                  return Opacity(opacity: value, child: child);
                 },
                 child: widget.child,
               ),
@@ -2464,13 +2456,6 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
         );
       },
     );
-  }
-
-  Alignment _expansionAlignment(Offset tap, Size size) {
-    if (size.isEmpty) return Alignment.topLeft;
-    final fx = (tap.dx / size.width).clamp(0.0, 1.0);
-    final fy = (tap.dy / size.height).clamp(0.0, 1.0);
-    return Alignment(fx * 2 - 1, fy * 2 - 1);
   }
 }
 
