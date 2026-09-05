@@ -159,7 +159,7 @@ class ChatInputRow extends StatelessWidget {
                                 ),
                               ),
                             PopupMenuItem<String>(
-                              value: 'image',
+                              value: 'media',
                               child: ListTile(
                                 leading: CircleAvatar(
                                   backgroundColor:
@@ -168,23 +168,7 @@ class ChatInputRow extends StatelessWidget {
                                       theme.colorScheme.primaryContainer,
                                   child: const Icon(Icons.photo_outlined),
                                 ),
-                                title: Text(L10n.of(context).sendImage),
-                                contentPadding: const EdgeInsets.all(0),
-                              ),
-                            ),
-                            PopupMenuItem<String>(
-                              value: 'video',
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.onPrimaryContainer,
-                                  foregroundColor:
-                                      theme.colorScheme.primaryContainer,
-                                  child: const Icon(
-                                    Icons.video_camera_back_outlined,
-                                  ),
-                                ),
-                                title: Text(L10n.of(context).sendVideo),
+                                title: Text(L10n.of(context).sendMedia),
                                 contentPadding: const EdgeInsets.all(0),
                               ),
                             ),

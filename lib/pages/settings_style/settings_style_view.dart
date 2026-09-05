@@ -16,6 +16,7 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 
@@ -201,6 +202,136 @@ class SettingsStyleView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
+              if (!AppSettings.useLegacyChatListAppBar.value) ...[
+                Material(
+                  color: theme.colorScheme.surfaceContainerHigh,
+                  clipBehavior: Clip.hardEdge,
+                  borderRadius: borderRadius,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text(
+                          L10n.of(context).appBarAppearance,
+                          style: TextStyle(
+                            color: theme.colorScheme.secondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Material(
+                          color: theme.colorScheme.surface,
+                          surfaceTintColor: theme.colorScheme.surfaceTint,
+                          borderRadius: borderRadius,
+                          clipBehavior: Clip.hardEdge,
+                          child: SizedBox(
+                            height: 56,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Row(
+                                children: [
+                                  if (controller.titleBarText == 'app')
+                                    Text(
+                                      AppConfig.applicationName,
+                                      style: theme.textTheme.titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    )
+                                  else
+                                    FutureBuilder<Profile>(
+                                      future: Matrix.of(
+                                        context,
+                                      ).client.fetchOwnProfile(),
+                                      builder: (context, snapshot) {
+                                        return Text(
+                                          snapshot.hasData &&
+                                                  snapshot.data != null
+                                              ? snapshot.data!.displayName ??
+                                                    snapshot.data!.userId
+                                              : AppConfig.applicationName,
+                                          style: theme.textTheme.titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        );
+                                      },
+                                    ),
+                                  const Spacer(),
+                                  const Icon(Icons.search),
+                                  const SizedBox(width: 16),
+                                  FutureBuilder<Profile>(
+                                    future: Matrix.of(
+                                      context,
+                                    ).client.fetchOwnProfile(),
+                                    builder: (context, snapshot) {
+                                      final client = Matrix.of(context).client;
+                                      return Avatar(
+                                        mxContent: snapshot.data?.avatarUrl,
+                                        name:
+                                            snapshot.data?.displayName ??
+                                            client.userID!.localpart,
+                                        size: 32,
+                                        borderRadius: BorderRadius.circular(16),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      //
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 16,
+                          left: 32,
+                          right: 32,
+                        ),
+                        child: RadioGroup<String>(
+                          onChanged: (value) {
+                            if (value != null) {
+                              controller.setTitleBarText(value);
+                            }
+                          },
+                          groupValue: controller.titleBarText,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: .center,
+                                  child: _LabeledRadio<String>(
+                                    label: L10n.of(context).appBarAppName,
+                                    value: "app",
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Align(
+                                  alignment: .center,
+                                  child: _LabeledRadio<String>(
+                                    label: L10n.of(context).appBarAccountName,
+                                    value: "user",
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Material(
                 color: theme.colorScheme.surfaceContainerHigh,
                 clipBehavior: Clip.hardEdge,

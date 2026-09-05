@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -63,7 +64,7 @@ class _ChatViewState extends State<ChatView> {
   @override
   void initState() {
     super.initState();
-    callMembers = controller.room.callMembersCount;
+    callMembers = controller.room.getActiveMatrixRtcMembers().length;
     stateUpdateSubscription = controller.room.client.onRoomState.stream
         .where(
           (update) =>
@@ -82,7 +83,7 @@ class _ChatViewState extends State<ChatView> {
 
   void stateUpdated(_) {
     setState(() {
-      callMembers = controller.room.callMembersCount;
+      callMembers = controller.room.getActiveMatrixRtcMembers().length;
     });
   }
 
