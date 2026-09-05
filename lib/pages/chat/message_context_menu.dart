@@ -48,19 +48,26 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
     Color? color,
     required void Function() onPressed,
   }) {
-    return InkWell(
+    return ListTile(
       onTap: onPressed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 12),
-            Expanded(child: Text(label)),
-          ],
-        ),
-      ),
+      visualDensity: .compact,
+      iconColor: color,
+      leading: Icon(icon),
+      title: Text(label),
     );
+    // return InkWell(
+    //   onTap: onPressed,
+    //   child: Padding(
+    //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    //     child: Row(
+    //       children: [
+    //         Icon(icon, size: 20, color: color),
+    //         const SizedBox(width: 12),
+    //         Expanded(child: Text(label)),
+    //       ],
+    //     ),
+    //   ),
+    // );
   }
 
   bool isDownloading = false;
@@ -105,7 +112,14 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
   @override
   void initState() {
     super.initState();
+    _loadAllEmojis();
     subscribe();
+  }
+
+  late List<Emoji> allEmojis;
+
+  void _loadAllEmojis() {
+    allEmojis = Emoji.all();
   }
 
   @override
@@ -116,18 +130,37 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_emojisLoaded) {
+      _loadEmojis();
+      _emojisLoaded = true;
+    }
+  }
+
+  bool _emojisLoaded = false;
+
+  void _loadEmojis() {
+    final client = Matrix.of(context).client;
+
+    imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
+    recentEmojisAll = client.recentEmojis.entries
+        .sortedByCompare((element) => element.value, (a, b) => b - a)
+        .map((entry) => entry.key)
+        .toList();
+    recentEmojis = recentEmojisAll.take(5).toList();
+  }
+
+  Map<String, ImagePackContent> imagePacks = {};
+  List<String> recentEmojisAll = [];
+  List<String> recentEmojis = [];
+
+  @override
   Widget build(BuildContext context) {
     final client = Matrix.of(context).client;
     final clients = Matrix.of(context).currentBundle;
     final theme = Theme.of(context);
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius);
-    final imagePacks = controller.room.getImagePacks(ImagePackUsage.emoticon);
-
-    final recentEmojisAll = client.recentEmojis.entries
-        .sortedByCompare((element) => element.value, (a, b) => b - a)
-        .map((entry) => entry.key)
-        .toList();
-    final recentEmojis = recentEmojisAll.take(5).toList();
 
     final receipts = room
         .getReceipts(timeline!, eventId: event.eventId)
@@ -171,36 +204,38 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (event.status == EventStatus.error)
-                    Material(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      clipBehavior: Clip.hardEdge,
-                      borderRadius: borderRadius,
-                      child: Column(
-                        children: [
-                          _buildMenuItem(
-                            event: event,
-                            icon: Icons.send_outlined,
-                            label: L10n.of(context).tryToSendAgain,
-                            onPressed: () {
-                              if (!PlatformInfos.isMobile) {
-                                controller.closeMessageMenu();
-                              }
-                              controller.sendAgainAction(event: event);
-                            },
-                          ),
-                          _buildMenuItem(
-                            event: event,
-                            icon: Icons.cancel_outlined,
-                            label: L10n.of(context).cancel,
-                            color: Colors.red,
-                            onPressed: () {
-                              if (!PlatformInfos.isMobile) {
-                                controller.closeMessageMenu();
-                              }
-                              event.cancelSend();
-                            },
-                          ),
-                        ],
+                    RepaintBoundary(
+                      child: Material(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        clipBehavior: Clip.hardEdge,
+                        borderRadius: borderRadius,
+                        child: Column(
+                          children: [
+                            _buildMenuItem(
+                              event: event,
+                              icon: Icons.send_outlined,
+                              label: L10n.of(context).tryToSendAgain,
+                              onPressed: () {
+                                if (!PlatformInfos.isMobile) {
+                                  controller.closeMessageMenu();
+                                }
+                                controller.sendAgainAction(event: event);
+                              },
+                            ),
+                            _buildMenuItem(
+                              event: event,
+                              icon: Icons.cancel_outlined,
+                              label: L10n.of(context).cancel,
+                              color: Colors.red,
+                              onPressed: () {
+                                if (!PlatformInfos.isMobile) {
+                                  controller.closeMessageMenu();
+                                }
+                                event.cancelSend();
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   if (event.status == EventStatus.sent ||
@@ -209,380 +244,349 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                         !event.redacted)
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
-                        child: Material(
-                          color: theme.colorScheme.surfaceContainerHigh,
-                          clipBehavior: Clip.hardEdge,
-                          borderRadius: borderRadius,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ...recentEmojis.map(
-                                (emoji) => IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Center(
-                                    child: Opacity(
-                                      opacity: sentReactions.contains(emoji)
-                                          ? 0.33
-                                          : 1,
-                                      child: emoji.startsWith("mxc://")
-                                          ? MxcImage(
-                                              uri: Uri.parse(emoji),
-                                              width: 32,
-                                              height: 32,
-                                            )
-                                          : Text(
-                                              emoji,
-                                              style: const TextStyle(
-                                                fontSize: 20,
+                        child: RepaintBoundary(
+                          child: Material(
+                            color: theme.colorScheme.surfaceContainerHigh,
+                            clipBehavior: Clip.hardEdge,
+                            borderRadius: borderRadius,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ...recentEmojis.map(
+                                  (emoji) => IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: Center(
+                                      child: Opacity(
+                                        opacity: sentReactions.contains(emoji)
+                                            ? 0.33
+                                            : 1,
+                                        child: emoji.startsWith("mxc://")
+                                            ? MxcImage(
+                                                uri: Uri.parse(emoji),
+                                                width: 32,
+                                                height: 32,
+                                              )
+                                            : Text(
+                                                emoji,
+                                                style: const TextStyle(
+                                                  fontSize: 20,
+                                                ),
+                                                textAlign: TextAlign.center,
                                               ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                    ),
-                                  ),
-                                  onPressed: sentReactions.contains(emoji)
-                                      ? null
-                                      : () {
-                                          controller.closeMessageMenu();
-                                          event.room.sendReaction(
-                                            event.eventId,
-                                            emoji,
-                                          );
-                                        },
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add_reaction_outlined),
-                                tooltip: L10n.of(context).customReaction,
-                                onPressed: () async {
-                                  if (!PlatformInfos.isMobile) {
-                                    controller.closeMessageMenu();
-                                  }
-                                  final emoji = await showAdaptiveBottomSheet<String>(
-                                    context: context,
-                                    builder: (context) => Scaffold(
-                                      appBar: AppBar(
-                                        title: Text(
-                                          L10n.of(context).customReaction,
-                                        ),
-                                        leading: CloseButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(null),
-                                        ),
                                       ),
-                                      body: SizedBox(
-                                        height: double.infinity,
-                                        child: MatrixEmojiPicker(
-                                          onEmojiSelected: (_, emoji) =>
-                                              Navigator.of(context).pop(
-                                                emoji.customData ??
-                                                    emoji.standardEmoji!.char,
-                                              ),
-                                          onBackspacePressed: () {},
-                                          recentEmojis: recentEmojisAll.map((
-                                            recent,
-                                          ) {
-                                            // MXC custom emoji
-                                            if (recent.startsWith('mxc://')) {
-                                              for (final entry
-                                                  in imagePacks.entries) {
-                                                for (final imgEntry
-                                                    in entry
+                                    ),
+                                    onPressed: sentReactions.contains(emoji)
+                                        ? null
+                                        : () {
+                                            controller.closeMessageMenu();
+                                            event.room.sendReaction(
+                                              event.eventId,
+                                              emoji,
+                                            );
+                                          },
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_reaction_outlined),
+                                  tooltip: L10n.of(context).customReaction,
+                                  onPressed: () async {
+                                    if (!PlatformInfos.isMobile) {
+                                      controller.closeMessageMenu();
+                                    }
+                                    final emoji = await showAdaptiveBottomSheet<String>(
+                                      context: context,
+                                      builder: (context) => Scaffold(
+                                        appBar: AppBar(
+                                          title: Text(
+                                            L10n.of(context).customReaction,
+                                          ),
+                                          leading: CloseButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(null),
+                                          ),
+                                        ),
+                                        body: SizedBox(
+                                          height: double.infinity,
+                                          child: MatrixEmojiPicker(
+                                            onEmojiSelected: (_, emoji) =>
+                                                Navigator.of(context).pop(
+                                                  emoji.customData ??
+                                                      emoji.standardEmoji!.char,
+                                                ),
+                                            onBackspacePressed: () {},
+                                            recentEmojis: recentEmojisAll.map((
+                                              recent,
+                                            ) {
+                                              // MXC custom emoji
+                                              if (recent.startsWith('mxc://')) {
+                                                for (final entry
+                                                    in imagePacks.entries) {
+                                                  for (final imgEntry
+                                                      in entry
+                                                          .value
+                                                          .images
+                                                          .entries) {
+                                                    final url = imgEntry
                                                         .value
-                                                        .images
-                                                        .entries) {
-                                                  final url = imgEntry.value.url
-                                                      .toString();
-                                                  if (url == recent) {
-                                                    return PickerEmoji.custom(
-                                                      name: imgEntry.key,
-                                                      customData: url,
-                                                      categoryId: entry.key,
-                                                    );
+                                                        .url
+                                                        .toString();
+                                                    if (url == recent) {
+                                                      return PickerEmoji.custom(
+                                                        name: imgEntry.key,
+                                                        customData: url,
+                                                        categoryId: entry.key,
+                                                      );
+                                                    }
                                                   }
                                                 }
+
+                                                // fallback: keep the MXC url as custom data
+                                                return PickerEmoji.custom(
+                                                  name: recent,
+                                                  customData: recent,
+                                                  categoryId: null,
+                                                );
                                               }
 
-                                              // fallback: keep the MXC url as custom data
+                                              // Try to find a matching standard Emoji by char, name or shortName
+                                              Emoji? found;
+                                              try {
+                                                found = allEmojis.firstWhere(
+                                                  (e) =>
+                                                      e.char == recent ||
+                                                      e.name == recent ||
+                                                      e.shortName == recent,
+                                                );
+                                              } catch (_) {
+                                                found = null;
+                                              }
+
+                                              if (found != null) {
+                                                return PickerEmoji.standard(
+                                                  found,
+                                                );
+                                              }
+
+                                              // fallback: treat as custom string
                                               return PickerEmoji.custom(
                                                 name: recent,
                                                 customData: recent,
                                                 categoryId: null,
                                               );
-                                            }
-
-                                            // Try to find a matching standard Emoji by char, name or shortName
-                                            Emoji? found;
-                                            final all = Emoji.all();
-                                            try {
-                                              found = all.firstWhere(
-                                                (e) =>
-                                                    e.char == recent ||
-                                                    e.name == recent ||
-                                                    e.shortName == recent,
-                                              );
-                                            } catch (_) {
-                                              found = null;
-                                            }
-
-                                            if (found != null) {
-                                              return PickerEmoji.standard(
-                                                found,
-                                              );
-                                            }
-
-                                            // fallback: treat as custom string
-                                            return PickerEmoji.custom(
-                                              name: recent,
-                                              customData: recent,
-                                              categoryId: null,
-                                            );
-                                          }).toList(),
-                                          customCategories: imagePacks.entries
-                                              .map(
-                                                (entry) => CustomCategory(
-                                                  id: entry.key,
-                                                  name: entry
-                                                      .value
-                                                      .pack
-                                                      .displayName!,
-                                                  icon: MxcImage(
-                                                    uri: entry
+                                            }).toList(),
+                                            customCategories: imagePacks.entries
+                                                .map(
+                                                  (entry) => CustomCategory(
+                                                    id: entry.key,
+                                                    name: entry
                                                         .value
-                                                        .images
-                                                        .values
-                                                        .first
-                                                        .url,
+                                                        .pack
+                                                        .displayName!,
+                                                    icon: MxcImage(
+                                                      uri: entry
+                                                          .value
+                                                          .images
+                                                          .values
+                                                          .first
+                                                          .url,
+                                                      width: 32,
+                                                      height: 32,
+                                                    ),
+                                                    emojis: entry.value.images
+                                                        .map((name, content) {
+                                                          return MapEntry(
+                                                            name,
+                                                            content.url
+                                                                .toString(),
+                                                          );
+                                                        }),
+                                                  ),
+                                                )
+                                                .toList(),
+                                            customEmojiBuilder:
+                                                (context, name, size) {
+                                                  return MxcImage(
+                                                    uri: Uri.parse(name),
                                                     width: 32,
                                                     height: 32,
-                                                  ),
-                                                  emojis: entry.value.images
-                                                      .map((name, content) {
-                                                        return MapEntry(
-                                                          name,
-                                                          content.url
-                                                              .toString(),
-                                                        );
-                                                      }),
-                                                ),
-                                              )
-                                              .toList(),
-                                          customEmojiBuilder:
-                                              (context, name, size) {
-                                                return MxcImage(
-                                                  uri: Uri.parse(name),
-                                                  width: 32,
-                                                  height: 32,
-                                                );
-                                              },
+                                                  );
+                                                },
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                  if (emoji == null) {
-                                    return;
-                                  }
-                                  if (sentReactions.contains(emoji)) {
-                                    return;
-                                  }
-                                  controller.closeMessageMenu();
-                                  room.client.addRecentEmoji(emoji);
-                                  await event.room.sendReaction(
-                                    event.eventId,
-                                    emoji,
-                                  );
-                                },
-                              ),
-                            ],
+                                    );
+                                    if (emoji == null) {
+                                      return;
+                                    }
+                                    if (sentReactions.contains(emoji)) {
+                                      return;
+                                    }
+                                    controller.closeMessageMenu();
+                                    room.client.addRecentEmoji(emoji);
+                                    await event.room.sendReaction(
+                                      event.eventId,
+                                      emoji,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     const SizedBox(height: 8),
-                    Material(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      clipBehavior: Clip.hardEdge,
-                      borderRadius: borderRadius,
-                      child: Column(
-                        children: [
-                          if (receipts.isNotEmpty) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.done_all,
-                              label: L10n.of(context).nViews(receipts.length),
-                              onPressed: () {
-                                if (!PlatformInfos.isMobile) {
-                                  controller.closeMessageMenu();
-                                }
-                                controller.showReadReceipts(event: event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (event.hasAggregatedEvents(
-                            controller.timeline!,
-                            RelationshipTypes.edit,
-                          )) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.edit_outlined,
-                              label: L10n.of(context).nEdits(
-                                event
-                                    .aggregatedEvents(
-                                      controller.timeline!,
-                                      RelationshipTypes.edit,
-                                    )
-                                    .length,
+                    RepaintBoundary(
+                      child: Material(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        clipBehavior: Clip.hardEdge,
+                        borderRadius: borderRadius,
+                        child: Column(
+                          children: [
+                            if (receipts.isNotEmpty) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.done_all,
+                                label: L10n.of(context).nViews(receipts.length),
+                                onPressed: () {
+                                  if (!PlatformInfos.isMobile) {
+                                    controller.closeMessageMenu();
+                                  }
+                                  controller.showReadReceipts(event: event);
+                                },
                               ),
-                              onPressed: () {
-                                if (!PlatformInfos.isMobile) {
+                              const ListDivider(),
+                            ],
+                            if (event.hasAggregatedEvents(
+                              controller.timeline!,
+                              RelationshipTypes.edit,
+                            )) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.edit_outlined,
+                                label: L10n.of(context).nEdits(
+                                  event
+                                      .aggregatedEvents(
+                                        controller.timeline!,
+                                        RelationshipTypes.edit,
+                                      )
+                                      .length,
+                                ),
+                                onPressed: () {
+                                  if (!PlatformInfos.isMobile) {
+                                    controller.closeMessageMenu();
+                                  }
+                                  controller.showEdits(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (room.canSendDefaultMessages &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.reply_outlined,
+                                label: L10n.of(context).reply,
+                                onPressed: () {
                                   controller.closeMessageMenu();
-                                }
-                                controller.showEdits(event: event);
-                              },
-                            ),
-                            const ListDivider(),
+                                  controller.replyAction(event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (room.canSendDefaultMessages &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.chat_bubble_outline,
+                                label: L10n.of(context).discuss,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.discussAction(
+                                    threadRootEvent: event,
+                                  );
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (content.containsKey('external_url') &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.open_in_new,
+                                label: L10n.of(context).openMessageSource,
+                                onPressed: () {
+                                  UrlLauncher(
+                                    context,
+                                    content.tryGet<String>('external_url'),
+                                  ).launchUrl();
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (room.canSendDefaultMessages &&
+                                event.senderId == client.userID! &&
+                                event.type == EventTypes.Message &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.edit_outlined,
+                                label: L10n.of(context).edit,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.editSelectedEventAction(
+                                    event: event,
+                                  );
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (event.type ==
+                                'org.matrix.msc3381.poll.start') ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.info_outline,
+                                label: L10n.of(context).pollResults,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.showPollResults(event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (event.type == 'org.matrix.msc3381.poll.start' &&
+                                event.senderId ==
+                                    Matrix.of(context).client.userID)
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.check,
+                                label: L10n.of(context).endPoll,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.endPollAction(event: event);
+                                },
+                              ),
                           ],
-                          if (room.canSendDefaultMessages &&
-                              !event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.reply_outlined,
-                              label: L10n.of(context).reply,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.replyAction(event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (room.canSendDefaultMessages &&
-                              !event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.chat_bubble_outline,
-                              label: L10n.of(context).discuss,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.discussAction(
-                                  threadRootEvent: event,
-                                );
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (content.containsKey('external_url') &&
-                              !event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.open_in_new,
-                              label: L10n.of(context).openMessageSource,
-                              onPressed: () {
-                                UrlLauncher(
-                                  context,
-                                  content.tryGet<String>('external_url'),
-                                ).launchUrl();
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (room.canSendDefaultMessages &&
-                              event.senderId == client.userID! &&
-                              event.type == EventTypes.Message &&
-                              !event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.edit_outlined,
-                              label: L10n.of(context).edit,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.editSelectedEventAction(
-                                  event: event,
-                                );
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (event.type ==
-                              'org.matrix.msc3381.poll.start') ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.info_outline,
-                              label: L10n.of(context).pollResults,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.showPollResults(event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (event.type == 'org.matrix.msc3381.poll.start' &&
-                              event.senderId ==
-                                  Matrix.of(context).client.userID)
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.check,
-                              label: L10n.of(context).endPoll,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.endPollAction(event: event);
-                              },
-                            ),
-                        ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Material(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      clipBehavior: Clip.hardEdge,
-                      borderRadius: borderRadius,
-                      child: Column(
-                        children: [
-                          if ([
-                            MessageTypes.File,
-                            MessageTypes.Audio,
-                            MessageTypes.Image,
-                            MessageTypes.Video,
-                          ].contains(event.messageType)) ...[
-                            if (isDownloading)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    downloadSuccess
-                                        ? Icon(
-                                            Icons.download_done_outlined,
-                                            size: 20,
-                                          )
-                                        : downloadError
-                                        ? Icon(Icons.error_outline, size: 20)
-                                        : CircularProgressIndicator.adaptive(
-                                            value: downloadProgress / 100,
-                                          ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        downloadSuccess
-                                            ? L10n.of(context).downloadSuccess
-                                            : downloadError
-                                            ? L10n.of(context).downloadFailed
-                                            : event.content.tryGet<String>(
-                                                    'filename',
-                                                  ) ??
-                                                  event.body,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              _buildMenuItem(
+                    RepaintBoundary(
+                      child: Material(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        clipBehavior: Clip.hardEdge,
+                        borderRadius: borderRadius,
+                        child: Column(
+                          children: [
+                            if ([
+                              MessageTypes.File,
+                              MessageTypes.Audio,
+                              MessageTypes.Image,
+                              MessageTypes.Video,
+                            ].contains(event.messageType)) ...[
+                              _DownloadProgressTile(
                                 event: event,
-                                icon: Icons.download_outlined,
-                                label: L10n.of(context).downloadFile,
-                                onPressed: () {
+                                onDownloadPressed: () {
                                   controller.closeMessageMenu();
                                   if (event.canDownloadInBackground) {
                                     event.downloadInBackground(context);
@@ -591,154 +595,158 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                                   }
                                 },
                               ),
-                            const ListDivider(),
-                          ],
-                          if (!event.redacted &&
-                              event.type == EventTypes.Message) ...[
+                              const ListDivider(),
+                            ],
+                            if (!event.redacted &&
+                                event.type == EventTypes.Message) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.forward_outlined,
+                                label: L10n.of(context).forward,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.forwardEventsAction(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (!event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.copy_outlined,
+                                label: L10n.of(context).copy,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  Clipboard.setData(
+                                    ClipboardData(
+                                      text: event
+                                          .getDisplayEvent(timeline!)
+                                          .calcLocalizedBodyFallback(
+                                            MatrixLocals(L10n.of(context)),
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
                             _buildMenuItem(
                               event: event,
-                              icon: Icons.forward_outlined,
-                              label: L10n.of(context).forward,
+                              icon: Icons.link,
+                              label: L10n.of(context).copyLink,
                               onPressed: () {
                                 controller.closeMessageMenu();
-                                controller.forwardEventsAction(event: event);
+                                controller.copyLinkAction(event: event);
                               },
                             ),
                             const ListDivider(),
-                          ],
-                          if (!event.redacted) ...[
+                            if (!event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.check_circle_outline,
+                                label: L10n.of(context).select,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.onMultiSelect(event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (!room.encrypted &&
+                                AppSettings.messageTranslation.value &&
+                                !event.redacted &&
+                                event.type == EventTypes.Message) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.translate,
+                                label: L10n.of(context).translate,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.translateEventAction(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.redo,
+                                label: L10n.of(context).recoverMessage,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.recoverEventAction(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (room.canChangeStateEvent(
+                                  EventTypes.RoomPinnedEvents,
+                                ) &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.push_pin_outlined,
+                                label:
+                                    room.pinnedEventIds.contains(event.eventId)
+                                    ? L10n.of(context).unpin
+                                    : L10n.of(context).pin,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.pinEvent(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
                             _buildMenuItem(
                               event: event,
-                              icon: Icons.copy_outlined,
-                              label: L10n.of(context).copy,
+                              icon: Icons.info_outline,
+                              label: L10n.of(context).messageInfo,
                               onPressed: () {
                                 controller.closeMessageMenu();
-                                Clipboard.setData(
-                                  ClipboardData(
-                                    text: event
-                                        .getDisplayEvent(timeline!)
-                                        .calcLocalizedBodyFallback(
-                                          MatrixLocals(L10n.of(context)),
-                                        ),
-                                  ),
-                                );
+                                controller.showEventInfo(event);
                               },
                             ),
-                            const ListDivider(),
                           ],
-                          _buildMenuItem(
-                            event: event,
-                            icon: Icons.link,
-                            label: L10n.of(context).copyLink,
-                            onPressed: () {
-                              controller.closeMessageMenu();
-                              controller.copyLinkAction(event: event);
-                            },
-                          ),
-                          const ListDivider(),
-                          if (!event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.check_circle_outline,
-                              label: L10n.of(context).select,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.onMultiSelect(event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (!room.encrypted &&
-                              AppSettings.messageTranslation.value &&
-                              !event.redacted &&
-                              event.type == EventTypes.Message) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.translate,
-                              label: L10n.of(context).translate,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.translateEventAction(event: event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.redo,
-                              label: L10n.of(context).recoverMessage,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.recoverEventAction(event: event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          if (room.canChangeStateEvent(
-                                EventTypes.RoomPinnedEvents,
-                              ) &&
-                              !event.redacted) ...[
-                            _buildMenuItem(
-                              event: event,
-                              icon: Icons.push_pin_outlined,
-                              label: room.pinnedEventIds.contains(event.eventId)
-                                  ? L10n.of(context).unpin
-                                  : L10n.of(context).pin,
-                              onPressed: () {
-                                controller.closeMessageMenu();
-                                controller.pinEvent(event: event);
-                              },
-                            ),
-                            const ListDivider(),
-                          ],
-                          _buildMenuItem(
-                            event: event,
-                            icon: Icons.info_outline,
-                            label: L10n.of(context).messageInfo,
-                            onPressed: () {
-                              controller.closeMessageMenu();
-                              controller.showEventInfo(event);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Material(
-                      color: theme.colorScheme.surfaceContainerHigh,
-                      clipBehavior: Clip.hardEdge,
-                      borderRadius: borderRadius,
-                      child: Column(
-                        children: [
-                          if ((event.canRedact ||
-                                  (clients!.any(
-                                    (cl) => event.senderId == cl!.userID,
-                                  ))) &&
-                              !event.redacted) ...[
+                    RepaintBoundary(
+                      child: Material(
+                        color: theme.colorScheme.surfaceContainerHigh,
+                        clipBehavior: Clip.hardEdge,
+                        borderRadius: borderRadius,
+                        child: Column(
+                          children: [
+                            if ((event.canRedact ||
+                                    (clients!.any(
+                                      (cl) => event.senderId == cl!.userID,
+                                    ))) &&
+                                !event.redacted) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.delete_outlined,
+                                color: Colors.red,
+                                label: L10n.of(context).delete,
+                                onPressed: () {
+                                  controller.closeMessageMenu();
+                                  controller.redactEventsAction(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
                             _buildMenuItem(
                               event: event,
-                              icon: Icons.delete_outlined,
+                              icon: Icons.report_outlined,
                               color: Colors.red,
-                              label: L10n.of(context).delete,
+                              label: L10n.of(context).reportMessage,
                               onPressed: () {
                                 controller.closeMessageMenu();
-                                controller.redactEventsAction(event: event);
+                                controller.reportEventAction(event: event);
                               },
                             ),
-                            const ListDivider(),
                           ],
-                          _buildMenuItem(
-                            event: event,
-                            icon: Icons.report_outlined,
-                            color: Colors.red,
-                            label: L10n.of(context).reportMessage,
-                            onPressed: () {
-                              controller.closeMessageMenu();
-                              controller.reportEventAction(event: event);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
@@ -748,6 +756,100 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DownloadProgressTile extends StatefulWidget {
+  final Event event;
+  final VoidCallback onDownloadPressed;
+  const _DownloadProgressTile({
+    required this.event,
+    required this.onDownloadPressed,
+  });
+
+  @override
+  State<_DownloadProgressTile> createState() => _DownloadProgressTileState();
+}
+
+class _DownloadProgressTileState extends State<_DownloadProgressTile> {
+  bool isDownloading = false;
+  bool downloadSuccess = false;
+  bool downloadError = false;
+  double downloadProgress = 0.0;
+  DownloadEventSubscription? _sub;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sub ??= DownloadManager.of(context).onEventFor(
+      widget.event.attachmentMxcUrl.toString(),
+      (event) {
+        if (!mounted) return;
+        switch (event) {
+          case DownloadStartEvent():
+            setState(() {
+              downloadProgress = 0.0;
+              downloadError = false;
+              downloadSuccess = false;
+              isDownloading = true;
+            });
+          case DownloadProgressEvent(:final progress):
+            setState(() {
+              isDownloading = true;
+              downloadProgress = progress;
+            });
+          case DownloadEndEvent(:final success, :final error):
+            setState(() {
+              isDownloading = false;
+              downloadError = !success && error != null;
+              downloadSuccess = success;
+            });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isDownloading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            downloadSuccess
+                ? const Icon(Icons.download_done_outlined, size: 20)
+                : downloadError
+                ? const Icon(Icons.error_outline, size: 20)
+                : CircularProgressIndicator.adaptive(
+                    value: downloadProgress / 100,
+                  ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                downloadSuccess
+                    ? L10n.of(context).downloadSuccess
+                    : downloadError
+                    ? L10n.of(context).downloadFailed
+                    : widget.event.content.tryGet<String>('filename') ??
+                          widget.event.body,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListTile(
+      onTap: widget.onDownloadPressed,
+      visualDensity: VisualDensity.compact,
+      leading: const Icon(Icons.download_outlined),
+      title: Text(L10n.of(context).downloadFile),
     );
   }
 }
