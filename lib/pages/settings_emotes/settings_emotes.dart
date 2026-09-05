@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:archive/archive.dart'
+    if (dart.library.io) 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' hide Client;
 import 'package:matrix/matrix.dart';
@@ -10,6 +12,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/file_selector.dart';
+import 'package:extera_next/utils/image_pack_migration.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
@@ -19,9 +22,6 @@ import '../../utils/emote_shortcode.dart';
 import '../../widgets/matrix.dart';
 import 'import_archive_dialog.dart';
 import 'settings_emotes_view.dart';
-
-import 'package:archive/archive.dart'
-    if (dart.library.io) 'package:archive/archive_io.dart';
 
 class EmotesSettings extends StatefulWidget {
   final String? roomId;
@@ -36,12 +36,39 @@ class EmotesSettingsController extends State<EmotesSettings> {
 
   String? stateKey;
 
+  BasicEvent? getRoomPackEvent(String key) {
+    final room = this.room;
+    if (room == null) return null;
+    return room.getState(EventTypes.RoomImagePack, key) ??
+        room.getState(legacyRoomImagePackEventType, key);
+  }
+
   List<String>? get packKeys {
     final room = this.room;
     if (room == null) return null;
-    final keys = room.states['im.ponies.room_emotes']?.keys.toList() ?? [];
-    keys.sort();
+    final keys = <String>{
+      ...?room.states[legacyRoomImagePackEventType]?.keys,
+      ...?room.states[EventTypes.RoomImagePack]?.keys,
+    }.toList()..sort();
     return keys;
+  }
+
+  List<String> get legacyPackKeysToMigrate {
+    final room = this.room;
+    if (room == null) return const [];
+    final legacy = room.states[legacyRoomImagePackEventType];
+    if (legacy == null) return const [];
+    return legacy.keys
+        .where((key) => room.getState(EventTypes.RoomImagePack, key) == null)
+        .toList()
+      ..sort();
+  }
+
+  bool get hasLegacyImagePacksToMigrate => legacyPackKeysToMigrate.isNotEmpty;
+
+  bool get canMigrateLegacyImagePacks {
+    final room = this.room;
+    return room != null && room.canChangeStateEvent(EventTypes.RoomImagePack);
   }
 
   @override
@@ -56,9 +83,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
   void setStateKey(String? key, {reset = true}) {
     stateKey = key;
 
-    final event = key == null
-        ? null
-        : room?.getState('im.ponies.room_emotes', key);
+    final event = key == null ? null : getRoomPackEvent(key);
     final eventPack = event?.content.tryGetMap<String, Object?>('pack');
     packDisplayNameController.text =
         eventPack?.tryGet<String>('display_name') ?? '';
@@ -73,12 +98,17 @@ class EmotesSettingsController extends State<EmotesSettings> {
     final client = Matrix.of(context).client;
     final event =
         (room != null
-            ? room!.getState('im.ponies.room_emotes', stateKey ?? '')
-            : client.accountData['im.ponies.user_emotes']) ??
+            ? getRoomPackEvent(stateKey ?? '')
+            : client.accountData[legacyUserImagePackEventType]) ??
         BasicEvent(type: 'm.dummy', content: {});
     // make sure we work on a *copy* of the event
     return BasicEvent.fromJson(event.toJson()).parsedImagePackContent;
   }
+
+  Map<String, dynamic> _stablePackJson(ImagePackContent imagePack) =>
+      normalizeStableImagePackContent(
+        Map<String, dynamic>.from(imagePack.toJson()),
+      );
 
   ImagePackContent? _pack;
 
@@ -100,13 +130,13 @@ class EmotesSettingsController extends State<EmotesSettings> {
       future: () => room != null
           ? client.setRoomStateWithKey(
               room!.id,
-              'im.ponies.room_emotes',
+              EventTypes.RoomImagePack,
               stateKey ?? '',
-              pack!.toJson(),
+              _stablePackJson(pack!),
             )
           : client.setAccountData(
               client.userID!,
-              'im.ponies.user_emotes',
+              legacyUserImagePackEventType,
               pack!.toJson(),
             ),
     );
@@ -117,36 +147,67 @@ class EmotesSettingsController extends State<EmotesSettings> {
     }
   }
 
+  Future<void> _setGlobalReference(
+    Client client,
+    String eventType,
+    bool active,
+  ) async {
+    final room = this.room;
+    if (room == null) return;
+    if (!active && client.accountData[eventType] == null) return;
+
+    final content = Map<String, dynamic>.from(
+      client.accountData[eventType]?.content ?? const <String, dynamic>{},
+    );
+    final rawRooms = content['rooms'];
+    final rooms = rawRooms is Map
+        ? Map<String, dynamic>.from(rawRooms)
+        : <String, dynamic>{};
+    final rawRoomReferences = rooms[room.id];
+    final roomReferences = rawRoomReferences is Map
+        ? Map<String, dynamic>.from(rawRoomReferences)
+        : <String, dynamic>{};
+    final key = stateKey ?? '';
+
+    if (active) {
+      roomReferences[key] = <String, dynamic>{};
+      rooms[room.id] = roomReferences;
+    } else {
+      roomReferences.remove(key);
+      if (roomReferences.isEmpty) {
+        rooms.remove(room.id);
+      } else {
+        rooms[room.id] = roomReferences;
+      }
+    }
+    content['rooms'] = rooms;
+
+    await client.setAccountData(client.userID!, eventType, content);
+  }
+
   Future<void> setIsGloballyActive(bool active) async {
     if (room == null) {
       return;
     }
     final client = Matrix.of(context).client;
-    final content =
-        client.accountData['im.ponies.emote_rooms']?.content ??
-        <String, dynamic>{};
-    if (active) {
-      if (content['rooms'] is! Map) {
-        content['rooms'] = <String, dynamic>{};
-      }
-      if (content['rooms'][room!.id] is! Map) {
-        content['rooms'][room!.id] = <String, dynamic>{};
-      }
-      if (content['rooms'][room!.id][stateKey ?? ''] is! Map) {
-        content['rooms'][room!.id][stateKey ?? ''] = <String, dynamic>{};
-      }
-    } else if (content['rooms'] is Map && content['rooms'][room!.id] is Map) {
-      content['rooms'][room!.id].remove(stateKey ?? '');
-    }
-    // and save
     await showFutureLoadingDialog(
       context: context,
-      future: () => client.setAccountData(
-        client.userID!,
-        'im.ponies.emote_rooms',
-        content,
-      ),
+      future: () async {
+        if (active) {
+          await _setGlobalReference(client, EventTypes.ImagePackRooms, true);
+        } else {
+          // Remove both forms: otherwise the SDK's legacy compatibility path
+          // would keep surfacing a pack which the user just disabled.
+          await _setGlobalReference(client, EventTypes.ImagePackRooms, false);
+          await _setGlobalReference(
+            client,
+            legacyImagePackRoomsEventType,
+            false,
+          );
+        }
+      },
     );
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -161,15 +222,16 @@ class EmotesSettingsController extends State<EmotesSettings> {
     showSave = true;
   });
 
-  void toggleUsage(String imageCode, ImagePackUsage usage) {
+  void togglePackUsage(ImagePackUsage usage) {
     setState(() {
-      final usages = pack!.images[imageCode]!.usage ??= List.from(
-        ImagePackUsage.values,
-      );
+      final usages = pack!.pack.usage ??= List.from(ImagePackUsage.values);
       if (!usages.remove(usage)) usages.add(usage);
       showSave = true;
     });
   }
+
+  bool packUses(ImagePackUsage usage) =>
+      pack!.pack.usage?.contains(usage) ?? true;
 
   void submitDisplaynameAction() {
     if (readonly) return;
@@ -228,23 +290,109 @@ class EmotesSettingsController extends State<EmotesSettings> {
     });
   }
 
+  bool _hasGlobalReference(Client client, String eventType) {
+    final room = this.room;
+    if (room == null) return false;
+    return client.accountData[eventType]?.content
+            .tryGetMap<String, Object?>('rooms')
+            ?.tryGetMap<String, Object?>(room.id)
+            ?.containsKey(stateKey ?? '') ==
+        true;
+  }
+
   bool isGloballyActive(Client? client) =>
       room != null &&
-      client!.accountData['im.ponies.emote_rooms']?.content
-              .tryGetMap<String, Object?>('rooms')
-              ?.tryGetMap<String, Object?>(room!.id)
-              ?.tryGetMap<String, Object?>(stateKey ?? '') !=
-          null;
+      client != null &&
+      (_hasGlobalReference(client, EventTypes.ImagePackRooms) ||
+          _hasGlobalReference(client, legacyImagePackRoomsEventType));
 
   bool get readonly => room == null
       ? false
-      : room?.canChangeStateEvent('im.ponies.room_emotes') == false;
+      : room?.canChangeStateEvent(EventTypes.RoomImagePack) == false;
 
   void resetAction() {
     setState(() {
       _pack = _getPack();
       showSave = false;
     });
+  }
+
+  Future<void> migrateLegacyImagePacks() async {
+    final room = this.room;
+    if (room == null || !canMigrateLegacyImagePacks) return;
+    final keysToMigrate = legacyPackKeysToMigrate;
+    if (keysToMigrate.isEmpty) return;
+
+    final client = room.client;
+    final result = await showFutureLoadingDialog(
+      context: context,
+      future: () async {
+        for (final key in keysToMigrate) {
+          // Never overwrite a stable event if one appeared while the dialog
+          // was opening or while another device was migrating the room.
+          if (room.getState(EventTypes.RoomImagePack, key) != null) continue;
+          final legacyEvent = room.getState(legacyRoomImagePackEventType, key);
+          if (legacyEvent == null) continue;
+          await client.setRoomStateWithKey(
+            room.id,
+            EventTypes.RoomImagePack,
+            key,
+            normalizeStableImagePackContent(
+              Map<String, dynamic>.from(legacyEvent.content),
+            ),
+          );
+        }
+
+        // Preserve the user's global activation choices in the stable account
+        // data event. Legacy account data is intentionally left in place for
+        // older clients; disabling a pack removes both forms above.
+        final legacyGlobal = client.accountData[legacyImagePackRoomsEventType];
+        final legacyRoomReferences = legacyGlobal?.content
+            .tryGetMap<String, Object?>('rooms')
+            ?.tryGetMap<String, Object?>(room.id);
+        if (legacyRoomReferences != null && legacyRoomReferences.isNotEmpty) {
+          final stableContent = Map<String, dynamic>.from(
+            client.accountData[EventTypes.ImagePackRooms]?.content ??
+                const <String, dynamic>{},
+          );
+          final rawStableRooms = stableContent['rooms'];
+          final stableRooms = rawStableRooms is Map
+              ? Map<String, dynamic>.from(rawStableRooms)
+              : <String, dynamic>{};
+          final rawStableReferences = stableRooms[room.id];
+          final stableReferences = rawStableReferences is Map
+              ? Map<String, dynamic>.from(rawStableReferences)
+              : <String, dynamic>{};
+          final availableStableKeys = <String>{
+            ...?room.states[EventTypes.RoomImagePack]?.keys,
+            ...keysToMigrate,
+          };
+          var changed = false;
+          for (final key in legacyRoomReferences.keys) {
+            if (!availableStableKeys.contains(key)) continue;
+            if (!stableReferences.containsKey(key)) {
+              stableReferences[key] = <String, dynamic>{};
+              changed = true;
+            }
+          }
+          if (changed) {
+            stableRooms[room.id] = stableReferences;
+            stableContent['rooms'] = stableRooms;
+            await client.setAccountData(
+              client.userID!,
+              EventTypes.ImagePackRooms,
+              stableContent,
+            );
+          }
+        }
+
+        await client.oneShotSync();
+      },
+    );
+
+    if (!mounted || result.isError) return;
+    _pack = null;
+    setStateKey(stateKey);
   }
 
   void createImagePack() async {
@@ -263,7 +411,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
 
     final keyName = name.toLowerCase().replaceAll(' ', '_');
 
-    if (packKeys?.contains(name) ?? false) {
+    if (packKeys?.contains(keyName) ?? false) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context).stickerPackNameAlreadyExists)),
       );
@@ -274,7 +422,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
       context: context,
       future: () => room.client.setRoomStateWithKey(
         room.id,
-        'im.ponies.room_emotes',
+        EventTypes.RoomImagePack,
         keyName,
         {
           'images': {},
@@ -291,6 +439,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
 
   void saveAction() async {
     await save(context);
+    if (!mounted) return;
     setState(() {
       showSave = false;
     });
@@ -326,21 +475,9 @@ class EmotesSettingsController extends State<EmotesSettings> {
           );
 
           setState(() {
-            final info = <String, dynamic>{...file.info};
-            // normalize width / height to 256, required for stickers
-            if (info['w'] is int && info['h'] is int) {
-              final ratio = info['w'] / info['h'];
-              if (info['w'] > info['h']) {
-                info['w'] = 256;
-                info['h'] = (256.0 / ratio).round();
-              } else {
-                info['h'] = 256;
-                info['w'] = (ratio * 256.0).round();
-              }
-            }
             final imageCode = pickedFile.name.split('.').first;
             pack!.images[imageCode] = ImagePackImageContent.fromJson(
-              <String, dynamic>{'url': uri.toString(), 'info': info},
+              <String, dynamic>{'url': uri.toString(), 'info': file.info},
             );
           });
         }

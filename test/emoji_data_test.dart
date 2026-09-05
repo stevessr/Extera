@@ -36,4 +36,12 @@ void main() {
       ]),
     );
   });
+
+  test('lookup resolves char, full name and short name through one index', () {
+    final crackingFace = EmojiData.lookup('cracking face');
+    expect(crackingFace, isNotNull);
+    expect(EmojiData.lookup(crackingFace!.char), same(crackingFace));
+    expect(EmojiData.lookup(crackingFace.shortName), same(crackingFace));
+    expect(EmojiData.lookup('not-an-emoji'), isNull);
+  });
 }

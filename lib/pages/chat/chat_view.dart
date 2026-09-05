@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -21,7 +22,6 @@ import 'package:extera_next/pages/chat/reply_display.dart';
 import 'package:extera_next/pages/dialer/back_to_call_button.dart';
 import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
-import 'package:extera_next/utils/matrix_sdk_extensions/call_members_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
@@ -64,7 +64,7 @@ class _ChatViewState extends State<ChatView> {
   @override
   void initState() {
     super.initState();
-    callMembers = controller.room.callMembersCount;
+    callMembers = controller.room.getActiveMatrixRtcMembers().length;
     stateUpdateSubscription = controller.room.client.onRoomState.stream
         .where(
           (update) =>
@@ -83,7 +83,7 @@ class _ChatViewState extends State<ChatView> {
 
   void stateUpdated(_) {
     setState(() {
-      callMembers = controller.room.callMembersCount;
+      callMembers = controller.room.getActiveMatrixRtcMembers().length;
     });
   }
 

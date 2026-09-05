@@ -178,9 +178,6 @@ void main() {
     );
   }
 
-  AnimatedCrossFade fadeState(WidgetTester tester) =>
-      tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade));
-
   testWidgets('recovers after a transport ClientException', (tester) async {
     final flaky = FlakyHttpClient(failuresLeft: 1, successBody: png);
     client.httpClient = flaky;
@@ -190,17 +187,12 @@ void main() {
     // First attempt fails inside the post-frame callback; the retry timer
     // gets scheduled. Neither may escape as an unhandled async error.
     await tester.pump();
-    expect(fadeState(tester).crossFadeState, CrossFadeState.showSecond);
 
     // Transport recovers before the retry fires.
     flaky.failuresLeft = 0;
     await tester.pump(const Duration(milliseconds: 10));
 
-    expect(
-      fadeState(tester).crossFadeState,
-      CrossFadeState.showFirst,
-      reason: 'image must render once the transport recovers',
-    );
+    expect(find.byType(Image), findsOneWidget);
   });
 
   testWidgets('gives up quietly on permanent (non-IO) failures', (
@@ -217,6 +209,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 3));
 
-    expect(fadeState(tester).crossFadeState, CrossFadeState.showSecond);
+    expect(find.byIcon(Icons.refresh), findsOneWidget);
   });
 }

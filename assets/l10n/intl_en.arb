@@ -4426,5 +4426,9 @@
     "@roomProfileCustomHint": {
         "type": "String",
         "placeholder": {}
-    }
+    },
+    "appBarAppearance": "App bar",
+    "appBarAppName": "App name",
+    "appBarAccountName": "Account name",
+    "sendMedia": "Send media"
 }

@@ -152,6 +152,14 @@ class SettingsStyleController extends State<SettingsStyle> {
     });
   }
 
+  String get titleBarText => AppSettings.appTitleText.value;
+
+  void setTitleBarText(String value) {
+    setState(() {
+      AppSettings.appTitleText.setItem(value);
+    });
+  }
+
   double get wallpaperBlur => _wallpaperBlur ?? 0.0;
   double? _wallpaperBlur;
 
@@ -198,9 +206,9 @@ class SettingsStyleController extends State<SettingsStyle> {
 
   /// The emoji font is fetched on demand (see lib/utils/noto_emoji_font.dart);
   /// loading it here covers the mid-session toggle path.
-  void toggleNotoEmoji(bool _) {
+  void toggleNotoEmoji(bool enabled) {
     setState(() {});
-    if (AppSettings.notoEmojiFont.value) {
+    if (enabled) {
       unawaited(ensureNotoEmojiFontLoaded());
     }
   }
@@ -241,6 +249,12 @@ class SettingsStyleController extends State<SettingsStyle> {
     setState(() {});
   }
 
+  void _refreshTypography() {
+    if (!mounted) return;
+    ThemeController.of(context).refreshTypography();
+    setState(() {});
+  }
+
   void editUIFont() async {
     final newFont = await showTextInputDialog(
       context: context,
@@ -249,8 +263,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialText: AppSettings.uiFont.value,
     );
     if (newFont == null) return;
-    AppSettings.uiFont.setItem(newFont);
-    setState(() {});
+    await AppSettings.uiFont.setItem(newFont);
+    _refreshTypography();
   }
 
   void editMonospaceFont() async {
@@ -261,8 +275,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialText: AppSettings.monospaceFont.value,
     );
     if (newFont == null) return;
-    AppSettings.monospaceFont.setItem(newFont);
-    setState(() {});
+    await AppSettings.monospaceFont.setItem(newFont);
+    _refreshTypography();
   }
 
   void editChatFont() async {
@@ -273,8 +287,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialText: AppSettings.chatFont.value,
     );
     if (newFont == null) return;
-    AppSettings.chatFont.setItem(newFont);
-    setState(() {});
+    await AppSettings.chatFont.setItem(newFont);
+    _refreshTypography();
   }
 
   void editUIFallbackFonts() async {
@@ -284,8 +298,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialItems: AppSettings.fallbackFonts.value.split(','),
     );
     if (newFonts == null) return;
-    AppSettings.fallbackFonts.setItem(newFonts.join(','));
-    setState(() {});
+    await AppSettings.fallbackFonts.setItem(newFonts.join(','));
+    _refreshTypography();
   }
 
   void editMonospaceFallbackFonts() async {
@@ -295,8 +309,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialItems: AppSettings.monospaceFallbackFonts.value.split(','),
     );
     if (newFonts == null) return;
-    AppSettings.monospaceFallbackFonts.setItem(newFonts.join(','));
-    setState(() {});
+    await AppSettings.monospaceFallbackFonts.setItem(newFonts.join(','));
+    _refreshTypography();
   }
 
   void editChatFallbackFonts() async {
@@ -306,8 +320,8 @@ class SettingsStyleController extends State<SettingsStyle> {
       initialItems: AppSettings.chatFallbackFonts.value.split(','),
     );
     if (newFonts == null) return;
-    AppSettings.chatFallbackFonts.setItem(newFonts.join(','));
-    setState(() {});
+    await AppSettings.chatFallbackFonts.setItem(newFonts.join(','));
+    _refreshTypography();
   }
 
   @override

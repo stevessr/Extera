@@ -18,7 +18,8 @@ Future<Client> prepareTestClient({
       KeyVerificationMethod.emoji,
     },
     importantStateEvents: <String>{
-      'im.ponies.room_emotes', // we want emotes to work properly
+      EventTypes.RoomImagePack,
+      'im.ponies.room_emotes', // keep legacy emote rooms readable
     },
     databaseBuilder: FlutterHiveCollectionsDatabase.databaseBuilder,
     supportedLoginTypes: {

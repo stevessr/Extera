@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
+import 'package:extera_next/utils/font_family.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
 
@@ -45,19 +46,18 @@ class ReplyContent extends StatelessWidget {
         ? theme.colorScheme.tertiaryContainer
         : theme.colorScheme.tertiary;
 
+    final fontFamily = resolveFontFamily(
+      useSystemFont: AppSettings.systemFont.value,
+      configuredFont: AppSettings.chatFont.value,
+    );
     final textStyle = TextStyle(
       fontSize: fontSize,
       color: textColor ?? color,
-      fontFamily: AppSettings.systemFont.value
-          ? 'SystemFont'
-          : AppSettings.chatFont.value.isNotEmpty
-          ? AppSettings.systemFont.value
-                ? 'SystemFont'
-                : AppSettings.chatFont.value
-          : null,
-      fontFamilyFallback: AppSettings.fontFallback(
-        AppSettings.chatFallbackFonts,
-        colorEmojiFirst: true,
+      fontFamily: fontFamily,
+      fontFamilyFallback: resolveFontFallbacks(
+        configuredFallbacks: AppSettings.chatFallbackFonts.value,
+        primaryFont: fontFamily,
+        includeNotoEmoji: AppSettings.notoEmojiFont.value,
       ),
     );
 
@@ -91,11 +91,7 @@ class ReplyContent extends StatelessWidget {
                               .calcDisplayname(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: textColor ?? color,
-                        fontSize: fontSize,
-                      ),
+                      style: textStyle.copyWith(fontWeight: FontWeight.bold),
                     );
                   },
                 ),

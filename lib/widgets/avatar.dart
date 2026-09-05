@@ -22,6 +22,7 @@ class Avatar extends StatelessWidget {
   final BorderSide? border;
   final Color? backgroundColor;
   final Color? textColor;
+  final MxcImageCacheCategory? cacheCategory;
 
   const Avatar({
     this.mxContent,
@@ -37,6 +38,7 @@ class Avatar extends StatelessWidget {
     this.icon,
     this.backgroundColor,
     this.textColor,
+    this.cacheCategory,
     super.key,
   });
 
@@ -54,6 +56,14 @@ class Avatar extends StatelessWidget {
 
     final borderRadius = this.borderRadius ?? BorderRadius.circular(size / 2);
     final presenceUserId = this.presenceUserId;
+    // Presence-linked avatars represent Matrix users. Avatars without a
+    // presence identity are overwhelmingly room/space avatars. Callers with a
+    // different semantic can still override [cacheCategory] explicitly.
+    final resolvedCacheCategory =
+        cacheCategory ??
+        (presenceUserId == null
+            ? MxcImageCacheCategory.roomAvatar
+            : MxcImageCacheCategory.userAvatar);
     final container = Stack(
       children: [
         SizedBox(
@@ -75,6 +85,7 @@ class Avatar extends StatelessWidget {
               borderRadius: borderRadius,
               key: ValueKey(mxContent.toString()),
               cacheKey: '${mxContent}_$size',
+              cacheCategory: resolvedCacheCategory,
               uri: mxContent,
               fit: BoxFit.cover,
               width: size,
