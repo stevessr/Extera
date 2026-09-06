@@ -246,6 +246,7 @@ class _AdaptiveReactorsDialog {
     barrierColor: Colors.transparent,
     useRootNavigator: true,
     barrierDismissible: true,
+    useSafeArea: false,
     builder: (context) => _ReactionsContextMenuOverlay(
       reactionKey: reactionKey,
       onDismiss: () => Navigator.of(context).pop(),
