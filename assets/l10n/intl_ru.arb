@@ -4227,5 +4227,11 @@
     "callVideocam": "Видео",
     "callMic": "Микрофон",
     "callScreenShare": "Экран",
-    "lkCallSettings": "Настройки"
+    "lkCallSettings": "Настройки",
+    "incomingCallFromRoom": "в {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    }
 }

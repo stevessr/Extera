@@ -4144,5 +4144,11 @@
     "appBarAppearance": "App bar",
     "appBarAppName": "App name",
     "appBarAccountName": "Account name",
-    "sendMedia": "Send media"
+    "sendMedia": "Send media",
+    "incomingCallFromRoom": "From {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    }
 }

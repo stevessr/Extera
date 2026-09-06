@@ -184,7 +184,7 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
 
   /// Subscription map for the LiveKit (MSC4075) incoming-call notification
   /// handler. Keys are client names.
-  final onLiveKitRtcNotification = <String, StreamSubscription<SyncUpdate>>{};
+  final onLiveKitRtcNotification = <String, StreamSubscription<Event>>{};
 
   String? _cachedPassword;
   Timer? _cachedPasswordClearTimer;
