@@ -338,6 +338,55 @@ class SettingsStyleView extends StatelessWidget {
                   children: [
                     ListTile(
                       title: Text(
+                        L10n.of(context).appearance,
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SettingsSwitchListTile.adaptive(
+                      title: L10n.of(context).showSeconds,
+                      setting: AppSettings.showSeconds,
+                      onChanged: controller.toggleShowSeconds,
+                    ),
+                    const ListDivider(),
+                    SettingsSwitchListTile.adaptive(
+                      title: L10n.of(context).useTwemoji,
+                      setting: AppSettings.twemojiFont,
+                    ),
+                    const ListDivider(),
+                    ListTile(
+                      title: Text(L10n.of(context).avatarBorderRadius),
+                      trailing: Text(
+                        '× ${AppSettings.avatarBorderRadius.value}',
+                      ),
+                    ),
+                    Slider.adaptive(
+                      min: 0.5,
+                      max: 1,
+                      divisions: 20,
+                      value: AppSettings.avatarBorderRadius.value,
+                      semanticFormatterCallback: (d) => d.toString(),
+                      onChanged: controller.changeAvatarBorderRadius,
+                    ),
+                    const ListDivider(),
+                    SettingsSwitchListTile.adaptive(
+                      title: L10n.of(context).floatingInputBar,
+                      setting: AppSettings.floatingInputBar,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Material(
+                color: theme.colorScheme.surfaceContainerHigh,
+                clipBehavior: Clip.hardEdge,
+                borderRadius: borderRadius,
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
                         L10n.of(context).messagesStyle,
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
@@ -593,17 +642,6 @@ class SettingsStyleView extends StatelessWidget {
                           setting: AppSettings.enableChatFrostedGlass,
                         ),
                         const ListDivider(),
-                        SettingsSwitchListTile.adaptive(
-                          title: L10n.of(context).showSeconds,
-                          setting: AppSettings.showSeconds,
-                          onChanged: controller.toggleShowSeconds,
-                        ),
-                        const ListDivider(),
-                        SettingsSwitchListTile.adaptive(
-                          title: L10n.of(context).useTwemoji,
-                          setting: AppSettings.twemojiFont,
-                        ),
-                        const ListDivider(),
                         const SizedBox(height: 8),
                         ListTile(
                           title: TextButton.icon(
@@ -664,21 +702,6 @@ class SettingsStyleView extends StatelessWidget {
                       value: AppSettings.fontSizeFactor.value,
                       semanticFormatterCallback: (d) => d.toString(),
                       onChanged: controller.changeFontSizeFactor,
-                    ),
-                    const ListDivider(),
-                    ListTile(
-                      title: Text(L10n.of(context).avatarBorderRadius),
-                      trailing: Text(
-                        '× ${AppSettings.avatarBorderRadius.value}',
-                      ),
-                    ),
-                    Slider.adaptive(
-                      min: 0.5,
-                      max: 1,
-                      divisions: 20,
-                      value: AppSettings.avatarBorderRadius.value,
-                      semanticFormatterCallback: (d) => d.toString(),
-                      onChanged: controller.changeAvatarBorderRadius,
                     ),
                     const ListDivider(),
                     ListTile(

@@ -4141,6 +4141,8 @@
     "callMic": "Mic",
     "callScreenShare": "Screen",
     "lkCallSettings": "Settings",
+    "appearance": "Appearance",
+    "floatingInputBar": "Floating input bar",
     "appBarAppearance": "App bar",
     "appBarAppName": "App name",
     "appBarAccountName": "Account name",

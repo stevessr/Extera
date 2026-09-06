@@ -4233,5 +4233,7 @@
         "placeholders": {
             "room": {"type": "String"}
         }
-    }
+    },
+    "appearance": "Внешний вид",
+    "floatingInputBar": "Плавающая панель ввода"
 }

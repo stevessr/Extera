@@ -420,6 +420,8 @@ class _ChatViewState extends State<ChatView> {
 
     final wallpaperPath = AppSettings.wallpaperPath.value;
 
+    final floatingInputBar = AppSettings.floatingInputBar.value;
+
     if (screenWidth == null || screenHeight == null) {
       final view = View.of(context);
       screenWidth ??= view.physicalSize.width / view.devicePixelRatio;
@@ -583,7 +585,8 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
 
-                  if (controller.room.canSendDefaultMessages &&
+                  if (floatingInputBar &&
+                      controller.room.canSendDefaultMessages &&
                       controller.room.membership == Membership.join)
                     Positioned(
                       left: 0,
@@ -611,13 +614,14 @@ class _ChatViewState extends State<ChatView> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 8,
+                    bottom: floatingInputBar ? 8 : 0,
                     child: _MeasureSize(
                       onChange: (size) {
                         final oldHeight = controller.inputBarHeight.value;
                         final newHeight = size.height;
                         if (oldHeight == newHeight) return;
-                        controller.inputBarHeight.value = newHeight + 8;
+                        controller.inputBarHeight.value =
+                            newHeight + (floatingInputBar ? 8 : 0);
 
                         // Keep the list scrolled to the bottom if we were already
                         // there, otherwise the newly‑added input bar would cover a
@@ -634,20 +638,27 @@ class _ChatViewState extends State<ChatView> {
                       child: SafeArea(
                         top: false,
                         child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: bottomSheetPadding,
-                            vertical: bottomSheetPadding / 2,
-                          ),
+                          padding: floatingInputBar
+                              ? EdgeInsets.symmetric(
+                                  horizontal: bottomSheetPadding,
+                                  vertical: bottomSheetPadding / 2,
+                                )
+                              : EdgeInsets.zero,
                           child: Align(
                             alignment: Alignment.center,
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: FluffyThemes.columnWidth * 2.5,
-                              ),
+                              constraints: AppSettings.floatingInputBar.value
+                                  ? const BoxConstraints(
+                                      maxWidth: FluffyThemes.columnWidth * 2.5,
+                                    )
+                                  : const BoxConstraints(),
                               child:
                                   controller.room.isExtinct &&
                                       !AppSettings.alwaysShowInputBar.value
-                                  ? (AppSettings.enableChatFrostedGlass.value
+                                  ? (floatingInputBar &&
+                                            AppSettings
+                                                .enableChatFrostedGlass
+                                                .value
                                         ? _FloatingInputShell(
                                             child: ElevatedButton.icon(
                                               icon: const Icon(
@@ -728,6 +739,20 @@ class _ChatViewState extends State<ChatView> {
                                                 ChatEmojiPicker(controller),
                                               ],
                                             );
+                                      if (!floatingInputBar) {
+                                        return Material(
+                                          clipBehavior: Clip.hardEdge,
+                                          color: theme
+                                              .colorScheme
+                                              .surfaceContainerHigh,
+                                          shape: Border(
+                                            top: BorderSide(
+                                              color: theme.dividerColor,
+                                            ),
+                                          ),
+                                          child: inputChild,
+                                        );
+                                      }
                                       return AppSettings
                                               .enableChatFrostedGlass
                                               .value
