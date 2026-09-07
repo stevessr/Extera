@@ -444,6 +444,13 @@ class _ReactionsMenuBody extends StatelessWidget {
                 children: List.generate(reactionEvents.length, (i) {
                   final event = reactionEvents[i];
                   final user = event.senderFromMemoryOrFallback;
+                  final canRedact = event.canRedact && chatController != null;
+                  final redact = canRedact
+                      ? () {
+                          Navigator.of(context).pop();
+                          chatController!.redactEventsAction(event: event);
+                        }
+                      : null;
 
                   return Column(
                     children: [
@@ -459,31 +466,14 @@ class _ReactionsMenuBody extends StatelessWidget {
                           event.originServerTs.localizedMessageTime(context),
                         ),
                         visualDensity: VisualDensity.compact,
-                        trailing: chatController == null
+                        dense: !FluffyThemes.isColumnMode(context),
+                        onTap: chatController == null
                             ? null
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      chatController?.replyAction(event);
-                                      Navigator.of(context).pop();
-                                    },
-                                    icon: const Icon(Icons.reply_outlined),
-                                  ),
-                                  if (event.canRedact)
-                                    IconButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                        chatController?.redactEventsAction(
-                                          event: event,
-                                        );
-                                      },
-                                      color: theme.colorScheme.error,
-                                      icon: const Icon(Icons.close),
-                                    ),
-                                ],
-                              ),
+                            : () {
+                                chatController!.replyAction(event);
+                                Navigator.of(context).pop();
+                              },
+                        onLongPress: redact,
                       ),
                       if (timeline != null)
                         SizedBox(
