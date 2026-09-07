@@ -660,6 +660,9 @@ class _ChatViewState extends State<ChatView> {
                                                 .enableChatFrostedGlass
                                                 .value
                                         ? _FloatingInputShell(
+                                            borderRadius: BorderRadius.circular(
+                                              28,
+                                            ),
                                             child: ElevatedButton.icon(
                                               icon: const Icon(
                                                 Icons.chevron_right,
@@ -740,23 +743,32 @@ class _ChatViewState extends State<ChatView> {
                                               ],
                                             );
                                       if (!floatingInputBar) {
-                                        return Material(
-                                          clipBehavior: Clip.hardEdge,
-                                          color: theme
-                                              .colorScheme
-                                              .surfaceContainerHigh,
-                                          shape: Border(
-                                            top: BorderSide(
-                                              color: theme.dividerColor,
-                                            ),
-                                          ),
-                                          child: inputChild,
-                                        );
+                                        return AppSettings
+                                                .enableChatFrostedGlass
+                                                .value
+                                            ? _FloatingInputShell(
+                                                borderRadius: BorderRadius.zero,
+                                                child: inputChild,
+                                              )
+                                            : Material(
+                                                clipBehavior: Clip.hardEdge,
+                                                color: theme
+                                                    .colorScheme
+                                                    .surfaceContainerHigh,
+                                                shape: Border(
+                                                  top: BorderSide(
+                                                    color: theme.dividerColor,
+                                                  ),
+                                                ),
+                                                child: inputChild,
+                                              );
                                       }
                                       return AppSettings
                                               .enableChatFrostedGlass
                                               .value
                                           ? _FloatingInputShell(
+                                              borderRadius:
+                                                  BorderRadius.circular(28),
                                               child: inputChild,
                                             )
                                           : Material(
@@ -859,22 +871,23 @@ class _ChatViewState extends State<ChatView> {
 
 class _FloatingInputShell extends StatelessWidget {
   final Widget child;
-  const _FloatingInputShell({required this.child});
+  final BorderRadius borderRadius;
+  const _FloatingInputShell({required this.child, required this.borderRadius});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return PhysicalModel(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: borderRadius,
       clipBehavior: Clip.hardEdge,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: borderRadius,
               color: theme.colorScheme.surfaceContainerHigh.withAlpha(
                 theme.brightness == Brightness.dark ? 160 : 190,
               ),
