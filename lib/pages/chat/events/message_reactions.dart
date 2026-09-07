@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -244,7 +245,7 @@ class _AdaptiveReactorsDialog {
   Future<bool?> show(BuildContext context) => showDialog<bool>(
     context: context,
     barrierColor: Colors.transparent,
-    useRootNavigator: false,
+    useRootNavigator: !PlatformInfos.isMobile,
     barrierDismissible: true,
     useSafeArea: false,
     builder: (context) => _ReactionsContextMenuOverlay(
