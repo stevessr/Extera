@@ -4094,8 +4094,6 @@
     "powerLevelReadOnly": "Только чтение",
     "elementCall": "Element Call",
     "@elementCall": {},
-    "elementCallExperimental": "Element Call (Экспериментально)",
-    "@elementCallExperimental": {},
     "p2pCall": "P2P Звонок",
     "@p2pCall": {},
     "chooseCallType": "Выберите тип звонка",

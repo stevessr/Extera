@@ -2231,7 +2231,7 @@ class ChatController extends State<ChatPageWithRoom>
   void onLiveKitCallButtonTap() async {
     final callType = await showModalActionPopup<String>(
       context: context,
-      title: L10n.of(context).elementCallExperimental,
+      title: L10n.of(context).placeCall,
       message: L10n.of(context).chooseCallType,
       cancelLabel: L10n.of(context).cancel,
       actions: [

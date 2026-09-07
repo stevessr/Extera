@@ -205,7 +205,7 @@ class _ChatViewState extends State<ChatView> {
             IconButton(
               onPressed: () => controller.onLiveKitCallButtonTap(),
               icon: const Icon(Icons.video_call_outlined),
-              tooltip: L10n.of(context).elementCallExperimental,
+              tooltip: L10n.of(context).placeCall,
             )
         else if (AppSettings.experimentalVoip.value &&
             Matrix.of(context).voipPlugin != null &&
