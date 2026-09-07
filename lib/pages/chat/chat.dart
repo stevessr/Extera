@@ -2236,14 +2236,14 @@ class ChatController extends State<ChatPageWithRoom>
       cancelLabel: L10n.of(context).cancel,
       actions: [
         AdaptiveModalAction(
-          label: L10n.of(context).p2pCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: 'p2p',
-        ),
-        AdaptiveModalAction(
           label: L10n.of(context).elementCall,
           icon: const Icon(Icons.video_call_outlined),
           value: 'element_call',
+        ),
+        AdaptiveModalAction(
+          label: L10n.of(context).p2pCall,
+          icon: const Icon(Icons.phone_outlined),
+          value: 'p2p',
         ),
       ],
     );
