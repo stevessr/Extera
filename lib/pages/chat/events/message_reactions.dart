@@ -244,7 +244,7 @@ class _AdaptiveReactorsDialog {
   Future<bool?> show(BuildContext context) => showDialog<bool>(
     context: context,
     barrierColor: Colors.transparent,
-    useRootNavigator: true,
+    useRootNavigator: false,
     barrierDismissible: true,
     useSafeArea: false,
     builder: (context) => _ReactionsContextMenuOverlay(
