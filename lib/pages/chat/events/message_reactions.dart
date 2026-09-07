@@ -242,24 +242,37 @@ class _AdaptiveReactorsDialog {
     required this.reactionKey,
   });
 
-  Future<bool?> show(BuildContext context) => showDialog<bool>(
-    context: context,
-    barrierColor: Colors.transparent,
-    useRootNavigator: !PlatformInfos.isMobile,
-    barrierDismissible: true,
-    useSafeArea: false,
-    builder: (context) => _ReactionsContextMenuOverlay(
-      reactionKey: reactionKey,
-      onDismiss: () => Navigator.of(context).pop(),
-      child: _ReactionsMenuBody(
-        client: client,
-        timeline: timeline,
-        reactionEntry: reactionEntry,
-        chatController: chatController,
-        onClose: () => Navigator.of(context).pop(),
+  Future<bool?> show(BuildContext context) async {
+    final deadline = DateTime.now().add(const Duration(milliseconds: 600));
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    await WidgetsBinding.instance.endOfFrame;
+
+    while (context.mounted &&
+        MediaQuery.viewInsetsOf(context).bottom > 0 &&
+        DateTime.now().isBefore(deadline)) {
+      await Future.delayed(const Duration(milliseconds: 16));
+    }
+
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.transparent,
+      useRootNavigator: !PlatformInfos.isMobile,
+      barrierDismissible: true,
+      useSafeArea: false,
+      builder: (context) => _ReactionsContextMenuOverlay(
+        reactionKey: reactionKey,
+        onDismiss: () => Navigator.of(context).pop(),
+        child: _ReactionsMenuBody(
+          client: client,
+          timeline: timeline,
+          reactionEntry: reactionEntry,
+          chatController: chatController,
+          onClose: () => Navigator.of(context).pop(),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ReactionsContextMenuOverlay extends StatefulWidget {
