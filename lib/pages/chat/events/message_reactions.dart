@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
-import 'package:extera_next/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -101,13 +101,16 @@ class MessageReactions extends StatelessWidget {
                 event.room.sendReaction(event.eventId, r.key);
               }
             },
-            onLongPress: () async => await _AdaptiveReactorsDialog(
-              client: client,
-              timeline: timeline,
-              reactionEntry: r,
-              chatController: chatController,
-              reactionKey: reactionGlobalKeys[r.key]!,
-            ).show(context),
+            onLongPress: () async {
+              if (chatController?.reactionsMenuOpen == true) return;
+              await _AdaptiveReactorsDialog(
+                client: client,
+                timeline: timeline,
+                reactionEntry: r,
+                chatController: chatController,
+                reactionKey: reactionGlobalKeys[r.key]!,
+              ).show(context);
+            },
           );
         }),
         if (allReactionEvents.any((e) => e.status.isSending))
@@ -243,46 +246,66 @@ class _AdaptiveReactorsDialog {
   });
 
   Future<bool?> show(BuildContext context) async {
-    final deadline = DateTime.now().add(const Duration(milliseconds: 600));
-    FocusManager.instance.primaryFocus?.unfocus();
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final route = ModalRoute.of(context);
+    OverlayEntry? entry;
+    LocalHistoryEntry? historyEntry;
+    final completer = Completer<bool?>();
+    var closed = false;
 
-    await WidgetsBinding.instance.endOfFrame;
-
-    while (context.mounted &&
-        MediaQuery.viewInsetsOf(context).bottom > 0 &&
-        DateTime.now().isBefore(deadline)) {
-      await Future.delayed(const Duration(milliseconds: 16));
+    void closeOverlay([bool? result]) {
+      if (closed) return;
+      closed = true;
+      entry?.remove();
+      entry = null;
+      chatController?.setReactionsMenuOpen(false);
+      if (!completer.isCompleted) completer.complete(result);
     }
 
-    return showDialog<bool>(
-      context: context,
-      barrierColor: Colors.transparent,
-      useRootNavigator: !PlatformInfos.isMobile,
-      barrierDismissible: true,
-      useSafeArea: false,
+    void remove([bool? result]) {
+      if (closed) return;
+      if (historyEntry != null) {
+        final he = historyEntry!;
+        historyEntry = null;
+        route?.removeLocalHistoryEntry(he);
+      } else {
+        closeOverlay(result);
+      }
+    }
+
+    historyEntry = LocalHistoryEntry(onRemove: () => closeOverlay());
+    route?.addLocalHistoryEntry(historyEntry!);
+
+    entry = OverlayEntry(
       builder: (context) => _ReactionsContextMenuOverlay(
         reactionKey: reactionKey,
-        onDismiss: () => Navigator.of(context).pop(),
+        onDismiss: () => remove(),
+        onOpen: () => chatController?.setReactionsMenuOpen(true),
         child: _ReactionsMenuBody(
           client: client,
           timeline: timeline,
           reactionEntry: reactionEntry,
           chatController: chatController,
-          onClose: () => Navigator.of(context).pop(),
+          onClose: () => remove(),
         ),
       ),
     );
+
+    overlay.insert(entry!);
+    return completer.future;
   }
 }
 
 class _ReactionsContextMenuOverlay extends StatefulWidget {
   final GlobalKey reactionKey;
-  final VoidCallback onDismiss;
+  final void Function() onDismiss;
+  final void Function() onOpen;
   final Widget child;
 
   const _ReactionsContextMenuOverlay({
     required this.reactionKey,
     required this.onDismiss,
+    required this.onOpen,
     required this.child,
   });
 
@@ -292,44 +315,83 @@ class _ReactionsContextMenuOverlay extends StatefulWidget {
 }
 
 class _ReactionsContextMenuOverlayState
-    extends State<_ReactionsContextMenuOverlay> {
+    extends State<_ReactionsContextMenuOverlay>
+    with WidgetsBindingObserver {
   Rect? _reactionRect;
+  Timer? _pollTimer;
+  double? _initialBottomInset;
+  bool _metricsReady = false;
 
   @override
   void initState() {
     super.initState();
-    _updateRect();
+    WidgetsBinding.instance.addObserver(this);
+    _startPolling();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initialBottomInset = MediaQuery.of(context).viewInsets.bottom;
+      _metricsReady = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(_ReactionsContextMenuOverlay old) {
     super.didUpdateWidget(old);
     if (widget.reactionKey != old.reactionKey) {
-      _updateRect();
+      _startPolling();
     }
   }
 
-  void _updateRect() {
-    final ctx = widget.reactionKey.currentContext;
-    if (ctx == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _updateRect();
-      });
-      return;
-    }
+  @override
+  void didChangeMetrics() {
+    if (!_metricsReady) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialBottomInset == null) return;
+      final currentBottomInset = MediaQuery.of(context).viewInsets.bottom;
+      if ((currentBottomInset - _initialBottomInset!).abs() > 1) {
+        widget.onDismiss();
+      }
+    });
+  }
 
-    final box = ctx.findRenderObject() as RenderBox;
-    if (!box.hasSize) return;
+  void _startPolling({Duration duration = const Duration(milliseconds: 900)}) {
+    _pollTimer?.cancel();
+    final endTime = DateTime.now().add(duration);
+    _pollTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      _measure();
+      if (DateTime.now().isAfter(endTime)) {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _measure() {
+    final ctx = widget.reactionKey.currentContext;
+    if (ctx == null) return;
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached || !box.hasSize) return;
 
     final pos = box.localToGlobal(Offset.zero);
-    setState(() {
-      _reactionRect = Rect.fromLTWH(
-        pos.dx,
-        pos.dy,
-        box.size.width,
-        box.size.height,
-      );
-    });
+    final rect = Rect.fromLTWH(pos.dx, pos.dy, box.size.width, box.size.height);
+
+    if (rect != _reactionRect) {
+      setState(() {
+        _reactionRect = rect;
+        widget.onOpen();
+      });
+    }
   }
 
   @override
@@ -461,7 +523,7 @@ class _ReactionsMenuBody extends StatelessWidget {
                   final canRedact = event.canRedact && chatController != null;
                   final redact = canRedact
                       ? () {
-                          Navigator.of(context).pop();
+                          onClose();
                           chatController!.redactEventsAction(event: event);
                         }
                       : null;
@@ -485,7 +547,7 @@ class _ReactionsMenuBody extends StatelessWidget {
                             ? null
                             : () {
                                 chatController!.replyAction(event);
-                                Navigator.of(context).pop();
+                                onClose();
                               },
                         onLongPress: redact,
                       ),

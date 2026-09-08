@@ -1998,6 +1998,14 @@ class ChatController extends State<ChatPageWithRoom>
 
   String? selectedEventId;
 
+  bool reactionsMenuOpen = false;
+
+  void setReactionsMenuOpen(bool value) {
+    setState(() {
+      reactionsMenuOpen = value;
+    });
+  }
+
   void onSelectMessage(Event event, Offset? tapPosition) {
     if (selectedEvents.isEmpty) {
       _openMenu(event, tapPosition);
