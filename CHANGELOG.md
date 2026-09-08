@@ -1,3 +1,7 @@
+## Extera 26.5.11
+- Fix wrong area being highlighted when showing reaction list.
+- Fix reaction list overlay not disappearing when closing chat.
+
 ## Extera 26.5.1
 - Improved incoming call popup for LiveKit calls.
 - Added option to use account name as app title.
