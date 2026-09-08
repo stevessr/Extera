@@ -124,6 +124,8 @@ abstract class ClientManager {
         // migrated rooms and older rooms are equally available to pickers.
         EventTypes.RoomImagePack,
         'im.ponies.room_emotes',
+        'org.matrix.msc3401.call.member',
+        'org.matrix.msc4705.rtc.notification',
       },
       roomPreviewLastEvents: <String>{
         EventTypes.Message,

@@ -4013,9 +4013,7 @@
     "powerLevelReadOnly": "Read only",
     "elementCall": "Element Call",
     "@elementCall": {},
-    "elementCallExperimental": "Element Call (Experimental)",
-    "@elementCallExperimental": {},
-    "p2pCall": "Legacy call",
+    "p2pCall": "Legacy P2P call",
     "@p2pCall": {},
     "chooseCallType": "Choose call type",
     "@chooseCallType": {},
@@ -4269,8 +4267,17 @@
     },
   "profileFieldManagedByServer": "This profile field is managed by your homeserver.",
   "@profileFieldManagedByServer": {},
+    "appearance": "Appearance",
+    "floatingInputBar": "Floating input bar",
     "appBarAppearance": "App bar",
     "appBarAppName": "App name",
     "appBarAccountName": "Account name",
-    "sendMedia": "Send media"
+    "sendMedia": "Send media",
+    "incomingCallFromRoom": "From {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    },
+    "reactionUiTip": "Tap to reply. Hold down to remove a reaction."
 }

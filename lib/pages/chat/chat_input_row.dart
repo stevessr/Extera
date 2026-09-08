@@ -13,7 +13,6 @@ import 'package:extera_next/utils/matrix_sdk_extensions/filtered_timeline_extens
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
-
 import '../../config/app_config.dart';
 import '../../config/themes.dart';
 import 'chat.dart';
@@ -43,168 +42,93 @@ class ChatInputRow extends StatelessWidget {
             onVideoSend: controller.onVideoNoteSend,
           );
         }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: controller.selectMode
-              ? <Widget>[
-                  if (controller.selectedEvents.every(
-                    (event) => event.status == EventStatus.error,
-                  ))
-                    SizedBox(
-                      height: height,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.colorScheme.error,
+        return Padding(
+          padding: AppSettings.floatingInputBar.value
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: controller.selectMode
+                ? <Widget>[
+                    if (controller.selectedEvents.every(
+                      (event) => event.status == EventStatus.error,
+                    ))
+                      SizedBox(
+                        height: height,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.error,
+                          ),
+                          onPressed: controller.deleteErrorEventsAction,
+                          child: Row(
+                            spacing: 4,
+                            children: <Widget>[
+                              const Icon(Icons.delete_forever_outlined),
+                              Text(L10n.of(context).delete),
+                            ],
+                          ),
                         ),
-                        onPressed: controller.deleteErrorEventsAction,
-                        child: Row(
-                          spacing: 4,
-                          children: <Widget>[
-                            const Icon(Icons.delete_forever_outlined),
-                            Text(L10n.of(context).delete),
-                          ],
+                      )
+                    else if (controller.selectedEvents.every(
+                      (event) => !event.isState,
+                    ))
+                      SizedBox(
+                        height: height,
+                        child: TextButton(
+                          style: selectedTextButtonStyle,
+                          onPressed: controller.forwardEventsAction,
+                          child: Row(
+                            spacing: 4,
+                            children: <Widget>[
+                              const Icon(Icons.keyboard_arrow_left_outlined),
+                              Text(L10n.of(context).forward),
+                            ],
+                          ),
                         ),
                       ),
-                    )
-                  else if (controller.selectedEvents.every(
-                    (event) => !event.isState,
-                  ))
-                    SizedBox(
-                      height: height,
-                      child: TextButton(
-                        style: selectedTextButtonStyle,
-                        onPressed: controller.forwardEventsAction,
-                        child: Row(
-                          spacing: 4,
-                          children: <Widget>[
-                            const Icon(Icons.keyboard_arrow_left_outlined),
-                            Text(L10n.of(context).forward),
-                          ],
-                        ),
-                      ),
-                    ),
-                  controller.selectedEvents.length == 1
-                      ? controller.selectedEvents.first
-                                .getDisplayEvent(controller.timeline!)
-                                .status
-                                .isSent
-                            ? SizedBox(
-                                height: height,
-                                child: TextButton(
-                                  style: selectedTextButtonStyle,
-                                  onPressed: () => controller.replyAction(null),
-                                  child: Row(
-                                    spacing: 4,
-                                    children: <Widget>[
-                                      Text(L10n.of(context).reply),
-                                      const Icon(Icons.keyboard_arrow_right),
-                                    ],
+                    controller.selectedEvents.length == 1
+                        ? controller.selectedEvents.first
+                                  .getDisplayEvent(controller.timeline!)
+                                  .status
+                                  .isSent
+                              ? SizedBox(
+                                  height: height,
+                                  child: TextButton(
+                                    style: selectedTextButtonStyle,
+                                    onPressed: () =>
+                                        controller.replyAction(null),
+                                    child: Row(
+                                      spacing: 4,
+                                      children: <Widget>[
+                                        Text(L10n.of(context).reply),
+                                        const Icon(Icons.keyboard_arrow_right),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              )
-                            : SizedBox(
-                                height: height,
-                                child: TextButton(
-                                  style: selectedTextButtonStyle,
-                                  onPressed: controller.sendAgainAction,
-                                  child: Row(
-                                    spacing: 4,
-                                    children: <Widget>[
-                                      Text(L10n.of(context).tryToSendAgain),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.send_outlined, size: 16),
-                                    ],
+                                )
+                              : SizedBox(
+                                  height: height,
+                                  child: TextButton(
+                                    style: selectedTextButtonStyle,
+                                    onPressed: controller.sendAgainAction,
+                                    child: Row(
+                                      spacing: 4,
+                                      children: <Widget>[
+                                        Text(L10n.of(context).tryToSendAgain),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.send_outlined,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              )
-                      : const SizedBox.shrink(),
-                ]
-              : <Widget>[
-                  const SizedBox(width: 4),
-                  AnimatedContainer(
-                    duration: FluffyThemes.animationDuration,
-                    curve: FluffyThemes.animationCurve,
-                    width: controller.sendController.text.isNotEmpty
-                        ? 0
-                        : height,
-                    height: height,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        AppConfig.borderRadius,
-                      ),
-                    ),
-                    clipBehavior: Clip.hardEdge,
-                    child: PopupMenuButton<String>(
-                      useRootNavigator: false,
-                      icon: const Icon(Icons.add_circle_outline),
-                      iconColor: theme.colorScheme.onSurface,
-                      onSelected: controller.onAddPopupMenuButtonSelected,
-                      itemBuilder: (BuildContext context) =>
-                          <PopupMenuEntry<String>>[
-                            if (PlatformInfos.isMobile)
-                              PopupMenuItem<String>(
-                                value: 'location',
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor:
-                                        theme.colorScheme.onPrimaryContainer,
-                                    foregroundColor:
-                                        theme.colorScheme.primaryContainer,
-                                    child: const Icon(Icons.gps_fixed_outlined),
-                                  ),
-                                  title: Text(L10n.of(context).shareLocation),
-                                  contentPadding: const EdgeInsets.all(0),
-                                ),
-                              ),
-                            PopupMenuItem<String>(
-                              value: 'media',
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.onPrimaryContainer,
-                                  foregroundColor:
-                                      theme.colorScheme.primaryContainer,
-                                  child: const Icon(Icons.photo_outlined),
-                                ),
-                                title: Text(L10n.of(context).sendMedia),
-                                contentPadding: const EdgeInsets.all(0),
-                              ),
-                            ),
-                            PopupMenuItem<String>(
-                              value: 'file',
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.onPrimaryContainer,
-                                  foregroundColor:
-                                      theme.colorScheme.primaryContainer,
-                                  child: const Icon(Icons.attachment_outlined),
-                                ),
-                                title: Text(L10n.of(context).sendFile),
-                                contentPadding: const EdgeInsets.all(0),
-                              ),
-                            ),
-                            PopupMenuItem<String>(
-                              value: 'poll',
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.onPrimaryContainer,
-                                  foregroundColor:
-                                      theme.colorScheme.primaryContainer,
-                                  child: const Icon(Icons.poll_outlined),
-                                ),
-                                title: Text(L10n.of(context).createPoll),
-                                contentPadding: const EdgeInsets.all(0),
-                              ),
-                            ),
-                          ],
-                    ),
-                  ),
-                  if (PlatformInfos.isMobile &&
-                      AppSettings.showCameraButton.value)
+                                )
+                        : const SizedBox.shrink(),
+                  ]
+                : <Widget>[
+                    const SizedBox(width: 4),
                     AnimatedContainer(
                       duration: FluffyThemes.animationDuration,
                       curve: FluffyThemes.animationCurve,
@@ -213,225 +137,313 @@ class ChatInputRow extends StatelessWidget {
                           : height,
                       height: height,
                       alignment: Alignment.center,
-                      decoration: const BoxDecoration(),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          AppConfig.borderRadius,
+                        ),
+                      ),
                       clipBehavior: Clip.hardEdge,
-                      child: PopupMenuButton(
+                      child: PopupMenuButton<String>(
                         useRootNavigator: false,
-                        icon: const Icon(Icons.camera_alt_outlined),
-                        onSelected: controller.onAddPopupMenuButtonSelected,
+                        icon: const Icon(Icons.add_circle_outline),
                         iconColor: theme.colorScheme.onSurface,
-                        itemBuilder: (context) => [
-                          PopupMenuItem<String>(
-                            value: 'camera-video',
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor:
-                                    theme.colorScheme.onPrimaryContainer,
-                                foregroundColor:
-                                    theme.colorScheme.primaryContainer,
-                                child: const Icon(Icons.videocam_outlined),
+                        onSelected: controller.onAddPopupMenuButtonSelected,
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                              if (PlatformInfos.isMobile)
+                                PopupMenuItem<String>(
+                                  value: 'location',
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          theme.colorScheme.onPrimaryContainer,
+                                      foregroundColor:
+                                          theme.colorScheme.primaryContainer,
+                                      child: const Icon(
+                                        Icons.gps_fixed_outlined,
+                                      ),
+                                    ),
+                                    title: Text(L10n.of(context).shareLocation),
+                                    contentPadding: const EdgeInsets.all(0),
+                                  ),
+                                ),
+                              PopupMenuItem<String>(
+                                value: 'media',
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.onPrimaryContainer,
+                                    foregroundColor:
+                                        theme.colorScheme.primaryContainer,
+                                    child: const Icon(Icons.photo_outlined),
+                                  ),
+                                  title: Text(L10n.of(context).sendMedia),
+                                  contentPadding: const EdgeInsets.all(0),
+                                ),
                               ),
-                              title: Text(L10n.of(context).recordAVideo),
-                              contentPadding: const EdgeInsets.all(0),
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'camera',
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor:
-                                    theme.colorScheme.onPrimaryContainer,
-                                foregroundColor:
-                                    theme.colorScheme.primaryContainer,
-                                child: const Icon(Icons.camera_alt_outlined),
+                              PopupMenuItem<String>(
+                                value: 'file',
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.onPrimaryContainer,
+                                    foregroundColor:
+                                        theme.colorScheme.primaryContainer,
+                                    child: const Icon(
+                                      Icons.attachment_outlined,
+                                    ),
+                                  ),
+                                  title: Text(L10n.of(context).sendFile),
+                                  contentPadding: const EdgeInsets.all(0),
+                                ),
                               ),
-                              title: Text(L10n.of(context).takeAPhoto),
-                              contentPadding: const EdgeInsets.all(0),
-                            ),
-                          ),
-                        ],
+                              PopupMenuItem<String>(
+                                value: 'poll',
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.onPrimaryContainer,
+                                    foregroundColor:
+                                        theme.colorScheme.primaryContainer,
+                                    child: const Icon(Icons.poll_outlined),
+                                  ),
+                                  title: Text(L10n.of(context).createPoll),
+                                  contentPadding: const EdgeInsets.all(0),
+                                ),
+                              ),
+                            ],
                       ),
                     ),
-                  Container(
-                    height: height,
-                    width: height,
-                    alignment: Alignment.center,
-                    child: IconButton(
-                      tooltip: L10n.of(context).emojis,
-                      color: theme.colorScheme.onSurface,
-                      icon: Icon(
-                        controller.sendController.text.isEmpty
-                            ? controller.showEmojiPicker
-                                  ? MdiIcons.sticker
-                                  : MdiIcons.stickerOutline
-                            : controller.showEmojiPicker
-                            ? Icons.add_reaction
-                            : Icons.add_reaction_outlined,
-                        key: ValueKey(controller.showEmojiPicker),
+                    if (PlatformInfos.isMobile &&
+                        AppSettings.showCameraButton.value)
+                      AnimatedContainer(
+                        duration: FluffyThemes.animationDuration,
+                        curve: FluffyThemes.animationCurve,
+                        width: controller.sendController.text.isNotEmpty
+                            ? 0
+                            : height,
+                        height: height,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(),
+                        clipBehavior: Clip.hardEdge,
+                        child: PopupMenuButton(
+                          useRootNavigator: false,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          onSelected: controller.onAddPopupMenuButtonSelected,
+                          iconColor: theme.colorScheme.onSurface,
+                          itemBuilder: (context) => [
+                            PopupMenuItem<String>(
+                              value: 'camera-video',
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      theme.colorScheme.onPrimaryContainer,
+                                  foregroundColor:
+                                      theme.colorScheme.primaryContainer,
+                                  child: const Icon(Icons.videocam_outlined),
+                                ),
+                                title: Text(L10n.of(context).recordAVideo),
+                                contentPadding: const EdgeInsets.all(0),
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'camera',
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      theme.colorScheme.onPrimaryContainer,
+                                  foregroundColor:
+                                      theme.colorScheme.primaryContainer,
+                                  child: const Icon(Icons.camera_alt_outlined),
+                                ),
+                                title: Text(L10n.of(context).takeAPhoto),
+                                contentPadding: const EdgeInsets.all(0),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      onPressed: controller.emojiPickerAction,
-                    ),
-                  ),
-                  if (Matrix.of(context).isMultiAccount &&
-                      Matrix.of(context).hasComplexBundles &&
-                      Matrix.of(context).currentBundle!.length > 1)
                     Container(
                       height: height,
                       width: height,
                       alignment: Alignment.center,
-                      child: _ChatAccountPicker(controller),
-                    ),
-                  Expanded(
-                    child: ChatPasteShortcut(
-                      onPaste: () {
-                        controller.sendImageFromClipBoard(null);
-                      },
-                      onPasteImage: (bytes, mimeType) {
-                        controller.sendImageFromClipBoard(
-                          bytes,
-                          mimeType: mimeType,
-                        );
-                      },
-                      child: InputBar(
-                        room: controller.room,
-                        minLines: 1,
-                        maxLines: 8,
-                        autofocus: !PlatformInfos.isMobile,
-                        keyboardType: TextInputType.multiline,
-                        textInputAction:
-                            AppSettings.sendOnEnter.value &&
-                                PlatformInfos.isMobile
-                            ? TextInputAction.send
-                            : null,
-                        onSubmitted: controller.onInputBarSubmitted,
-                        onSubmitImage: controller.sendImageFromClipBoard,
-                        focusNode: controller.inputFocus,
-                        controller: controller.sendController,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.only(
-                            left: 6.0,
-                            right: 6.0,
-                            bottom: 10.0,
-                            top: 0.0,
-                          ),
-                          counter: const SizedBox.shrink(),
-                          hintText: L10n.of(context).writeAMessage,
-                          hintMaxLines: 1,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          filled: false,
+                      child: IconButton(
+                        tooltip: L10n.of(context).emojis,
+                        color: theme.colorScheme.onSurface,
+                        icon: Icon(
+                          controller.sendController.text.isEmpty
+                              ? controller.showEmojiPicker
+                                    ? MdiIcons.sticker
+                                    : MdiIcons.stickerOutline
+                              : controller.showEmojiPicker
+                              ? Icons.add_reaction
+                              : Icons.add_reaction_outlined,
+                          key: ValueKey(controller.showEmojiPicker),
                         ),
-                        onChanged: controller.onInputBarChanged,
+                        onPressed: controller.emojiPickerAction,
                       ),
                     ),
-                  ),
-                  Container(
-                    height: height,
-                    width: height,
-                    alignment: Alignment.center,
-                    child:
-                        PlatformInfos.platformCanRecord &&
-                            controller.sendController.text.isEmpty &&
-                            // While editing, an empty input still has to be
-                            // sendable, e.g. to drop the caption of an image.
-                            controller.editEvent == null
-                        ? IconButton(
-                            tooltip:
-                                recordingViewModel.recordingMode ==
-                                    RecordingMode.video
-                                ? L10n.of(context).videoNote
-                                : L10n.of(context).voiceMessage,
-                            onPressed: () {
-                              // On tap: show tip and toggle mode if video notes enabled
-                              final videoNotesEnabled =
-                                  AppSettings.enableVideoNotes.value &&
-                                  PlatformInfos.isMobile;
-                              if (videoNotesEnabled) {
-                                final newMode =
-                                    recordingViewModel.recordingMode ==
-                                        RecordingMode.audio
-                                    ? RecordingMode.video
-                                    : RecordingMode.audio;
-                                recordingViewModel.setRecordingMode(newMode);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    margin: const EdgeInsets.only(
-                                      bottom: height + 16,
-                                      left: 16,
-                                      right: 16,
-                                      top: 16,
-                                    ),
-                                    showCloseIcon: true,
-                                    content: Text(
-                                      newMode == RecordingMode.video
-                                          ? L10n.of(
-                                              context,
-                                            ).longPressToRecordVideoNote
-                                          : L10n.of(
-                                              context,
-                                            ).longPressToRecordVoiceMessage,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    margin: const EdgeInsets.only(
-                                      bottom: height + 16,
-                                      left: 16,
-                                      right: 16,
-                                      top: 16,
-                                    ),
-                                    showCloseIcon: true,
-                                    content: Text(
-                                      L10n.of(
-                                        context,
-                                      ).longPressToRecordVoiceMessage,
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            onLongPress: () {
-                              if (recordingViewModel.recordingMode ==
-                                  RecordingMode.video) {
-                                // Open full-screen video note dialog
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    fullscreenDialog: true,
-                                    builder: (_) => VideoNoteRecordingDialog(
-                                      room: controller.room,
-                                      onVideoSend: controller.onVideoNoteSend,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                recordingViewModel.startRecording(
-                                  controller.room,
-                                );
-                              }
-                            },
-                            style: IconButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
+                    if (Matrix.of(context).isMultiAccount &&
+                        Matrix.of(context).hasComplexBundles &&
+                        Matrix.of(context).currentBundle!.length > 1)
+                      Container(
+                        height: height,
+                        width: height,
+                        alignment: Alignment.center,
+                        child: _ChatAccountPicker(controller),
+                      ),
+                    Expanded(
+                      child: ChatPasteShortcut(
+                        onPaste: () {
+                          controller.sendImageFromClipBoard(null);
+                        },
+                        onPasteImage: (bytes, mimeType) {
+                          controller.sendImageFromClipBoard(
+                            bytes,
+                            mimeType: mimeType,
+                          );
+                        },
+                        child: InputBar(
+                          room: controller.room,
+                          minLines: 1,
+                          maxLines: 8,
+                          autofocus: !PlatformInfos.isMobile,
+                          keyboardType: TextInputType.multiline,
+                          textInputAction:
+                              AppSettings.sendOnEnter.value &&
+                                  PlatformInfos.isMobile
+                              ? TextInputAction.send
+                              : null,
+                          onSubmitted: controller.onInputBarSubmitted,
+                          onSubmitImage: controller.sendImageFromClipBoard,
+                          focusNode: controller.inputFocus,
+                          controller: controller.sendController,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.only(
+                              left: 6.0,
+                              right: 6.0,
+                              bottom: 10.0,
+                              top: 0.0,
                             ),
-                            icon: Icon(
-                              recordingViewModel.recordingMode ==
-                                      RecordingMode.video
-                                  ? Icons.camera_alt
-                                  : Icons.mic,
-                            ),
-                          )
-                        : IconButton(
-                            tooltip: L10n.of(context).send,
-                            onPressed: controller.send,
-                            style: IconButton.styleFrom(
-                              foregroundColor: theme.colorScheme.primary,
-                            ),
-                            icon: const Icon(Icons.send),
+                            counter: const SizedBox.shrink(),
+                            hintText: L10n.of(context).writeAMessage,
+                            hintMaxLines: 1,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            filled: false,
                           ),
-                  ),
-                  // const SizedBox(width: 4),
-                ],
+                          onChanged: controller.onInputBarChanged,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: height,
+                      width: height,
+                      alignment: Alignment.center,
+                      child:
+                          PlatformInfos.platformCanRecord &&
+                              controller.sendController.text.isEmpty &&
+                              // While editing, an empty input still has to be
+                              // sendable, e.g. to drop the caption of an image.
+                              controller.editEvent == null
+                          ? IconButton(
+                              tooltip:
+                                  recordingViewModel.recordingMode ==
+                                      RecordingMode.video
+                                  ? L10n.of(context).videoNote
+                                  : L10n.of(context).voiceMessage,
+                              onPressed: () {
+                                // On tap: show tip and toggle mode if video notes enabled
+                                final videoNotesEnabled =
+                                    AppSettings.enableVideoNotes.value &&
+                                    PlatformInfos.isMobile;
+                                if (videoNotesEnabled) {
+                                  final newMode =
+                                      recordingViewModel.recordingMode ==
+                                          RecordingMode.audio
+                                      ? RecordingMode.video
+                                      : RecordingMode.audio;
+                                  recordingViewModel.setRecordingMode(newMode);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      margin: const EdgeInsets.only(
+                                        bottom: height + 16,
+                                        left: 16,
+                                        right: 16,
+                                        top: 16,
+                                      ),
+                                      showCloseIcon: true,
+                                      content: Text(
+                                        newMode == RecordingMode.video
+                                            ? L10n.of(
+                                                context,
+                                              ).longPressToRecordVideoNote
+                                            : L10n.of(
+                                                context,
+                                              ).longPressToRecordVoiceMessage,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      margin: const EdgeInsets.only(
+                                        bottom: height + 16,
+                                        left: 16,
+                                        right: 16,
+                                        top: 16,
+                                      ),
+                                      showCloseIcon: true,
+                                      content: Text(
+                                        L10n.of(
+                                          context,
+                                        ).longPressToRecordVoiceMessage,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              onLongPress: () {
+                                if (recordingViewModel.recordingMode ==
+                                    RecordingMode.video) {
+                                  // Open full-screen video note dialog
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      fullscreenDialog: true,
+                                      builder: (_) => VideoNoteRecordingDialog(
+                                        room: controller.room,
+                                        onVideoSend: controller.onVideoNoteSend,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  recordingViewModel.startRecording(
+                                    controller.room,
+                                  );
+                                }
+                              },
+                              style: IconButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                              ),
+                              icon: Icon(
+                                recordingViewModel.recordingMode ==
+                                        RecordingMode.video
+                                    ? Icons.camera_alt
+                                    : Icons.mic,
+                              ),
+                            )
+                          : IconButton(
+                              tooltip: L10n.of(context).send,
+                              onPressed: controller.send,
+                              style: IconButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                              ),
+                              icon: const Icon(Icons.send),
+                            ),
+                    ),
+                    // const SizedBox(width: 4),
+                  ],
+          ),
         );
       },
     );

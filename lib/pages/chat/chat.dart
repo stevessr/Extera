@@ -2482,6 +2482,14 @@ class ChatController extends State<ChatPageWithRoom>
 
   String? selectedEventId;
 
+  bool reactionsMenuOpen = false;
+
+  void setReactionsMenuOpen(bool value) {
+    setState(() {
+      reactionsMenuOpen = value;
+    });
+  }
+
   void onSelectMessage(Event event, Offset? tapPosition) {
     if (selectedEvents.isEmpty) {
       _openMenu(event, tapPosition);
@@ -2715,19 +2723,19 @@ class ChatController extends State<ChatPageWithRoom>
   void onLiveKitCallButtonTap() async {
     final callType = await showModalActionPopup<String>(
       context: context,
-      title: L10n.of(context).elementCallExperimental,
+      title: L10n.of(context).placeCall,
       message: L10n.of(context).chooseCallType,
       cancelLabel: L10n.of(context).cancel,
       actions: [
         AdaptiveModalAction(
-          label: L10n.of(context).p2pCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: 'p2p',
-        ),
-        AdaptiveModalAction(
           label: L10n.of(context).elementCall,
           icon: const Icon(Icons.video_call_outlined),
           value: 'element_call',
+        ),
+        AdaptiveModalAction(
+          label: L10n.of(context).p2pCall,
+          icon: const Icon(Icons.phone_outlined),
+          value: 'p2p',
         ),
       ],
     );
@@ -2904,7 +2912,6 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.biggest;
         return Stack(
           children: [
             GestureDetector(
@@ -2934,14 +2941,7 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
                 duration: FluffyThemes.animationDuration,
                 curve: FluffyThemes.animationCurve,
                 builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.scale(
-                      scale: value,
-                      alignment: _expansionAlignment(widget.tapPosition, size),
-                      child: child,
-                    ),
-                  );
+                  return Opacity(opacity: value, child: child);
                 },
                 child: widget.child,
               ),
@@ -2950,13 +2950,6 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay> {
         );
       },
     );
-  }
-
-  Alignment _expansionAlignment(Offset tap, Size size) {
-    if (size.isEmpty) return Alignment.topLeft;
-    final fx = (tap.dx / size.width).clamp(0.0, 1.0);
-    final fy = (tap.dy / size.height).clamp(0.0, 1.0);
-    return Alignment(fx * 2 - 1, fy * 2 - 1);
   }
 }
 
