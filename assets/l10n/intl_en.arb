@@ -4150,5 +4150,6 @@
         "placeholders": {
             "room": {"type": "String"}
         }
-    }
+    },
+    "reactionUiTip": "Tap to reply. Hold down to remove a reaction."
 }

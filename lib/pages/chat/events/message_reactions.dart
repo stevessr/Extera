@@ -506,71 +506,89 @@ class _ReactionsMenuBody extends StatelessWidget {
       );
     }
 
-    return Material(
-      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-      color: theme.colorScheme.surfaceContainerHigh,
-      clipBehavior: Clip.hardEdge,
-      elevation: 8,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                children: List.generate(reactionEvents.length, (i) {
-                  final event = reactionEvents[i];
-                  final user = event.senderFromMemoryOrFallback;
-                  final canRedact = event.canRedact && chatController != null;
-                  final redact = canRedact
-                      ? () {
-                          onClose();
-                          chatController!.redactEventsAction(event: event);
-                        }
-                      : null;
+    return Column(
+      mainAxisSize: .min,
+      spacing: 4,
+      children: [
+        Material(
+          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+          color: theme.colorScheme.surfaceContainerHigh,
+          clipBehavior: Clip.hardEdge,
+          elevation: 8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: List.generate(reactionEvents.length, (i) {
+                      final event = reactionEvents[i];
+                      final user = event.senderFromMemoryOrFallback;
+                      final canRedact =
+                          event.canRedact && chatController != null;
+                      final redact = canRedact
+                          ? () {
+                              onClose();
+                              chatController!.redactEventsAction(event: event);
+                            }
+                          : null;
 
-                  return Column(
-                    children: [
-                      ListTile(
-                        leading: Avatar(
-                          mxContent: user.avatarUrl,
-                          size: 32,
-                          name: user.displayName ?? user.id,
-                          key: ValueKey(user.id),
-                        ),
-                        title: Text(user.displayName ?? user.id),
-                        subtitle: Text(
-                          event.originServerTs.localizedMessageTime(context),
-                        ),
-                        visualDensity: VisualDensity.compact,
-                        dense: !FluffyThemes.isColumnMode(context),
-                        onTap: chatController == null
-                            ? null
-                            : () {
-                                chatController!.replyAction(event);
-                                onClose();
-                              },
-                        onLongPress: redact,
-                      ),
-                      if (timeline != null)
-                        SizedBox(
-                          width: double.infinity,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: MessageReactions(
-                              event,
-                              timeline!,
-                              chatController: chatController,
+                      return Column(
+                        children: [
+                          ListTile(
+                            leading: Avatar(
+                              mxContent: user.avatarUrl,
+                              size: 32,
+                              name: user.displayName ?? user.id,
+                              key: ValueKey(user.id),
                             ),
+                            title: Text(user.displayName ?? user.id),
+                            subtitle: Text(
+                              event.originServerTs.localizedMessageTime(
+                                context,
+                              ),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            dense: !FluffyThemes.isColumnMode(context),
+                            onTap: chatController == null
+                                ? null
+                                : () {
+                                    chatController!.replyAction(event);
+                                    onClose();
+                                  },
+                            onLongPress: redact,
                           ),
-                        ),
-                    ],
-                  );
-                }),
+                          if (timeline != null)
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: MessageReactions(
+                                  event,
+                                  timeline!,
+                                  chatController: chatController,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Align(
+          alignment: .topLeft,
+          child: Text(
+            L10n.of(context).reactionUiTip,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      ],
     );
   }
 }
