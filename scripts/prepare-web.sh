@@ -1,20 +1,34 @@
 #!/bin/sh -e
 
-# Compile Vodozemac for web
-version=$(yq ".dependencies.flutter_vodozemac" < pubspec.yaml)
-version=$(printf "%s" "$version" | tr -d '"^')
-rm -rf .vodozemac
-git clone --depth 1 https://github.com/famedly/dart-vodozemac.git -b ${version} .vodozemac
-cd .vodozemac
-
-# Cached in CI via ~/.cargo/bin. Skip explicitly rather than letting cargo
-# decide: on a restored cache it refuses to overwrite a binary it does not
-# track, which would abort this script.
-if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1; then
-  cargo install flutter_rust_bridge_codegen
+# Compile the Wasm-enabled vodozemac bridge from the same stable releases
+# resolved by Pub. Keeping both versions sourced from pubspec.lock prevents
+# generated Dart/Rust bindings from drifting away from the runtime packages.
+vodozemac_version=$(yq -r '.packages.flutter_vodozemac.version' pubspec.lock)
+frb_codegen_version=$(yq -r '.packages.flutter_rust_bridge.version' pubspec.lock)
+if [ -z "$vodozemac_version" ] || [ "$vodozemac_version" = "null" ]; then
+  echo "Unable to resolve flutter_vodozemac version from pubspec.lock" >&2
+  exit 1
+fi
+if [ -z "$frb_codegen_version" ] || [ "$frb_codegen_version" = "null" ]; then
+  echo "Unable to resolve flutter_rust_bridge version from pubspec.lock" >&2
+  exit 1
 fi
 
-flutter_rust_bridge_codegen build-web --dart-root dart --rust-root $(readlink -f rust) --release
+rm -rf .vodozemac
+git clone --depth 1 https://github.com/famedly/dart-vodozemac.git \
+  --branch "$vodozemac_version" .vodozemac
+cd .vodozemac
+
+# Cached in CI via ~/.cargo/bin. Reinstall only when the cached binary does
+# not match the FRB runtime selected by Pub.
+if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1 \
+  || [ "$(flutter_rust_bridge_codegen --version)" != "flutter_rust_bridge_codegen $frb_codegen_version" ]; then
+  cargo install flutter_rust_bridge_codegen \
+    --version "=$frb_codegen_version" --locked --force
+fi
+
+flutter_rust_bridge_codegen build-web --dart-root dart --rust-root \
+  "$(readlink -f rust)" --release
 cd ..
 mkdir -p ./assets/vodozemac
 rm -f ./assets/vodozemac/vodozemac_bindings_dart*
