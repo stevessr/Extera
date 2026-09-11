@@ -4415,5 +4415,20 @@
   "@roomProfileCustomHint": {
     "type": "String",
     "placeholder": {}
-  }
+  },
+  "profileFieldManagedByServer": "此个人资料字段由您的主服务器管理。",
+  "@profileFieldManagedByServer": {},
+    "appearance": "外观",
+    "floatingInputBar": "浮动输入栏",
+    "appBarAppearance": "应用栏",
+    "appBarAppName": "应用名称",
+    "appBarAccountName": "账户名称",
+    "sendMedia": "发送媒体",
+    "incomingCallFromRoom": "来自 {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    },
+  "reactionUiTip": "轻触以回复。长按以移除回应。"
 }

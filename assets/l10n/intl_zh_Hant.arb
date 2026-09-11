@@ -3269,5 +3269,20 @@
   "messageLayout": "訊息版面配置",
   "bubblesLayout": "新氣泡",
   "legacyBubblesLayout": "傳統氣泡",
-  "modernLayout": "現代"
+  "modernLayout": "現代",
+  "profileFieldManagedByServer": "此個人資料欄位由您的主伺服器管理。",
+  "@profileFieldManagedByServer": {},
+    "appearance": "外觀",
+    "floatingInputBar": "浮動輸入列",
+    "appBarAppearance": "應用程式列",
+    "appBarAppName": "應用程式名稱",
+    "appBarAccountName": "帳戶名稱",
+    "sendMedia": "傳送媒體",
+    "incomingCallFromRoom": "來自 {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    },
+    "reactionUiTip": "輕觸以回覆。長按以移除回應。"
 }

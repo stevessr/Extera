@@ -6,3 +6,4 @@ preferred-supported-locales: ["en"]
 use-deferred-loading: true
 nullable-getter: false
 output-dir: lib/generated/l10n
+untranslated-messages-file: untranslated.json
