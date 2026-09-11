@@ -36,6 +36,12 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
 
   double _progress = 0;
 
+  bool get _hasInvalidImportNames {
+    final names = _importMap.values.toList(growable: false);
+    return names.any((name) => !emoteShortcodePattern.hasMatch(name)) ||
+        names.toSet().length != names.length;
+  }
+
   @override
   void initState() {
     _importFileMap();
@@ -59,7 +65,9 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
                       (e) => _EmojiImportPreview(
                         key: ValueKey(e.key.name),
                         entry: e,
-                        onNameChanged: (name) => _importMap[e.key] = name,
+                        onNameChanged: (name) => setState(() {
+                          _importMap[e.key] = name;
+                        }),
                         onRemove: () =>
                             setState(() => _importMap.remove(e.key)),
                       ),
@@ -73,11 +81,9 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
           child: Text(L10n.of(context).cancel),
         ),
         TextButton(
-          onPressed: _loading
+          onPressed: _loading || _importMap.isEmpty || _hasInvalidImportNames
               ? null
-              : _importMap.isNotEmpty
-              ? _addEmotePack
-              : null,
+              : _addEmotePack,
           child: Text(L10n.of(context).importNow),
         ),
       ],
@@ -85,10 +91,16 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
   }
 
   void _importFileMap() {
+    final usedShortcodes = <String>{};
     _importMap = Map.fromEntries(
       widget.archive.files
           .where((e) => e.isFile)
-          .map((e) => MapEntry(e, e.name.emoteNameFromPath))
+          .map(
+            (e) => MapEntry(
+              e,
+              uniqueEmoteShortcode(e.name.emoteNameFromPath, usedShortcodes),
+            ),
+          )
           .sorted((a, b) => a.value.compareTo(b.value)),
     );
   }
@@ -157,19 +169,10 @@ class _ImportEmoteArchiveDialogState extends State<ImportEmoteArchiveDialog> {
           contentType: mxcFile.mimeType,
         );
 
+        // Keep the actual generated image metadata. MSC2545 does not require
+        // 256x256 sticker metadata (and recommends stickers are at least
+        // 512x512), so rewriting dimensions here would make `info` inaccurate.
         final info = <String, dynamic>{...mxcFile.info};
-
-        // normalize width / height to 256, required for stickers
-        if (info['w'] is int && info['h'] is int) {
-          final ratio = info['w'] / info['h'];
-          if (info['w'] > info['h']) {
-            info['w'] = 256;
-            info['h'] = (256.0 / ratio).round();
-          } else {
-            info['h'] = 256;
-            info['w'] = (ratio * 256.0).round();
-          }
-        }
         widget.controller.pack!.images[imageCode] =
             ImagePackImageContent.fromJson(<String, dynamic>{
               'url': uri.toString(),
@@ -272,12 +275,12 @@ class _EmojiImportPreviewState extends State<_EmojiImportPreview> {
                   child: TextField(
                     controller: controller,
                     inputFormatters: [
-                      // Filters out the characters that are not allowed
-                      // instead of clearing the whole field, which an anchored
-                      // pattern would do.
+                      // Stable MSC2545 accepts only ASCII letters, digits,
+                      // `_` and `-`, and limits shortcodes to 100 bytes.
                       FilteringTextInputFormatter.allow(
                         emoteShortcodeAllowedCharacters,
                       ),
+                      LengthLimitingTextInputFormatter(maxEmoteShortcodeBytes),
                     ],
                     autocorrect: false,
                     minLines: 1,
@@ -346,19 +349,12 @@ class _ImageFileError extends StatelessWidget {
 }
 
 extension on String {
-  /// normalizes a file path into its name only replacing any character that is
-  /// not allowed in a shortcode with an underscore and removing the extension
+  /// Normalizes a file path into an MSC2545-compatible image-pack shortcode.
   ///
-  /// Used to compute emote name proposal based on file name
+  /// The file extension is removed first, then unsupported characters are
+  /// replaced and the result is capped at the stable 100-byte limit.
   String get emoteNameFromPath {
-    // ... removing leading path
-    return split(RegExp(r'[/\\]')).last
-        // ... removing file extension
-        .split('.')
-        .first
-        // ... lowering
-        .toLowerCase()
-        // ... replacing unexpected characters
-        .replaceAll(emoteShortcodeForbiddenCharacter, '_');
+    final name = split(RegExp(r'[/\\]')).last.split('.').first.toLowerCase();
+    return sanitizeEmoteShortcode(name);
   }
 }

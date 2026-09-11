@@ -1,6 +1,6 @@
 # CI
 
-Two workflows, both written for Forgejo Actions.
+Core CI uses two Forgejo Actions workflows.
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
@@ -16,6 +16,55 @@ Workflows stay thin. Everything they do lives in one of two places:
   `build-web-app`, plus their `setup-*` dependencies). Each third-party action
   version is pinned in exactly one of these files.
 - `scripts/ci/*.sh` — the actual logic, runnable outside CI.
+
+## One-shot / temporary Actions
+
+All one-shot CI work uses **one workflow identity only**:
+
+- workflow file: `.github/workflows/temp-action.yaml`
+- workflow name: `Temporary Action`
+- task body: `scripts/ci/temp-action.sh`
+
+Do not add files such as `tmp-*.yaml`, `temporary-*.yaml`, `refresh-*.yaml`,
+`*-patch.yaml`, or any other workflow for a single migration, formatter run,
+lockfile refresh, patch, or verification. Reusing the same workflow path keeps
+the Actions sidebar stable instead of permanently accumulating obsolete
+workflow entries.
+
+Each run is distinguished by its process metadata rather than by creating a new
+workflow. `workflow_dispatch` records:
+
+- `action_type` — `patch`, `format`, `dependency`, `migration`, `verification`,
+  `maintenance`, or `other`;
+- `purpose` — a short human-readable explanation of this particular run;
+- `target_branch` — the branch that contains the temporary task body;
+- whether the result should be committed and pushed.
+
+The run title is always rendered as
+`TEMP · <type> · <purpose> · <target branch>`, so task type and purpose remain
+visible in the Actions run history while the workflow itself keeps the same
+name.
+
+### Temporary task procedure
+
+1. Create or use the target work branch.
+2. Replace only the task block between `TEMP ACTION BEGIN` and
+   `TEMP ACTION END` in `scripts/ci/temp-action.sh`. Do not rename the script.
+3. Commit that temporary script change to the target branch.
+4. Dispatch **Temporary Action** and select the task type, purpose, target
+   branch, and whether generated changes should be committed.
+5. The workflow runs the fixed script path, validates the resulting diff, and
+   refuses any modification under `.github/workflows`.
+6. When `commit_changes` is enabled, the workflow restores
+   `scripts/ci/temp-action.sh` from the default branch before committing the
+   generated result. Task-specific CI code therefore does not survive in the
+   branch's final tree.
+
+Direct writes to the default branch are blocked unless
+`allow_default_branch_write` is explicitly enabled. Concurrent temporary runs
+are serialized per target branch. The baseline script is intentionally a no-op,
+so accidentally dispatching the shared workflow without configuring a task does
+not change the repository.
 
 The Flutter version is pinned in `.tool_versions.yaml`, which
 `subosito/flutter-action` reads directly. The JDK and yq versions live in

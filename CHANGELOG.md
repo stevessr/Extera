@@ -1,3 +1,15 @@
+## Extera 26.5.11
+- Fix wrong area being highlighted when showing reaction list.
+- Fix reaction list overlay not disappearing when closing chat.
+
+## Extera 26.5.1
+- Improved incoming call popup for LiveKit calls.
+- Added option to use account name as app title.
+- Use context menu for message reactions popup.
+- Replaced send image/video attachment buttons with send media.
+- Do not show spaces tab when navigation rail is visible.
+- Added option to use non-floating input bar.
+
 ## Extera 26.5.0
 - Remove legacy bubbles layout.
 - Remove mediakit video player.

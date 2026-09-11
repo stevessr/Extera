@@ -45,7 +45,11 @@ class Avatar extends StatelessWidget {
   String _calcFallbackLetters() {
     final name = this.name?.trim();
     if (name == null || name.isEmpty) return '@';
-    return name.characters.first;
+    final words = name.split(RegExp(r'\s+'));
+    if (words.length > 1) {
+      return words.take(2).map((word) => word.characters.first).join();
+    }
+    return name.characters.take(2).toString();
   }
 
   @override
@@ -53,6 +57,26 @@ class Avatar extends StatelessWidget {
     final theme = Theme.of(context);
 
     final fallbackLetters = _calcFallbackLetters();
+
+    final fallback = Container(
+      decoration: BoxDecoration(
+        color: backgroundColor ?? fallbackLetters.colorScheme.primaryContainer,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        fallbackLetters,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: AppSettings.monospaceFont.value,
+          fontFamilyFallback: AppSettings.fontFallback(
+            AppSettings.monospaceFallbackFonts,
+          ),
+          color: textColor ?? fallbackLetters.colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.bold,
+          fontSize: (size / 2.5).roundToDouble(),
+        ),
+      ),
+    );
 
     final borderRadius = this.borderRadius ?? BorderRadius.circular(size / 2);
     final presenceUserId = this.presenceUserId;
@@ -80,40 +104,20 @@ class Avatar extends StatelessWidget {
                   side: border ?? .none,
                 ),
             clipBehavior: Clip.antiAlias,
-            child: MxcImage(
-              client: client,
-              borderRadius: borderRadius,
-              key: ValueKey(mxContent.toString()),
-              cacheKey: '${mxContent}_$size',
-              cacheCategory: resolvedCacheCategory,
-              uri: mxContent,
-              fit: BoxFit.cover,
-              width: size,
-              height: size,
-              placeholder: (_) => Container(
-                decoration: BoxDecoration(
-                  color:
-                      backgroundColor ??
-                      fallbackLetters.colorScheme.primaryContainer,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  fallbackLetters,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: AppSettings.monospaceFont.value,
-                    fontFamilyFallback: AppSettings.fontFallback(
-                      AppSettings.monospaceFallbackFonts,
-                    ),
-                    color:
-                        textColor ??
-                        fallbackLetters.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                    fontSize: (size / 2.5).roundToDouble(),
+            child: mxContent == null || mxContent.toString().trim().isEmpty
+                ? fallback
+                : MxcImage(
+                    client: client,
+                    borderRadius: borderRadius,
+                    key: ValueKey(mxContent.toString()),
+                    cacheKey: '${mxContent}_$size',
+                    cacheCategory: resolvedCacheCategory,
+                    uri: mxContent,
+                    fit: BoxFit.cover,
+                    width: size,
+                    height: size,
+                    placeholder: (_) => fallback,
                   ),
-                ),
-              ),
-            ),
           ),
         ),
         if (presenceUserId != null)

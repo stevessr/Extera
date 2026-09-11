@@ -4095,8 +4095,6 @@
     "powerLevelReadOnly": "Только чтение",
     "elementCall": "Element Call",
     "@elementCall": {},
-    "elementCallExperimental": "Element Call (Экспериментально)",
-    "@elementCallExperimental": {},
     "p2pCall": "P2P Звонок",
     "@p2pCall": {},
     "chooseCallType": "Выберите тип звонка",
@@ -4228,5 +4226,14 @@
     "callVideocam": "Видео",
     "callMic": "Микрофон",
     "callScreenShare": "Экран",
-    "lkCallSettings": "Настройки"
+    "lkCallSettings": "Настройки",
+    "incomingCallFromRoom": "в {room}",
+    "@incomingCallFromRoom": {
+        "placeholders": {
+            "room": {"type": "String"}
+        }
+    },
+    "appearance": "Внешний вид",
+    "floatingInputBar": "Плавающая панель ввода",
+    "reactionUiTip": "Нажмите для ответа. Удерживайте, чтобы убрать реакцию."
 }

@@ -2,7 +2,7 @@ name: extera_next
 description: Chat with your friends.
 publish_to: none
 # Version schema: <YEAR>.<MAJOR UPDATE>.<MINOR><PATCH>
-version: 26.5.1
+version: 26.5.11
 
 environment:
   sdk: ">=3.11.1 <4.0.0"
@@ -72,11 +72,11 @@ dependencies:
   local_auth: ^3.0.2
   lottie: ^3.5.1
   matrix:
-    # Pin the stable-MSC snapshot from the Extera SDK branch so `pub get`
-    # cannot silently keep using an older branch commit from pubspec.lock.
+    # Pin the merged stable-MSC snapshot so `pub get` cannot silently keep
+    # using an older SDK commit from pubspec.lock.
     git:
       url: https://github.com/stevessr/matrix-dart-sdk.git
-      ref: d672ed667dfaecc4553264ce6b83b6d2614bbcba
+      ref: 507adcbd4ee71ed8c50e1ab4afe470d38b9ceb60
   mime: ^2.0.0
   native_imaging: ^0.5.0
   opus_caf_converter_dart: ^1.0.1

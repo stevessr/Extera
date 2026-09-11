@@ -208,7 +208,7 @@ class _ChatViewState extends State<ChatView> {
             IconButton(
               onPressed: () => controller.onLiveKitCallButtonTap(),
               icon: const Icon(Icons.video_call_outlined),
-              tooltip: L10n.of(context).elementCallExperimental,
+              tooltip: L10n.of(context).placeCall,
             )
         else if (AppSettings.experimentalVoip.value &&
             Matrix.of(context).voipPlugin != null &&
@@ -422,6 +422,7 @@ class _ChatViewState extends State<ChatView> {
     final bottomSheetPadding = FluffyThemes.isColumnMode(context) ? 16.0 : 8.0;
     final scrollUpBannerEventId = controller.scrollUpBannerEventId;
 
+    final floatingInputBar = AppSettings.floatingInputBar.value;
     if (screenWidth == null || screenHeight == null) {
       final view = View.of(context);
       screenWidth ??= view.physicalSize.width / view.devicePixelRatio;
@@ -593,7 +594,8 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
 
-                  if (controller.room.canSendDefaultMessages &&
+                  if (floatingInputBar &&
+                      controller.room.canSendDefaultMessages &&
                       controller.room.membership == Membership.join)
                     Positioned(
                       left: 0,
@@ -621,13 +623,14 @@ class _ChatViewState extends State<ChatView> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 8,
+                    bottom: floatingInputBar ? 8 : 0,
                     child: _MeasureSize(
                       onChange: (size) {
                         final oldHeight = controller.inputBarHeight.value;
                         final newHeight = size.height;
                         if (oldHeight == newHeight) return;
-                        controller.inputBarHeight.value = newHeight + 8;
+                        controller.inputBarHeight.value =
+                            newHeight + (floatingInputBar ? 8 : 0);
 
                         // Keep the list scrolled to the bottom if we were already
                         // there, otherwise the newly‑added input bar would cover a
@@ -644,21 +647,31 @@ class _ChatViewState extends State<ChatView> {
                       child: SafeArea(
                         top: false,
                         child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: bottomSheetPadding,
-                            vertical: bottomSheetPadding / 2,
-                          ),
+                          padding: floatingInputBar
+                              ? EdgeInsets.symmetric(
+                                  horizontal: bottomSheetPadding,
+                                  vertical: bottomSheetPadding / 2,
+                                )
+                              : EdgeInsets.zero,
                           child: Align(
                             alignment: Alignment.center,
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: FluffyThemes.columnWidth * 2.5,
-                              ),
+                              constraints: AppSettings.floatingInputBar.value
+                                  ? const BoxConstraints(
+                                      maxWidth: FluffyThemes.columnWidth * 2.5,
+                                    )
+                                  : const BoxConstraints(),
                               child:
                                   controller.room.isExtinct &&
                                       !AppSettings.alwaysShowInputBar.value
-                                  ? (AppSettings.enableChatFrostedGlass.value
+                                  ? (floatingInputBar &&
+                                            AppSettings
+                                                .enableChatFrostedGlass
+                                                .value
                                         ? _FloatingInputShell(
+                                            borderRadius: BorderRadius.circular(
+                                              28,
+                                            ),
                                             child: ElevatedButton.icon(
                                               icon: const Icon(
                                                 Icons.chevron_right,
@@ -738,10 +751,33 @@ class _ChatViewState extends State<ChatView> {
                                                 ChatEmojiPicker(controller),
                                               ],
                                             );
+                                      if (!floatingInputBar) {
+                                        return AppSettings
+                                                .enableChatFrostedGlass
+                                                .value
+                                            ? _FloatingInputShell(
+                                                borderRadius: BorderRadius.zero,
+                                                child: inputChild,
+                                              )
+                                            : Material(
+                                                clipBehavior: Clip.hardEdge,
+                                                color: theme
+                                                    .colorScheme
+                                                    .surfaceContainerHigh,
+                                                shape: Border(
+                                                  top: BorderSide(
+                                                    color: theme.dividerColor,
+                                                  ),
+                                                ),
+                                                child: inputChild,
+                                              );
+                                      }
                                       return AppSettings
                                               .enableChatFrostedGlass
                                               .value
                                           ? _FloatingInputShell(
+                                              borderRadius:
+                                                  BorderRadius.circular(28),
                                               child: inputChild,
                                             )
                                           : Material(
@@ -844,22 +880,23 @@ class _ChatViewState extends State<ChatView> {
 
 class _FloatingInputShell extends StatelessWidget {
   final Widget child;
-  const _FloatingInputShell({required this.child});
+  final BorderRadius borderRadius;
+  const _FloatingInputShell({required this.child, required this.borderRadius});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return PhysicalModel(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: borderRadius,
       clipBehavior: Clip.hardEdge,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: borderRadius,
               color: theme.colorScheme.surfaceContainerHigh.withAlpha(
                 theme.brightness == Brightness.dark ? 160 : 190,
               ),

@@ -20,6 +20,7 @@ class ForegroundTaskManager {
   }
 
   static Future<void> _initTask(BuildContext context) async {
+    if (!PlatformInfos.isAndroid) return;
     await ForegroundTaskManager._stopFgTaskIfRunning();
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
@@ -36,6 +37,7 @@ class ForegroundTaskManager {
 
   static Future<void> startFileUpload(BuildContext context) async {
     if (_currentTask != null) return;
+    if (!PlatformInfos.isAndroid) return;
     final l10n = L10n.of(context);
 
     await _initTask(context);
@@ -55,6 +57,7 @@ class ForegroundTaskManager {
     required void Function(Object) taskDataCallback,
   }) async {
     if (_currentTask != null) return;
+    if (!PlatformInfos.isAndroid) return;
     await _initTask(context);
     await FlutterForegroundTask.startService(
       notificationTitle: L10n.of(context).ongoingElementCall,
@@ -78,6 +81,7 @@ class ForegroundTaskManager {
   }
 
   static Future<void> stopTask({ForegroundTaskType? taskType}) async {
+    if (!PlatformInfos.isAndroid) return;
     if (taskType != null && taskType != _currentTask) return;
     await ForegroundTaskManager._stopFgTaskIfRunning();
     for (final callback in _taskCallbacks) {
