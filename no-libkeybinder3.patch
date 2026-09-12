@@ -1,0 +1,123 @@
+diff --git a/lib/shortcuts/chat/paste_shortcut.dart b/lib/shortcuts/chat/paste_shortcut.dart
+index 9878aba..a27feab 100644
+--- a/lib/shortcuts/chat/paste_shortcut.dart
++++ b/lib/shortcuts/chat/paste_shortcut.dart
+@@ -1,7 +1,7 @@
+ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ 
+-import 'package:hotkey_manager/hotkey_manager.dart';
++//import 'package:hotkey_manager/hotkey_manager.dart';
+ 
+ class PasteIntent extends Intent {
+   const PasteIntent();
+@@ -22,27 +22,27 @@ class ChatPasteShortcut extends StatefulWidget {
+ }
+ 
+ class ChatPasteShortcutState extends State<ChatPasteShortcut> {
+-  final HotKey pasteKey = HotKey(
++  /*final HotKey pasteKey = HotKey(
+     key: LogicalKeyboardKey.keyV,
+     modifiers: [HotKeyModifier.control],
+     scope: HotKeyScope.inapp,
+-  );
++   );*/
+ 
+   @override
+   void initState() {
+     super.initState();
+-    hotKeyManager.register(
++    /*hotKeyManager.register(
+       pasteKey,
+       keyDownHandler: (hotKey) {
+         widget.onPaste();
+       },
+-    );
++    );*/
+   }
+ 
+   @override
+   void dispose() {
+     super.dispose();
+-    hotKeyManager.unregister(pasteKey);
++    //hotKeyManager.unregister(pasteKey);
+   }
+ 
+   @override
+diff --git a/lib/shortcuts/chat_list/chat_list_shortcuts.dart b/lib/shortcuts/chat_list/chat_list_shortcuts.dart
+index c07c975..8634e5e 100644
+--- a/lib/shortcuts/chat_list/chat_list_shortcuts.dart
++++ b/lib/shortcuts/chat_list/chat_list_shortcuts.dart
+@@ -1,7 +1,7 @@
+ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ 
+-import 'package:hotkey_manager/hotkey_manager.dart';
++//import 'package:hotkey_manager/hotkey_manager.dart';
+ 
+ class NextChatIntent extends Intent {
+   const NextChatIntent();
+@@ -28,40 +28,40 @@ class ChatListShortcuts extends StatefulWidget {
+ }
+ 
+ class ChatListShortcutsState extends State<ChatListShortcuts> {
+-  final HotKey prevChatKey = HotKey(
++  /*final HotKey prevChatKey = HotKey(
+     key: LogicalKeyboardKey.arrowUp,
+     modifiers: [HotKeyModifier.alt],
+     scope: HotKeyScope.inapp,
+-  );
++  );*/
+ 
+-  final HotKey nextChatKey = HotKey(
++  /*final HotKey nextChatKey = HotKey(
+     key: LogicalKeyboardKey.arrowDown,
+     modifiers: [HotKeyModifier.alt],
+     scope: HotKeyScope.inapp,
+-  );
++  );*/
+ 
+   @override
+   void initState() {
+     super.initState();
+-    hotKeyManager.register(
++    /* hotKeyManager.register(
+       prevChatKey,
+       keyDownHandler: (hotKey) {
+         widget.onPreviousChat();
+       },
+-    );
+-    hotKeyManager.register(
++     );*/
++    /*.register(
+       nextChatKey,
+       keyDownHandler: (hotKey) {
+         widget.onNextChat();
+       },
+-    );
++    );*/
+   }
+ 
+   @override
+   void dispose() {
+     super.dispose();
+-    hotKeyManager.unregister(prevChatKey);
+-    hotKeyManager.unregister(nextChatKey);
++    // hotKeyManager.unregister(prevChatKey);
++    // hotKeyManager.unregister(nextChatKey);
+   }
+ 
+   @override
+diff --git a/pubspec.yaml b/pubspec.yaml
+index a47c72c..958db94 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -59,7 +59,7 @@ dependencies:
+   go_router: ^17.2.3
+   handy_window: ^0.4.2
+   highlight_selectable: ^0.2.1
+-  hotkey_manager: ^0.2.3
++  #hotkey_manager: ^0.2.3
+   html: ^0.15.4
+   http: ^1.6.0
+   image: ^4.8.0
