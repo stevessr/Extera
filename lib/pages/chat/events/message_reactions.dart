@@ -22,15 +22,22 @@ import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 
+typedef _OpenReactionDetails = void Function(
+  Event targetEvent,
+  String reactionKey,
+);
+
 class MessageReactions extends StatelessWidget {
   final Event event;
   final Timeline timeline;
   final ChatController? chatController;
+  final _OpenReactionDetails? onOpenDetails;
 
   const MessageReactions(
     this.event,
     this.timeline, {
     this.chatController,
+    this.onOpenDetails,
     super.key,
   });
 
@@ -55,17 +62,18 @@ class MessageReactions extends StatelessWidget {
             key: key,
             count: 0,
             reacted: false,
-            reactionEvents: [],
           );
         }
         reactionMap[key]!.count++;
-        reactionMap[key]!.reactionEvents!.add(e);
         reactionMap[key]!.reacted |= e.senderId == e.room.client.userID;
       }
     }
 
-    final reactionList = reactionMap.values.toList();
-    reactionList.sort((a, b) => b.count - a.count > 0 ? 1 : -1);
+    final reactionList = reactionMap.values.toList()
+      ..sort((a, b) {
+        final countCompare = b.count.compareTo(a.count);
+        return countCompare != 0 ? countCompare : a.key.compareTo(b.key);
+      });
     final ownMessage = event.senderId == event.room.client.userID;
     return Wrap(
       spacing: 4.0,
@@ -106,11 +114,17 @@ class MessageReactions extends StatelessWidget {
               }
             },
             onLongPress: () async {
+              final nestedDetails = onOpenDetails;
+              if (nestedDetails != null) {
+                nestedDetails(event, r.key);
+                return;
+              }
               if (chatController?.reactionsMenuOpen == true) return;
               await _AdaptiveReactorsDialog(
                 client: client,
                 timeline: timeline,
-                reactionEntry: r,
+                targetEvent: event,
+                selectedReactionKey: r.key,
                 chatController: chatController,
                 reactionKey: reactionGlobalKeys[r.key]!,
               ).show(context);
@@ -224,19 +238,30 @@ class _ReactionEntry {
   String key;
   int count;
   bool reacted;
-  List<Event>? reactionEvents;
 
   _ReactionEntry({
     required this.key,
     required this.count,
     required this.reacted,
-    this.reactionEvents,
   });
+}
+
+class _ReactionDetailsLevel {
+  final Event targetEvent;
+  final String reactionKey;
+
+  const _ReactionDetailsLevel({
+    required this.targetEvent,
+    required this.reactionKey,
+  });
+
+  String get identity => '${targetEvent.eventId}\u0000$reactionKey';
 }
 
 class _AdaptiveReactorsDialog {
   final Client? client;
-  final _ReactionEntry? reactionEntry;
+  final Event targetEvent;
+  final String selectedReactionKey;
   final ChatController? chatController;
   final Timeline? timeline;
   final GlobalKey reactionKey;
@@ -245,7 +270,8 @@ class _AdaptiveReactorsDialog {
     this.client,
     this.timeline,
     this.chatController,
-    this.reactionEntry,
+    required this.targetEvent,
+    required this.selectedReactionKey,
     required this.reactionKey,
   });
 
@@ -288,7 +314,8 @@ class _AdaptiveReactorsDialog {
         child: _ReactionsMenuBody(
           client: client,
           timeline: timeline,
-          reactionEntry: reactionEntry,
+          targetEvent: targetEvent,
+          selectedReactionKey: selectedReactionKey,
           chatController: chatController,
           onClose: () => remove(),
         ),
@@ -483,9 +510,10 @@ class _ReactionsMenuLayoutDelegate extends SingleChildLayoutDelegate {
   }
 }
 
-class _ReactionsMenuBody extends StatelessWidget {
+class _ReactionsMenuBody extends StatefulWidget {
   final Client? client;
-  final _ReactionEntry? reactionEntry;
+  final Event targetEvent;
+  final String selectedReactionKey;
   final ChatController? chatController;
   final Timeline? timeline;
   final VoidCallback onClose;
@@ -494,9 +522,100 @@ class _ReactionsMenuBody extends StatelessWidget {
     this.client,
     this.timeline,
     this.chatController,
-    this.reactionEntry,
+    required this.targetEvent,
+    required this.selectedReactionKey,
     required this.onClose,
   });
+
+  @override
+  State<_ReactionsMenuBody> createState() => _ReactionsMenuBodyState();
+}
+
+class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
+  late List<_ReactionDetailsLevel> _levels;
+
+  Timeline? get timeline => widget.timeline;
+  ChatController? get chatController => widget.chatController;
+
+  @override
+  void initState() {
+    super.initState();
+    _levels = [
+      _ReactionDetailsLevel(
+        targetEvent: widget.targetEvent,
+        reactionKey: widget.selectedReactionKey,
+      ),
+    ];
+    final client = widget.client ?? widget.targetEvent.room.client;
+    _subscriptions.add(
+      client.onTimelineEvent.stream.listen(_onTimelineUpdate),
+    );
+    _subscriptions.add(
+      client.onHistoryEvent.stream.listen(_onTimelineUpdate),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_ReactionsMenuBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.targetEvent.eventId != widget.targetEvent.eventId ||
+        oldWidget.selectedReactionKey != widget.selectedReactionKey) {
+      _levels = [
+        _ReactionDetailsLevel(
+          targetEvent: widget.targetEvent,
+          reactionKey: widget.selectedReactionKey,
+        ),
+      ];
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
+    _subscriptions.clear();
+    super.dispose();
+  }
+
+  void _onTimelineUpdate(dynamic update) {
+    if (!mounted || update is! Event) return;
+    if (update.roomId != widget.targetEvent.roomId) return;
+    if (update.type != EventTypes.Reaction &&
+        update.type != EventTypes.Redaction &&
+        update.redacts == null) {
+      return;
+    }
+    setState(() {});
+  }
+
+  void _openNestedDetails(Event targetEvent, String reactionKey) {
+    final next = _ReactionDetailsLevel(
+      targetEvent: targetEvent,
+      reactionKey: reactionKey,
+    );
+    if (_levels.any((level) => level.identity == next.identity)) return;
+    setState(() => _levels.add(next));
+  }
+
+  void _goBack() {
+    if (_levels.length <= 1) return;
+    setState(() => _levels.removeLast());
+  }
+
+  List<Event> _reactionEventsFor(_ReactionDetailsLevel level) {
+    final currentTimeline = timeline;
+    if (currentTimeline == null) return const [];
+    return level.targetEvent
+        .aggregatedEvents(currentTimeline, RelationshipTypes.reaction)
+        .where(
+          (event) =>
+              event.content.tryGetMap('m.relates_to')?['key'] ==
+              level.reactionKey,
+        )
+        .toList(growable: false);
+  }
 
   Future<void> _addReaction(BuildContext context, Event targetEvent) async {
     if (timeline == null ||
@@ -580,14 +699,8 @@ class _ReactionsMenuBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final reactionEvents = reactionEntry!.reactionEvents;
-
-    if (reactionEvents == null) {
-      return Padding(
-        padding: const EdgeInsets.all(8),
-        child: Text(L10n.of(context).oopsSomethingWentWrong),
-      );
-    }
+    final level = _levels.last;
+    final reactionEvents = _reactionEventsFor(level);
 
     return Column(
       mainAxisSize: .min,
@@ -601,103 +714,129 @@ class _ReactionsMenuBody extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: List.generate(reactionEvents.length, (i) {
-                      final event = reactionEvents[i];
-                      final user = event.senderFromMemoryOrFallback;
-                      final canReact =
-                          timeline != null &&
-                          !event.redacted &&
-                          event.room.canSendEvent(EventTypes.Reaction);
-                      final canRedact =
-                          event.canRedact && chatController != null;
-                      final redact = canRedact
-                          ? () {
-                              onClose();
-                              chatController!.redactEventsAction(event: event);
-                            }
-                          : null;
-
-                      return Column(
-                        children: [
-                          ListTile(
-                            leading: Avatar(
-                              mxContent: user.avatarUrl,
-                              size: 32,
-                              name: user.displayName ?? user.id,
-                              key: ValueKey(user.id),
-                            ),
-                            title: Text(user.displayName ?? user.id),
-                            subtitle: Text(
-                              event.originServerTs.localizedMessageTime(
-                                context,
-                              ),
-                            ),
-                            visualDensity: VisualDensity.compact,
-                            dense: !FluffyThemes.isColumnMode(context),
-                            onTap: chatController == null
-                                ? null
-                                : () {
-                                    chatController!.replyAction(event);
-                                    onClose();
-                                  },
-                            onLongPress: redact,
-                            trailing: !canReact && chatController == null
-                                ? null
-                                : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (canReact)
-                                        IconButton(
-                                          tooltip: L10n.of(
-                                            context,
-                                          ).customReaction,
-                                          onPressed: () =>
-                                              _addReaction(context, event),
-                                          icon: const Icon(
-                                            Icons.add_reaction_outlined,
-                                          ),
-                                        ),
-                                      if (chatController != null)
-                                        IconButton(
-                                          onPressed: () {
-                                            chatController!.replyAction(event);
-                                            onClose();
-                                          },
-                                          icon: const Icon(
-                                            Icons.reply_outlined,
-                                          ),
-                                        ),
-                                      if (canRedact)
-                                        IconButton(
-                                          onPressed: redact,
-                                          color: theme.colorScheme.error,
-                                          icon: const Icon(Icons.close),
-                                        ),
-                                    ],
-                                  ),
-                          ),
-                          if (timeline != null)
-                            SizedBox(
-                              width: double.infinity,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: MessageReactions(
-                                  event,
-                                  timeline!,
-                                  chatController: chatController,
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    }),
+              if (_levels.length > 1)
+                ListTile(
+                  dense: true,
+                  leading: IconButton(
+                    onPressed: _goBack,
+                    icon: const Icon(Icons.arrow_back),
                   ),
+                  title: Text(
+                    level.reactionKey,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Text('${_levels.length}'),
                 ),
+              Flexible(
+                child: reactionEvents.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(L10n.of(context).oopsSomethingWentWrong),
+                      )
+                    : SingleChildScrollView(
+                        child: Column(
+                          children: List.generate(reactionEvents.length, (i) {
+                            final event = reactionEvents[i];
+                            final user = event.senderFromMemoryOrFallback;
+                            final canReact =
+                                timeline != null &&
+                                !event.redacted &&
+                                event.room.canSendEvent(EventTypes.Reaction);
+                            final canRedact =
+                                event.canRedact && chatController != null;
+                            final redact = canRedact
+                                ? () {
+                                    widget.onClose();
+                                    chatController!.redactEventsAction(
+                                      event: event,
+                                    );
+                                  }
+                                : null;
+
+                            return Column(
+                              children: [
+                                ListTile(
+                                  leading: Avatar(
+                                    mxContent: user.avatarUrl,
+                                    size: 32,
+                                    name: user.displayName ?? user.id,
+                                    key: ValueKey(user.id),
+                                  ),
+                                  title: Text(user.displayName ?? user.id),
+                                  subtitle: Text(
+                                    event.originServerTs.localizedMessageTime(
+                                      context,
+                                    ),
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                  dense: !FluffyThemes.isColumnMode(context),
+                                  onTap: chatController == null
+                                      ? null
+                                      : () {
+                                          chatController!.replyAction(event);
+                                          widget.onClose();
+                                        },
+                                  onLongPress: redact,
+                                  trailing: !canReact && chatController == null
+                                      ? null
+                                      : Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (canReact)
+                                              IconButton(
+                                                tooltip: L10n.of(
+                                                  context,
+                                                ).customReaction,
+                                                onPressed: () => _addReaction(
+                                                  context,
+                                                  event,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.add_reaction_outlined,
+                                                ),
+                                              ),
+                                            if (chatController != null)
+                                              IconButton(
+                                                onPressed: () {
+                                                  chatController!.replyAction(
+                                                    event,
+                                                  );
+                                                  widget.onClose();
+                                                },
+                                                icon: const Icon(
+                                                  Icons.reply_outlined,
+                                                ),
+                                              ),
+                                            if (canRedact)
+                                              IconButton(
+                                                onPressed: redact,
+                                                color: theme.colorScheme.error,
+                                                icon: const Icon(Icons.close),
+                                              ),
+                                          ],
+                                        ),
+                                ),
+                                if (timeline != null)
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      child: MessageReactions(
+                                        event,
+                                        timeline!,
+                                        chatController: chatController,
+                                        onOpenDetails: _openNestedDetails,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
               ),
             ],
           ),
