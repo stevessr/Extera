@@ -22,10 +22,8 @@ import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 
-typedef _OpenReactionDetails = void Function(
-  Event targetEvent,
-  String reactionKey,
-);
+typedef _OpenReactionDetails =
+    void Function(Event targetEvent, String reactionKey);
 
 class MessageReactions extends StatelessWidget {
   final Event event;
@@ -58,11 +56,7 @@ class MessageReactions extends StatelessWidget {
           ?.tryGet<String>('key');
       if (key != null) {
         if (!reactionMap.containsKey(key)) {
-          reactionMap[key] = _ReactionEntry(
-            key: key,
-            count: 0,
-            reacted: false,
-          );
+          reactionMap[key] = _ReactionEntry(key: key, count: 0, reacted: false);
         }
         reactionMap[key]!.count++;
         reactionMap[key]!.reacted |= e.senderId == e.room.client.userID;
@@ -548,12 +542,8 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
       ),
     ];
     final client = widget.client ?? widget.targetEvent.room.client;
-    _subscriptions.add(
-      client.onTimelineEvent.stream.listen(_onTimelineUpdate),
-    );
-    _subscriptions.add(
-      client.onHistoryEvent.stream.listen(_onTimelineUpdate),
-    );
+    _subscriptions.add(client.onTimelineEvent.stream.listen(_onTimelineUpdate));
+    _subscriptions.add(client.onHistoryEvent.stream.listen(_onTimelineUpdate));
   }
 
   @override
