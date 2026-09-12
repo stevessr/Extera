@@ -98,16 +98,8 @@ jobs:
       - name: Check formatting
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
-      - name: Normalize import ordering on this fix branch
-        run: |
-          dart run tidy_imports --no-comments
-          if ! git diff --quiet -- lib/; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add lib/
-            git commit -m "style: normalize Dart imports"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+      - name: Check import ordering
+        run: dart run tidy_imports --no-comments --exit-if-changed
 
       - name: Check license compliance
         run: dart run license_checker check-licenses -c licenses.yaml --problematic
