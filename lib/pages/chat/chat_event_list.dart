@@ -173,8 +173,8 @@ class ChatEventList extends StatelessWidget {
       controller: controller.scrollController,
       reverse: true,
       center: _centerKey,
-      physics: controller.selectedEventId != null ||
-              controller.reactionsMenuOpen
+      physics:
+          controller.selectedEventId != null || controller.reactionsMenuOpen
           ? const NeverScrollableScrollPhysics()
           : null,
       keyboardDismissBehavior: PlatformInfos.isIOS

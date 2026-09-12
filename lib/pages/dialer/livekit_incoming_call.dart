@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:action_slider/action_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+import 'package:action_slider/action_slider.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -13,8 +13,8 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/pages/dialer/livekit_call_screen.dart';
-import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/fluffy_chat_app.dart';
 import 'package:extera_next/widgets/matrix.dart';
