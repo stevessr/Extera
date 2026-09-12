@@ -14,9 +14,9 @@ import 'package:extera_next/utils/color_value.dart';
 import 'package:extera_next/utils/dummy_timeline.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
+import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
-import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 
