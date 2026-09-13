@@ -89,6 +89,7 @@ typedef ChatTileDeps = ({
   bool animateIn,
   bool selected,
   bool singleSelected,
+  bool singleSided,
   bool longPressSelect,
   bool selectable,
   bool hasBeenRead,
