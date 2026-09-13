@@ -30,6 +30,7 @@ enum AppSettings<T> {
   neurogateTokenExpiry<String>('xyz.extera.neurogateTokenExpiryDate', ''),
   selectedAccount<String>('xyz.extera.selectedAccount', ''),
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
+  bubbleSide<String>('xyz.extera.bubbleSide', 'both'), // oneSide | adaptive | both
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
   fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),

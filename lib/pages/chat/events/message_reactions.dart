@@ -30,12 +30,14 @@ class MessageReactions extends StatelessWidget {
   final Timeline timeline;
   final ChatController? chatController;
   final _OpenReactionDetails? onOpenDetails;
+  final bool isLeftAligned;
 
   const MessageReactions(
     this.event,
     this.timeline, {
     this.chatController,
     this.onOpenDetails,
+    this.isLeftAligned = false,
     super.key,
   });
 
@@ -68,12 +70,12 @@ class MessageReactions extends StatelessWidget {
         final countCompare = b.count.compareTo(a.count);
         return countCompare != 0 ? countCompare : a.key.compareTo(b.key);
       });
-    final ownMessage = event.senderId == event.room.client.userID;
+
     return Wrap(
       spacing: 4.0,
       runSpacing: 4.0,
       alignment:
-          (ownMessage &&
+          (!isLeftAligned &&
               chatController?.layout != .modern &&
               {
                 EventTypes.Message,

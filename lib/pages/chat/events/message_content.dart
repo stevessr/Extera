@@ -45,7 +45,7 @@ class MessageContent extends StatelessWidget {
   final bool selectable;
   final MessageLayout layout;
 
-  final bool ownMessage;
+  final bool isLeftAligned;
   final bool previousEventSameSender;
   final bool nextEventSameSender;
 
@@ -72,7 +72,7 @@ class MessageContent extends StatelessWidget {
     required this.linkColor,
     this.backgroundColor,
     required this.borderRadius,
-    this.ownMessage = false,
+    this.isLeftAligned = false,
     this.previousEventSameSender = false,
     this.nextEventSameSender = false,
     this.layout = .bubbles,
@@ -221,7 +221,7 @@ class MessageContent extends StatelessWidget {
               onLoadMedia: onLoadMedia,
               onRevealHiddenMedia: onRevealHiddenMedia,
               contentWarning: contentWarning,
-              ownMessage: ownMessage,
+              isLeftAligned: isLeftAligned,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
             );
@@ -275,7 +275,7 @@ class MessageContent extends StatelessWidget {
               onRevealHiddenMedia: onRevealHiddenMedia,
               contentWarning: contentWarning,
               layout: layout,
-              ownMessage: ownMessage,
+              isLeftAligned: isLeftAligned,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
             );

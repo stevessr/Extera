@@ -242,6 +242,55 @@ class SettingsStyleController extends State<SettingsStyle> {
     });
   }
 
+  String get bubbleSide => AppSettings.bubbleSide.value;
+
+  void setBubbleSide(String value) {
+    AppSettings.bubbleSide.setItem(value);
+    setState(() {});
+  }
+
+  void showBubbleSideSheet() async {
+    final current = bubbleSide;
+    await showAdaptiveBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return Scaffold(
+          appBar: AppBar(title: Text(L10n.of(context).bubbleSide)),
+          body: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Material(
+              color: Theme.of(sheetContext).colorScheme.surfaceContainerHigh,
+              clipBehavior: Clip.hardEdge,
+              borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+              child: ListView(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: [
+                  for (final (value, label) in [
+                    ('oneSide', L10n.of(context).bubbleSingleSided),
+                    ('adaptive', L10n.of(context).bubbleAdaptiveSide),
+                    ('both', L10n.of(context).bubbleBothSided),
+                  ])
+                    ListTile(
+                      title: Text(label),
+                      selected: current == value,
+                      trailing: current == value
+                          ? const Icon(Icons.check_circle)
+                          : null,
+                      onTap: () {
+                        setBubbleSide(value);
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   bool get showSeconds => AppSettings.showSeconds.value;
 
   void toggleShowSeconds(bool value) {

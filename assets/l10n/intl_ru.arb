@@ -4235,5 +4235,10 @@
     },
     "appearance": "Внешний вид",
     "floatingInputBar": "Плавающая панель ввода",
-    "reactionUiTip": "Нажмите для ответа. Удерживайте, чтобы убрать реакцию."
+    "reactionUiTip": "Нажмите для ответа. Удерживайте, чтобы убрать реакцию.",
+    "bubblesAppearance": "Вид пузырей",
+    "bubbleSide": "Расположение сообщений",
+    "bubbleSingleSided": "Всегда на одной стороне",
+    "bubbleAdaptiveSide": "Адаптивное",
+    "bubbleBothSided": "С обеих сторон"
 }
