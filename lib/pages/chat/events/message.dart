@@ -29,6 +29,7 @@ class Message extends StatelessWidget {
   final List<Color> colors;
   final bool gradient;
   final bool singleSelected;
+  final bool singleSided;
   final bool selectable;
   final bool? exampleMessage;
   final Thread? thread;
@@ -52,6 +53,7 @@ class Message extends StatelessWidget {
     required this.scrollToEventId,
     required this.onSwipe,
     this.selected = false,
+    this.singleSided = false,
     required this.timeline,
     this.highlightMarker = false,
     this.animateIn = false,
@@ -90,6 +92,7 @@ class Message extends StatelessWidget {
         chatController: chatController,
         selected: selected,
         singleSelected: singleSelected,
+        singleSided: singleSided,
         thread: thread,
         wallpaperMode: wallpaperMode,
         selectable: selectable,

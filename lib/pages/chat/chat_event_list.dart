@@ -88,6 +88,12 @@ class ChatEventList extends StatelessWidget {
             singleSelected:
                 controller.selectedEvents.length == 1 &&
                 controller.selectedEvents.first.eventId == event.eventId,
+            singleSided:
+                switch (AppSettings.bubbleSide.value) {
+                  'oneSide' => true,
+                  'adaptive' => FluffyThemes.isColumnMode(context),
+                  _ => false,
+                },
             onSwipe: controller.replyAction,
             hasBeenRead:
                 latestReadEventIndex != -1 &&
