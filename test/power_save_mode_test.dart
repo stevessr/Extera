@@ -27,14 +27,8 @@ void main() {
 
     // The override is effective-only: leaving power saver restores what the
     // user configured instead of permanently changing SharedPreferences.
-    expect(
-      AppSettings.store.getBool(AppSettings.animatedEmoji.key),
-      isTrue,
-    );
-    expect(
-      AppSettings.store.getBool(AppSettings.autoplayImages.key),
-      isTrue,
-    );
+    expect(AppSettings.store.getBool(AppSettings.animatedEmoji.key), isTrue);
+    expect(AppSettings.store.getBool(AppSettings.autoplayImages.key), isTrue);
     expect(
       AppSettings.store.getBool(AppSettings.enableChatFrostedGlass.key),
       isTrue,

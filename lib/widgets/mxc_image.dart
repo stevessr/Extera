@@ -382,7 +382,8 @@ class _MxcImageState extends State<MxcImage> {
 
     if (event != null) {
       final useThumbnail =
-          (widget.isThumbnail || (PowerSaveMode.isEnabled && widget.animated)) &&
+          (widget.isThumbnail ||
+              (PowerSaveMode.isEnabled && widget.animated)) &&
           event.hasThumbnail;
       if (!useThumbnail &&
           !{
