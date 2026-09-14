@@ -1969,7 +1969,7 @@ class ChatController extends State<ChatPageWithRoom>
       inputFocus.unfocus();
     }
 
-    keyboardWasActive = isKeyboardActive
+    keyboardWasActive = isKeyboardActive;
   }
 
   void _openMenu(Event event, Offset? tapPosition) {
