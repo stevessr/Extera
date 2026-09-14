@@ -151,6 +151,8 @@ class ChatController extends State<ChatPageWithRoom>
 
   late final FocusNode inputFocus;
 
+  bool focusWasActive = false;
+
   Timer? typingCoolDown;
   Timer? typingTimeout;
   bool currentlyTyping = false;
@@ -1934,6 +1936,16 @@ class ChatController extends State<ChatPageWithRoom>
   /// had scrolled up before opening the menu, the anchor stays managed by the
   /// normal scroll handler.
   void _onMenuClosed() {
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      if (!mounted) return;
+
+      if (focusWasActive){
+        inputFocus.requestFocus();
+      } else {
+        inputFocus.unfocus();
+      }
+    })
+
     if (!_menuSetAnchor) return;
     _menuSetAnchor = false;
     // Compute newEventCount before clearing the anchor, since it depends on it.
@@ -1957,6 +1969,8 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void _openMenu(Event event, Offset? tapPosition) {
+    focusWasActive = inputFocus.hasFocus;
+    
     _setScrollAnchorForMenu();
     if (PlatformInfos.isMobile) {
       showAdaptiveBottomSheet(
