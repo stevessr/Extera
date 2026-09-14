@@ -28,8 +28,7 @@ Future<void> showPollResultsDialog(
   if (timeline != null) {
     await pollEvent.fetchPollResponses(timeline);
   }
-  final isEnded = timeline != null &&
-      pollEvent.getPollHasBeenEnded(timeline);
+  final isEnded = timeline != null && pollEvent.getPollHasBeenEnded(timeline);
 
   // Determine if we should show results and voter names
   final shouldShowResults = isDisclosed || isEnded;
@@ -38,9 +37,7 @@ Future<void> showPollResultsDialog(
   if (!shouldShowResults) {
     // Poll is undisclosed and not ended yet
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Poll results are hidden until the poll ends'),
-      ),
+      SnackBar(content: Text(L10n.of(context).pollResultsAreHidden)),
     );
     return;
   }

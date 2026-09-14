@@ -4239,5 +4239,6 @@
     "bubbleSide": "Расположение сообщений",
     "bubbleSingleSided": "Всегда на одной стороне",
     "bubbleAdaptiveSide": "Адаптивное",
-    "bubbleBothSided": "С обеих сторон"
+    "bubbleBothSided": "С обеих сторон",
+    "pollResultsAreHidden": "Результаты опроса будут доступны после его окончания"
 }

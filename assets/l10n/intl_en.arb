@@ -4156,5 +4156,6 @@
     "bubbleSide": "Bubbles side",
     "bubbleSingleSided": "Always on one side",
     "bubbleAdaptiveSide": "Adaptive",
-    "bubbleBothSided": "Both sides"
+    "bubbleBothSided": "Both sides",
+    "pollResultsAreHidden": "Poll results are hidden until the poll ends"
 }
