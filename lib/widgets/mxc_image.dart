@@ -362,13 +362,15 @@ class _MxcImageState extends State<MxcImage> {
       final realWidth = width == null ? null : width * devicePixelRatio;
       final height = widget.height;
       final realHeight = height == null ? null : height * devicePixelRatio;
+      final forceStaticThumbnail = PowerSaveMode.isEnabled && widget.animated;
+      final effectiveIsThumbnail = widget.isThumbnail || forceStaticThumbnail;
 
       final remoteData = await client.downloadMxcCached(
         uri,
-        width: realWidth,
-        height: realHeight,
+        width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
+        height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
         thumbnailMethod: widget.thumbnailMethod,
-        isThumbnail: widget.isThumbnail,
+        isThumbnail: effectiveIsThumbnail,
         animated: _effectiveAnimated,
       );
       if (!mounted || generation != _loadGeneration) return;
