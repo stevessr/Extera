@@ -715,7 +715,7 @@ class ChatController extends State<ChatPageWithRoom>
   Future<void> showPollResults(Event event) async {
     await showFutureLoadingSnackbar(
       context: context,
-      future: () => showPollResultsDialog(context, event),
+      future: () => showPollResultsDialog(context, event, timeline: timeline),
     );
   }
 
