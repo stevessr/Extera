@@ -195,7 +195,9 @@ class _MxcImageState extends State<MxcImage> {
 
   String? get _effectiveCacheKey {
     final explicitKey = widget.cacheKey;
-    if (explicitKey != null) return explicitKey;
+    if (explicitKey != null) {
+      return '$explicitKey:${widget.isThumbnail}:$_effectiveAnimated';
+    }
     if (_effectiveCacheCategory != MxcImageCacheCategory.sticker) return null;
 
     final dimensions = '${widget.width}x${widget.height}';
