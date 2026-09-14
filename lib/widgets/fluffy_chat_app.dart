@@ -12,6 +12,7 @@ import 'package:extera_next/config/routes.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/download_manager/download_manager.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/background_audio_player.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
@@ -57,6 +58,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
   @override
   void initState() {
     super.initState();
+    PowerSaveMode.initialize();
     initPlatformState();
   }
 
@@ -100,54 +102,71 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeBuilder(
-      builder:
-          (
-            context,
-            themeMode,
-            primaryColor,
-            schemeVariant,
-            pureBlack,
-            notoEmoji,
-          ) => MaterialApp.router(
-            title: AppConfig.applicationName,
-            themeMode: themeMode,
-            theme: FluffyThemes.buildTheme(
+    return ValueListenableBuilder<bool>(
+      valueListenable: PowerSaveMode.enabled,
+      builder: (context, powerSaveMode, _) => ThemeBuilder(
+        builder:
+            (
               context,
-              Brightness.light,
+              themeMode,
               primaryColor,
               schemeVariant,
               pureBlack,
               notoEmoji,
-            ),
-            darkTheme: FluffyThemes.buildTheme(
-              context,
-              Brightness.dark,
-              primaryColor,
-              schemeVariant,
-              pureBlack,
-              notoEmoji,
-            ),
-            scrollBehavior: CustomScrollBehavior(),
-            localizationsDelegates: L10n.localizationsDelegates,
-            supportedLocales: L10n.supportedLocales,
-            routerConfig: FluffyChatApp.router,
-            builder: (context, child) => AppLockWidget(
-              pincode: widget.pincode,
-              clients: widget.clients,
-              // Need a navigator above the Matrix widget for
-              // displaying dialogs
-              child: DownloadManager(
-                child: BackgroundAudioPlayer(
-                  child: Matrix(
-                    clients: widget.clients,
-                    store: widget.store,
-                    child: widget.testWidget ?? child,
-                  ),
-                ),
+            ) => MaterialApp.router(
+              title: AppConfig.applicationName,
+              themeMode: themeMode,
+              themeAnimationDuration: powerSaveMode
+                  ? Duration.zero
+                  : kThemeAnimationDuration,
+              theme: FluffyThemes.buildTheme(
+                context,
+                Brightness.light,
+                primaryColor,
+                schemeVariant,
+                pureBlack,
+                notoEmoji,
               ),
+              darkTheme: FluffyThemes.buildTheme(
+                context,
+                Brightness.dark,
+                primaryColor,
+                schemeVariant,
+                pureBlack,
+                notoEmoji,
+              ),
+              scrollBehavior: CustomScrollBehavior(),
+              localizationsDelegates: L10n.localizationsDelegates,
+              supportedLocales: L10n.supportedLocales,
+              routerConfig: FluffyChatApp.router,
+              builder: (context, child) {
+                final mediaQuery = MediaQuery.of(context);
+                final effectiveMediaQuery =
+                    powerSaveMode && !mediaQuery.disableAnimations
+                    ? mediaQuery.copyWith(disableAnimations: true)
+                    : mediaQuery;
+
+                return MediaQuery(
+                  data: effectiveMediaQuery,
+                  child: AppLockWidget(
+                    pincode: widget.pincode,
+                    clients: widget.clients,
+                    // Need a navigator above the Matrix widget for
+                    // displaying dialogs
+                    child: DownloadManager(
+                      child: BackgroundAudioPlayer(
+                        child: Matrix(
+                          clients: widget.clients,
+                          store: widget.store,
+                          child: widget.testWidget ?? child,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
+      ),
     );
   }
 }
