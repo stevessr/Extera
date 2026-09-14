@@ -437,6 +437,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         ratchetWindowSize: 16,
         discardFrameWhenCryptorNotReady: true,
         keyDerivationAlgorithm: rtc.KeyDerivationAlgorithm.kHKDF,
+        keyRingSize: 255,
       );
       final nativeKeyProvider = await rtc.frameCryptorFactory
           .createDefaultKeyProvider(keyProviderOptions);
