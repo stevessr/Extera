@@ -2382,7 +2382,7 @@ class ChatController extends State<ChatPageWithRoom>
             ),
           ),
         ],
-      );
+      ),
     );
   }
 }
