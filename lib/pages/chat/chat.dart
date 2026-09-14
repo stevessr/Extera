@@ -1944,7 +1944,7 @@ class ChatController extends State<ChatPageWithRoom>
       } else {
         inputFocus.unfocus();
       }
-    });
+    })
 
     if (!_menuSetAnchor) return;
     _menuSetAnchor = false;
@@ -2341,48 +2341,40 @@ class ChatController extends State<ChatPageWithRoom>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return PopScope(
-      canPop: !inputFocus.hasFocus,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (inputFocus.hasFocus) inputFocus.unfocus()
-      },
-      child Row(
-        children: [
-          Expanded(child: ChatView(this)),
-          AnimatedSize(
-            duration: FluffyThemes.animationDuration,
-            curve: FluffyThemes.animationCurve,
-            child: ValueListenableBuilder(
-              valueListenable: _displayChatDetailsColumn,
-              builder: (context, displayChatDetailsColumn, _) {
-                if (!FluffyThemes.isThreeColumnMode(context) ||
-                    room.membership != Membership.join ||
-                    !displayChatDetailsColumn) {
-                  return const SizedBox(height: double.infinity, width: 0);
-                }
-                return Container(
-                  width: FluffyThemes.columnWidth,
-                  clipBehavior: Clip.hardEdge,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(width: 1, color: theme.dividerColor),
-                    ),
+    return Row(
+      children: [
+        Expanded(child: ChatView(this)),
+        AnimatedSize(
+          duration: FluffyThemes.animationDuration,
+          curve: FluffyThemes.animationCurve,
+          child: ValueListenableBuilder(
+            valueListenable: _displayChatDetailsColumn,
+            builder: (context, displayChatDetailsColumn, _) {
+              if (!FluffyThemes.isThreeColumnMode(context) ||
+                  room.membership != Membership.join ||
+                  !displayChatDetailsColumn) {
+                return const SizedBox(height: double.infinity, width: 0);
+              }
+              return Container(
+                width: FluffyThemes.columnWidth,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(width: 1, color: theme.dividerColor),
                   ),
-                  child: ChatDetails(
-                    roomId: roomId,
-                    embeddedCloseButton: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: toggleDisplayChatDetailsColumn,
-                    ),
+                ),
+                child: ChatDetails(
+                  roomId: roomId,
+                  embeddedCloseButton: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: toggleDisplayChatDetailsColumn,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      );
+        ),
+      ],
     );
   }
 }
