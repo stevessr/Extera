@@ -59,7 +59,7 @@ dependencies:
   go_router: ^17.2.3
   handy_window: ^0.4.2
   highlight_selectable: ^0.2.1
-  #hotkey_manager: ^0.2.3
+  hotkey_manager: ^0.2.3
   html: ^0.15.4
   http: ^1.6.0
   image: ^4.8.0
