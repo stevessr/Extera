@@ -452,7 +452,7 @@ class InputBar extends StatelessWidget {
         maxLines: maxLines,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
-        autofocus: autofocus!,
+        autofocus: false,
         spellCheckConfiguration: PlatformInfos.supportsSpellCheck
             ? const SpellCheckConfiguration()
             : null,
