@@ -8,6 +8,7 @@ import 'package:matrix/matrix_api_lite/utils/logs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 
 const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
 const _legacyUiChatFallbackFonts = 'Roboto,SystemFont,sans-serif';
@@ -270,7 +271,19 @@ extension AppSettingsBoolExtension on AppSettings<bool> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (!PowerSaveMode.isEnabled) return configuredValue;
+
+    // Power saving is an ephemeral policy layer: do not write these overrides
+    // to SharedPreferences. The user's choices therefore come back instantly
+    // when the OS leaves battery/low-power mode.
+    return switch (this) {
+      AppSettings.animatedEmoji ||
+      AppSettings.autoplayImages ||
+      AppSettings.enableChatFrostedGlass => false,
+      _ => configuredValue,
+    };
   }
 
   Future<void> setItem(bool value) => AppSettings.store.setBool(key, value);
