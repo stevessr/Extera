@@ -284,7 +284,8 @@ extension AppSettingsBoolExtension on AppSettings<bool> {
     return switch (this) {
       AppSettings.animatedEmoji ||
       AppSettings.autoplayImages ||
-      AppSettings.enableChatFrostedGlass => false,
+      AppSettings.enableChatFrostedGlass ||
+      AppSettings.enableGradient => false,
       _ => configuredValue,
     };
   }
@@ -337,7 +338,12 @@ extension AppSettingsDoubleExtension on AppSettings<double> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (PowerSaveMode.isEnabled && this == AppSettings.wallpaperBlur) {
+      return 0.0;
+    }
+    return configuredValue;
   }
 
   Future<void> setItem(double value) => AppSettings.store.setDouble(key, value);
