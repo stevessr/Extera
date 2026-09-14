@@ -156,8 +156,6 @@ class ChatController extends State<ChatPageWithRoom>
   bool currentlyTyping = false;
   bool dragging = false;
 
-  bool focusWasRequested = false;
-
   List<String> eventsToScrollBackTo = [];
 
   void onDragEntered(_) => setState(() => dragging = true);
@@ -2328,14 +2326,6 @@ class ChatController extends State<ChatPageWithRoom>
 
   @override
   Widget build(BuildContext context) {
-    if (!focusWasRequested && !PlatformInfos.isMobile){
-      focusWasRequested=true;
-      WidgetsBinding.instance.addPostFrameCallback((_){
-        if (!mounted) return;
-        inputFocus.requestFocus();
-      });
-    }
-
     final theme = Theme.of(context);
     return Row(
       children: [
