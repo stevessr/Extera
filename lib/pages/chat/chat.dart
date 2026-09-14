@@ -522,6 +522,7 @@ class ChatController extends State<ChatPageWithRoom>
     scrollController.addListener(_updateScrollController);
     inputFocus.addListener(_inputFocusListener);
 
+    // Register window metrics observer
     WidgetsBinding.instance.addObserver(this);
 
     _loadDraft();
@@ -1961,15 +1962,17 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
+  void _checkKeyboardChange(FlutterView view){
+    final isKeyboardActive = view.ViewInsets.bottom > 0;
+    
+    if (keyboardWasActive && !isKeyboardActive) inputFocus.unfocus();
+    keyboardWasActive = isKeyboardActive;
+  }
+
   void didChangeMetrics(){
     final view = WidgetsBinding.instance.platformDispatcher.views.first;
-    final isKeyboardActive = view.ViewInsets.bottom > 0;
 
-    if (keyboardWasActive && !isKeyboardActive){
-      inputFocus.unfocus();
-    }
-
-    keyboardWasActive = isKeyboardActive;
+    _checkKeyboardChange(view);
   }
 
   void _openMenu(Event event, Offset? tapPosition) {
