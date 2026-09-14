@@ -669,7 +669,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                         ? Colors.transparent
                         : null,
                   ),
-                if (isLeftAligned &&
+                if (!isLeftAligned &&
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
@@ -927,7 +927,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                     ],
                   ),
                 ),
-                if (!isLeftAligned &&
+                if (isLeftAligned &&
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
@@ -981,8 +981,8 @@ class _MessageBubbleState extends State<MessageBubble> {
             Padding(
               padding: EdgeInsets.only(
                 top: 4.0,
-                  left: isLeftAligned ? 30 + 12.0 : 12.0,
-                  right: isLeftAligned ? 12.0 : 0,
+                left: isLeftAligned ? 30 + 12.0 : 12.0,
+                right: isLeftAligned ? 12.0 : 0,
                 bottom: 4.0,
               ),
               child: MessageReactions(
