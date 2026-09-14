@@ -2346,9 +2346,9 @@ class ChatController extends State<ChatPageWithRoom>
       canPop: !inputFocus.hasFocus,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (inputFocus.hasFocus) inputFocus.unfocus()
+        if (inputFocus.hasFocus) inputFocus.unfocus();
       },
-      child Row(
+      child: Row(
         children: [
           Expanded(child: ChatView(this)),
           AnimatedSize(
