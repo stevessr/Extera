@@ -931,7 +931,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
-                if (!isLeftAligned) SizedBox(height: 36, width: 36),
+                if (isLeftAligned) SizedBox(height: 36, width: 36),
               ],
             ),
           ],
