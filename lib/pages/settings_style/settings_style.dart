@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:matrix/matrix.dart';
@@ -114,8 +114,7 @@ class SettingsStyleController extends State<SettingsStyle> {
   }
 
   void setWallpaper() async {
-    final picked = await selectFiles(context, type: FileType.image);
-    final pickedFile = picked.firstOrNull;
+    final pickedFile = await selectFile(context, type: FileType.image);
     if (pickedFile == null) return;
 
     await showFutureLoadingDialog(

@@ -5,7 +5,7 @@ import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ChatAclSettingsView extends StatelessWidget {
   final ChatAclSettingsController controller;

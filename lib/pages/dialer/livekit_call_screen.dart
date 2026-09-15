@@ -6,7 +6,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/foreground_task_manager.dart';
 import 'package:extera_next/utils/error_reporter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;

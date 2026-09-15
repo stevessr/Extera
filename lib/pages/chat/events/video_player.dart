@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:extera_next/pages/chat/events/message.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:matrix/matrix.dart';
