@@ -185,8 +185,7 @@ class SettingsSecurityView extends StatelessWidget {
                               );
                             },
                           ),
-                          if (Matrix.of(context).client.encryption != null) ...[
-                            if (PlatformInfos.isMobile) ...[
+                          if (Matrix.of(context).client.encryption != null && PlatformInfos.isMobile) ...[
                               const ListDivider(),
                               ListTile(
                                 trailing: const Icon(
@@ -198,7 +197,6 @@ class SettingsSecurityView extends StatelessWidget {
                                 ),
                                 onTap: controller.setAppLockAction,
                               ),
-                            ],
                           ],
                         ],
                       ),
