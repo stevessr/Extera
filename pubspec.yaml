@@ -118,7 +118,6 @@ dependencies:
   flutter_material_design_icons: ^3.1.0+7447
   open_file: ^3.5.11
   phone_numbers_parser: ^9.0.21
-  defer_pointer: ^0.0.2
 
 dev_dependencies:
   flutter_lints: ^6.0.0
