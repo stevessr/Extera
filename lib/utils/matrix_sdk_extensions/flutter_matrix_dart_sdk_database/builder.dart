@@ -28,12 +28,7 @@ Future<DatabaseApi> flutterMatrixSdkDatabaseBuilder(String clientName) async {
     try {
       // Send error notification:
       final l10n = await lookupL10n(PlatformDispatcher.instance.locale);
-      // We expect that the database cannot be open on iOS 2.8.0 due to that
-      // the team ID has changed and te app can no longer access the database
-      // key in the iOS keychain. This should be removed from 2.9.0 on.
-      if (!PlatformInfos.isIOS) {
-        ClientManager.sendInitNotification(l10n.initAppError, e.toString());
-      }
+      ClientManager.sendInitNotification(l10n.initAppError, e.toString());
     } catch (e, s) {
       Logs().e('Unable to send error notification', e, s);
     }
