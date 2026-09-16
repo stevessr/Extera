@@ -17,9 +17,8 @@ const String _breakDelimiter = '\uE002';
 
 Text _opaqueDelimitedLatex(Text laTeXCode) {
   final source = laTeXCode.data ?? '';
-  final math = source.length >= 2 &&
-          source.startsWith(r'$') &&
-          source.endsWith(r'$')
+  final math =
+      source.length >= 2 && source.startsWith(r'$') && source.endsWith(r'$')
       ? source.substring(1, source.length - 1)
       : source;
 
