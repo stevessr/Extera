@@ -20,6 +20,8 @@ void main() {
       await AppSettings.enableGradient.setItem(true);
       await AppSettings.wallpaperBlur.setItem(18.0);
 
+      // Exercise both directions so the transient runtime policy is proven to
+      // leave the user's persisted visual preferences untouched.
       PowerSaveMode.enabled.value = false;
       expect(AppSettings.animatedEmoji.value, isTrue);
       expect(AppSettings.autoplayImages.value, isTrue);
