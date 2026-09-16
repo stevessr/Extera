@@ -4005,7 +4005,7 @@
         }
     },
     "powerLevelReadOnly": "Read only",
-    "elementCallDescription": "Group calls using LiveKit",
+    "elementCallDescription": "Do you want to connect to a call?",
     "@elementCallDescription": {},
     "ongoingElementCall": "Ongoing call",
     "@ongoingElementCall": {},
