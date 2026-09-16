@@ -214,7 +214,7 @@ class ProfileController extends State<ProfilePage> {
       context: context,
       title: L10n.of(context).placeCall,
       message: L10n.of(context).elementCallDescription,
-      okLabel: L10n.of(context).placeCall,
+      okLabel: L10n.of(context).continueText,
     );
     if (confirmed != OkCancelResult.ok) return;
 
