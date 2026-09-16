@@ -66,39 +66,3 @@ runs:
       if: ${{ inputs.pub-get == 'true' && steps.animated_emoji_cache.outputs.cache-hit != 'true' }}
       shell: bash
       run: dart run tool/download_animated_emoji.dart
-
-    # One-shot branch hygiene: run the project-pinned import sorter on only the
-    # Dart files touched by this PR, then restore this helper from the PR base
-    # before committing so no temporary CI code survives in the resulting head.
-    - name: Apply one-shot import ordering
-      if: ${{ github.job == 'analyze' }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        files=(
-          lib/config/themes.dart
-          lib/pages/chat/chat_emoji_picker.dart
-          lib/pages/chat/events/cute_events.dart
-          lib/pages/chat/events/poll_content.dart
-          lib/pages/chat/reply_display.dart
-          lib/pages/chat/seen_by_row.dart
-          lib/pages/chat/typing_indicators.dart
-          lib/pages/chat_list/chat_list_bottom_navbar.dart
-          lib/pages/chat_list/navi_rail_item.dart
-          lib/pages/chat_list/start_chat_fab.dart
-          lib/pages/chat_list/status_msg_list.dart
-          lib/pages/chat_list/unread_bubble.dart
-          test/power_save_mode_test.dart
-        )
-        dart run tidy_imports --no-comments "${files[@]}"
-        dart format "${files[@]}"
-        git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
-        git restore --source=FETCH_HEAD -- .github/actions/setup-flutter/action.yml
-        git add -A -- "${files[@]}" .github/actions/setup-flutter/action.yml
-        if git diff --cached --quiet; then
-          exit 0
-        fi
-        git config user.name github-actions[bot]
-        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-        git commit -m "style: sort imports in power saver changes"
-        git push origin "HEAD:${GITHUB_HEAD_REF}"
