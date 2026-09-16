@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:action_slider/action_slider.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';

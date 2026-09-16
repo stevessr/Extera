@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:file_picker/file_picker.dart';
@@ -258,6 +258,7 @@ class BootstrapViewModel extends ValueNotifier<BootstrapViewModelState> {
       allowedExtensions: ['txt'],
       type: FileType.custom,
     );
+
     if (file == null) return;
     try {
       final key = await file.xFile.readAsString();

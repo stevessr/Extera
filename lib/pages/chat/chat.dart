@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
@@ -958,7 +958,7 @@ class ChatController extends State<ChatPageWithRoom>
   Future<void> showPollResults(Event event) async {
     await showFutureLoadingSnackbar(
       context: context,
-      future: () => showPollResultsDialog(context, event),
+      future: () => showPollResultsDialog(context, event, timeline: timeline),
     );
   }
 
@@ -1258,7 +1258,7 @@ class ChatController extends State<ChatPageWithRoom>
   void sendFileAction({FileType type = .any}) async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
-    final files = await selectFiles(context, allowMultiple: true, type: type);
+    final files = await selectFiles(context, type: type);
     if (files.isEmpty) {
       Logs().v("Returning in sendFileAction, bc files.isEmpty==true");
       return;

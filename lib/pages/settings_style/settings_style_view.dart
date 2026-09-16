@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:matrix/matrix.dart';
@@ -665,6 +665,7 @@ class SettingsStyleView extends StatelessWidget {
                           }),
                           onTap: controller.showBubbleSideSheet,
                         ),
+
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).enableChatFrostedGlass,
                           setting: AppSettings.enableChatFrostedGlass,

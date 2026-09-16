@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -318,11 +318,7 @@ class ChatDetailsController extends State<ChatDetails> {
       );
     }
 
-    final picked = await selectFiles(
-      context,
-      allowMultiple: false,
-      type: FileType.image,
-    );
+    final picked = await selectFiles(context, type: FileType.image);
     final pickedFile = picked.firstOrNull;
     if (pickedFile == null) return null;
     return MatrixFile(

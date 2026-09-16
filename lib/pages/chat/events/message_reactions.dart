@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:matrix/matrix.dart';
@@ -22,14 +22,14 @@ import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 
-typedef _OpenReactionDetails =
+typedef OpenReactionDetails =
     void Function(Event targetEvent, String reactionKey);
 
 class MessageReactions extends StatelessWidget {
   final Event event;
   final Timeline timeline;
   final ChatController? chatController;
-  final _OpenReactionDetails? onOpenDetails;
+  final OpenReactionDetails? onOpenDetails;
   final bool isLeftAligned;
 
   const MessageReactions(
@@ -70,7 +70,6 @@ class MessageReactions extends StatelessWidget {
         final countCompare = b.count.compareTo(a.count);
         return countCompare != 0 ? countCompare : a.key.compareTo(b.key);
       });
-
     return Wrap(
       spacing: 4.0,
       runSpacing: 4.0,

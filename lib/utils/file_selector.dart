@@ -6,26 +6,30 @@ import 'package:file_selector/file_selector.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 
-Future<List<XFile>> selectFiles(
+Future<XFile?> selectFile(
   BuildContext context, {
   String? title,
   FileType type = FileType.any,
-  bool allowMultiple = false,
 }) async {
   final result = await AppLock.of(context).pauseWhile(
     showFutureLoadingDialog(
       context: context,
-      future: () async {
-        if (allowMultiple) {
-          return FilePicker.pickFiles(compressionQuality: 0, type: type);
-        }
-        final file = await FilePicker.pickFile(
-          compressionQuality: 0,
-          type: type,
-        );
-        return file == null ? <PlatformFile>[] : [file];
-      },
+      future: () => FilePicker.pickFile(compressionQuality: 0, type: type),
     ),
   );
-  return result.result?.map((file) => file.xFile).toList() ?? [];
+  return result.result?.xFile;
+}
+
+Future<List<XFile>> selectFiles(
+  BuildContext context, {
+  String? title,
+  FileType type = FileType.any,
+}) async {
+  final result = await AppLock.of(context).pauseWhile(
+    showFutureLoadingDialog(
+      context: context,
+      future: () => FilePicker.pickFiles(compressionQuality: 0, type: type),
+    ),
+  );
+  return result.result?.map((x) => x.xFile).toList() ?? [];
 }

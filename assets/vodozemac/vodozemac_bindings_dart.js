@@ -1409,6 +1409,7 @@ let wasm_bindgen;
 
     /**
      * @param {any} that
+
      * @param {any} their_identity_key
      * @param {string} pre_key_message_base64
      * @returns {any}

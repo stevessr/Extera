@@ -1,7 +1,7 @@
 import 'dart:core';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';

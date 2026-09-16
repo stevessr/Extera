@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:html_unescape/html_unescape.dart';
