@@ -69,7 +69,7 @@ class ChatEmojiPicker extends StatelessWidget {
 
     return ClipRect(
       child: AnimatedSize(
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         child: showEmojiPicker
             ? SizedBox(
