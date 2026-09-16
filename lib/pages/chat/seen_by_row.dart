@@ -34,7 +34,7 @@ class SeenByRow extends StatelessWidget {
         height: receipts.isEmpty ? 0 : 24,
         duration: receipts.isEmpty
             ? Duration.zero
-            : FluffyThemes.animationDuration,
+            : FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         alignment:
             controller.timeline!.events.isNotEmpty &&
