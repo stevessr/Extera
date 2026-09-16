@@ -4145,7 +4145,8 @@
             "room": {"type": "String"}
         }
     },
-    "reactionUiTip": "Tap to reply. Hold down to remove a reaction.",
+    "reactionUiTipReply": "Tap to reply.",
+    "reactionUiTipRedact": "Hold down to remove a reaction.",
     "bubblesAppearance": "Bubbles style",
     "bubbleSide": "Bubbles side",
     "bubbleSingleSided": "Always on one side",

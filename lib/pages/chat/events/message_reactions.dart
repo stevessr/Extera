@@ -582,13 +582,27 @@ class _ReactionsMenuBody extends StatelessWidget {
             ],
           ),
         ),
-        Align(
-          alignment: .topLeft,
-          child: Text(
-            L10n.of(context).reactionUiTip,
-            style: theme.textTheme.bodyMedium,
+        if (chatController?.room.canSendDefaultMessages == true ||
+            chatController?.room.canRedact == true)
+          Align(
+            alignment: .topLeft,
+            child: Row(
+              spacing: 4,
+              mainAxisSize: .min,
+              children: [
+                Icon(Icons.info_outline, size: 18),
+                Text(
+                  <String>[
+                    if (chatController?.room.canSendDefaultMessages == true)
+                      L10n.of(context).reactionUiTipReply,
+                    if (chatController?.room.canRedact == true)
+                      L10n.of(context).reactionUiTipRedact,
+                  ].join(' '), // TODO write it better
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
