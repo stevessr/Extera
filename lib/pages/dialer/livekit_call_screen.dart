@@ -423,6 +423,8 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final openId = await client.requestOpenIdToken(client.userID!, {});
       final deviceId = client.deviceID ?? '';
 
+      _registerMatrixListeners(client);
+
       await lk.LiveKitClient.initialize();
 
       LiveKitCredentials? creds;
@@ -431,10 +433,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final keyProviderOptions = rtc.KeyProviderOptions(
         sharedKey: false,
         ratchetSalt: Uint8List.fromList('LKFrameEncryptionKey'.codeUnits),
-        // Must be > 0 so decryption can self-heal via ratcheting when the
-        // remote side rotates to a key index we have not applied yet.
-        // (Element Call uses 10, the livekit default is 16.)
-        ratchetWindowSize: 16,
+        ratchetWindowSize: 0,
         discardFrameWhenCryptorNotReady: true,
         keyDerivationAlgorithm: rtc.KeyDerivationAlgorithm.kHKDF,
         keyRingSize: 255,
@@ -445,8 +444,6 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         nativeKeyProvider,
         keyProviderOptions,
       );
-
-      _registerMatrixListeners(client);
 
       final ownMemberId = '${client.userID}:${client.deviceID}';
       final otherActiveMembers = matrixRoom
