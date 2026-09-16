@@ -38,7 +38,6 @@ class InputBar extends StatelessWidget {
   final TextEditingController? controller;
   final InputDecoration decoration;
   final ValueChanged<String>? onChanged;
-  final bool? autofocus;
   final bool readOnly;
 
   static List<_CachedEmoji>? _cachedEmojis;
@@ -56,7 +55,6 @@ class InputBar extends StatelessWidget {
     this.controller,
     required this.decoration,
     this.onChanged,
-    this.autofocus,
     this.textInputAction,
     this.readOnly = false,
     super.key,
@@ -452,7 +450,7 @@ class InputBar extends StatelessWidget {
         maxLines: maxLines,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
-        autofocus: autofocus!,
+        autofocus: false,
         spellCheckConfiguration: PlatformInfos.supportsSpellCheck
             ? const SpellCheckConfiguration()
             : null,

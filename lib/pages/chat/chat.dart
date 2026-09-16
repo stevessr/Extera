@@ -1960,14 +1960,14 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
-  void _checkKeyboardChange(FlutterView view){
-    final isKeyboardActive = view.ViewInsets.bottom > 0;
-    
+  void _checkKeyboardChange(FlutterView view) {
+    final isKeyboardActive = view.viewInsets.bottom > 0;
     if (keyboardWasActive && !isKeyboardActive) inputFocus.unfocus();
     keyboardWasActive = isKeyboardActive;
   }
 
-  void didChangeMetrics(){
+  @override
+  void didChangeMetrics() {
     final view = WidgetsBinding.instance.platformDispatcher.views.first;
 
     _checkKeyboardChange(view);
