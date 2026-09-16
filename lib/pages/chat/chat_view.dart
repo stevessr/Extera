@@ -20,7 +20,6 @@ import 'package:extera_next/pages/chat/chat_event_list.dart';
 import 'package:extera_next/pages/chat/encryption_button.dart';
 import 'package:extera_next/pages/chat/pinned_events.dart';
 import 'package:extera_next/pages/chat/reply_display.dart';
-import 'package:extera_next/pages/dialer/back_to_call_button.dart';
 import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/stream_extension.dart';
@@ -206,15 +205,7 @@ class _ChatViewState extends State<ChatView> {
               onPressed: () => controller.onLiveKitCallButtonTap(),
               icon: const Icon(Icons.video_call_outlined),
               tooltip: L10n.of(context).placeCall,
-            )
-        else if (AppSettings.experimentalVoip.value &&
-            Matrix.of(context).voipPlugin != null &&
-            controller.room.isDirectChat)
-          IconButton(
-            onPressed: controller.onPhoneButtonTap,
-            icon: const Icon(Icons.call_outlined),
-            tooltip: L10n.of(context).placeCall,
-          ),
+            ),
         EncryptionButton(controller.room),
         ChatSettingsPopupMenu(controller.room, true),
       ];
@@ -815,7 +806,6 @@ class _ChatViewState extends State<ChatView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const BackToCallButton(),
                           ValueListenableBuilder<String?>(
                             valueListenable:
                                 LiveKitCallManager().currentCallRoomId,

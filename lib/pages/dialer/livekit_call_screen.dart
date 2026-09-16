@@ -13,7 +13,7 @@ import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:matrix/matrix.dart' show Client, Logs, DeviceKeys;
 
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/pages/dialer/dialer.dart';
+import 'package:extera_next/pages/dialer/task_handler.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/pages/dialer/livekit_service.dart';
 import 'package:extera_next/utils/platform_infos.dart';

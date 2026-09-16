@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -50,7 +49,6 @@ import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/room_status_extension.dart';
 import 'package:extera_next/utils/show_scaffold_dialog.dart';
-import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
@@ -2189,120 +2187,25 @@ class ChatController extends State<ChatPageWithRoom>
   void showEventInfo([Event? event]) =>
       (event ?? selectedEvents.single).showInfoDialog(context);
 
-  void onPhoneButtonTap() async {
-    // VoIP required Android SDK 21
-    if (PlatformInfos.isAndroid) {
-      DeviceInfoPlugin().androidInfo.then((value) {
-        if (value.version.sdkInt < 21) {
-          Navigator.pop(context);
-          showOkAlertDialog(
-            context: context,
-            title: L10n.of(context).unsupportedAndroidVersion,
-            message: L10n.of(context).unsupportedAndroidVersionLong,
-            okLabel: L10n.of(context).close,
-          );
-        }
-      });
-    }
-    final callType = await showModalActionPopup<CallType>(
-      context: context,
-      title: L10n.of(context).warning,
-      message: L10n.of(context).videoCallsBetaWarning,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).voiceCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: CallType.kVoice,
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).videoCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: CallType.kVideo,
-        ),
-      ],
-    );
-    if (callType == null) return;
-
-    final voipPlugin = Matrix.of(context).voipPlugin;
-    try {
-      final session = await voipPlugin!.voip.inviteToCall(room, callType);
-      voipPlugin.addCallingOverlay(session.callId, session);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-      Logs().e("onPhoneButtonTap", e);
-    }
-  }
-
   void onLiveKitCallButtonTap() async {
-    final callType = await showModalActionPopup<String>(
+    final confirmed = await showOkCancelAlertDialog(
       context: context,
       title: L10n.of(context).placeCall,
-      message: L10n.of(context).chooseCallType,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).elementCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: 'element_call',
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).p2pCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: 'p2p',
-        ),
-      ],
+      message: L10n.of(context).elementCallDescription,
+      okLabel: L10n.of(context).placeCall,
     );
-    if (callType == null) return;
+    if (confirmed != OkCancelResult.ok) return;
 
-    if (callType == 'p2p') {
-      // Use traditional P2P call
-      final voipCallType = await showModalActionPopup<CallType>(
-        context: context,
-        title: L10n.of(context).warning,
-        message: L10n.of(context).videoCallsBetaWarning,
-        cancelLabel: L10n.of(context).cancel,
-        actions: [
-          AdaptiveModalAction(
-            label: L10n.of(context).voiceCall,
-            icon: const Icon(Icons.phone_outlined),
-            value: CallType.kVoice,
-          ),
-          AdaptiveModalAction(
-            label: L10n.of(context).videoCall,
-            icon: const Icon(Icons.video_call_outlined),
-            value: CallType.kVideo,
-          ),
-        ],
+    // Start a LiveKit (Element Call) call.
+    try {
+      await openLiveKitCall(context, roomId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context).errorWithMessage('Element Call: $e')),
+        ),
       );
-      if (voipCallType == null) return;
-
-      final voipPlugin = Matrix.of(context).voipPlugin;
-      try {
-        final session = await voipPlugin!.voip.inviteToCall(room, voipCallType);
-        voipPlugin.addCallingOverlay(session.callId, session);
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-        Logs().e("onPhoneButtonTap", e);
-      }
-    } else if (callType == 'element_call') {
-      // Use Element Call (LiveKit)
-      try {
-        await openLiveKitCall(context, roomId);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              L10n.of(context).errorWithMessage('Element Call: $e'),
-            ),
-          ),
-        );
-        Logs().e("onLiveKitCallButtonTap", e);
-      }
+      Logs().e("onLiveKitCallButtonTap", e);
     }
   }
 
