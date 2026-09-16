@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:hotkey_manager/hotkey_manager.dart';
@@ -28,17 +28,17 @@ class ChatListShortcuts extends StatefulWidget {
 }
 
 class ChatListShortcutsState extends State<ChatListShortcuts> {
-  /*final HotKey prevChatKey = HotKey(
+  final HotKey prevChatKey = HotKey(
     key: LogicalKeyboardKey.arrowUp,
     modifiers: [HotKeyModifier.alt],
     scope: HotKeyScope.inapp,
-  );*/
+  );
 
-  /*final HotKey nextChatKey = HotKey(
+  final HotKey nextChatKey = HotKey(
     key: LogicalKeyboardKey.arrowDown,
     modifiers: [HotKeyModifier.alt],
     scope: HotKeyScope.inapp,
-  );*/
+  );
 
   @override
   void initState() {

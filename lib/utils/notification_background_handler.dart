@@ -277,6 +277,10 @@ Future<void> notificationTap(
             );
           }
       }
+    case NotificationResponseType.notificationDismissed:
+      {
+        break;
+      }
   }
 }
 

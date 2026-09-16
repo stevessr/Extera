@@ -14,7 +14,7 @@ if (file("google-services.json").exists()) {
 
 configurations.all {
     // Use the latest version published: https://central.sonatype.com/artifact/com.google.crypto.tink/tink-android
-    val tink = "com.google.crypto.tink:tink-android:1.17.0"
+    val tink = "com.google.crypto.tink:tink-android:1.23.0"
     // You can also use the library declaration catalog
     // val tink = libs.google.tink
     resolutionStrategy {

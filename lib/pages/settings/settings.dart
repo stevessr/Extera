@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -324,31 +324,21 @@ class SettingsController extends State<Settings> {
       return;
     }
     MatrixFile file;
-    if (PlatformInfos.isMobile) {
-      final result = await ImagePicker().pickImage(
-        source: action == AvatarAction.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        imageQuality: 50,
-      );
-      if (result == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await result.readAsBytes()),
-        ),
-        name: result.path,
-      );
-    } else {
-      final result = await selectFiles(context, type: FileType.image);
-      final pickedFile = result.firstOrNull;
-      if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await pickedFile.readAsBytes()),
-        ),
-        name: pickedFile.name,
-      );
+    final result = PlatformInfos.isMobile
+        ? await ImagePicker().pickImage(
+            source: action == AvatarAction.camera
+                ? ImageSource.camera
+                : ImageSource.gallery,
+            imageQuality: 50,
+          )
+        : await selectFile(context, type: FileType.image);
+
+    if (result == null) return;
+    var bytes = await result.readAsBytes();
+    if (AppSettings.cleanExif.value) {
+      bytes = Uint8List.fromList(ExifCleaner.removeExifData(bytes));
     }
+    file = MatrixFile(bytes: bytes, name: result.name);
     final success = await showFutureLoadingDialog(
       context: context,
       future: () => matrix.client.setAvatar(file),
@@ -405,31 +395,21 @@ class SettingsController extends State<Settings> {
       return;
     }
     MatrixFile file;
-    if (PlatformInfos.isMobile) {
-      final result = await ImagePicker().pickImage(
-        source: action == AvatarAction.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        imageQuality: 50,
-      );
-      if (result == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await result.readAsBytes()),
-        ),
-        name: result.path,
-      );
-    } else {
-      final result = await selectFiles(context, type: FileType.image);
-      final pickedFile = result.firstOrNull;
-      if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await pickedFile.readAsBytes()),
-        ),
-        name: pickedFile.name,
-      );
+    final result = PlatformInfos.isMobile
+        ? await ImagePicker().pickImage(
+            source: action == AvatarAction.camera
+                ? ImageSource.camera
+                : ImageSource.gallery,
+            imageQuality: 50,
+          )
+        : await selectFile(context, type: FileType.image);
+
+    if (result == null) return;
+    var bytes = await result.readAsBytes();
+    if (AppSettings.cleanExif.value) {
+      bytes = Uint8List.fromList(ExifCleaner.removeExifData(bytes));
     }
+    file = MatrixFile(bytes: bytes, name: result.name);
     final success = await showFutureLoadingDialog(
       context: context,
       future: () async {

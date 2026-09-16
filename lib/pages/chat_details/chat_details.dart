@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:extera_next/config/app_settings.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -141,24 +142,24 @@ class ChatDetailsController extends State<ChatDetails> {
         imageQuality: 50,
       );
       if (result == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(
-          ExifCleaner.removeExifData(await result.readAsBytes()),
-        ),
-        name: result.path,
-      );
+      var bytes = await result.readAsBytes();
+
+      if (AppSettings.cleanExif.value) {
+        bytes = Uint8List.fromList(ExifCleaner.removeExifData(bytes));
+      }
+
+      file = MatrixFile(bytes: bytes, name: result.path);
     } else {
-      final picked = await selectFiles(
-        context,
-        allowMultiple: false,
-        type: FileType.image,
-      );
+      final picked = await selectFiles(context, type: FileType.image);
       final pickedFile = picked.firstOrNull;
       if (pickedFile == null) return;
-      file = MatrixFile(
-        bytes: Uint8List.fromList(await pickedFile.readAsBytes()),
-        name: pickedFile.name,
-      );
+      var bytes = await pickedFile.readAsBytes();
+
+      if (AppSettings.cleanExif.value) {
+        bytes = Uint8List.fromList(ExifCleaner.removeExifData(bytes));
+      }
+
+      file = MatrixFile(bytes: bytes, name: pickedFile.name);
     }
     await showFutureLoadingDialog(
       context: context,

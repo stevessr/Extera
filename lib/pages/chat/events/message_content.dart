@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:extera_next/pages/chat/events/message.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_linkify/flutter_linkify.dart';
@@ -40,7 +40,7 @@ class MessageContent extends StatelessWidget {
   final bool selectable;
   final MessageLayout layout;
 
-  final bool ownMessage;
+  final bool isLeftAligned;
   final bool previousEventSameSender;
   final bool nextEventSameSender;
 
@@ -62,7 +62,7 @@ class MessageContent extends StatelessWidget {
     required this.textColor,
     required this.linkColor,
     required this.borderRadius,
-    this.ownMessage = false,
+    this.isLeftAligned = false,
     this.previousEventSameSender = false,
     this.nextEventSameSender = false,
     this.layout = .bubbles,
@@ -200,7 +200,7 @@ class MessageContent extends StatelessWidget {
               onLoadMedia: onLoadMedia,
               onRevealHiddenMedia: onRevealHiddenMedia,
               contentWarning: contentWarning,
-              ownMessage: ownMessage,
+              isLeftAligned: isLeftAligned,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
             );
@@ -253,7 +253,7 @@ class MessageContent extends StatelessWidget {
               onRevealHiddenMedia: onRevealHiddenMedia,
               contentWarning: contentWarning,
               layout: layout,
-              ownMessage: ownMessage,
+              isLeftAligned: isLeftAligned,
               nextEventSameSender: nextEventSameSender,
               previousEventSameSender: previousEventSameSender,
             );

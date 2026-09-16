@@ -1,7 +1,8 @@
 import 'dart:isolate';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
@@ -23,6 +24,14 @@ import 'widgets/fluffy_chat_app.dart';
 ReceivePort? mainIsolateReceivePort;
 
 void main() async {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    Logs().e('FlutterError', details.exception, details.stack);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    Logs().e('PlatformDispatcher error', error, stack);
+    return true;
+  };
   Logs().i('Welcome to ${AppConfig.applicationName}! Wonderhoy!!');
 
   if (PlatformInfos.isAndroid) {
@@ -42,7 +51,7 @@ void main() async {
 
   tz.initializeTimeZones();
 
-  FlutterForegroundTask.initCommunicationPort();
+  if (!kIsWeb) FlutterForegroundTask.initCommunicationPort();
 
   await vod.init(wasmPath: './assets/assets/vodozemac/');
 

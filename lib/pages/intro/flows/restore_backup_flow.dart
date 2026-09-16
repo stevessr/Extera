@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -9,8 +9,7 @@ import 'package:extera_next/widgets/matrix.dart';
 Future<void> restoreBackupFlow(BuildContext context) async {
   final mx = Matrix.of(context);
 
-  final picked = await selectFiles(context);
-  final file = picked.firstOrNull;
+  final file = await selectFile(context);
   if (file == null) return;
 
   if (!context.mounted) return;
