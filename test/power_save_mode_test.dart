@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/power_save_mode.dart';
 
 void main() {
@@ -23,6 +24,14 @@ void main() {
     expect(AppSettings.enableChatFrostedGlass.value, isTrue);
     expect(AppSettings.enableGradient.value, isTrue);
     expect(AppSettings.wallpaperBlur.value, 18.0);
+    expect(
+      FluffyThemes.effectiveAnimationDuration,
+      FluffyThemes.animationDuration,
+    );
+    expect(
+      FluffyThemes.reduceMotionDuration(const Duration(milliseconds: 200)),
+      const Duration(milliseconds: 200),
+    );
 
     PowerSaveMode.enabled.value = true;
     expect(AppSettings.animatedEmoji.value, isFalse);
@@ -30,6 +39,11 @@ void main() {
     expect(AppSettings.enableChatFrostedGlass.value, isFalse);
     expect(AppSettings.enableGradient.value, isFalse);
     expect(AppSettings.wallpaperBlur.value, 0.0);
+    expect(FluffyThemes.effectiveAnimationDuration, Duration.zero);
+    expect(
+      FluffyThemes.reduceMotionDuration(const Duration(milliseconds: 200)),
+      Duration.zero,
+    );
 
     // The override is effective-only: leaving power saver restores what the
     // user configured instead of permanently changing SharedPreferences.
@@ -48,5 +62,9 @@ void main() {
     expect(AppSettings.enableChatFrostedGlass.value, isTrue);
     expect(AppSettings.enableGradient.value, isTrue);
     expect(AppSettings.wallpaperBlur.value, 18.0);
+    expect(
+      FluffyThemes.effectiveAnimationDuration,
+      FluffyThemes.animationDuration,
+    );
   });
 }
