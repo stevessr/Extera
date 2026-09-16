@@ -4092,17 +4092,11 @@
         }
     },
     "powerLevelReadOnly": "Только чтение",
-    "elementCall": "Element Call",
-    "@elementCall": {},
-    "p2pCall": "P2P Звонок",
-    "@p2pCall": {},
-    "chooseCallType": "Выберите тип звонка",
-    "@chooseCallType": {},
     "elementCallDescription": "Звонки через LiveKit",
     "@elementCallDescription": {},
-    "ongoingElementCall": "Element Call",
+    "ongoingElementCall": "Текущий звонок",
     "@ongoingElementCall": {},
-    "ongoingElementCallDetail": "Вы участвуете в звонке: {name}",
+    "ongoingElementCallDetail": "Текущий звонок: {name}",
     "@ongoingElementCallDetail": {
         "placeholders": {
             "name": {
@@ -4110,7 +4104,7 @@
             }
         }
     },
-    "elementCallLiveKit": "Element Call",
+    "elementCallLiveKit": "Экспериментальные звонки",
     "@elementCallLiveKit": {},
     "camera": "Камера",
     "@camera": {},

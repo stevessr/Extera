@@ -4005,15 +4005,9 @@
         }
     },
     "powerLevelReadOnly": "Read only",
-    "elementCall": "Element Call",
-    "@elementCall": {},
-    "p2pCall": "Legacy P2P call",
-    "@p2pCall": {},
-    "chooseCallType": "Choose call type",
-    "@chooseCallType": {},
     "elementCallDescription": "Group calls using LiveKit",
     "@elementCallDescription": {},
-    "ongoingElementCall": "Element Call",
+    "ongoingElementCall": "Ongoing call",
     "@ongoingElementCall": {},
     "ongoingElementCallDetail": "You are in a call: {name}",
     "@ongoingElementCallDetail": {
@@ -4023,7 +4017,7 @@
             }
         }
     },
-    "elementCallLiveKit": "Element Call",
+    "elementCallLiveKit": "Experimental calls",
     "@elementCallLiveKit": {},
     "camera": "Camera",
     "@camera": {},
@@ -4051,7 +4045,7 @@
     "@allLiveKitUnavailable": {},
     "shareCallLink": "Share call link",
     "@shareCallLink": {},
-    "couldNotFindCallServer": "Your homeserver does not support Element Calls.",
+    "couldNotFindCallServer": "Your homeserver does not support MatrixRTC calls. (Does it have LiveKit configured?)",
     "@couldNotFindCallServer": {},
     "errorWithMessage": "Error: {error}",
     "@errorWithMessage": {
