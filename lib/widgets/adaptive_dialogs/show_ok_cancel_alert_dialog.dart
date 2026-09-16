@@ -30,9 +30,10 @@ Future<OkCancelResult?> showOkCancelAlertDialog({
           : SelectableLinkify(
               text: message,
               textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
-              linkStyle: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium,
+              linkStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
-                decoration: .none,
+                decorationColor: Theme.of(context).colorScheme.primary,
               ),
               options: const LinkifyOptions(humanize: false),
               onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
