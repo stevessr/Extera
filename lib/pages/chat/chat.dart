@@ -1459,6 +1459,7 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void forwardEventsAction({Event? event}) async {
+    if (selectedEvents.isEmpty && event == null) return;
     await showScaffoldDialog(
       context: context,
       builder: (context) => ShareScaffoldDialog(
@@ -1466,7 +1467,11 @@ class ChatController extends State<ChatPageWithRoom>
             ? [
                 ContentShareItem(
                   sanitizeContent(
-                    event!.getDisplayEvent(timeline!).content.copy(),
+                    (timeline == null
+                            ? event!
+                            : event!.getDisplayEvent(timeline!))
+                        .content
+                        .copy(),
                   ),
                   attribution: generateAttributionString(event),
                 ),
@@ -1475,7 +1480,11 @@ class ChatController extends State<ChatPageWithRoom>
                   .map(
                     (event) => ContentShareItem(
                       sanitizeContent(
-                        event.getDisplayEvent(timeline!).content.copy(),
+                        (timeline == null
+                                ? event
+                                : event.getDisplayEvent(timeline!))
+                            .content
+                            .copy(),
                       ),
                       attribution: generateAttributionString(event),
                     ),
