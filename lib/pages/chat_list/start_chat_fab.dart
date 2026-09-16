@@ -3,9 +3,8 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -27,7 +26,7 @@ class StartChatFab extends StatelessWidget {
           : const EdgeInsets.symmetric(horizontal: 16),
       label: AnimatedSize(
         alignment: Alignment.centerLeft,
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: Curves.easeInOut,
         child: extended ? Text(L10n.of(context).newChat) : SizedBox.shrink(),
       ),

@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:badges/badges.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -51,7 +50,7 @@ class NaviRailItem extends StatelessWidget {
                 left: 0,
                 child: AnimatedContainer(
                   width: isSelected ? 8 : 0,
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary,
@@ -65,7 +64,7 @@ class NaviRailItem extends StatelessWidget {
               Center(
                 child: AnimatedScale(
                   scale: hovered ? 1.1 : 1.0,
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   child: Material(
                     borderRadius: borderRadius,

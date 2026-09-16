@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -34,7 +33,7 @@ class SeenByRow extends StatelessWidget {
         height: receipts.isEmpty ? 0 : 24,
         duration: receipts.isEmpty
             ? Duration.zero
-            : FluffyThemes.animationDuration,
+            : FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         alignment:
             controller.timeline!.events.isNotEmpty &&

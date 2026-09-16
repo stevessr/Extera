@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:collection/collection.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -69,7 +68,7 @@ class ChatEmojiPicker extends StatelessWidget {
 
     return ClipRect(
       child: AnimatedSize(
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         child: showEmojiPicker
             ? SizedBox(

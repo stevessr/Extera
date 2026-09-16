@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -19,7 +18,7 @@ class UnreadBubble extends StatelessWidget {
               : 14.0
         : 0.0;
     return AnimatedContainer(
-      duration: FluffyThemes.animationDuration,
+      duration: FluffyThemes.effectiveAnimationDuration,
       curve: FluffyThemes.animationCurve,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 7),

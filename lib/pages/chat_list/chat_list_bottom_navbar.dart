@@ -1,8 +1,7 @@
 import 'dart:ui';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:badges/badges.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -109,7 +108,9 @@ class _ChatListBottomNavbarState extends State<ChatListBottomNavbar> {
             child: Padding(
               padding: const .all(8),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: FluffyThemes.reduceMotionDuration(
+                  const Duration(milliseconds: 200),
+                ),
                 curve: Curves.easeInOut,
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(

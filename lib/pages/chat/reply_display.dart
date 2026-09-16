@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -26,7 +25,7 @@ class ReplyDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: FluffyThemes.animationDuration,
+      duration: FluffyThemes.effectiveAnimationDuration,
       curve: FluffyThemes.animationCurve,
       height: controller.editEvent != null || controller.replyEvent != null
           ? ReplyDisplay.height
