@@ -21,7 +21,7 @@ import 'cipher.dart';
 
 Future<DatabaseApi> flutterMatrixSdkDatabaseBuilder(String clientName) async {
   try {
-    return await _constructDatabase(clientName);
+    return await _constructDatabaseWithRetry(clientName);
   } catch (e, s) {
     Logs().wtf('Unable to construct database!', e, s);
 
@@ -40,8 +40,37 @@ Future<DatabaseApi> flutterMatrixSdkDatabaseBuilder(String clientName) async {
     }
 
     // Try again
-    return await _constructDatabase(clientName);
+    return await _constructDatabaseWithRetry(clientName);
   }
+}
+
+Future<DatabaseApi> _constructDatabaseWithRetry(String clientName) async {
+  const delays = [
+    Duration(milliseconds: 100),
+    Duration(milliseconds: 300),
+    Duration(milliseconds: 500),
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 5),
+  ];
+
+  Object? lastError;
+  StackTrace? lastStackTrace;
+
+  for (final delay in delays) {
+    try {
+      return await _constructDatabase(clientName);
+    } catch (e, s) {
+      if (!_isDatabaseBusy(e)) {
+        Error.throwWithStackTrace(e, s);
+      }
+      lastError = e;
+      lastStackTrace = s;
+      await Future.delayed(delay);
+    }
+  }
+
+  Error.throwWithStackTrace(lastError!, lastStackTrace!);
 }
 
 Future<void> _ensureIncrementalAutoVacuum(Database database) async {
@@ -55,10 +84,9 @@ Future<void> _ensureIncrementalAutoVacuum(Database database) async {
     Logs().i('Switching database to incremental auto_vacuum...');
     await database.execute('PRAGMA auto_vacuum = $incrementalAutoVacuum');
     await database.execute('VACUUM');
-    return;
+  } else {
+    await database.execute('PRAGMA incremental_vacuum');
   }
-
-  await database.execute('PRAGMA incremental_vacuum');
 }
 
 Future<MatrixSdkDatabase> _constructDatabase(String clientName) async {
@@ -108,7 +136,11 @@ Future<MatrixSdkDatabase> _constructDatabase(String clientName) async {
     options: OpenDatabaseOptions(
       version: 1,
       // most important : apply encryption when opening the DB
-      onConfigure: helper?.applyPragmaKey,
+      onConfigure: (db) async {
+        await helper?.applyPragmaKey(db);
+
+        await db.execute('PRAGMA busy_timeout = 10000');
+      },
     ),
   );
 
@@ -176,4 +208,13 @@ Future<void> _migrateLegacyLocation(
     await maybeOldFile.copy(sqlFilePath);
     await maybeOldFile.delete();
   }
+}
+
+bool _isDatabaseBusy(Object error) {
+  final text = error.toString().toLowerCase();
+
+  return text.contains('database is locked') ||
+      text.contains('database is busy') ||
+      text.contains('sqlite_busy') ||
+      text.contains('sqlite_locked');
 }
