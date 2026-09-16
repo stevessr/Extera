@@ -134,6 +134,8 @@ class ChatController extends State<ChatPageWithRoom>
 
   late Client sendingClient;
 
+  bool keyboardWasActive = false;
+
   Timeline? timeline;
 
   late final String readMarkerEventId;
@@ -518,6 +520,9 @@ class ChatController extends State<ChatPageWithRoom>
     scrollController.addListener(_updateScrollController);
     inputFocus.addListener(_inputFocusListener);
 
+    // Register window metrics observer
+    WidgetsBinding.instance.addObserver(this);
+
     _loadDraft();
     WidgetsBinding.instance.addPostFrameCallback(_shareItems);
     super.initState();
@@ -812,6 +817,7 @@ class ChatController extends State<ChatPageWithRoom>
     timeline = null;
     inputFocus.removeListener(_inputFocusListener);
     inputFocus.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     inputBarHeight.dispose();
     scrollController.dispose();
     sendController.dispose();
@@ -1952,6 +1958,19 @@ class ChatController extends State<ChatPageWithRoom>
         setReadMarker();
       });
     }
+  }
+
+  void _checkKeyboardChange(FlutterView view){
+    final isKeyboardActive = view.ViewInsets.bottom > 0;
+    
+    if (keyboardWasActive && !isKeyboardActive) inputFocus.unfocus();
+    keyboardWasActive = isKeyboardActive;
+  }
+
+  void didChangeMetrics(){
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+
+    _checkKeyboardChange(view);
   }
 
   void _openMenu(Event event, Offset? tapPosition) {
