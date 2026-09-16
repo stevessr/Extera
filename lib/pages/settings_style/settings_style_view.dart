@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:matrix/matrix.dart';
@@ -49,6 +49,11 @@ class SettingsStyleView extends StatelessWidget {
     };
 
     final hasWallpaper = controller.wallpaperPath != null;
+    final singleSided = switch (AppSettings.bubbleSide.value) {
+      'oneSide' => true,
+      'adaptive' => FluffyThemes.isColumnMode(context),
+      _ => false,
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -485,6 +490,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -527,6 +533,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -569,6 +576,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -632,6 +640,24 @@ class SettingsStyleView extends StatelessWidget {
                           ),
                         ),
                         const ListDivider(),
+                        ListTile(
+                          title: Text(
+                            L10n.of(context).bubblesAppearance,
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          title: Text(L10n.of(context).bubbleSide),
+                          subtitle: Text(switch (controller.bubbleSide) {
+                            'oneSide' => L10n.of(context).bubbleSingleSided,
+                            'adaptive' => L10n.of(context).bubbleAdaptiveSide,
+                            _ => L10n.of(context).bubbleBothSided,
+                          }),
+                          onTap: controller.showBubbleSideSheet,
+                        ),
                         // SettingsSwitchListTile.adaptive(
                         //   title: L10n.of(context).enableGradient,
                         //   setting: AppSettings.enableGradient,

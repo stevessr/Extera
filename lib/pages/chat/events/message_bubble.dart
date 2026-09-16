@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:go_router/go_router.dart';
@@ -53,6 +53,7 @@ class MessageBubble extends StatefulWidget {
   final bool hasBeenRead;
   final bool selectable;
   final bool? exampleMessage;
+  final bool singleSided;
 
   const MessageBubble(
     this.event, {
@@ -76,6 +77,7 @@ class MessageBubble extends StatefulWidget {
     this.wallpaperMode = false,
     required this.onMention,
     this.selectable = true,
+    this.singleSided = true,
     this.scrollController,
     this.chatController,
     required this.colors,
@@ -140,8 +142,9 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   Future<User?> fetchSenderUser() async {
     final client = Matrix.of(context).client;
-    if (widget.event.senderId != client.userID) {
-      return await widget.event.fetchSenderUser();
+    if (widget.event.senderId != client.userID || widget.singleSided) {
+      return widget.event.senderFromMemoryOrFallback;
+      // return await widget.event.fetchSenderUser();
     }
     // we don't render avatar/displayname for own messages
     return User(client.userID!, room: widget.event.room);
@@ -297,7 +300,8 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     final client = Matrix.of(context).client;
     final ownMessage = event.senderId == client.userID;
-    final alignment = ownMessage ? Alignment.topRight : Alignment.topLeft;
+    final isLeftAligned = !ownMessage || widget.singleSided;
+    final alignment = isLeftAligned ? Alignment.topLeft : Alignment.topRight;
     final hasBeenRead = widget.hasBeenRead;
 
     var color = theme.colorScheme.surfaceContainerHigh;
@@ -332,20 +336,24 @@ class _MessageBubbleState extends State<MessageBubble> {
           event.originServerTs,
         );
 
-    final rowMainAxisAlignment = ownMessage
-        ? MainAxisAlignment.end
-        : MainAxisAlignment.start;
+    final rowMainAxisAlignment = isLeftAligned
+        ? MainAxisAlignment.start
+        : MainAxisAlignment.end;
 
     final displayEvent = event.getDisplayEvent(timeline);
     const hardCorner = Radius.circular(4);
     const roundedCorner = Radius.circular(AppConfig.borderRadius);
     final borderRadius = BorderRadius.only(
-      topLeft: !ownMessage && nextEventSameSender ? hardCorner : roundedCorner,
-      topRight: ownMessage && nextEventSameSender ? hardCorner : roundedCorner,
-      bottomLeft: !ownMessage && previousEventSameSender
+      topLeft: isLeftAligned && nextEventSameSender
           ? hardCorner
           : roundedCorner,
-      bottomRight: ownMessage && previousEventSameSender
+      topRight: !isLeftAligned && nextEventSameSender
+          ? hardCorner
+          : roundedCorner,
+      bottomLeft: isLeftAligned && previousEventSameSender
+          ? hardCorner
+          : roundedCorner,
+      bottomRight: !isLeftAligned && previousEventSameSender
           ? hardCorner
           : roundedCorner,
     );
@@ -625,7 +633,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                       onChanged: (_) => widget.onSelect(event, null),
                     ),
                   )
-                else if (nextEventSameSender || ownMessage)
+                else if (nextEventSameSender || !isLeftAligned)
                   SizedBox(
                     width: 36,
                     child: Center(
@@ -661,7 +669,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                         ? Colors.transparent
                         : null,
                   ),
-                if (ownMessage &&
+                if (!isLeftAligned &&
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
@@ -735,7 +743,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                         Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment:
-                                              ownMessage && noBubble
+                                              !isLeftAligned && noBubble
                                               ? CrossAxisAlignment.end
                                               : CrossAxisAlignment.start,
                                           children: [
@@ -795,7 +803,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                     nextEventSameSender,
                                                 previousEventSameSender:
                                                     previousEventSameSender,
-                                                ownMessage: ownMessage,
+                                                isLeftAligned: isLeftAligned,
                                                 layout: .bubbles,
                                                 selectable: widget.selectable,
                                                 trailingSpan: useInlineStatus
@@ -859,7 +867,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                       ),
                       if (widget.thread != null)
                         Align(
-                          alignment: ownMessage ? .bottomRight : .bottomLeft,
+                          alignment: isLeftAligned ? .bottomLeft : .bottomRight,
                           child: Padding(
                             padding: const .only(
                               bottom: 8,
@@ -919,11 +927,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                     ],
                   ),
                 ),
-                if (!ownMessage &&
+                if (isLeftAligned &&
                     !event.redacted &&
                     event.type == EventTypes.Sticker)
                   Flexible(child: replyDisplay),
-                if (!ownMessage) SizedBox(height: 36, width: 36),
+                if (isLeftAligned) SizedBox(height: 36, width: 36),
               ],
             ),
           ],
@@ -938,9 +946,9 @@ class _MessageBubbleState extends State<MessageBubble> {
         widget.displayReadMarker) {
       container = Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: ownMessage
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment: isLeftAligned
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
         children: <Widget>[
           if (displayTime || widget.selected)
             Padding(
@@ -973,14 +981,15 @@ class _MessageBubbleState extends State<MessageBubble> {
             Padding(
               padding: EdgeInsets.only(
                 top: 4.0,
-                left: (ownMessage ? 0 : 30) + 12.0,
-                right: ownMessage ? 0 : 12.0,
+                left: isLeftAligned ? 30 + 12.0 : 12.0,
+                right: isLeftAligned ? 12.0 : 0,
                 bottom: 4.0,
               ),
               child: MessageReactions(
                 event,
                 timeline,
                 chatController: widget.chatController,
+                isLeftAligned: isLeftAligned,
               ),
             ),
           if (widget.displayReadMarker)

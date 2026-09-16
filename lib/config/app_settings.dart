@@ -25,6 +25,10 @@ enum AppSettings<T> {
   neurogateTokenExpiry<String>('xyz.extera.neurogateTokenExpiryDate', ''),
   selectedAccount<String>('xyz.extera.selectedAccount', ''),
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
+  bubbleSide<String>(
+    'xyz.extera.bubbleSide',
+    'both',
+  ), // oneSide | adaptive | both
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
   fallbackFonts<String>(
@@ -186,9 +190,10 @@ enum AppSettings<T> {
     }
     if (kIsWeb && loadWebConfigFile) {
       try {
-        final configJsonString = utf8.decode(
-          (await http.get(Uri.parse('config.json'))).bodyBytes,
-        );
+        final client = http.Client();
+        final response = await client.get(Uri.parse('config.json'));
+        final configJsonString = utf8.decode(response.bodyBytes);
+        client.close();
         final configJson =
             json.decode(configJsonString) as Map<String, Object?>;
         for (final setting in AppSettings.values) {
@@ -210,8 +215,8 @@ enum AppSettings<T> {
         }
       } on FormatException catch (_) {
         Logs().v('[ConfigLoader] config.json not found');
-      } catch (e) {
-        Logs().v('[ConfigLoader] config.json not found', e);
+      } catch (e, s) {
+        Logs().v('[ConfigLoader] config.json not found', e, s);
       }
     }
 

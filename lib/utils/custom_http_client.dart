@@ -44,5 +44,10 @@ class CustomHttpClient {
     return client;
   }
 
-  static http.Client createHTTPClient() => IOClient(customHttpClient());
+  static http.Client createHTTPClient() {
+    // On web dart:io HttpClient is not available (Platform._version stub).
+    // Use BrowserClient (via http.Client factory) which uses window.fetch.
+    if (PlatformInfos.isWeb) return http.Client();
+    return IOClient(customHttpClient());
+  }
 }

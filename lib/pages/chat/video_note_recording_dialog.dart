@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:camera/camera.dart';
 import 'package:device_info_plus/device_info_plus.dart';

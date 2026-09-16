@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:extera_next/pages/chat/events/message.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:matrix/matrix.dart';
@@ -26,7 +26,7 @@ class EventVideoPlayer extends StatelessWidget {
   final bool loadThumbnail;
   final InlineSpan? trailingSpan;
 
-  final bool ownMessage;
+  final bool isLeftAligned;
   final bool nextEventSameSender;
   final bool previousEventSameSender;
   final MessageLayout layout;
@@ -44,7 +44,7 @@ class EventVideoPlayer extends StatelessWidget {
     this.trailingSpan,
     this.selectable = true,
     this.loadThumbnail = false,
-    this.ownMessage = false,
+    this.isLeftAligned = false,
     this.nextEventSameSender = false,
     this.previousEventSameSender = false,
     this.showHiddenMedia = false,
@@ -127,7 +127,7 @@ class EventVideoPlayer extends StatelessWidget {
         : Duration(milliseconds: durationInt);
 
     if (layout != .modern) {
-      if (ownMessage) {
+      if (!isLeftAligned) {
         borderRadius = borderRadius.copyWith(
           topRight: nextEventSameSender ? hardCorner : roundedCorner,
           bottomRight: previousEventSameSender ? hardCorner : roundedCorner,

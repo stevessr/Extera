@@ -1,9 +1,6 @@
-import 'dart:io';
-
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:matrix/matrix.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:universal_html/html.dart' as html;
@@ -11,7 +8,6 @@ import 'package:universal_html/html.dart' as html;
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/size_string.dart';
-import 'package:extera_next/widgets/future_loading_dialog.dart';
 
 extension MatrixFileExtension on MatrixFile {
   void save(BuildContext context) async {
@@ -20,30 +16,19 @@ extension MatrixFileExtension on MatrixFile {
       return;
     }
 
-    final downloadPath = !PlatformInfos.isMobile
-        ? (await getSaveLocation(
-            suggestedName: name,
-            confirmButtonText: L10n.of(context).saveFile,
-          ))?.path
-        : await FilePicker.saveFile(
-            dialogTitle: L10n.of(context).saveFile,
-            fileName: name,
-            type: filePickerFileType,
-            bytes: bytes,
-          );
+    final downloadPath = await FilePicker.saveFile(
+      dialogTitle: L10n.of(context).saveFile,
+      fileName: name,
+      type: filePickerFileType,
+      bytes: bytes,
+    );
     if (downloadPath == null) return;
-
-    if (PlatformInfos.isDesktop) {
-      final result = await showFutureLoadingDialog(
-        context: context,
-        future: () => File(downloadPath).writeAsBytes(bytes),
-      );
-      if (result.error != null) return;
-    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(L10n.of(context).fileHasBeenSavedAt(downloadPath)),
+        content: Text(
+          L10n.of(context).fileHasBeenSavedAt(downloadPath.toString()),
+        ),
         showCloseIcon: true,
       ),
     );
