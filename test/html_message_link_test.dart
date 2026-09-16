@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:matrix/matrix.dart';
 
+import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/message_content.dart';
 import 'package:extera_next/utils/dummy_timeline.dart';
@@ -34,7 +35,7 @@ Event makeEvent(Room room, String formattedBody) => Event(
 Future<void> pumpContent(WidgetTester tester, Event event) async {
   await tester.pumpWidget(
     MaterialApp(
-      localizationsDelegates: L10n.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: L10n.supportedLocales,
       home: Scaffold(
         body: Center(

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/send_file_dialog.dart';
 
@@ -55,7 +56,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: theme,
-        localizationsDelegates: L10n.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: L10n.supportedLocales,
         home: Builder(
           builder: (context) => SendFileDialog(

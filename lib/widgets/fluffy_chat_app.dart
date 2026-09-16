@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/config/routes.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -136,7 +137,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
                 notoEmoji,
               ),
               scrollBehavior: CustomScrollBehavior(),
-              localizationsDelegates: L10n.localizationsDelegates,
+              localizationsDelegates: appLocalizationsDelegates,
               supportedLocales: L10n.supportedLocales,
               routerConfig: FluffyChatApp.router,
               builder: (context, child) {
