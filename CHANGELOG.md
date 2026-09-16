@@ -1,3 +1,15 @@
+## Extera 26.5.2
+- Feature to choose message bubble side (single/adaptive/both).
+- Preserve input focus state when opening message menu. (@meow)
+- Enable auto vacuum for DB. Also output some information into logs to assist troubleshooting. (~~Stolen~~ Backported from FluffyChat)
+- Support for `HTTP_PROXY` environment variable (@meow)
+- Remove TURN-based legacy calls in favour of Livekit-backed calls.
+- Construct database with retries, should make DB errors appear less frequently.
+- Fix polls sometimes not showing all votes, also internally refactor to utilise matrix-dart-sdk's extension for polls.
+- Remove references to 'Element Call's, as they're just normal calls now.
+- Make reaction UI tip include only available reactions: show reply part only if user can send messages, show redact part only if user can redact messages.
+- Some changes to allow Extera run on the web in the future. (@lukindev)
+
 ## Extera 26.5.11
 - Fix wrong area being highlighted when showing reaction list.
 - Fix reaction list overlay not disappearing when closing chat.
