@@ -8,6 +8,7 @@ import 'package:matrix/matrix_api_lite/utils/logs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 
 const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
 const _legacyUiChatFallbackFonts = 'Roboto,SystemFont,sans-serif';
@@ -30,7 +31,10 @@ enum AppSettings<T> {
   neurogateTokenExpiry<String>('xyz.extera.neurogateTokenExpiryDate', ''),
   selectedAccount<String>('xyz.extera.selectedAccount', ''),
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
-  bubbleSide<String>('xyz.extera.bubbleSide', 'both'), // oneSide | adaptive | both
+  bubbleSide<String>(
+    'xyz.extera.bubbleSide',
+    'both',
+  ), // oneSide | adaptive | both
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
   fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),
@@ -271,7 +275,20 @@ extension AppSettingsBoolExtension on AppSettings<bool> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (!PowerSaveMode.isEnabled) return configuredValue;
+
+    // Power saving is an ephemeral policy layer: do not write these overrides
+    // to SharedPreferences. The user's choices therefore come back instantly
+    // when the OS leaves battery/low-power mode.
+    return switch (this) {
+      AppSettings.animatedEmoji ||
+      AppSettings.autoplayImages ||
+      AppSettings.enableChatFrostedGlass ||
+      AppSettings.enableGradient => false,
+      _ => configuredValue,
+    };
   }
 
   Future<void> setItem(bool value) => AppSettings.store.setBool(key, value);
@@ -322,7 +339,12 @@ extension AppSettingsDoubleExtension on AppSettings<double> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (PowerSaveMode.isEnabled && this == AppSettings.wallpaperBlur) {
+      return 0.0;
+    }
+    return configuredValue;
   }
 
   Future<void> setItem(double value) => AppSettings.store.setDouble(key, value);

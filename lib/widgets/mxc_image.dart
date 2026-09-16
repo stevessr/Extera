@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -178,6 +179,8 @@ class _MxcImageState extends State<MxcImage> {
   // newer MxcImage with bytes from the previous grid cell.
   int _loadGeneration = 0;
 
+  bool get _effectiveAnimated => widget.animated && !PowerSaveMode.isEnabled;
+
   MxcImageCacheCategory get _effectiveCacheCategory {
     if (widget.cacheCategory != MxcImageCacheCategory.general) {
       return widget.cacheCategory;
@@ -191,11 +194,13 @@ class _MxcImageState extends State<MxcImage> {
 
   String? get _effectiveCacheKey {
     final explicitKey = widget.cacheKey;
-    if (explicitKey != null) return explicitKey;
+    if (explicitKey != null) {
+      return '$explicitKey:${widget.isThumbnail}:$_effectiveAnimated';
+    }
     if (_effectiveCacheCategory != MxcImageCacheCategory.sticker) return null;
 
     final dimensions = '${widget.width}x${widget.height}';
-    final variant = '$dimensions:${widget.isThumbnail}:${widget.animated}';
+    final variant = '$dimensions:${widget.isThumbnail}:$_effectiveAnimated';
     final uri = widget.uri;
     if (uri != null) return 'uri:$uri:$variant';
 
@@ -283,9 +288,34 @@ class _MxcImageState extends State<MxcImage> {
   @override
   void initState() {
     super.initState();
+    PowerSaveMode.enabled.addListener(_onPowerSaveModeChanged);
     final generation = _loadGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _tryLoad(generation);
+    });
+  }
+
+  @override
+  void dispose() {
+    PowerSaveMode.enabled.removeListener(_onPowerSaveModeChanged);
+    super.dispose();
+  }
+
+  void _onPowerSaveModeChanged() {
+    if (!mounted || !widget.animated) return;
+
+    // Static and animated variants intentionally occupy separate cache keys.
+    // Reload when the OS policy changes so leaving power saver immediately
+    // restores animation without ever persisting or poisoning the other mode.
+    _loadGeneration++;
+    _imageDataNoCache = null;
+    _loadFailed = false;
+    final generation = _loadGeneration;
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && generation == _loadGeneration) {
+        _tryLoad(generation);
+      }
     });
   }
 
@@ -331,14 +361,16 @@ class _MxcImageState extends State<MxcImage> {
       final realWidth = width == null ? null : width * devicePixelRatio;
       final height = widget.height;
       final realHeight = height == null ? null : height * devicePixelRatio;
+      final forceStaticThumbnail = PowerSaveMode.isEnabled && widget.animated;
+      final effectiveIsThumbnail = widget.isThumbnail || forceStaticThumbnail;
 
       final remoteData = await client.downloadMxcCached(
         uri,
-        width: realWidth,
-        height: realHeight,
+        width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
+        height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
         thumbnailMethod: widget.thumbnailMethod,
-        isThumbnail: widget.isThumbnail,
-        animated: widget.animated,
+        isThumbnail: effectiveIsThumbnail,
+        animated: _effectiveAnimated,
       );
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
@@ -348,7 +380,10 @@ class _MxcImageState extends State<MxcImage> {
     }
 
     if (event != null) {
-      final useThumbnail = widget.isThumbnail && event.hasThumbnail;
+      final useThumbnail =
+          (widget.isThumbnail ||
+              (PowerSaveMode.isEnabled && widget.animated)) &&
+          event.hasThumbnail;
       if (!useThumbnail &&
           !{
             MessageTypes.Image,
