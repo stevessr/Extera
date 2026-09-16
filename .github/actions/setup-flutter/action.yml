@@ -66,23 +66,3 @@ runs:
       if: ${{ inputs.pub-get == 'true' && steps.animated_emoji_cache.outputs.cache-hit != 'true' }}
       shell: bash
       run: dart run tool/download_animated_emoji.dart
-
-    # One-shot branch hygiene: use the pinned formatter that CI itself runs,
-    # then restore this helper from the PR base before committing. The helper
-    # therefore never survives in the resulting branch commit.
-    - name: Apply one-shot poll formatter
-      if: ${{ github.job == 'analyze' }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        dart format lib/pages/chat/events/poll_content.dart
-        git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
-        git restore --source=FETCH_HEAD -- .github/actions/setup-flutter/action.yml
-        git add -A -- lib/pages/chat/events/poll_content.dart .github/actions/setup-flutter/action.yml
-        if git diff --cached --quiet; then
-          exit 0
-        fi
-        git config user.name github-actions[bot]
-        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-        git commit -m "style: format poll content"
-        git push origin "HEAD:${GITHUB_HEAD_REF}"
