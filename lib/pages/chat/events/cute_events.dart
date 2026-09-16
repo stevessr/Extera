@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 
 // import 'package:extera_next/config/setting_keys.dart';
 
@@ -51,8 +52,13 @@ class _CuteContentState extends State<CuteContent> {
   }
 
   Future<void> addOverlay() async {
+    // Decorative overlays intentionally do nothing in system power-saving
+    // modes. The underlying event remains fully visible and interactive.
+    if (PowerSaveMode.isEnabled) return;
+
     // _isOverlayShown = true;
     await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted || PowerSaveMode.isEnabled) return;
 
     OverlayEntry? overlay;
     overlay = OverlayEntry(
@@ -118,18 +124,29 @@ class _CuteEventOverlayState extends State<CuteEventOverlay>
   @override
   void initState() {
     controller = AnimationController(
-      duration: const Duration(milliseconds: 2500),
+      duration: PowerSaveMode.isEnabled
+          ? Duration.zero
+          : const Duration(milliseconds: 2500),
       vsync: this,
     );
-    controller?.forward();
     controller?.addStatusListener(_hideOverlay);
+    PowerSaveMode.enabled.addListener(_onPowerSaveModeChanged);
+    controller?.forward();
     super.initState();
   }
 
   @override
   void dispose() {
+    PowerSaveMode.enabled.removeListener(_onPowerSaveModeChanged);
     controller?.dispose();
     super.dispose();
+  }
+
+  void _onPowerSaveModeChanged() {
+    if (!PowerSaveMode.isEnabled) return;
+    final animationController = controller;
+    if (animationController == null || !animationController.isAnimating) return;
+    animationController.value = 1;
   }
 
   @override
