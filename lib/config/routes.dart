@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -11,6 +9,7 @@ import 'package:extera_next/pages/archive/archive.dart';
 import 'package:extera_next/pages/bootstrap/bootstrap_page.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat_access_settings/chat_access_settings_controller.dart';
+import 'package:extera_next/pages/chat_acl_settings/chat_acl_settings.dart';
 import 'package:extera_next/pages/chat_details/chat_details.dart';
 import 'package:extera_next/pages/chat_encryption_settings/chat_encryption_settings.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';

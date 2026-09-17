@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -147,7 +146,11 @@ class PollWidgetState extends State<PollWidget> {
     return isDisclosed || isEnded;
   }
 
-  double _getAnswerPercentage(Map<String, int> results, int totalVotes, String answerId) {
+  double _getAnswerPercentage(
+    Map<String, int> results,
+    int totalVotes,
+    String answerId,
+  ) {
     if (totalVotes == 0) return 0.0;
     return (results[answerId]?.toDouble() ?? 0) / totalVotes.toDouble();
   }
@@ -255,7 +258,11 @@ class PollWidgetState extends State<PollWidget> {
                         answer['org.matrix.msc1767.text'] as String? ??
                         'Answer ${index + 1}';
                     final isSelected = selectedAnswers.contains(answerId);
-                    final percentage = _getAnswerPercentage(results, totalVotes, answerId);
+                    final percentage = _getAnswerPercentage(
+                      results,
+                      totalVotes,
+                      answerId,
+                    );
                     // final voteCount = pollResults?[answerId] ?? 0;
 
                     return Padding(

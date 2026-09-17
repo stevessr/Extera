@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/utils/date_time_extension.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
+import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';

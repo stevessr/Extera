@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
@@ -13,6 +11,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:mime/mime.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -55,6 +54,7 @@ import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/future_loading_snackbar.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/multi_hole_clipper.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
 import '../../utils/account_bundles.dart';
 import '../../utils/localized_exception_extension.dart';
