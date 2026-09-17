@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
+
 import 'package:visibility_detector/visibility_detector.dart';
 
 import 'package:extera_next/config/animated_emoji_config.dart';
@@ -48,7 +49,7 @@ class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _tickerModeEnabled = TickerMode.of(context);
+    _tickerModeEnabled = TickerMode.valuesOf(context).enabled;
     _ensureAtlasForCurrentMetrics();
     _syncClockActivity();
   }
