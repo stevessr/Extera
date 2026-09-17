@@ -1465,26 +1465,19 @@ class ChatController extends State<ChatPageWithRoom>
       builder: (context) => ShareScaffoldDialog(
         items: selectedEvents.isEmpty
             ? [
-                ContentShareItem(
-                  sanitizeContent(
-                    (timeline == null
-                            ? event!
-                            : event!.getDisplayEvent(timeline!))
-                        .content
-                        .copy(),
+                if (event != null)
+                  ContentShareItem(
+                    sanitizeContent(
+                      event.getDisplayEvent(timeline!).content.copy(),
+                    ),
+                    attribution: generateAttributionString(event),
                   ),
-                  attribution: generateAttributionString(event),
-                ),
               ]
             : selectedEvents
                   .map(
                     (event) => ContentShareItem(
                       sanitizeContent(
-                        (timeline == null
-                                ? event
-                                : event.getDisplayEvent(timeline!))
-                            .content
-                            .copy(),
+                        event.getDisplayEvent(timeline!).content.copy(),
                       ),
                       attribution: generateAttributionString(event),
                     ),
