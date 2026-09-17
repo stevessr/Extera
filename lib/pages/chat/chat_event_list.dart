@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -88,12 +87,11 @@ class ChatEventList extends StatelessWidget {
             singleSelected:
                 controller.selectedEvents.length == 1 &&
                 controller.selectedEvents.first.eventId == event.eventId,
-            singleSided:
-                switch (AppSettings.bubbleSide.value) {
-                  'oneSide' => true,
-                  'adaptive' => FluffyThemes.isColumnMode(context),
-                  _ => false,
-                },
+            singleSided: switch (AppSettings.bubbleSide.value) {
+              'oneSide' => true,
+              'adaptive' => FluffyThemes.isColumnMode(context),
+              _ => false,
+            },
             onSwipe: controller.replyAction,
             hasBeenRead:
                 latestReadEventIndex != -1 &&
@@ -131,8 +129,8 @@ class ChatEventList extends StatelessWidget {
       controller: controller.scrollController,
       reverse: true,
       center: _centerKey,
-      physics: controller.selectedEventId != null ||
-              controller.reactionsMenuOpen
+      physics:
+          controller.selectedEventId != null || controller.reactionsMenuOpen
           ? const NeverScrollableScrollPhysics()
           : null,
       keyboardDismissBehavior: PlatformInfos.isIOS

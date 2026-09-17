@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 class FileSendingStatusIndicator extends StatelessWidget {

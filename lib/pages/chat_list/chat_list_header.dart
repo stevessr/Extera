@@ -1,9 +1,8 @@
-import 'package:extera_next/config/app_settings.dart';
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';

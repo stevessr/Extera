@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';

@@ -1,8 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -12,6 +11,7 @@ import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/pages/chat_list/chat_list_header.dart';
 import 'package:extera_next/pages/chat_list/chat_list_legacy_header.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/interesting_presences_extension.dart';
+import 'package:extera_next/utils/rich_presence.dart';
 import 'package:extera_next/utils/show_profile.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -77,16 +77,13 @@ class _PeopleViewState extends State<PeopleView> {
                 ? Text(client.presences[userId]!.statusMsg!)
                 : null,
           ),
-          if (profile?.additionalProperties.containsKey(
-                'com.ip-logger.msc4320.rpc',
-              ) ??
-              false)
-            RichPresenceContent(
-              richPresenceData:
-                  profile!.additionalProperties['com.ip-logger.msc4320.rpc']!
-                      as Map<String, dynamic>,
-              noBackground: true,
+          RichPresenceContent(
+            presences: RichPresenceEntry.parseList(
+              profile?.additionalProperties,
             ),
+            single: true,
+            noBackground: true,
+          ),
         ],
       ),
     );

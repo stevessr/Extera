@@ -1,8 +1,5 @@
-import 'package:extera_next/widgets/matrix.dart';
-import 'package:extera_next/widgets/mxc_image.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
@@ -11,6 +8,8 @@ import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
+import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/mxc_image.dart';
 import 'package:extera_next/widgets/settings_switch_list_tile.dart';
 import 'settings_chat.dart';
 

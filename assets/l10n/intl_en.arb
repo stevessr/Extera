@@ -3531,7 +3531,7 @@
     "palette_content": "Content",
     "palette_rainbow": "Rainbow",
     "palette_fruitSalad": "Fruit salad",
-    "listeningTo": "Listening to {mediaPlayer}",
+    "listeningTo": "Listening on {mediaPlayer}",
     "@listeningTo": {
         "placeholders": {
             "mediaPlayer": {
@@ -3541,6 +3541,24 @@
     },
     "listeningToSomeTunes": "Listening to some tunes",
     "playing": "Playing",
+    "richPresenceElapsed": "{duration} elapsed",
+    "@richPresenceElapsed": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceRemaining": "{duration} remaining",
+    "@richPresenceRemaining": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceOpenIdWarning": "This button will ask your homeserver for an OpenID token and share it with the destination site. This may disclose your IP address and browser metadata, and lets the site correlate this visit with your Matrix account. This won't allow third parties to access your Matrix account.",
+    "@richPresenceOpenIdWarning": {},
     "editedAt": "edited at {when}",
     "@editedAt": {
         "type": "text",

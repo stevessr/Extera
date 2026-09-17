@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';

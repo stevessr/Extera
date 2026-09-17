@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:dio/dio.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:provider/provider.dart';
 

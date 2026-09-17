@@ -1,12 +1,11 @@
 import 'dart:ui';
 
-import 'package:extera_next/config/themes.dart';
-import 'package:material_ui/material_ui.dart';
-
 import 'package:badges/badges.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/widgets/unread_rooms_badge.dart';
 import '../../widgets/matrix.dart';

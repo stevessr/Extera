@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart' hide Visibility;
 import 'package:go_router/go_router.dart';
-
+import 'package:material_ui/material_ui.dart' hide Visibility;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';

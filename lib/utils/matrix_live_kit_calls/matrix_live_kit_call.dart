@@ -7,10 +7,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:matrix/matrix.dart';
+
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
-import 'package:matrix/matrix.dart';
 
 extension MatrixRtcClientExtension on Client {
   Future<List<String>> getLiveKitServiceUrls() async {
