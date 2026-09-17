@@ -140,6 +140,7 @@ abstract class FluffyThemes {
           systemNavigationBarColor: colorScheme.surface,
         ),
       ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(year2023: false),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(width: 1, color: colorScheme.primary),
