@@ -58,8 +58,6 @@ Future<(PresenceType, String?)?> showStatusInputDialog({
                       initialText: initialText,
                       minLines: 1,
                       maxLines: 6,
-                      // Ensure maxLength is defined somewhere in your file or imports
-                      maxLength: 60,
                     );
                   },
                 ),
