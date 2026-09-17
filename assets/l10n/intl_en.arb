@@ -3531,7 +3531,7 @@
     "palette_content": "Content",
     "palette_rainbow": "Rainbow",
     "palette_fruitSalad": "Fruit salad",
-    "listeningTo": "Listening to {mediaPlayer}",
+    "listeningTo": "Listening on {mediaPlayer}",
     "@listeningTo": {
         "placeholders": {
             "mediaPlayer": {
