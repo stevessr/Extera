@@ -403,10 +403,8 @@ class ProfileView extends StatelessWidget {
               child: Column(
                 mainAxisSize: .max,
                 children: [
-                  if (controller.richPresenceData != null)
-                    RichPresenceContent(
-                      richPresenceData: controller.richPresenceData!,
-                    ),
+                  if (controller.richPresences?.isNotEmpty ?? false)
+                    RichPresenceContent(presences: controller.richPresences!),
                   Material(
                     clipBehavior: .hardEdge,
                     color: theme.colorScheme.surfaceContainerHigh,

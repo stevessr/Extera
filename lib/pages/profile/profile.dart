@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/msc2666_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/user_notes_extension.dart';
+import 'package:extera_next/utils/rich_presence.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -29,13 +32,27 @@ class ProfilePage extends StatefulWidget {
 class ProfileController extends State<ProfilePage> {
   String? about;
   String? tz;
-  Map<String, dynamic>? richPresenceData;
+  List<RichPresenceEntry>? richPresences;
   Map<String, dynamic>? profileData;
   Uri? bannerUrl;
 
   bool isQuerying = false;
 
   late final TextEditingController noteController;
+  Timer? _presenceRefreshTimer;
+
+  void _schedulePresenceRefresh() {
+    _presenceRefreshTimer?.cancel();
+    final entries = richPresences;
+    if (entries == null) return;
+    final nearest = RichPresenceEntry.nearestExpiry(entries);
+    if (nearest == null) return;
+    final delayMs = nearest - DateTime.now().millisecondsSinceEpoch;
+    _presenceRefreshTimer = Timer(
+      Duration(milliseconds: delayMs < 0 ? 0 : delayMs),
+      queryData,
+    );
+  }
 
   Future<void> queryData() async {
     final client = Matrix.of(context).client;
@@ -82,60 +99,14 @@ class ProfileController extends State<ProfilePage> {
       }
     }
 
-    if (profile.additionalProperties.containsKey("com.ip-logger.msc4320.rpc") &&
-        profile.additionalProperties["com.ip-logger.msc4320.rpc"] is Object) {
-      setState(() {
-        richPresenceData =
-            profile.additionalProperties["com.ip-logger.msc4320.rpc"]
-                as Map<String, dynamic>;
-      });
-    }
+    setState(() {
+      richPresences = RichPresenceEntry.parseList(profile.additionalProperties);
+    });
+    _schedulePresenceRefresh();
 
     setState(() {
       isQuerying = false;
     });
-  }
-
-  bool get isRpcMedia {
-    if (richPresenceData == null) return false;
-    if (richPresenceData!['type'] != 'com.ip-logger.msc4320.rpc.media') {
-      return false;
-    }
-    if (richPresenceData!['artist'] is! String ||
-        richPresenceData!['album'] is! String ||
-        richPresenceData!['track'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("cover_art") &&
-        richPresenceData!['cover_art'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("player") &&
-        richPresenceData!['player'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("streaming_link") &&
-        richPresenceData!['streaming_link'] is! String) {
-      return false;
-    }
-    return true;
-  }
-
-  bool get isRpcActivity {
-    if (richPresenceData == null) return false;
-    if (richPresenceData!['type'] != 'com.ip-logger.msc4320.rpc.activity') {
-      return false;
-    }
-    if (!richPresenceData!.containsKey('name')) return false;
-    if (richPresenceData!.containsKey("image") &&
-        richPresenceData!['image'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("details") &&
-        richPresenceData!['details'] is! String) {
-      return false;
-    }
-    return true;
   }
 
   List<Room> mutualRooms = [];
@@ -175,6 +146,7 @@ class ProfileController extends State<ProfilePage> {
 
   @override
   void dispose() {
+    _presenceRefreshTimer?.cancel();
     noteController.dispose();
     super.dispose();
   }
