@@ -491,8 +491,9 @@ class PollWidgetState extends State<PollWidget> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    L10n.of(context)
-                        .choicesSelected(selectedAnswers.length, maxSelections),
+                    L10n.of(
+                      context,
+                    ).choicesSelected(selectedAnswers.length, maxSelections),
                     style: TextStyle(
                       fontSize: widget.fontSize - 1,
                       color: widget.color.withValues(alpha: 0.7),

@@ -1,20 +1,18 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'dart:ui' as ui;
+
 import 'package:flutter/widgets.dart';
 
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:http/http.dart' as http;
-import 'package:lottie/lottie.dart' deferred as lottie;
-import 'package:matrix/matrix.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
+import 'package:extera_next/config/animated_emoji_config.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
-import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/animated_emoji_atlas.dart';
 
-/// Renders one emoji as the Lottie animation Google ships for it.
+/// Renders one emoji from the process-wide shared sprite-atlas cache.
 ///
-/// While the animation is loading, and whenever it cannot be loaded, the plain
-/// emoji glyph is rendered instead, so the text never jumps or goes blank.
+/// The expensive Lottie traversal happens only once for each codepoint +
+/// physical-size bucket. All widget instances then share one texture and one
+/// process-wide animation clock.
 class AnimatedEmojiImage extends StatefulWidget {
   final String emoji;
 
@@ -36,168 +34,165 @@ class AnimatedEmojiImage extends StatefulWidget {
   State<AnimatedEmojiImage> createState() => _AnimatedEmojiImageState();
 }
 
-class _AnimatedEmojiImageState extends State<AnimatedEmojiImage>
-    with WidgetsBindingObserver {
-  /// Emoji repeat a lot within a chat, so hold on to the parsed animations for
-  /// the lifetime of the process.
-  ///
-  /// Held as `dynamic` because deferred library types cannot appear in
-  /// declarations; the values are only touched after `lottie.loadLibrary()`.
-  static final Map<String, dynamic> _compositions = {};
-
-  /// Never load and parse the same emoji twice at once.
-  static final Map<String, Future<dynamic>> _pending = {};
-
-  dynamic _composition;
-
-  /// Stable across rebuilds so the visibility detector does not mistake a
-  /// rebuilt widget for a different child.
+class _AnimatedEmojiImageState extends State<AnimatedEmojiImage> {
   late final Key _visibilityDetectorKey = UniqueKey();
 
-  /// Whether any part of the emoji intersects the viewport.
-  bool _isVisible = true;
+  AnimatedEmojiAtlasHandle? _atlasHandle;
+  String? _requestedCodepoint;
+  int? _requestedRasterSize;
+  int _loadGeneration = 0;
 
-  /// Whether the app is foregrounded; hidden tabs must not decode frames.
-  bool _appResumed = true;
+  bool _isVisible = true;
+  bool _tickerModeEnabled = true;
+  bool _clockRetained = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _load();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tickerModeEnabled = TickerMode.valuesOf(context).enabled;
+    _ensureAtlasForCurrentMetrics();
+    _syncClockActivity();
   }
 
   @override
   void didUpdateWidget(AnimatedEmojiImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.codepoint != widget.codepoint) _load();
+    if (oldWidget.codepoint != widget.codepoint ||
+        oldWidget.fontSize != widget.fontSize) {
+      _ensureAtlasForCurrentMetrics();
+    }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _loadGeneration++;
+    _setClockRetained(false);
+    _atlasHandle?.release();
+    _atlasHandle = null;
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final playing = switch (state) {
-      AppLifecycleState.paused ||
-      AppLifecycleState.hidden ||
-      AppLifecycleState.detached => false,
-      _ => true,
-    };
-    if (playing != _appResumed && mounted) {
-      setState(() => _appResumed = playing);
-    }
+  int _targetRasterSize() {
+    final devicePixelRatio = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 1;
+    final logicalSize = widget.fontSize * 1.3;
+    return animatedEmojiAtlasRasterSizeFor(logicalSize * devicePixelRatio);
   }
 
-  /// Pauses frame decoding while the emoji is scrolled out of the viewport
-  /// and resumes when it comes back. Only transitions trigger rebuilds.
-  void _onVisibilityChanged(VisibilityInfo info) {
-    final visible = info.visibleFraction > 0;
-    if (visible != _isVisible && mounted) {
-      setState(() => _isVisible = visible);
-    }
-  }
-
-  void _load() {
-    final codepoint = widget.codepoint;
-
-    final cached = _compositions[codepoint];
-    if (cached != null) {
-      _composition = cached;
+  void _ensureAtlasForCurrentMetrics() {
+    final rasterSize = _targetRasterSize();
+    if (_requestedCodepoint == widget.codepoint &&
+        _requestedRasterSize == rasterSize) {
       return;
     }
 
-    _composition = null;
-    (_pending[codepoint] ??= _resolve(codepoint)).then((composition) {
-      if (composition == null || !mounted || widget.codepoint != codepoint) {
-        return;
-      }
-      setState(() => _composition = composition);
-    });
+    _requestedCodepoint = widget.codepoint;
+    _requestedRasterSize = rasterSize;
+    final generation = ++_loadGeneration;
+
+    _setClockRetained(false);
+    _atlasHandle?.release();
+    _atlasHandle = null;
+
+    AnimatedEmojiAtlasPool.instance
+        .acquire(
+          codepoint: widget.codepoint,
+          rasterSize: rasterSize,
+          assetPath: animatedEmojiAssetPath(widget.codepoint),
+          networkUri: animatedEmojiUrl(widget.codepoint),
+        )
+        .then((handle) {
+          if (!mounted || generation != _loadGeneration) {
+            handle?.release();
+            return;
+          }
+          setState(() => _atlasHandle = handle);
+          _syncClockActivity();
+        });
   }
 
-  static Future<dynamic> _resolve(String codepoint) async {
-    try {
-      // The renderer stays out of the web startup bundle; animated emoji are
-      // opt-in and usually render as the plain glyph until first use.
-      await lottie.loadLibrary();
-      final composition =
-          await _fromAsset(codepoint) ?? await _fromNetwork(codepoint);
-      if (composition != null) _compositions[codepoint] = composition;
-      return composition;
-    } catch (e, s) {
-      Logs().d('Unable to load animated emoji $codepoint', e, s);
-      return null;
-    } finally {
-      _pending.remove(codepoint);
-    }
+  void _onVisibilityChanged(VisibilityInfo info) {
+    final visible = info.visibleFraction > 0;
+    if (visible == _isVisible || !mounted) return;
+    setState(() => _isVisible = visible);
+    _syncClockActivity();
   }
 
-  /// The animations are downloaded into the bundle at build time.
-  static Future<dynamic> _fromAsset(String codepoint) async {
-    try {
-      final data = await rootBundle.load(animatedEmojiAssetPath(codepoint));
-      return await lottie.LottieComposition.fromByteData(data);
-    } catch (_) {
-      // Not bundled, e.g. because the download step was skipped.
-      return null;
-    }
+  void _syncClockActivity() {
+    final shouldRetain =
+        _atlasHandle != null && _isVisible && _tickerModeEnabled;
+    _setClockRetained(shouldRetain);
   }
 
-  static Future<dynamic> _fromNetwork(String codepoint) async {
-    final url = animatedEmojiUrl(codepoint).toString();
-    final Uint8List bytes;
-    if (kIsWeb) {
-      // No file system on web, but the browser cache already persists the
-      // response for us.
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode != 200) {
-        throw Exception('HTTP ${response.statusCode}');
-      }
-      bytes = response.bodyBytes;
+  void _setClockRetained(bool retained) {
+    if (_clockRetained == retained) return;
+    _clockRetained = retained;
+    if (retained) {
+      AnimatedEmojiClock.instance.retain();
     } else {
-      final file = await DefaultCacheManager().getSingleFile(url);
-      bytes = await file.readAsBytes();
+      AnimatedEmojiClock.instance.release();
     }
-    return lottie.LottieComposition.fromBytes(bytes);
   }
+
+  TextStyle get _fallbackStyle =>
+      (widget.style ?? const TextStyle()).copyWith(fontSize: widget.fontSize);
 
   @override
   Widget build(BuildContext context) {
-    final composition = _composition;
-    if (composition == null) {
-      return Text(widget.emoji, style: widget.style);
+    final handle = _atlasHandle;
+    if (handle == null) {
+      return Text(widget.emoji, style: _fallbackStyle);
     }
 
-    // Emoji glyphs are drawn slightly larger than the font size.
     final size = widget.fontSize * 1.3;
+    final playing = _isVisible && _tickerModeEnabled;
 
     return VisibilityDetector(
       key: _visibilityDetectorKey,
       onVisibilityChanged: _onVisibilityChanged,
-      child: lottie.Lottie(
-        composition: composition,
-        width: size,
-        height: size,
-        // Emoji are tiny and repeat a lot, which is exactly the case a render
-        // cache is meant for: every frame is rasterized/recorded once and reused.
-        //
-        // The raster cache keys frames by their on-screen size, which it derives
-        // from `RenderBox.localToGlobal` × device pixel ratio. For these inline
-        // emoji (WidgetSpan children) that size is non-finite on the Web engine,
-        // and dart2wasm throws `Infinity or NaN toInt` while building the cache
-        // key. The drawing-commands cache keys on `Size.zero` instead, so it is
-        // safe on Web while still sparing the per-frame composition walk.
-        renderCache: PlatformInfos.isWeb
-            ? lottie.RenderCache.drawingCommands
-            : lottie.RenderCache.raster,
-        // Off-screen or backgrounded emoji keep their last painted frame
-        // instead of burning CPU on invisible animation frames.
-        animate: _isVisible && _appResumed,
+      child: Semantics(
+        label: widget.emoji,
+        image: true,
+        child: SizedBox.square(
+          dimension: size,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _AnimatedEmojiAtlasPainter(
+                atlas: handle.atlas,
+                clock: AnimatedEmojiClock.instance,
+                playing: playing,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+}
+
+class _AnimatedEmojiAtlasPainter extends CustomPainter {
+  final AnimatedEmojiAtlas atlas;
+  final AnimatedEmojiClock clock;
+  final bool playing;
+
+  _AnimatedEmojiAtlasPainter({
+    required this.atlas,
+    required this.clock,
+    required this.playing,
+  }) : super(repaint: playing ? clock : null);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frame = atlas.frameIndexFor(clock.elapsed);
+    final paint = Paint()..filterQuality = ui.FilterQuality.low;
+    canvas.drawImageRect(
+      atlas.image,
+      atlas.sourceRect(frame),
+      Offset.zero & size,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_AnimatedEmojiAtlasPainter oldDelegate) =>
+      oldDelegate.atlas != atlas || oldDelegate.playing != playing;
 }
