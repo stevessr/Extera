@@ -14,6 +14,12 @@ const int animatedEmojiAtlasMaxFrames = 90;
 /// Approximate GPU-memory budget for cached sprite atlases.
 const int animatedEmojiAtlasCacheBytes = 32 * 1024 * 1024;
 
+/// Maximum number of parsed Lottie compositions retained in memory.
+///
+/// Parsed compositions are much cheaper than raster atlases, but keeping them
+/// forever would still allow long-running chat sessions to grow without bound.
+const int animatedEmojiCompositionCacheEntries = 64;
+
 /// Physical-pixel tile sizes used for atlases. Keeping a few buckets makes
 /// identical emoji at normal chat sizes share the same texture.
 const List<int> animatedEmojiAtlasRasterBuckets = [48, 64, 96, 128, 192];
