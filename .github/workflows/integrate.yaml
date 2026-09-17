@@ -199,6 +199,8 @@ jobs:
     if: ${{ needs.changes.outputs.ios == 'true' && vars.ENABLE_MACOS_RUNNER == 'true' }}
     runs-on: macos-15
     steps:
+      - uses: actions/checkout@v5
+
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
