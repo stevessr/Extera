@@ -353,21 +353,28 @@ class _PresenceTimeInfoState extends State<_PresenceTimeInfo> {
     if (since != null && until != null) {
       final total = until - since;
       final pos = (_now - since).clamp(0, total);
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LinearProgressIndicator(
-            minHeight: 6,
-            trackGap: 4,
-            value: total > 0 ? pos / total : 1.0,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${_formatDuration(pos)} / ${_formatDuration(total)}',
-            style: theme.textTheme.bodySmall,
-          ),
-        ],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return ConstrainedBox(
+            constraints: constraints,
+            child: Row(
+              mainAxisSize: .min,
+              crossAxisAlignment: .center,
+              spacing: 8,
+              children: [
+                Text(_formatDuration(pos), style: theme.textTheme.bodySmall),
+                Expanded(
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    trackGap: 4,
+                    value: total > 0 ? pos / total : 1.0,
+                  ),
+                ),
+                Text(_formatDuration(total), style: theme.textTheme.bodySmall),
+              ],
+            ),
+          );
+        },
       );
     }
     if (since != null) {
