@@ -14,32 +14,50 @@ import 'package:extera_next/widgets/future_loading_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
 
-class RichPresenceContent extends StatelessWidget {
+class RichPresenceContent extends StatefulWidget {
   final List<RichPresenceEntry> presences;
   final bool noBackground;
   final bool noPadding;
+  final bool single;
 
   const RichPresenceContent({
     required this.presences,
     this.noBackground = false,
     this.noPadding = false,
+    this.single = false,
     super.key,
   });
 
   @override
+  State<StatefulWidget> createState() => _RichPresenceContentState();
+}
+
+class _RichPresenceContentState extends State<RichPresenceContent> {
+  bool minimized = true;
+
+  @override
   Widget build(BuildContext context) {
-    if (presences.isEmpty) return const SizedBox.shrink();
+    if (widget.presences.isEmpty) return const SizedBox.shrink();
+    final presences = widget.presences.take(minimized ? 1 : 4);
     return Column(
       mainAxisSize: MainAxisSize.min,
+      spacing: 8,
       children: [
-        for (final entry in presences) ...[
+        for (final entry in presences)
           _PresenceCard(
             entry: entry,
-            noBackground: noBackground,
-            noPadding: noPadding,
+            noBackground: widget.noBackground,
+            noPadding: widget.noPadding,
           ),
-          const SizedBox(height: 8),
-        ],
+        if (widget.presences.length > 1 && !widget.single && minimized)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                minimized = false;
+              });
+            },
+            child: Text(L10n.of(context).loadMore),
+          ),
       ],
     );
   }
@@ -339,7 +357,11 @@ class _PresenceTimeInfoState extends State<_PresenceTimeInfo> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LinearProgressIndicator(value: total > 0 ? pos / total : 1.0),
+          LinearProgressIndicator(
+            minHeight: 6,
+            trackGap: 4,
+            value: total > 0 ? pos / total : 1.0,
+          ),
           const SizedBox(height: 4),
           Text(
             '${_formatDuration(pos)} / ${_formatDuration(total)}',

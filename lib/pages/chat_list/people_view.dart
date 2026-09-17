@@ -82,6 +82,7 @@ class _PeopleViewState extends State<PeopleView> {
             presences: RichPresenceEntry.parseList(
               profile?.additionalProperties,
             ),
+            single: true,
             noBackground: true,
           ),
         ],

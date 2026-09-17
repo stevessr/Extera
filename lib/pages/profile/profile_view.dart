@@ -402,6 +402,7 @@ class ProfileView extends StatelessWidget {
               padding: const .symmetric(horizontal: 8),
               child: Column(
                 mainAxisSize: .max,
+                spacing: 8,
                 children: [
                   if (controller.richPresences?.isNotEmpty ?? false)
                     RichPresenceContent(presences: controller.richPresences!),
