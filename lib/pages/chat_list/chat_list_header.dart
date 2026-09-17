@@ -213,24 +213,24 @@ class _ChatListHeaderDelegate extends SliverPersistentHeaderDelegate {
                                             ),
                                           )
                                   : Container(
-                                      margin: const EdgeInsets.all(8),
-                                      width: 8,
-                                      height: 8,
-                                      child: Center(
-                                        child:
-                                            CircularProgressIndicator.adaptive(
-                                              constraints: const .tightFor(
-                                                width: 24,
-                                                height: 32,
-                                              ),
-                                              strokeWidth: 2,
-                                              value: status.progress,
-                                              valueColor: status.error != null
-                                                  ? AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(theme.colorScheme.error)
-                                                  : null,
+                                      margin: const EdgeInsets.all(2),
+                                      child: SizedBox.square(
+                                        dimension: 24,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            constraints: const .tightFor(
+                                              width: 24,
+                                              height: 24,
                                             ),
+                                            strokeWidth: 2,
+                                            value: status.progress,
+                                            valueColor: status.error != null
+                                                ? AlwaysStoppedAnimation<Color>(
+                                                    theme.colorScheme.error,
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
                                       ),
                                     ),
                               suffixIcon:
