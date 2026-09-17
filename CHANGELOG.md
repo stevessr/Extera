@@ -1,3 +1,10 @@
+## Extera 26.5.3
+- View MSC4544 rich presences.
+- Remove support for MSC4320 rich presences.
+- Add call indicators in chat list.
+- Show "Include attribution" in share dialog only when needed.
+- Fix "Null check on null value" error when forwarding multiple messages.
+
 ## Extera 26.5.21
 - Hotfix: localization delegates.
 
