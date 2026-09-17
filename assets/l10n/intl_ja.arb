@@ -32,7 +32,7 @@
 	"cleanExif": "EXIFを削除",
 	"cleanExifDescription": "送信前に画像からEXIFメタデータ（カメラモデル、位置情報、時刻）を削除します。",
 	"@@locale": "ja",
-	"@@last_modified": "2026-09-17T09:19:47.502Z",
+	"@@last_modified": "2026-09-17T22:57:09.809Z",
 	"doNotSendIfCantClean": "クリーンできない画像を送信しない",
 	"doNotSendIfCantCleanDescription": "EXIFメタデータを削除できない場合、画像を送信しません",
 	"repeatPassword": "パスワードを再入力",
@@ -4162,5 +4162,31 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"messageFontSize": "メッセージのフォントサイズ",
+	"richPresenceElapsed": "{duration} 経過",
+	"richPresenceRemaining": "残り {duration}",
+	"richPresenceOpenIdWarning": "このリンクにアクセスすると、ホームサーバーにOpenIDトークンを要求し、それを外部のウェブサイトに渡します。これにより、あなたのIPアドレスやブラウザのメタデータが公開され、ウェブサイトがこのアクセスをあなたのMatrixアカウントと紐付ける可能性があります。OpenIDトークンはアカウントの所有確認にのみ使用され、第三者があなたのチャットにアクセスすることはありません。",
+	"changeYourBanner": "バナーを変更",
+	"removeYourBanner": "バナーを削除",
+	"pleaseEnterCountryCode": "国コードを入力してください。",
+	"verificationCodeSent2": "認証コードがお客様の電話番号に送信されました。以下に入力してください。",
+	"appBarAppearance": "上部バー",
+	"appBarAppName": "アプリ名",
+	"appBarAccountName": "アカウント名",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

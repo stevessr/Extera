@@ -1,6 +1,6 @@
 {
 	"@@locale": "de",
-	"@@last_modified": "2026-09-17T09:18:30.198Z",
+	"@@last_modified": "2026-09-17T22:58:56.926Z",
 	"alwaysUse24HourFormat": "true",
 	"@alwaysUse24HourFormat": {
 		"description": "Set to true to always display time of day in 24 hour format."
@@ -4281,5 +4281,31 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"messageFontSize": "Schriftgröße der Nachrichten",
+	"richPresenceElapsed": "Verstrichen: {duration}",
+	"richPresenceRemaining": "Verbleibend: {duration}",
+	"richPresenceOpenIdWarning": "Wenn Sie diesem Link folgen, wird ein OpenID-Token von Ihrem Homeserver angefordert und an eine externe Website weitergegeben. Dies kann Ihre IP-Adresse und Browser-Metadaten preisgeben und es der Website ermöglichen, diesen Besuch Ihrem Matrix-Konto zuzuordnen. Das OpenID-Token wird nur zum Nachweis des Kontobesitzes verwendet: Dritte erhalten keinen Zugriff auf Ihre Chats.",
+	"changeYourBanner": "Banner ändern",
+	"removeYourBanner": "Banner entfernen",
+	"pleaseEnterCountryCode": "Bitte geben Sie den Ländercode ein.",
+	"verificationCodeSent2": "Ein Bestätigungscode wurde an Ihre Telefonnummer gesendet. Geben Sie ihn unten ein.",
+	"appBarAppearance": "Obere Leiste",
+	"appBarAppName": "App",
+	"appBarAccountName": "Konto",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

@@ -128,7 +128,7 @@
 	"chatBackup": "Copia de seguridad de claves",
 	"pinCode": "Código PIN",
 	"@@locale": "es",
-	"@@last_modified": "2026-09-17T09:19:25.128Z",
+	"@@last_modified": "2026-09-17T22:57:36.447Z",
 	"chatBackupDescription": "La copia de seguridad de las claves está protegida con una clave de recuperación. Guárdala en un lugar seguro.",
 	"chatDetails": "Configuración del chat",
 	"chatHasBeenAddedToThisSpace": "El chat ha sido añadido a este espacio",
@@ -4162,5 +4162,31 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"messageFontSize": "Tamaño de la fuente de los mensajes",
+	"richPresenceElapsed": "Transcurrido {duration}",
+	"richPresenceRemaining": "Queda {duration}",
+	"richPresenceOpenIdWarning": "Al abrir este enlace, se solicitará un token OpenID a tu servidor de inicio y se le entregará al sitio web externo. Esto puede revelar tu dirección IP y los metadatos de tu navegador, además de permitir que el sitio web asocie esta visita con tu cuenta de Matrix. El token OpenID se usa únicamente para confirmar que eres el propietario de la cuenta: los terceros no tendrán acceso a tus chats.",
+	"changeYourBanner": "Cambiar el banner",
+	"removeYourBanner": "Quitar el banner",
+	"pleaseEnterCountryCode": "Introduce el código de país.",
+	"verificationCodeSent2": "Se ha enviado un código de verificación a tu número de teléfono. Introdúcelo a continuación.",
+	"appBarAppearance": "Barra superior",
+	"appBarAppName": "Aplicación",
+	"appBarAccountName": "Cuenta",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

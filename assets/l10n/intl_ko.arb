@@ -1,6 +1,6 @@
 {
 	"@@locale": "ko",
-	"@@last_modified": "2026-09-17T09:25:05.355Z",
+	"@@last_modified": "2026-09-17T22:56:20.466Z",
 	"about": "소개",
 	"@about": {
 		"type": "String",
@@ -4259,5 +4259,27 @@
 	"bubbleAdaptiveSide": "적응형",
 	"bubbleBothSided": "양쪽에 표시",
 	"pollResultsAreHidden": "설문 결과는 종료 후 공개됩니다",
-	"sendMedia": "미디어 보내기"
+	"sendMedia": "미디어 보내기",
+	"messageFontSize": "메시지 글꼴 크기",
+	"richPresenceElapsed": "{duration} 경과",
+	"richPresenceRemaining": "{duration} 남음",
+	"richPresenceOpenIdWarning": "이 링크를 열면 홈 서버에 OpenID 토큰을 요청한 후 외부 웹사이트에 전달합니다. 이로 인해 IP 주소와 브라우저 메타데이터가 노출될 수 있으며, 해당 웹사이트가 이 방문을 사용자의 Matrix 계정과 연결할 수 있습니다. OpenID 토큰은 계정 소유 확인 용도로만 사용되며, 제3자가 사용자의 채팅에 접근할 수는 없습니다.",
+	"appBarAppearance": "상단 바",
+	"appBarAppName": "앱",
+	"appBarAccountName": "계정",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

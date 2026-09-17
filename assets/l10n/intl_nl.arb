@@ -1,6 +1,6 @@
 {
 	"@@locale": "nl",
-	"@@last_modified": "2026-09-17T09:19:02.966Z",
+	"@@last_modified": "2026-09-17T22:58:35.942Z",
 	"@choicesSelected": {
 		"type": "String",
 		"placeholders": {
@@ -4162,5 +4162,31 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"messageFontSize": "Lettergrootte van berichten",
+	"richPresenceElapsed": "Verstreken: {duration}",
+	"richPresenceRemaining": "Resterend: {duration}",
+	"richPresenceOpenIdWarning": "Door deze link te openen, wordt er een OpenID-token opgevraagd bij je homeserver en doorgegeven aan een externe website. Dit kan je IP-adres en browsermetadata blootstellen en stelt de website in staat dit bezoek te koppelen aan je Matrix-account. Het OpenID-token wordt alleen gebruikt om het eigendom van het account te bevestigen: derden krijgen geen toegang tot je chats.",
+	"changeYourBanner": "Banner wijzigen",
+	"removeYourBanner": "Banner verwijderen",
+	"pleaseEnterCountryCode": "Voer de landcode in.",
+	"verificationCodeSent2": "De verificatiecode is naar je telefoonnummer verzonden. Voer de code hieronder in.",
+	"appBarAppearance": "Bovenste balk",
+	"appBarAppName": "App",
+	"appBarAccountName": "Account",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }
