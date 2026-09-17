@@ -118,6 +118,7 @@ dependencies:
   flutter_material_design_icons: ^3.1.0+7447
   open_file: ^4.0.0
   phone_numbers_parser: ^9.0.21
+  cupertino_ui: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:android_system_font/android_system_font.dart';
@@ -119,7 +120,11 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
               twemoji,
             ),
             scrollBehavior: CustomScrollBehavior(),
-            localizationsDelegates: L10n.localizationsDelegates,
+            localizationsDelegates: [
+              ...L10n.localizationsDelegates,
+              ...GlobalMaterialLocalizations.delegates,
+              ...GlobalCupertinoLocalizations.delegates,
+            ],
             supportedLocales: L10n.supportedLocales,
             routerConfig: FluffyChatApp.router,
             builder: (context, child) => AppLockWidget(
