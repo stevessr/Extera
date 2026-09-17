@@ -510,6 +510,11 @@ class _ReactionsMenuBody extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 4,
       children: [
+        if (reactionEntry != null && reactionEntry!.key.length > 10)
+          Align(
+            alignment: .topLeft,
+            child: Text(reactionEntry!.key, style: theme.textTheme.labelMedium),
+          ),
         Material(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           color: theme.colorScheme.surfaceContainerHigh,
@@ -583,23 +588,26 @@ class _ReactionsMenuBody extends StatelessWidget {
         ),
         if (chatController?.room.canSendDefaultMessages == true ||
             chatController?.room.canRedact == true)
-          Align(
-            alignment: .topLeft,
-            child: Row(
-              spacing: 4,
-              mainAxisSize: .min,
-              children: [
-                Icon(Icons.info_outline, size: 18),
-                Text(
-                  <String>[
-                    if (chatController?.room.canSendDefaultMessages == true)
-                      L10n.of(context).reactionUiTipReply,
-                    if (chatController?.room.canRedact == true)
-                      L10n.of(context).reactionUiTipRedact,
-                  ].join(' '), // TODO write it better
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
+          Padding(
+            padding: const .symmetric(vertical: 4),
+            child: Align(
+              alignment: .topLeft,
+              child: Row(
+                spacing: 4,
+                mainAxisSize: .min,
+                children: [
+                  Icon(Icons.info_outline, size: 18),
+                  Text(
+                    <String>[
+                      if (chatController?.room.canSendDefaultMessages == true)
+                        L10n.of(context).reactionUiTipReply,
+                      if (chatController?.room.canRedact == true)
+                        L10n.of(context).reactionUiTipRedact,
+                    ].join(' '), // TODO write it better
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
             ),
           ),
       ],
