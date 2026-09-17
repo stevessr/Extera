@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:extera_next/pages/chat_list/chat_call_indicator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart' as sdk;
@@ -899,6 +900,7 @@ class _SpaceViewState extends State<SpaceView> {
                                             : null,
                                       ),
                                 title: Row(
+                                  spacing: 8,
                                   children: [
                                     Expanded(
                                       child: Opacity(
@@ -919,6 +921,8 @@ class _SpaceViewState extends State<SpaceView> {
                                         ),
                                       ),
                                     ),
+                                    if (joinedRoom != null)
+                                      ChatCallIndicator(room: joinedRoom),
                                     if (joinedRoom != null)
                                       UnreadBubble(room: joinedRoom)
                                     else
