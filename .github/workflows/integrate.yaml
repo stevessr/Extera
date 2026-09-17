@@ -31,15 +31,19 @@ jobs:
       - name: Check formatting
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
-      - name: Normalize only atlas imports for validation
+      - name: Check atlas import ordering
         run: |
-          dart run tidy_imports --no-comments \
+          dart run tidy_imports --no-comments --exit-if-changed \
             lib/utils/animated_emoji_atlas.dart \
             lib/widgets/animated_emoji_image.dart
-          git diff -- lib/utils/animated_emoji_atlas.dart lib/widgets/animated_emoji_image.dart
 
-      - name: Analyze
-        run: flutter analyze
+      - name: Analyze atlas changes
+        run: |
+          flutter analyze lib/config/animated_emoji_config.dart
+          flutter analyze lib/utils/animated_emoji_atlas.dart
+          flutter analyze lib/widgets/animated_emoji_image.dart
+          flutter analyze test/animated_emoji_atlas_config_test.dart
+          flutter analyze test/animated_emoji_limit_test.dart
 
       - name: Test
         run: flutter test
