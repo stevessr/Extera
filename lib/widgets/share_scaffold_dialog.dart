@@ -210,22 +210,27 @@ class _ShareScaffoldDialogState extends State<ShareScaffoldDialog> {
                       mainAxisSize: .min,
                       spacing: 4,
                       children: [
-                        Row(
-                          mainAxisSize: .max,
-                          children: [
-                            Expanded(
-                              child: Text(L10n.of(context).includeAttribution),
-                            ),
-                            Switch(
-                              value: includeAttribution,
-                              onChanged: (value) {
-                                setState(() {
-                                  includeAttribution = value;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
+                        if (widget.items.any(
+                          (item) => item.attribution != null,
+                        ))
+                          Row(
+                            mainAxisSize: .max,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  L10n.of(context).includeAttribution,
+                                ),
+                              ),
+                              Switch(
+                                value: includeAttribution,
+                                onChanged: (value) {
+                                  setState(() {
+                                    includeAttribution = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         Row(
                           mainAxisSize: .max,
                           children: [
