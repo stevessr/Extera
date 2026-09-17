@@ -4236,5 +4236,30 @@
     "bubbleAdaptiveSide": "Адаптивное",
     "bubbleBothSided": "С обеих сторон",
     "pollResultsAreHidden": "Результаты опроса будут доступны после его окончания",
-    "sendMedia": "Отправить медиа"
+    "sendMedia": "Отправить медиа",
+    "messageFontSize": "Размер шрифта сообщений",
+    "richPresenceElapsed": "Прошло {duration}",
+    "@richPresenceElapsed": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceRemaining": "Осталось {duration}",
+    "@richPresenceRemaining": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceOpenIdWarning": "Переход по этой ссылке запросит токен OpenID у Вашего домашнего сервера и передаст внешнему веб-сайту. Это может раскрыть ваш IP-адрес и метаданные браузера, а также позволит веб-сайту сопоставить это посещение с Вашим аккаунтом Matrix. Токен OpenID используется только для подтверждения владения аккаунтом: третьи лица не получат доступ к Вашим чатам.",
+    "changeYourBanner": "Изменить баннер",
+    "removeYourBanner": "Убрать баннер",
+    "pleaseEnterCountryCode": "Введите код страны.",
+    "verificationCodeSent2": "Код подтверждения был отправлен на Ваш номер телефона. Введите его ниже.",
+    "appBarAppearance": "Верхняя панель",
+    "appBarAppName": "Приложение",
+    "appBarAccountName": "Аккаунт"
 }
