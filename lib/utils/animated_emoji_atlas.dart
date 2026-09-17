@@ -79,10 +79,11 @@ class _AtlasCacheEntry {
 
 /// Process-wide sprite-atlas cache for animated emoji.
 ///
-/// A Lottie composition is parsed once per codepoint, and each codepoint +
-/// physical-size bucket is rasterized once into a single texture containing all
-/// sampled frames. Every visible instance then performs only one drawImageRect
-/// per animation frame.
+/// Parsed Lottie compositions and raster atlases are both shared. Atlases are
+/// keyed by codepoint + physical-size bucket, while parsed compositions use a
+/// separate bounded LRU so long-running sessions cannot grow without limit.
+/// Every visible instance then performs only one drawImageRect per animation
+/// frame.
 class AnimatedEmojiAtlasPool {
   static final AnimatedEmojiAtlasPool instance = AnimatedEmojiAtlasPool._();
 
@@ -161,8 +162,11 @@ class AnimatedEmojiAtlasPool {
     required String assetPath,
     required Uri networkUri,
   }) async {
-    final cached = _compositions[codepoint];
-    if (cached != null) return cached;
+    final cached = _compositions.remove(codepoint);
+    if (cached != null) {
+      _compositions[codepoint] = cached;
+      return cached;
+    }
 
     final existing = _compositionPending[codepoint];
     if (existing != null) return existing;
@@ -171,12 +175,21 @@ class AnimatedEmojiAtlasPool {
     _compositionPending[codepoint] = future;
     try {
       final composition = await future;
-      if (composition != null) _compositions[codepoint] = composition;
+      if (composition != null) {
+        _compositions[codepoint] = composition;
+        _evictCompositionsIfNeeded();
+      }
       return composition;
     } finally {
       if (identical(_compositionPending[codepoint], future)) {
         _compositionPending.remove(codepoint);
       }
+    }
+  }
+
+  void _evictCompositionsIfNeeded() {
+    while (_compositions.length > animatedEmojiCompositionCacheEntries) {
+      _compositions.remove(_compositions.keys.first);
     }
   }
 
