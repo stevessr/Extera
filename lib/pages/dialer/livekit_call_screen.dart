@@ -27,10 +27,13 @@ class LiveKitCallScreen extends StatefulWidget {
   final String roomId;
   final List<String> liveKitServiceUrls;
   final String? callStateKey;
+  final bool noNotification;
+
   const LiveKitCallScreen({
     required this.roomId,
     required this.liveKitServiceUrls,
     this.callStateKey,
+    this.noNotification = false,
     super.key,
   });
 
@@ -498,7 +501,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
           // create receiver frame cryptors before any key material exists,
           // leaving them pinned at key index 0 with no way to recover once
           // the peer rotates to a higher index.
-          await _publishCallMember();
+          await _publishCallMember(notify: !widget.noNotification);
           membershipPublished = true;
           await _createKeyAndShare(room);
 
@@ -1540,7 +1543,11 @@ class _CallControls extends StatelessWidget {
   }
 }
 
-Future<void> openLiveKitCall(BuildContext context, String roomId) async {
+Future<void> openLiveKitCall(
+  BuildContext context,
+  String roomId, {
+  bool noNotification = false,
+}) async {
   final manager = LiveKitCallManager();
 
   // Check if we are already in THIS call. If so, just push the UI, don't send Matrix state events.
@@ -1551,6 +1558,7 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
           roomId: roomId,
           liveKitServiceUrls: const [],
           callStateKey: manager.callStateKey,
+          noNotification: noNotification,
         ),
       );
       manager.startCall(roomId, route);

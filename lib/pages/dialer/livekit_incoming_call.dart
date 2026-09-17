@@ -183,7 +183,7 @@ class LiveKitIncomingCallManager {
       final nav = Navigator.of(context, rootNavigator: false);
       if (nav.canPop()) nav.pop();
     }
-    unawaited(openLiveKitCall(context, roomId));
+    unawaited(openLiveKitCall(context, roomId, noNotification: true));
   }
 
   void _dismiss() {
