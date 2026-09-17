@@ -28,10 +28,7 @@ int animatedEmojiAtlasRasterSizeFor(double physicalPixels) {
   return animatedEmojiAtlasRasterBuckets.last;
 }
 
-int animatedEmojiAtlasFrameCountFor(
-  Duration duration,
-  double compositionFps,
-) {
+int animatedEmojiAtlasFrameCountFor(Duration duration, double compositionFps) {
   if (duration <= Duration.zero) return 1;
   final safeFps = compositionFps.isFinite && compositionFps > 0
       ? compositionFps

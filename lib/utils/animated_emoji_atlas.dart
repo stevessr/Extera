@@ -324,8 +324,7 @@ class AnimatedEmojiClock extends ChangeNotifier with WidgetsBindingObserver {
   void _onTick(Duration _) {
     final now = _watch.elapsed;
     final minimumInterval = Duration(
-      microseconds:
-          Duration.microsecondsPerSecond ~/ animatedEmojiAtlasMaxFps,
+      microseconds: Duration.microsecondsPerSecond ~/ animatedEmojiAtlasMaxFps,
     );
     if (now - _lastNotification < minimumInterval) return;
     _lastNotification = now;

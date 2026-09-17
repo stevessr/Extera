@@ -14,23 +14,14 @@ void main() {
 
     test('caps sampled animation frame rate and frame count', () {
       expect(
-        animatedEmojiAtlasFrameCountFor(
-          const Duration(seconds: 1),
-          60,
-        ),
+        animatedEmojiAtlasFrameCountFor(const Duration(seconds: 1), 60),
         30,
       );
       expect(
-        animatedEmojiAtlasFrameCountFor(
-          const Duration(seconds: 10),
-          60,
-        ),
+        animatedEmojiAtlasFrameCountFor(const Duration(seconds: 10), 60),
         animatedEmojiAtlasMaxFrames,
       );
-      expect(
-        animatedEmojiAtlasFrameCountFor(Duration.zero, 30),
-        1,
-      );
+      expect(animatedEmojiAtlasFrameCountFor(Duration.zero, 30), 1);
     });
   });
 }
