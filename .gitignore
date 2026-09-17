@@ -78,3 +78,5 @@ lib/generated
 /web/native_executor.js
 /web/native_executor.js.deps
 /web/native_executor.js.map
+
+/untranslated_messages.txt
