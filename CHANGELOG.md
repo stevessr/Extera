@@ -1,3 +1,6 @@
+## Extera 26.5.21
+- Hotfix: localization delegates.
+
 ## Extera 26.5.2
 - Feature to choose message bubble side (single/adaptive/both).
 - Preserve input focus state when opening message menu. (@meow)
