@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'package:extera_next/config/animated_emoji_config.dart';
 import 'package:extera_next/config/animated_emoji_data.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/widgets/animated_emoji_image.dart';
@@ -48,16 +49,68 @@ String? animatedEmojiCodepoint(String emoji) {
   return _byStrippedCodepoint[_stripVariationSelectors(key)];
 }
 
+bool _addAnimatedEmojiCount(String text, List<int> count) {
+  for (final grapheme in text.characters) {
+    if (animatedEmojiCodepoint(grapheme) == null) continue;
+    count[0]++;
+    if (count[0] > maxAnimatedEmojiPerMessage) return false;
+  }
+  return true;
+}
+
+bool _textFitsAnimatedEmojiLimit(String text) {
+  final count = <int>[0];
+  return _addAnimatedEmojiCount(text, count);
+}
+
+bool _spansFitAnimatedEmojiLimit(List<InlineSpan> spans) {
+  final count = <int>[0];
+
+  bool visit(InlineSpan span) {
+    if (span is! TextSpan) return true;
+
+    final text = span.text;
+    if (text != null &&
+        text.isNotEmpty &&
+        !_addAnimatedEmojiCount(text, count)) {
+      return false;
+    }
+
+    final children = span.children;
+    if (children != null) {
+      for (final child in children) {
+        if (!visit(child)) return false;
+      }
+    }
+    return true;
+  }
+
+  for (final span in spans) {
+    if (!visit(span)) return false;
+  }
+  return true;
+}
+
+/// Whether [text] is allowed to instantiate animated emoji players.
+///
+/// The limit is intentionally application-configurable rather than a user
+/// preference. Once a text run contains more than
+/// [maxAnimatedEmojiPerMessage] playable emoji, all emoji in that run stay
+/// static to avoid animation-heavy messages causing frame drops.
+bool shouldAnimateEmojiText(String text) =>
+    animatedEmojiEnabled && _textFitsAnimatedEmojiLimit(text);
+
 /// Splits [text] into plain text spans and animated emoji.
 ///
-/// Emoji without an animation, and every emoji while the setting is off, stay
-/// part of the text so that they keep being rendered by the emoji font.
+/// Emoji without an animation, every emoji while the setting is off, and every
+/// emoji in an over-limit text run stay part of the text so they keep being
+/// rendered by the emoji font.
 List<InlineSpan> buildAnimatedEmojiSpans(
   String text, {
   required double fontSize,
   TextStyle? style,
 }) {
-  if (!animatedEmojiEnabled || text.isEmpty) {
+  if (!shouldAnimateEmojiText(text) || text.isEmpty) {
     return [TextSpan(text: text, style: style)];
   }
 
@@ -100,12 +153,16 @@ List<InlineSpan> buildAnimatedEmojiSpans(
 
 /// Replaces the emoji of every [TextSpan] in [spans] with animated ones.
 ///
-/// Used for span trees that are built elsewhere, e.g. by the linkifier.
+/// Used for span trees that are built elsewhere, e.g. by the linkifier. The
+/// complete tree is counted before rewriting so splitting one message into
+/// multiple spans cannot bypass [maxAnimatedEmojiPerMessage].
 List<InlineSpan> replaceEmojiInSpans(
   List<InlineSpan> spans, {
   required double fontSize,
 }) {
-  if (!animatedEmojiEnabled) return spans;
+  if (!animatedEmojiEnabled || !_spansFitAnimatedEmojiLimit(spans)) {
+    return spans;
+  }
 
   return spans.map((span) => _replaceEmojiInSpan(span, fontSize)).toList();
 }
@@ -191,7 +248,7 @@ class AnimatedEmojiText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!animatedEmojiEnabled) {
+    if (!shouldAnimateEmojiText(text)) {
       return Text(
         text,
         style: style,
