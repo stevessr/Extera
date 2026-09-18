@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
-
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/dialer/livekit_call_screen.dart';
 import 'package:extera_next/pages/profile/profile_source_data_dialog.dart';
 import 'package:extera_next/pages/profile/profile_view.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
@@ -16,7 +16,7 @@ import 'package:extera_next/utils/matrix_sdk_extensions/msc2666_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/user_notes_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/stream_extension.dart';
-import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
+import 'package:extera_next/utils/rich_presence.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -33,13 +33,27 @@ class ProfilePage extends StatefulWidget {
 class ProfileController extends State<ProfilePage> {
   String? about;
   String? tz;
-  Map<String, dynamic>? richPresenceData;
+  List<RichPresenceEntry>? richPresences;
   Map<String, dynamic>? profileData;
   Uri? bannerUrl;
 
   bool isQuerying = false;
 
   late final TextEditingController noteController;
+  Timer? _presenceRefreshTimer;
+
+  void _schedulePresenceRefresh() {
+    _presenceRefreshTimer?.cancel();
+    final entries = richPresences;
+    if (entries == null) return;
+    final nearest = RichPresenceEntry.nearestExpiry(entries);
+    if (nearest == null) return;
+    final delayMs = nearest - DateTime.now().millisecondsSinceEpoch;
+    _presenceRefreshTimer = Timer(
+      Duration(milliseconds: delayMs < 0 ? 0 : delayMs),
+      queryData,
+    );
+  }
 
   Future<void> queryData() async {
     final client = Matrix.of(context).client;
@@ -86,60 +100,14 @@ class ProfileController extends State<ProfilePage> {
       }
     }
 
-    if (profile.additionalProperties.containsKey("com.ip-logger.msc4320.rpc") &&
-        profile.additionalProperties["com.ip-logger.msc4320.rpc"] is Object) {
-      setState(() {
-        richPresenceData =
-            profile.additionalProperties["com.ip-logger.msc4320.rpc"]
-                as Map<String, dynamic>;
-      });
-    }
+    setState(() {
+      richPresences = RichPresenceEntry.parseList(profile.additionalProperties);
+    });
+    _schedulePresenceRefresh();
 
     setState(() {
       isQuerying = false;
     });
-  }
-
-  bool get isRpcMedia {
-    if (richPresenceData == null) return false;
-    if (richPresenceData!['type'] != 'com.ip-logger.msc4320.rpc.media') {
-      return false;
-    }
-    if (richPresenceData!['artist'] is! String ||
-        richPresenceData!['album'] is! String ||
-        richPresenceData!['track'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("cover_art") &&
-        richPresenceData!['cover_art'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("player") &&
-        richPresenceData!['player'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("streaming_link") &&
-        richPresenceData!['streaming_link'] is! String) {
-      return false;
-    }
-    return true;
-  }
-
-  bool get isRpcActivity {
-    if (richPresenceData == null) return false;
-    if (richPresenceData!['type'] != 'com.ip-logger.msc4320.rpc.activity') {
-      return false;
-    }
-    if (!richPresenceData!.containsKey('name')) return false;
-    if (richPresenceData!.containsKey("image") &&
-        richPresenceData!['image'] is! String) {
-      return false;
-    }
-    if (richPresenceData!.containsKey("details") &&
-        richPresenceData!['details'] is! String) {
-      return false;
-    }
-    return true;
   }
 
   List<Room> mutualRooms = [];
@@ -190,6 +158,7 @@ class ProfileController extends State<ProfilePage> {
 
   @override
   void dispose() {
+    _presenceRefreshTimer?.cancel();
     noteController.dispose();
     super.dispose();
   }
@@ -218,55 +187,28 @@ class ProfileController extends State<ProfilePage> {
   }
 
   bool get showCallButton {
-    if (Matrix.of(context).voipPlugin == null) return false;
+    if (!AppSettings.experimentalLiveKit.value) return false;
     final client = Matrix.of(context).client;
     final roomId = client.getDirectChatFromUserId(widget.profile.userId);
     return roomId != null;
   }
 
   void onCallTap() async {
-    // VoIP required Android SDK 21
-    if (PlatformInfos.isAndroid) {
-      DeviceInfoPlugin().androidInfo.then((value) {
-        if (value.version.sdkInt < 21) {
-          Navigator.pop(context);
-          showOkAlertDialog(
-            context: context,
-            title: L10n.of(context).unsupportedAndroidVersion,
-            message: L10n.of(context).unsupportedAndroidVersionLong,
-            okLabel: L10n.of(context).close,
-          );
-        }
-      });
-    }
-    final callType = await showModalActionPopup<CallType>(
+    final confirmed = await showOkCancelAlertDialog(
       context: context,
-      title: L10n.of(context).warning,
-      message: L10n.of(context).videoCallsBetaWarning,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).voiceCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: CallType.kVoice,
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).videoCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: CallType.kVideo,
-        ),
-      ],
+      title: L10n.of(context).placeCall,
+      message: L10n.of(context).elementCallDescription,
+      okLabel: L10n.of(context).continueText,
     );
-    if (callType == null) return;
+    if (confirmed != OkCancelResult.ok) return;
 
     final client = Matrix.of(context).client;
     final roomId = client.getDirectChatFromUserId(widget.profile.userId);
-    final room = client.getRoomById(roomId!);
+    if (roomId == null) return;
+    final room = client.getRoomById(roomId);
     if (room == null) return;
-    final voipPlugin = Matrix.of(context).voipPlugin;
     try {
-      final session = await voipPlugin!.voip.inviteToCall(room, callType);
-      voipPlugin.addCallingOverlay(session.callId, session);
+      await openLiveKitCall(context, roomId);
       context.go('/rooms/$roomId');
     } catch (e) {
       ScaffoldMessenger.of(

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -15,6 +15,7 @@ import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/timezone_init.dart';
+import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/future_loading_dialog.dart';
@@ -275,13 +276,20 @@ class ProfileView extends StatelessWidget {
                                             options: const LinkifyOptions(
                                               humanize: false,
                                             ),
-                                            linkStyle: TextStyle(
-                                              color: theme.colorScheme.primary,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                              decorationColor:
-                                                  theme.colorScheme.primary,
-                                            ),
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                            linkStyle: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                  decorationColor: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                ),
                                             onOpen: (url) => UrlLauncher(
                                               context,
                                               url.url,
@@ -399,10 +407,10 @@ class ProfileView extends StatelessWidget {
               child: Column(
                 mainAxisSize: .max,
                 children: [
-                  if (controller.richPresenceData != null)
-                    RichPresenceContent(
-                      richPresenceData: controller.richPresenceData!,
-                    ),
+                  if (controller.richPresences?.isNotEmpty ?? false) ...[
+                    RichPresenceContent(presences: controller.richPresences!),
+                    const SizedBox(height: 8),
+                  ],
                   Material(
                     clipBehavior: .hardEdge,
                     color: theme.colorScheme.surfaceContainerHigh,

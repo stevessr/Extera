@@ -2,7 +2,7 @@ name: extera_next
 description: Chat with your friends.
 publish_to: none
 # Version schema: <YEAR>.<MAJOR UPDATE>.<MINOR><PATCH>
-version: 26.5.11
+version: 26.5.3
 
 environment:
   sdk: ">=3.11.1 <4.0.0"
@@ -124,6 +124,7 @@ dependencies:
   web: ^1.1.1
   webrtc_interface: ^1.4.0
   webview_flutter: ^4.10.0
+  cupertino_ui: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0

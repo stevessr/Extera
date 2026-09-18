@@ -4,15 +4,14 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:mime/mime.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -187,6 +186,8 @@ class ChatController extends State<ChatPageWithRoom>
   MessageLayout get layout => _layout;
 
   late Client sendingClient;
+
+  bool keyboardWasActive = false;
 
   Timeline? timeline;
 
@@ -736,6 +737,9 @@ class ChatController extends State<ChatPageWithRoom>
     scrollController.addListener(_updateScrollController);
     inputFocus.addListener(_inputFocusListener);
 
+    // Register window metrics observer
+    WidgetsBinding.instance.addObserver(this);
+
     _loadDraft();
     WidgetsBinding.instance.addPostFrameCallback(_shareItems);
     super.initState();
@@ -1059,6 +1063,7 @@ class ChatController extends State<ChatPageWithRoom>
     timeline = null;
     inputFocus.removeListener(_inputFocusListener);
     inputFocus.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     inputBarHeight.dispose();
     scrollController.dispose();
     sendController.dispose();
@@ -1803,17 +1808,19 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void forwardEventsAction({Event? event}) async {
+    if (selectedEvents.isEmpty && event == null) return;
     await showScaffoldDialog(
       context: context,
       builder: (context) => ShareScaffoldDialog(
         items: selectedEvents.isEmpty
             ? [
-                ContentShareItem(
-                  sanitizeContent(
-                    event!.getDisplayEvent(timeline!).content.copy(),
+                if (event != null)
+                  ContentShareItem(
+                    sanitizeContent(
+                      event.getDisplayEvent(timeline!).content.copy(),
+                    ),
+                    attribution: generateAttributionString(event),
                   ),
-                  attribution: generateAttributionString(event),
-                ),
               ]
             : selectedEvents
                   .map(
@@ -2441,6 +2448,19 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
+  void _checkKeyboardChange(FlutterView view) {
+    final isKeyboardActive = view.viewInsets.bottom > 0;
+    if (keyboardWasActive && !isKeyboardActive) inputFocus.unfocus();
+    keyboardWasActive = isKeyboardActive;
+  }
+
+  @override
+  void didChangeMetrics() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+
+    _checkKeyboardChange(view);
+  }
+
   void _openMenu(Event event, Offset? tapPosition) {
     _setScrollAnchorForMenu();
     if (PlatformInfos.isMobile) {
@@ -2674,120 +2694,25 @@ class ChatController extends State<ChatPageWithRoom>
   void showEventInfo([Event? event]) =>
       (event ?? selectedEvents.single).showInfoDialog(context);
 
-  void onPhoneButtonTap() async {
-    // VoIP required Android SDK 21
-    if (PlatformInfos.isAndroid) {
-      DeviceInfoPlugin().androidInfo.then((value) {
-        if (value.version.sdkInt < 21) {
-          Navigator.pop(context);
-          showOkAlertDialog(
-            context: context,
-            title: L10n.of(context).unsupportedAndroidVersion,
-            message: L10n.of(context).unsupportedAndroidVersionLong,
-            okLabel: L10n.of(context).close,
-          );
-        }
-      });
-    }
-    final callType = await showModalActionPopup<CallType>(
-      context: context,
-      title: L10n.of(context).warning,
-      message: L10n.of(context).videoCallsBetaWarning,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).voiceCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: CallType.kVoice,
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).videoCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: CallType.kVideo,
-        ),
-      ],
-    );
-    if (callType == null) return;
-
-    final voipPlugin = Matrix.of(context).voipPlugin;
-    try {
-      final session = await voipPlugin!.voip.inviteToCall(room, callType);
-      voipPlugin.addCallingOverlay(session.callId, session);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-      Logs().e("onPhoneButtonTap", e);
-    }
-  }
-
   void onLiveKitCallButtonTap() async {
-    final callType = await showModalActionPopup<String>(
+    final confirmed = await showOkCancelAlertDialog(
       context: context,
       title: L10n.of(context).placeCall,
-      message: L10n.of(context).chooseCallType,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).elementCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: 'element_call',
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).p2pCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: 'p2p',
-        ),
-      ],
+      message: L10n.of(context).elementCallDescription,
+      okLabel: L10n.of(context).continueText,
     );
-    if (callType == null) return;
+    if (confirmed != OkCancelResult.ok) return;
 
-    if (callType == 'p2p') {
-      // Use traditional P2P call
-      final voipCallType = await showModalActionPopup<CallType>(
-        context: context,
-        title: L10n.of(context).warning,
-        message: L10n.of(context).videoCallsBetaWarning,
-        cancelLabel: L10n.of(context).cancel,
-        actions: [
-          AdaptiveModalAction(
-            label: L10n.of(context).voiceCall,
-            icon: const Icon(Icons.phone_outlined),
-            value: CallType.kVoice,
-          ),
-          AdaptiveModalAction(
-            label: L10n.of(context).videoCall,
-            icon: const Icon(Icons.video_call_outlined),
-            value: CallType.kVideo,
-          ),
-        ],
+    // Start a LiveKit (Element Call) call.
+    try {
+      await openLiveKitCall(context, roomId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context).errorWithMessage('Element Call: $e')),
+        ),
       );
-      if (voipCallType == null) return;
-
-      final voipPlugin = Matrix.of(context).voipPlugin;
-      try {
-        final session = await voipPlugin!.voip.inviteToCall(room, voipCallType);
-        voipPlugin.addCallingOverlay(session.callId, session);
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-        Logs().e("onPhoneButtonTap", e);
-      }
-    } else if (callType == 'element_call') {
-      // Use Element Call (LiveKit)
-      try {
-        await openLiveKitCall(context, roomId);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              L10n.of(context).errorWithMessage('Element Call: $e'),
-            ),
-          ),
-        );
-        Logs().e("onLiveKitCallButtonTap", e);
-      }
+      Logs().e("onLiveKitCallButtonTap", e);
     }
   }
 

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 Future<T?> showModalActionPopup<T>({
@@ -33,7 +33,9 @@ Future<T?> showModalActionPopup<T>({
                 title: title == null
                     ? null
                     : Text(title, style: theme.textTheme.labelSmall),
-                subtitle: message == null ? null : Text(message),
+                subtitle: message == null
+                    ? null
+                    : Text(message, style: theme.textTheme.bodyMedium),
               ),
               const Divider(height: 1),
             ],
@@ -74,7 +76,9 @@ Future<T?> showModalActionPopup<T>({
           constraints: const BoxConstraints(maxWidth: 512),
           child: CupertinoActionSheet(
             title: title == null ? null : Text(title),
-            message: message == null ? null : Text(message),
+            message: message == null
+                ? null
+                : Text(message, style: theme.textTheme.bodyMedium),
             cancelButton: cancelLabel == null
                 ? null
                 : CupertinoActionSheetAction(

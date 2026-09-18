@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -697,6 +696,11 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
       mainAxisSize: .min,
       spacing: 4,
       children: [
+        if (reactionEntry != null && reactionEntry!.key.length > 10)
+          Align(
+            alignment: .topLeft,
+            child: Text(reactionEntry!.key, style: theme.textTheme.labelMedium),
+          ),
         Material(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           color: theme.colorScheme.surfaceContainerHigh,
@@ -832,13 +836,30 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
             ],
           ),
         ),
-        Align(
-          alignment: .topLeft,
-          child: Text(
-            L10n.of(context).reactionUiTip,
-            style: theme.textTheme.bodyMedium,
+        if (chatController?.room.canSendDefaultMessages == true ||
+            chatController?.room.canRedact == true)
+          Padding(
+            padding: const .symmetric(vertical: 4),
+            child: Align(
+              alignment: .topLeft,
+              child: Row(
+                spacing: 4,
+                mainAxisSize: .min,
+                children: [
+                  Icon(Icons.info_outline, size: 18),
+                  Text(
+                    <String>[
+                      if (chatController?.room.canSendDefaultMessages == true)
+                        L10n.of(context).reactionUiTipReply,
+                      if (chatController?.room.canRedact == true)
+                        L10n.of(context).reactionUiTipRedact,
+                    ].join(' '), // TODO write it better
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
       ],
     );
   }

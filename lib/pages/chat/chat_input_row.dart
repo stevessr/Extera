@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -308,7 +307,6 @@ class ChatInputRow extends StatelessWidget {
                           room: controller.room,
                           minLines: 1,
                           maxLines: 8,
-                          autofocus: !PlatformInfos.isMobile,
                           keyboardType: TextInputType.multiline,
                           textInputAction:
                               AppSettings.sendOnEnter.value &&

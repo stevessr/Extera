@@ -32,7 +32,7 @@
 	"cleanExif": "EXIFを削除",
 	"cleanExifDescription": "送信前に画像からEXIFメタデータ（カメラモデル、位置情報、時刻）を削除します。",
 	"@@locale": "ja",
-	"@@last_modified": "2026-08-12T21:54:17.665Z",
+	"@@last_modified": "2026-09-17T22:57:09.809Z",
 	"doNotSendIfCantClean": "クリーンできない画像を送信しない",
 	"doNotSendIfCantCleanDescription": "EXIFメタデータを削除できない場合、画像を送信しません",
 	"repeatPassword": "パスワードを再入力",
@@ -3996,14 +3996,6 @@
 		}
 	},
 	"powerLevelReadOnly": "読み取り専用",
-	"elementCall": "Element Call",
-	"elementCallExperimental": "Element Call (試験的)",
-	"p2pCall": "P2P通話",
-	"chooseCallType": "通話タイプを選択",
-	"elementCallDescription": "LiveKitを使用した通話",
-	"ongoingElementCall": "Element Call",
-	"ongoingElementCallDetail": "通話に参加中: {name}",
-	"elementCallLiveKit": "Element Call",
 	"camera": "カメラ",
 	"connectingToCall": "通話に接続中",
 	"waitingForParticipants": "参加者を待機中",
@@ -4025,20 +4017,6 @@
 	"speakerN": "スピーカー {n}",
 	"cameraN": "カメラ {n}",
 	"screenShare": "画面共有",
-	"@elementCall": {},
-	"@elementCallExperimental": {},
-	"@p2pCall": {},
-	"@chooseCallType": {},
-	"@elementCallDescription": {},
-	"@ongoingElementCall": {},
-	"@ongoingElementCallDetail": {
-		"placeholders": {
-			"name": {
-				"type": "String"
-			}
-		}
-	},
-	"@elementCallLiveKit": {},
 	"@camera": {},
 	"@connectingToCall": {},
 	"@waitingForParticipants": {},
@@ -4145,5 +4123,70 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"elementCallDescription": "通話に参加してもよろしいですか？",
+	"ongoingElementCall": "通話中",
+	"ongoingElementCallDetail": "通話中: {name}",
+	"elementCallLiveKit": "実験的な通話",
+	"hideIgnoredUsers": "ミュート済みユーザーを非表示",
+	"showIgnoredUsers": "ミュート済みユーザーを表示",
+	"callVideocam": "ビデオ",
+	"callMic": "マイク",
+	"callScreenShare": "画面",
+	"lkCallSettings": "設定",
+	"incomingCallFromRoom": "{room} で",
+	"appearance": "外観",
+	"floatingInputBar": "浮動入力バー",
+	"reactionUiTipReply": "タップして返信。",
+	"reactionUiTipRedact": "長押しでリアクションを削除。",
+	"bubblesAppearance": "バブルの外観",
+	"bubbleSide": "メッセージの配置",
+	"bubbleSingleSided": "常に片側に表示",
+	"bubbleAdaptiveSide": "自動調整",
+	"bubbleBothSided": "両側に表示",
+	"pollResultsAreHidden": "投票結果は投票の終了後に表示されます",
+	"sendMedia": "メディアを送信",
+	"@elementCallDescription": {},
+	"@ongoingElementCall": {},
+	"@ongoingElementCallDetail": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"@elementCallLiveKit": {},
+	"@incomingCallFromRoom": {
+		"placeholders": {
+			"room": {
+				"type": "String"
+			}
+		}
+	},
+	"messageFontSize": "メッセージのフォントサイズ",
+	"richPresenceElapsed": "{duration} 経過",
+	"richPresenceRemaining": "残り {duration}",
+	"richPresenceOpenIdWarning": "このリンクにアクセスすると、ホームサーバーにOpenIDトークンを要求し、それを外部のウェブサイトに渡します。これにより、あなたのIPアドレスやブラウザのメタデータが公開され、ウェブサイトがこのアクセスをあなたのMatrixアカウントと紐付ける可能性があります。OpenIDトークンはアカウントの所有確認にのみ使用され、第三者があなたのチャットにアクセスすることはありません。",
+	"changeYourBanner": "バナーを変更",
+	"removeYourBanner": "バナーを削除",
+	"pleaseEnterCountryCode": "国コードを入力してください。",
+	"verificationCodeSent2": "認証コードがお客様の電話番号に送信されました。以下に入力してください。",
+	"appBarAppearance": "上部バー",
+	"appBarAppName": "アプリ名",
+	"appBarAccountName": "アカウント名",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

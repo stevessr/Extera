@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 import 'package:extera_next/config/app_settings.dart';

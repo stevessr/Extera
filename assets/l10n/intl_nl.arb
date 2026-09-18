@@ -1,6 +1,6 @@
 {
 	"@@locale": "nl",
-	"@@last_modified": "2026-08-12T21:54:34.514Z",
+	"@@last_modified": "2026-09-17T22:58:35.942Z",
 	"@choicesSelected": {
 		"type": "String",
 		"placeholders": {
@@ -3675,7 +3675,6 @@
 	"systemFont": "Systeemlettertype gebruiken",
 	"setLowPriority": "Lage prioriteit",
 	"unsetLowPriority": "Lage prioriteit verwijderen",
-	"jitsiFeatureFlag": "Groepsgesprekken (Jitsi)",
 	"removeCallFromChat": "Conferentie verwijderen",
 	"removeCallFromChatDescription": "Weet je zeker dat je deze conferentie uit de chat wilt verwijderen?",
 	"removeCallForEveryone": "Conferentie voor iedereen verwijderen",
@@ -3871,14 +3870,6 @@
 	"messageCanOnlyBeReadByUsers": "Uw berichten zijn versleuteld en alleen leesbaar voor deze gebruikers:",
 	"publicKey": "Publieke sleutel: {key}",
 	"powerLevelReadOnly": "Alleen-lezen",
-	"elementCall": "Element Call",
-	"elementCallExperimental": "Element Call (Experimenteel)",
-	"p2pCall": "P2P-oproep",
-	"chooseCallType": "Kies oproeptype",
-	"elementCallDescription": "Oproepen via LiveKit",
-	"ongoingElementCall": "Element Call",
-	"ongoingElementCallDetail": "U neemt deel aan een oproep: {name}",
-	"elementCallLiveKit": "Element Call",
 	"camera": "Camera",
 	"connectingToCall": "Verbinden met oproep",
 	"waitingForParticipants": "Wachten op deelnemers",
@@ -4025,20 +4016,6 @@
 			}
 		}
 	},
-	"@elementCall": {},
-	"@elementCallExperimental": {},
-	"@p2pCall": {},
-	"@chooseCallType": {},
-	"@elementCallDescription": {},
-	"@ongoingElementCall": {},
-	"@ongoingElementCallDetail": {
-		"placeholders": {
-			"name": {
-				"type": "String"
-			}
-		}
-	},
-	"@elementCallLiveKit": {},
 	"@camera": {},
 	"@connectingToCall": {},
 	"@waitingForParticipants": {},
@@ -4145,5 +4122,71 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"jitsiFeatureFlag": "Groepsgesprekken (Jitsi)",
+	"elementCallDescription": "Weet je zeker dat je wilt deelnemen aan het gesprek?",
+	"ongoingElementCall": "Lopend gesprek",
+	"ongoingElementCallDetail": "Lopend gesprek: {name}",
+	"elementCallLiveKit": "Experimentele gesprekken",
+	"hideIgnoredUsers": "Genegeerde gebruikers verbergen",
+	"showIgnoredUsers": "Genegeerde gebruikers tonen",
+	"callVideocam": "Video",
+	"callMic": "Microfoon",
+	"callScreenShare": "Scherm",
+	"lkCallSettings": "Instellingen",
+	"incomingCallFromRoom": "in {room}",
+	"appearance": "Uiterlijk",
+	"floatingInputBar": "Zwevende invoerbalk",
+	"reactionUiTipReply": "Tik om te antwoorden.",
+	"reactionUiTipRedact": "Houd ingedrukt om de reactie te verwijderen.",
+	"bubblesAppearance": "Weergave van bellen",
+	"bubbleSide": "Plaatsing van berichten",
+	"bubbleSingleSided": "Altijd aan één kant",
+	"bubbleAdaptiveSide": "Adaptief",
+	"bubbleBothSided": "Aan beide kanten",
+	"pollResultsAreHidden": "De pollresultaten worden beschikbaar na afloop van de poll",
+	"sendMedia": "Media verzenden",
+	"@elementCallDescription": {},
+	"@ongoingElementCall": {},
+	"@ongoingElementCallDetail": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"@elementCallLiveKit": {},
+	"@incomingCallFromRoom": {
+		"placeholders": {
+			"room": {
+				"type": "String"
+			}
+		}
+	},
+	"messageFontSize": "Lettergrootte van berichten",
+	"richPresenceElapsed": "Verstreken: {duration}",
+	"richPresenceRemaining": "Resterend: {duration}",
+	"richPresenceOpenIdWarning": "Door deze link te openen, wordt er een OpenID-token opgevraagd bij je homeserver en doorgegeven aan een externe website. Dit kan je IP-adres en browsermetadata blootstellen en stelt de website in staat dit bezoek te koppelen aan je Matrix-account. Het OpenID-token wordt alleen gebruikt om het eigendom van het account te bevestigen: derden krijgen geen toegang tot je chats.",
+	"changeYourBanner": "Banner wijzigen",
+	"removeYourBanner": "Banner verwijderen",
+	"pleaseEnterCountryCode": "Voer de landcode in.",
+	"verificationCodeSent2": "De verificatiecode is naar je telefoonnummer verzonden. Voer de code hieronder in.",
+	"appBarAppearance": "Bovenste balk",
+	"appBarAppName": "App",
+	"appBarAccountName": "Account",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

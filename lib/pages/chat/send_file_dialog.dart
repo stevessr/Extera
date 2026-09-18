@@ -1,9 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:cross_file/cross_file.dart';
 import 'package:html_unescape/html_unescape.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:mime/mime.dart';
 

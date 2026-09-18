@@ -120,7 +120,6 @@ enum AppSettings<T> {
     'chat.fluffy.hide_member_changes_in_public_chats',
     false,
   ),
-  experimentalVoip<bool>('chat.fluffy.experimental_voip', false),
   showPresences<bool>('chat.fluffy.show_presences', true),
   presenceStatus<String>('xyz.extera.presence_status', 'online'),
   avatarBorderRadius<double>('xyz.extera.next.avatarBorderRadius', 1),

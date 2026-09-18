@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/app_settings.dart';

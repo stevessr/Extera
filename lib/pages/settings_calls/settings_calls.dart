@@ -12,10 +12,6 @@ class SettingsCalls extends StatefulWidget {
 }
 
 class SettingsCallsController extends State<SettingsCalls> {
-  void onExperimentalVoipChanged(bool value) {
-    Matrix.of(context).createVoipPlugin();
-  }
-
   @override
   Widget build(BuildContext context) => SettingsCallsView(this);
 }

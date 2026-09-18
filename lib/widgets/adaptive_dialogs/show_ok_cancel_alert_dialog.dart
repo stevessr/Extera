@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/url_launcher.dart';
@@ -30,9 +29,10 @@ Future<OkCancelResult?> showOkCancelAlertDialog({
           : SelectableLinkify(
               text: message,
               textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
-              linkStyle: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium,
+              linkStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
-                decoration: .none,
+                decorationColor: Theme.of(context).colorScheme.primary,
               ),
               options: const LinkifyOptions(humanize: false),
               onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
@@ -86,7 +86,8 @@ Future<OkCancelResult?> showOkAlertDialog({
           : SelectableLinkify(
               text: message,
               textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
-              linkStyle: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium,
+              linkStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 decorationColor: Theme.of(context).colorScheme.primary,
               ),
