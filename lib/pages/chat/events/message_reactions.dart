@@ -696,10 +696,10 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
       mainAxisSize: .min,
       spacing: 4,
       children: [
-        if (reactionEntry != null && reactionEntry!.key.length > 10)
+        if (Characters(level.reactionKey).length > 10)
           Align(
             alignment: .topLeft,
-            child: Text(reactionEntry!.key, style: theme.textTheme.labelMedium),
+            child: Text(level.reactionKey, style: theme.textTheme.labelMedium),
           ),
         Material(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
