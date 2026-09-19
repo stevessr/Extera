@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/chat_read_marker.dart';
 import 'package:extera_next/pages/chat/chat_view.dart';
 import 'package:extera_next/pages/chat/event_info_dialog.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
@@ -754,7 +755,20 @@ class ChatController extends State<ChatPageWithRoom>
       _ => .bubbles,
     };
     sendingClient = Matrix.of(context).client;
-    readMarkerEventId = room.hasNewMessages ? room.fullyRead : '';
+    final currentThread = thread;
+    readMarkerEventId = initialChatReadMarkerEventId(
+      roomHasNewMessages: room.hasNewMessages,
+      roomFullyRead: room.fullyRead,
+      threadRootEventId: currentThread?.rootEvent.eventId,
+      threadHasNewMessages: currentThread?.hasNewMessages ?? false,
+      threadReadEventId: currentThread == null
+          ? null
+          : room
+                .receiptState
+                .byThread[currentThread.rootEvent.eventId]
+                ?.latestOwnReceipt
+                ?.eventId,
+    );
     WidgetsBinding.instance.addObserver(this);
     _tryLoadTimeline();
     _subscribeTileInvalidation();
@@ -785,7 +799,12 @@ class ChatController extends State<ChatPageWithRoom>
                 )
                 .indexWhere((e) => e.eventId == readMarkerEventId);
 
-      if (timeline != null &&
+      // Only the room timeline should fetch history for its m.fully_read
+      // boundary. A thread receipt may refer to an old, no-longer-cached
+      // reply; fetching history or showing a scroll banner in that case
+      // blocks automatic read acknowledgement at the latest thread event.
+      if (thread == null &&
+          timeline != null &&
           timeline!.events.isNotEmpty &&
           readMarkerEventId.isNotEmpty &&
           readMarkerEventIndex == -1) {
@@ -802,7 +821,9 @@ class ChatController extends State<ChatPageWithRoom>
         Logs().v('Scroll up to visible event', readMarkerEventId);
         scrollToEventId(readMarkerEventId, null, highlightEvent: false);
         return;
-      } else if (readMarkerEventId.isNotEmpty && readMarkerEventIndex == -1) {
+      } else if (thread == null &&
+          readMarkerEventId.isNotEmpty &&
+          readMarkerEventIndex == -1) {
         _showScrollUpMaterialBanner(readMarkerEventId);
       }
 
