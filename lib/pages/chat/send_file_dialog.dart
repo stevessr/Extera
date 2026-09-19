@@ -91,8 +91,9 @@ class SendFileDialogState extends State<SendFileDialog> {
       }
 
       if (widget.outerContext.mounted) {
-        foregroundUploadAcquired =
-            await ForegroundTaskManager.startFileUpload(widget.outerContext);
+        foregroundUploadAcquired = await ForegroundTaskManager.startFileUpload(
+          widget.outerContext,
+        );
       }
 
       for (final xfile in files) {
