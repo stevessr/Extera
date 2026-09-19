@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
@@ -9,7 +10,6 @@ import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.da
 import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/utils/svg_image.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:material_ui/material_ui.dart';
 
 enum MxcImageCacheCategory { general, sticker, userAvatar, roomAvatar }
 
