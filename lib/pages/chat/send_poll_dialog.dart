@@ -97,8 +97,10 @@ class SendPollDialogState extends State<SendPollDialog> {
         pollContent,
         type: 'org.matrix.msc3381.poll.start',
         threadLastEventId:
-            widget.thread?.lastEvent?.eventId ??
-            widget.thread?.rootEvent.eventId,
+            widget.thread?.lastEvent != null &&
+                widget.thread!.lastEvent!.status.isSynced
+            ? widget.thread!.lastEvent!.eventId
+            : widget.thread?.rootEvent.eventId,
         threadRootEventId: widget.thread?.rootEvent.eventId,
       );
       // ignore: use_build_context_synchronously
