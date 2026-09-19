@@ -376,14 +376,27 @@ class _MxcImageState extends State<MxcImage> {
       final forceStaticThumbnail = PowerSaveMode.isEnabled && widget.animated;
       final effectiveIsThumbnail = widget.isThumbnail || forceStaticThumbnail;
 
-      final remoteData = await client.downloadMxcCached(
-        uri,
-        width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
-        height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
-        thumbnailMethod: widget.thumbnailMethod,
-        isThumbnail: effectiveIsThumbnail,
-        animated: _effectiveAnimated,
-      );
+      // Some homeservers cannot rasterize SVG media into thumbnails.
+      // Use the original response when thumbnail generation is unsupported.
+      Uint8List remoteData;
+      try {
+        remoteData = await client.downloadMxcCached(
+          uri,
+          width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
+          height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
+          thumbnailMethod: widget.thumbnailMethod,
+          isThumbnail: effectiveIsThumbnail,
+          animated: _effectiveAnimated,
+        );
+      } catch (error, stackTrace) {
+        if (!effectiveIsThumbnail) rethrow;
+        Logs().d('Unable to load mxc thumbnail; trying original', error, stackTrace);
+        remoteData = await client.downloadMxcCached(
+          uri,
+          isThumbnail: false,
+          animated: _effectiveAnimated,
+        );
+      }
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
@@ -403,11 +416,20 @@ class _MxcImageState extends State<MxcImage> {
           }.contains(event.messageType)) {
         Logs().e('Event of type ${event.messageType} has no thumbnail!');
       }
-      final data = await event.downloadAndDecryptAttachment(
-        getThumbnail: useThumbnail,
-      );
+      MatrixFile data;
+      try {
+        data = await event.downloadAndDecryptAttachment(
+          getThumbnail: useThumbnail,
+        );
+      } catch (error, stackTrace) {
+        if (!useThumbnail) rethrow;
+        Logs().d('Unable to load event thumbnail; trying original', error, stackTrace);
+        data = await event.downloadAndDecryptAttachment(
+          getThumbnail: false,
+        );
+      }
       if (generation != _loadGeneration) return;
-      if (data.detectFileType is MatrixImageFile) {
+      if (data.detectFileType is MatrixImageFile || isSvgImage(data.bytes)) {
         if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;
