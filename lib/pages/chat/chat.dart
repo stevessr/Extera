@@ -1265,13 +1265,19 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendPollAction() async {
-    await showAdaptiveDialog(
+    final sent = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: false,
-      builder: (c) =>
-          SendPollDialog(room: room, thread: thread, outerContext: context),
+      builder: (c) => SendPollDialog(
+        room: room,
+        thread: thread,
+        outerContext: context,
+        replyEvent: replyEvent,
+      ),
     );
-    replyEvent = null;
+    if (sent == true && mounted) {
+      setState(() => replyEvent = null);
+    }
   }
 
   void sendFileAction({FileType type = .any}) async {
@@ -1482,11 +1488,18 @@ class ChatController extends State<ChatPageWithRoom>
   void sendLocationAction() async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
-    await showAdaptiveDialog(
+    final sent = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: false,
-      builder: (c) => SendLocationDialog(room: room, thread: thread),
+      builder: (c) => SendLocationDialog(
+        room: room,
+        thread: thread,
+        replyEvent: replyEvent,
+      ),
     );
+    if (sent == true && mounted) {
+      setState(() => replyEvent = null);
+    }
   }
 
   String _getSelectedEventString() {
