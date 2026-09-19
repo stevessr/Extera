@@ -41,6 +41,10 @@ class ForegroundTaskManager {
     if (_currentTask == .livekitCall) return false;
 
     _fileUploadUsers++;
+    if (_currentTask == .fileUpload && _fileUploadStartFuture == null) {
+      return true;
+    }
+
     _currentTask = .fileUpload;
     final startFuture = _fileUploadStartFuture ??= () async {
       final l10n = L10n.of(context);
