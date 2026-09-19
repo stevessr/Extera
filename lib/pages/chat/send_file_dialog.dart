@@ -85,6 +85,12 @@ class SendFileDialogState extends State<SendFileDialog> {
         final name = xfile.name.isNotEmpty
             ? xfile.name
             : "file.${mimeType!.split('/').last}";
+        // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
+        // not rewrite it. Some file pickers report .svg as octet-stream.
+        final isSvg =
+            mimeType?.split(';').first.trim().toLowerCase() == 'image/svg+xml' ||
+            name.toLowerCase().endsWith('.svg');
+        final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
 
         // If file is a video, shrink it!
         if (PlatformInfos.isMobile &&
@@ -96,7 +102,8 @@ class SendFileDialogState extends State<SendFileDialog> {
           file = await xfile.resizeVideo();
         } else if (mimeType != null &&
             mimeType.startsWith('image') &&
-            AppSettings.cleanExif.value) {
+            AppSettings.cleanExif.value &&
+            !isSvg) {
           if (length > maxUploadSize) {
             throw FileTooBigMatrixException(length, maxUploadSize);
           }
@@ -107,7 +114,7 @@ class SendFileDialogState extends State<SendFileDialog> {
               ExifCleaner.removeExifData(await xfile.readAsBytes()),
             ),
             name: name,
-            mimeType: mimeType,
+            mimeType: effectiveMimeType,
           ).detectFileType;
         } else {
           if (length > maxUploadSize) {
@@ -118,13 +125,13 @@ class SendFileDialogState extends State<SendFileDialog> {
           file = MatrixFile(
             bytes: await xfile.readAsBytes(),
             name: name,
-            mimeType: mimeType,
+            mimeType: effectiveMimeType,
           ).detectFileType;
         }
 
         // Shrink images before sending, but keep the original if the
         // shrunk result would be bigger than the source file.
-        if (compress && file is MatrixImageFile) {
+        if (compress && !isSvg && file is MatrixImageFile) {
           file = await file.shrinkWithSizeCheck(
             maxDimension: 1600,
             client: widget.room.client,
