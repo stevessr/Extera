@@ -96,6 +96,7 @@ class SendPollDialogState extends State<SendPollDialog> {
       await widget.room.sendEvent(
         pollContent,
         type: 'org.matrix.msc3381.poll.start',
+        inReplyTo: widget.replyEvent,
         threadLastEventId:
             widget.thread?.lastEvent != null &&
                 widget.thread!.lastEvent!.status.isSynced
@@ -104,7 +105,7 @@ class SendPollDialogState extends State<SendPollDialog> {
         threadRootEventId: widget.thread?.rootEvent.eventId,
       );
       // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (e) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(
