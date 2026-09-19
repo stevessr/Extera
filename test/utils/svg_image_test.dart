@@ -24,21 +24,35 @@ void main() {
       isTrue,
     );
     expect(
-      isSvgImage(_bytes('<!DOCTYPE svg><svg xmlns="http://www.w3.org/2000/svg"/>')),
+      isSvgImage(
+        _bytes('<!DOCTYPE svg><svg xmlns="http://www.w3.org/2000/svg"/>'),
+      ),
       isTrue,
     );
   });
 
-  test('does not route raster thumbnails or unrelated XML into the SVG parser', () {
-    expect(isSvgImage(Uint8List(0)), isFalse);
-    expect(
-      isSvgImage(
-        Uint8List.fromList(<int>[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-      ),
-      isFalse,
-    );
-    expect(isSvgImage(_bytes('<html><svg></svg></html>')), isFalse);
-    expect(isSvgImage(_bytes('<?xml version="1.0"?><root/>')), isFalse);
-    expect(isSvgImage(_bytes('<svg-not-an-svg/>')), isFalse);
-  });
+  test(
+    'does not route raster thumbnails or unrelated XML into the SVG parser',
+    () {
+      expect(isSvgImage(Uint8List(0)), isFalse);
+      expect(
+        isSvgImage(
+          Uint8List.fromList(<int>[
+            0x89,
+            0x50,
+            0x4E,
+            0x47,
+            0x0D,
+            0x0A,
+            0x1A,
+            0x0A,
+          ]),
+        ),
+        isFalse,
+      );
+      expect(isSvgImage(_bytes('<html><svg></svg></html>')), isFalse);
+      expect(isSvgImage(_bytes('<?xml version="1.0"?><root/>')), isFalse);
+      expect(isSvgImage(_bytes('<svg-not-an-svg/>')), isFalse);
+    },
+  );
 }

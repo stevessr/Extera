@@ -90,7 +90,8 @@ class SendFileDialogState extends State<SendFileDialog> {
         // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
         // not rewrite it. Some file pickers report .svg as octet-stream.
         final isSvg =
-            mimeType?.split(';').first.trim().toLowerCase() == 'image/svg+xml' ||
+            mimeType?.split(';').first.trim().toLowerCase() ==
+                'image/svg+xml' ||
             name.toLowerCase().endsWith('.svg');
         final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
 
@@ -488,7 +489,8 @@ class SendFileDialogState extends State<SendFileDialog> {
                                                     ? 256 - 36
                                                     : null,
                                                 fit: BoxFit.contain,
-                                                errorBuilder: _imagePreviewError,
+                                                errorBuilder:
+                                                    _imagePreviewError,
                                               )
                                             : Image.memory(
                                                 bytes,
@@ -497,19 +499,20 @@ class SendFileDialogState extends State<SendFileDialog> {
                                                     ? 256 - 36
                                                     : null,
                                                 fit: BoxFit.contain,
-                                                errorBuilder: _imagePreviewError,
+                                                errorBuilder:
+                                                    _imagePreviewError,
                                               ),
                                         if (!isSvgImage(bytes))
-                                        Positioned(
-                                          right: 8,
-                                          bottom: 8,
-                                          child: IconButton.filledTonal(
-                                            onPressed: () => editImage(i),
-                                            icon: const Icon(
-                                              Icons.edit_outlined,
+                                          Positioned(
+                                            right: 8,
+                                            bottom: 8,
+                                            child: IconButton.filledTonal(
+                                              onPressed: () => editImage(i),
+                                              icon: const Icon(
+                                                Icons.edit_outlined,
+                                              ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     );
                                   },

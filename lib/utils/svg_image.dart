@@ -14,7 +14,8 @@ bool isSvgImage(Uint8List bytes) {
   if (bytes.isEmpty) return false;
   // Raster images and most other media never start with an XML tag. Avoid
   // allocating or parsing their payload on every timeline rebuild.
-  var offset = bytes.length >= 3 &&
+  var offset =
+      bytes.length >= 3 &&
           bytes[0] == 0xEF &&
           bytes[1] == 0xBB &&
           bytes[2] == 0xBF

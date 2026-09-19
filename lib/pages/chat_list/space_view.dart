@@ -884,9 +884,9 @@ class _SpaceViewState extends State<SpaceView> {
                               clipBehavior: Clip.hardEdge,
                               color:
                                   joinedRoom != null &&
-                                          widget.activeChat == joinedRoom.id
-                                      ? theme.colorScheme.secondaryContainer
-                                      : Colors.transparent,
+                                      widget.activeChat == joinedRoom.id
+                                  ? theme.colorScheme.secondaryContainer
+                                  : Colors.transparent,
                               child: HoverBuilder(
                                 builder: (context, hovered) => ListTile(
                                   visualDensity: const VisualDensity(
@@ -900,9 +900,9 @@ class _SpaceViewState extends State<SpaceView> {
                                       : () => _joinChildRoom(item),
                                   onLongPress: isAdmin
                                       ? () => _showSpaceChildEditMenu(
-                                            context,
-                                            item.roomId,
-                                          )
+                                          context,
+                                          item.roomId,
+                                        )
                                       : null,
                                   leading: hovered && isAdmin
                                       ? SizedBox.square(
@@ -940,10 +940,10 @@ class _SpaceViewState extends State<SpaceView> {
                                               : null,
                                           borderRadius:
                                               item.roomType == 'm.space'
-                                                  ? BorderRadius.circular(
-                                                      AppConfig.borderRadius / 4,
-                                                    )
-                                                  : null,
+                                              ? BorderRadius.circular(
+                                                  AppConfig.borderRadius / 4,
+                                                )
+                                              : null,
                                         ),
                                   title: Row(
                                     spacing: 8,
@@ -958,12 +958,12 @@ class _SpaceViewState extends State<SpaceView> {
                                             style: TextStyle(
                                               fontWeight:
                                                   (joinedRoom?.isUnread ==
-                                                              true ||
-                                                          joinedRoom
-                                                                  ?.hasNewMessages ==
-                                                              true)
-                                                      ? FontWeight.w500
-                                                      : null,
+                                                          true ||
+                                                      joinedRoom
+                                                              ?.hasNewMessages ==
+                                                          true)
+                                                  ? FontWeight.w500
+                                                  : null,
                                             ),
                                           ),
                                         ),
