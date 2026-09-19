@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'package:matrix/matrix.dart';
@@ -120,12 +122,27 @@ class _ThreadChatPageWithRoom extends ChatPageWithRoom {
 
 class _ThreadChatController extends ChatController {
   Future<void>? _threadReadMarkerFuture;
+  String? _lastAcknowledgedThreadEventId;
+  bool _readMarkerRequestedWhilePending = false;
 
   @override
   void setReadMarker({String? eventId}) {
-    if (_threadReadMarkerFuture != null) return;
+    if (_threadReadMarkerFuture != null) {
+      // A sync update can bring a newer reply while the previous receipt is
+      // in flight. Retry using the latest visible event once it completes.
+      _readMarkerRequestedWhilePending = true;
+      return;
+    }
     if (scrolledUpNotifier.value) return;
     if (scrollUpBannerEventId != null) return;
+    if (!mounted) return;
+    // Match the normal chat's foreground guard: background threads must not
+    // silently clear their unread state on incoming sync updates.
+    if (kIsWeb && !Matrix.of(context).webHasFocus) return;
+    if (!kIsWeb &&
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
 
     final currentTimeline = timeline;
     final currentThread = thread;
@@ -143,7 +160,7 @@ class _ThreadChatController extends ChatController {
         }
       }
     }
-    if (eventId == null) return;
+    if (eventId == null || eventId == _lastAcknowledgedThreadEventId) return;
 
     Logs().d(
       'Set thread read marker ${currentThread.rootEvent.eventId}...',
@@ -159,6 +176,7 @@ class _ThreadChatController extends ChatController {
           public: shouldSendPublicReadReceipts(room.client, roomId),
         )
         .then((_) {
+          _lastAcknowledgedThreadEventId = eventId;
           // Remove the local unread indicator immediately instead of waiting
           // for the next /sync response to echo the threaded receipt.
           currentThread.notificationCount = 0;
@@ -170,8 +188,16 @@ class _ThreadChatController extends ChatController {
         })
         .whenComplete(() {
           // Always unlock so a transient receipt failure can be retried by the
-          // next existing read-marker trigger.
+          // next existing read-marker trigger. Do not lose a newer reply that
+          // arrived while the previous receipt was in flight.
+          final shouldRetry = _readMarkerRequestedWhilePending;
+          _readMarkerRequestedWhilePending = false;
           _threadReadMarkerFuture = null;
+          if (shouldRetry && mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setReadMarker();
+            });
+          }
         });
 
     unawaited(_threadReadMarkerFuture);
