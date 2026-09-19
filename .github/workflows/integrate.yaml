@@ -100,6 +100,8 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         run: |
           dart format lib/ test/ integration_test/
+          dart run tidy_imports --no-comments
+          dart format lib/ test/ integration_test/
           git add -- lib/ test/ integration_test/
           if ! git diff --cached --quiet; then
             git config user.name github-actions[bot]
