@@ -7,22 +7,19 @@ void main() {
   const lastEventId = r'$last';
   const replyEventId = r'$reply';
 
-  test(
-    'thread attachment retains thread relation and fallback on retry',
-    () {
-      final relation = buildFileSendRelation(
-        threadRootEventId: rootEventId,
-        threadLastEventId: lastEventId,
-      );
+  test('thread attachment retains thread relation and fallback on retry', () {
+    final relation = buildFileSendRelation(
+      threadRootEventId: rootEventId,
+      threadLastEventId: lastEventId,
+    );
 
-      expect(relation, {
-        'event_id': rootEventId,
-        'rel_type': 'm.thread',
-        'is_falling_back': true,
-        'm.in_reply_to': {'event_id': lastEventId},
-      });
-    },
-  );
+    expect(relation, {
+      'event_id': rootEventId,
+      'rel_type': 'm.thread',
+      'is_falling_back': true,
+      'm.in_reply_to': {'event_id': lastEventId},
+    });
+  });
 
   test('a reply in a thread remains a thread event', () {
     final relation = buildFileSendRelation(
@@ -49,12 +46,9 @@ void main() {
   });
 
   test('room-level reply has no thread relationship', () {
-    expect(
-      buildFileSendRelation(inReplyToEventId: replyEventId),
-      {
-        'm.in_reply_to': {'event_id': replyEventId},
-      },
-    );
+    expect(buildFileSendRelation(inReplyToEventId: replyEventId), {
+      'm.in_reply_to': {'event_id': replyEventId},
+    });
   });
 
   test('ordinary room attachment has no relationship', () {
