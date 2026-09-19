@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/utils/power_save_mode.dart';
+import 'package:extera_next/utils/svg_image.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -258,30 +260,40 @@ class _MxcImageState extends State<MxcImage> {
                     height: widget.height,
                     placeholder: widget.placeholder,
                   )
-          : Image.memory(
-              data,
-              width: widget.width,
-              height: widget.height,
-              fit: widget.fit,
-              filterQuality: widget.isThumbnail
-                  ? FilterQuality.low
-                  : FilterQuality.medium,
-              errorBuilder: (context, e, s) {
-                Logs().d('Unable to render mxc image', e, s);
-                return SizedBox(
+          : isSvgImage(data)
+              ? SvgPicture.memory(
+                  data,
                   width: widget.width,
                   height: widget.height,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                );
-              },
-            ),
+                  fit: widget.fit ?? BoxFit.contain,
+                  errorBuilder: _imageError,
+                )
+              : Image.memory(
+                  data,
+                  width: widget.width,
+                  height: widget.height,
+                  fit: widget.fit,
+                  filterQuality: widget.isThumbnail
+                      ? FilterQuality.low
+                      : FilterQuality.medium,
+                  errorBuilder: _imageError,
+                ),
+    );
+  }
+
+  Widget _imageError(BuildContext context, Object error, StackTrace? stack) {
+    Logs().d('Unable to render mxc image', error, stack);
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        child: Icon(
+          Icons.broken_image_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
     );
   }
 
