@@ -96,7 +96,17 @@ jobs:
       - run: flutter gen-l10n
 
       - name: Check formatting
+        id: formatting
+        continue-on-error: true
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
+
+      - name: Show formatting diff
+        if: steps.formatting.outcome == 'failure'
+        run: git diff -- lib/ test/ integration_test/
+
+      - name: Fail on formatting changes
+        if: steps.formatting.outcome == 'failure'
+        run: exit 1
 
       - name: Check import ordering
         run: dart run tidy_imports --no-comments --exit-if-changed
