@@ -114,8 +114,15 @@ class SendFileDialogState extends State<SendFileDialog> {
         final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
         final canShrinkImage =
             !isSvg && effectiveMimeType?.startsWith('image') == true;
+        final canCompressVideo =
+            PlatformInfos.isMobile &&
+            effectiveMimeType?.startsWith('video') == true &&
+            length > minSizeToCompress &&
+            compress;
 
-        if (length > maxUploadSize && !(compress && canShrinkImage)) {
+        if (length > maxUploadSize &&
+            !(compress && canShrinkImage) &&
+            !canCompressVideo) {
           throw FileTooBigMatrixException(length, maxUploadSize);
         }
 
