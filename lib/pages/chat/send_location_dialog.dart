@@ -89,11 +89,7 @@ class SendLocationDialogState extends State<SendLocationDialog> {
     final result = await showFutureLoadingDialog(
       context: context,
       future: () => widget.room.sendEvent(
-        {
-          'msgtype': 'm.location',
-          'body': body,
-          'geo_uri': uri,
-        },
+        {'msgtype': 'm.location', 'body': body, 'geo_uri': uri},
         inReplyTo: widget.replyEvent,
         threadRootEventId: threadRootEventId,
         threadLastEventId:
