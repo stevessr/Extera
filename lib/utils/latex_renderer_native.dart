@@ -1,5 +1,6 @@
-import 'package:latext/latext.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'package:latext/latext.dart';
 
 // Matrix's data-mx-maths attribute already tells us that the whole payload is
 // TeX. LaTexT is designed for mixed text + math and otherwise parses `$` and

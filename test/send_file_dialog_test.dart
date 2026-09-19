@@ -1,8 +1,9 @@
 import 'dart:convert';
 
+import 'package:material_ui/material_ui.dart';
+
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';

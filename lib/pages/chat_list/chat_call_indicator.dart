@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-
-import 'package:matrix/matrix.dart';
-
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:matrix/matrix.dart';
 
 class ChatCallIndicator extends StatelessWidget {
   final Room room;

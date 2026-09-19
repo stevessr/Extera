@@ -1,10 +1,10 @@
 import 'package:emojis/emoji.dart';
+import 'package:extera_next/utils/platform_infos.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/animated_emoji.dart';
-import 'package:extera_next/utils/platform_infos.dart';
 
 // ==========================================
 // 1. Data Models
