@@ -116,7 +116,7 @@ class ChatEmojiPicker extends StatelessWidget {
                                   controller.room,
                                 );
                                 if (!proceed) return;
-                                controller.room.sendEvent(
+                                await controller.room.sendEvent(
                                   {
                                     'body': sticker.body,
                                     'info': sticker.info ?? {},
@@ -126,6 +126,8 @@ class ChatEmojiPicker extends StatelessWidget {
                                   inReplyTo: controller.replyEvent,
                                   threadRootEventId:
                                       controller.threadRootEventId,
+                                  threadLastEventId:
+                                      controller.threadLastEventId,
                                 );
                                 controller.cancelReplyEventAction();
                                 controller.hideEmojiPicker();

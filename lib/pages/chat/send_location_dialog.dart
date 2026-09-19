@@ -11,10 +11,12 @@ import 'package:extera_next/widgets/future_loading_dialog.dart';
 class SendLocationDialog extends StatefulWidget {
   final Room room;
   final Thread? thread;
+  final Event? replyEvent;
 
   const SendLocationDialog({
     required this.room,
     required this.thread,
+    this.replyEvent,
     super.key,
   });
 
@@ -82,17 +84,22 @@ class SendLocationDialogState extends State<SendLocationDialog> {
         'https://www.openstreetmap.org/?mlat=${position!.latitude}&mlon=${position!.longitude}#map=16/${position!.latitude}/${position!.longitude}';
     final uri =
         'geo:${position!.latitude},${position!.longitude};u=${position!.accuracy}';
-    await showFutureLoadingDialog(
+    final threadRootEventId = widget.thread?.rootEvent.eventId;
+    final lastThreadEvent = widget.thread?.lastEvent;
+    final result = await showFutureLoadingDialog(
       context: context,
-      future: () {
-        if (widget.thread != null) {
-          return widget.thread!.sendLocation(body, uri);
-        } else {
-          return widget.room.sendLocation(body, uri);
-        }
-      },
+      future: () => widget.room.sendEvent(
+        {'msgtype': 'm.location', 'body': body, 'geo_uri': uri},
+        inReplyTo: widget.replyEvent,
+        threadRootEventId: threadRootEventId,
+        threadLastEventId:
+            lastThreadEvent != null && lastThreadEvent.status.isSynced
+            ? lastThreadEvent.eventId
+            : threadRootEventId,
+      ),
     );
-    Navigator.of(context, rootNavigator: false).pop();
+    if (!mounted || result.isError) return;
+    Navigator.of(context, rootNavigator: false).pop(true);
   }
 
   @override

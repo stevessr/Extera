@@ -36,7 +36,7 @@ class InputBar extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
-  final ValueChanged<Uint8List?>? onSubmitImage;
+  final void Function(Uint8List? image, {String? mimeType})? onSubmitImage;
   final FocusNode? focusNode;
   final TextEditingController? controller;
   final InputDecoration decoration;
@@ -443,13 +443,7 @@ class InputBar extends StatelessWidget {
           onContentInserted: (KeyboardInsertedContent content) {
             final data = content.data;
             if (data == null) return;
-
-            final file = MatrixFile(
-              mimeType: content.mimeType,
-              bytes: data,
-              name: content.uri.split('/').last,
-            );
-            room.sendFileEvent(file, shrinkImageMaxDimension: 1600);
+            onSubmitImage?.call(data, mimeType: content.mimeType);
           },
         ),
         minLines: minLines,
