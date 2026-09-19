@@ -958,10 +958,10 @@ class _SpaceViewState extends State<SpaceView> {
                                             style: TextStyle(
                                               fontWeight:
                                                   (joinedRoom?.isUnread ==
-                                                            true ||
-                                                        joinedRoom
-                                                                ?.hasNewMessages ==
-                                                            true)
+                                                          true ||
+                                                      joinedRoom
+                                                              ?.hasNewMessages ==
+                                                          true)
                                                   ? FontWeight.w500
                                                   : null,
                                             ),
