@@ -11,6 +11,7 @@ class ForegroundTaskManager {
   static final List<void Function(Object)> _taskCallbacks = [];
   static ForegroundTaskType? _currentTask;
   static int _fileUploadUsers = 0;
+  static Future<void>? _fileUploadStartFuture;
 
   static Future<void> _stopFgTaskIfRunning() async {
     if (!PlatformInfos.isAndroid) return;
@@ -40,10 +41,9 @@ class ForegroundTaskManager {
     if (_currentTask == .livekitCall) return false;
 
     _fileUploadUsers++;
-    if (_currentTask == .fileUpload) return true;
-
-    final l10n = L10n.of(context);
-    try {
+    _currentTask = .fileUpload;
+    final startFuture = _fileUploadStartFuture ??= () async {
+      final l10n = L10n.of(context);
       await _initTask(context);
       await FlutterForegroundTask.startService(
         notificationTitle: l10n.sendingAttachment,
@@ -51,11 +51,19 @@ class ForegroundTaskManager {
         serviceTypes: [.dataSync],
         notificationButtons: [],
       );
-      _currentTask = .fileUpload;
+    }();
+
+    try {
+      await startFuture;
       return true;
     } catch (_) {
       _fileUploadUsers--;
+      if (_fileUploadUsers == 0) _currentTask = null;
       rethrow;
+    } finally {
+      if (identical(_fileUploadStartFuture, startFuture)) {
+        _fileUploadStartFuture = null;
+      }
     }
   }
 
@@ -102,6 +110,7 @@ class ForegroundTaskManager {
     }
     _taskCallbacks.clear();
     _fileUploadUsers = 0;
+    _fileUploadStartFuture = null;
     _currentTask = null;
   }
 }
