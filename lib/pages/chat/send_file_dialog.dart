@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
@@ -17,6 +18,7 @@ import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/size_string.dart';
+import 'package:extera_next/utils/svg_image.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/dialog_text_field.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
@@ -85,6 +87,13 @@ class SendFileDialogState extends State<SendFileDialog> {
         final name = xfile.name.isNotEmpty
             ? xfile.name
             : "file.${mimeType!.split('/').last}";
+        // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
+        // not rewrite it. Some file pickers report .svg as octet-stream.
+        final isSvg =
+            mimeType?.split(';').first.trim().toLowerCase() ==
+                'image/svg+xml' ||
+            name.toLowerCase().endsWith('.svg');
+        final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
 
         // If file is a video, shrink it!
         if (PlatformInfos.isMobile &&
@@ -96,7 +105,8 @@ class SendFileDialogState extends State<SendFileDialog> {
           file = await xfile.resizeVideo();
         } else if (mimeType != null &&
             mimeType.startsWith('image') &&
-            AppSettings.cleanExif.value) {
+            AppSettings.cleanExif.value &&
+            !isSvg) {
           if (length > maxUploadSize) {
             throw FileTooBigMatrixException(length, maxUploadSize);
           }
@@ -107,7 +117,7 @@ class SendFileDialogState extends State<SendFileDialog> {
               ExifCleaner.removeExifData(await xfile.readAsBytes()),
             ),
             name: name,
-            mimeType: mimeType,
+            mimeType: effectiveMimeType,
           ).detectFileType;
         } else {
           if (length > maxUploadSize) {
@@ -118,13 +128,13 @@ class SendFileDialogState extends State<SendFileDialog> {
           file = MatrixFile(
             bytes: await xfile.readAsBytes(),
             name: name,
-            mimeType: mimeType,
+            mimeType: effectiveMimeType,
           ).detectFileType;
         }
 
         // Shrink images before sending, but keep the original if the
         // shrunk result would be bigger than the source file.
-        if (compress && file is MatrixImageFile) {
+        if (compress && !isSvg && file is MatrixImageFile) {
           file = await file.shrinkWithSizeCheck(
             maxDimension: 1600,
             client: widget.room.client,
@@ -355,13 +365,32 @@ class SendFileDialogState extends State<SendFileDialog> {
     super.dispose();
   }
 
+  Widget _imagePreviewError(
+    BuildContext context,
+    Object error,
+    StackTrace? stackTrace,
+  ) {
+    Logs().w('Unable to preview image', error, stackTrace);
+    return const Center(
+      child: SizedBox(
+        width: 256,
+        height: 256,
+        child: Icon(Icons.broken_image_outlined, size: 64),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     var sendStr = L10n.of(context).sendFile;
     final uniqueFileType = widget.files
-        .map((file) => file.mimeType ?? lookupMimeType(file.name))
+        .map(
+          (file) => file.name.toLowerCase().endsWith('.svg')
+              ? 'image/svg+xml'
+              : file.mimeType ?? lookupMimeType(file.name),
+        )
         .map((mimeType) => mimeType?.split('/').first)
         .toSet()
         .singleOrNull;
@@ -452,41 +481,38 @@ class SendFileDialogState extends State<SendFileDialog> {
                                     }
                                     return Stack(
                                       children: [
-                                        Image.memory(
-                                          bytes,
-                                          height: 256,
-                                          width: widget.files.length == 1
-                                              ? 256 - 36
-                                              : null,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (context, e, s) {
-                                            Logs().w(
-                                              'Unable to preview image',
-                                              e,
-                                              s,
-                                            );
-                                            return const Center(
-                                              child: SizedBox(
-                                                width: 256,
+                                        isSvgImage(bytes)
+                                            ? SvgPicture.memory(
+                                                bytes,
                                                 height: 256,
-                                                child: Icon(
-                                                  Icons.broken_image_outlined,
-                                                  size: 64,
-                                                ),
+                                                width: widget.files.length == 1
+                                                    ? 256 - 36
+                                                    : null,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    _imagePreviewError,
+                                              )
+                                            : Image.memory(
+                                                bytes,
+                                                height: 256,
+                                                width: widget.files.length == 1
+                                                    ? 256 - 36
+                                                    : null,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    _imagePreviewError,
                                               ),
-                                            );
-                                          },
-                                        ),
-                                        Positioned(
-                                          right: 8,
-                                          bottom: 8,
-                                          child: IconButton.filledTonal(
-                                            onPressed: () => editImage(i),
-                                            icon: const Icon(
-                                              Icons.edit_outlined,
+                                        if (!isSvgImage(bytes))
+                                          Positioned(
+                                            right: 8,
+                                            bottom: 8,
+                                            child: IconButton.filledTonal(
+                                              onPressed: () => editImage(i),
+                                              icon: const Icon(
+                                                Icons.edit_outlined,
+                                              ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     );
                                   },
