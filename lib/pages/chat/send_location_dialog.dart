@@ -86,7 +86,7 @@ class SendLocationDialogState extends State<SendLocationDialog> {
         'geo:${position!.latitude},${position!.longitude};u=${position!.accuracy}';
     final threadRootEventId = widget.thread?.rootEvent.eventId;
     final lastThreadEvent = widget.thread?.lastEvent;
-    await showFutureLoadingDialog(
+    final result = await showFutureLoadingDialog(
       context: context,
       future: () => widget.room.sendEvent(
         {
@@ -102,7 +102,7 @@ class SendLocationDialogState extends State<SendLocationDialog> {
             : threadRootEventId,
       ),
     );
-    if (!mounted) return;
+    if (!mounted || result.isError) return;
     Navigator.of(context, rootNavigator: false).pop(true);
   }
 
