@@ -1291,10 +1291,7 @@ class ChatController extends State<ChatPageWithRoom>
     await _showSendFileDialog(files);
   }
 
-  void sendImageFromClipBoard(
-    Uint8List? image, {
-    String? mimeType,
-  }) async {
+  void sendImageFromClipBoard(Uint8List? image, {String? mimeType}) async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     var pastedImage = image;
