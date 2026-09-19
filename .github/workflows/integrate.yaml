@@ -95,6 +95,12 @@ jobs:
 
       - run: flutter gen-l10n
 
+      # Temporary focused verification for SVG changes; remove after review.
+      - name: Verify SVG renderer and upload tests
+        run: |
+          flutter analyze lib/widgets/mxc_image.dart lib/pages/chat/send_file_dialog.dart lib/utils/svg_image.dart test/utils/svg_image_test.dart
+          flutter test test/utils/svg_image_test.dart test/send_file_dialog_test.dart
+
       - name: Check formatting
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
