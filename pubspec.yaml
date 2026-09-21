@@ -17,6 +17,7 @@ dependencies:
   archive: ^4.1.0
   async: ^2.13.1
   audioplayers: ^6.8.1
+  audioplayers_linux: ^4.3.0
   badges: ^3.2.0
   blurhash_dart: ^1.2.1
   camera: ^0.12.0+2
@@ -24,9 +25,13 @@ dependencies:
   collection: ^1.19.1
   cross_file: ^0.3.5+4
   cupertino_icons: any
+  cupertino_ui: ^1.1.0
+  defer_pointer: ^0.0.2
   desktop_drop: ^0.8.4
   desktop_notifications: ^0.6.3
+  desktop_webview_window: ^0.3.0
   device_info_plus: ^13.2.0
+  dio: ^5.11.0
   dynamic_color: ^2.1.0
   emojis: ^3.2.0
   #fcm_shared_isolate: ^0.2.0
@@ -42,6 +47,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_map: ^8.3.1
+  flutter_material_design_icons: ^3.1.0+7447
   flutter_new_badger: ^2.0.0
   flutter_openssl_crypto: ^0.5.0
   flutter_ringtone_player: ^4.0.0+4
@@ -84,8 +90,10 @@ dependencies:
       ref: 1f99d07fd6aa3a388b5b9a48edf5754512a64717
   mime: ^2.0.0
   native_imaging: ^0.5.0
+  open_file: ^4.0.0
   opus_caf_converter_dart: ^1.0.1
   package_info_plus: ^10.2.1
+  particles_network: ^1.9.5
   pasteboard: ^0.5.0
   path: ^1.9.1
   path_provider: ^2.1.6
@@ -110,20 +118,11 @@ dependencies:
   unifiedpush: ^6.2.0
   unifiedpush_ui: ^0.2.0
   url_launcher: ^6.3.2
+  uuid: ^4.6.0
   video_compress: ^3.1.4
   video_player: ^2.11.1
   visibility_detector: ^0.4.0+2
-  audioplayers_linux: ^4.3.0
-  cupertino_ui: ^1.1.0
-  defer_pointer: ^0.0.2
-  desktop_webview_window: ^0.3.0
-  dio: ^5.11.0
-  flutter_material_design_icons: ^3.1.0+7447
-  open_file: ^4.0.0
-  particles_network: ^1.9.5
-  uuid: ^4.6.0
   vodozemac: ^0.8.0
-  visibility_detector: ^0.4.0+2
   wakelock_plus: ^1.7.0
   web: ^1.1.1
   webrtc_interface: ^1.5.1
