@@ -1,14 +1,15 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart' as sdk;
 import 'package:matrix/matrix.dart';
 
+import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/new_group/new_group_view.dart';
+import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -51,12 +52,12 @@ class NewGroupController extends State<NewGroup> {
   void setEnableEncryption(bool b) => setState(() => enableEncryption = b);
 
   void selectPhoto() async {
-    final photo = await selectFiles(
-      context,
-      type: FileType.image,
-      allowMultiple: false,
-    );
-    final bytes = await photo.singleOrNull?.readAsBytes();
+    final photo = await selectFile(context, type: FileType.image);
+    var bytes = await photo?.readAsBytes();
+
+    if (AppSettings.cleanExif.value && bytes != null) {
+      bytes = Uint8List.fromList(ExifCleaner.removeExifData(bytes));
+    }
 
     setState(() {
       avatarUrl = null;

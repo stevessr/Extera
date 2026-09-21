@@ -1,7 +1,9 @@
 #!/bin/sh -e
 
-# Compile the Wasm-enabled vodozemac bridge. Keep this ref and codegen version
-# synchronized with the dependency overrides in pubspec.yaml.
+# Compile the Wasm-enabled vodozemac bridge. Keep this ref, commit and codegen
+# version synchronized with the dependency overrides in pubspec.yaml, and with
+# the bundled wasm artifacts in assets/vodozemac (generated Dart code and
+# Rust/Wasm artifacts must agree).
 vodozemac_branch=krille/frb-wasm-fix
 vodozemac_commit=b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
 frb_codegen_version=2.13.0-beta.4

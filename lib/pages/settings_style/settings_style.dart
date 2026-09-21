@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
@@ -60,8 +59,7 @@ class SettingsStyleController extends State<SettingsStyle> {
   }
 
   void setWallpaper() async {
-    final picked = await selectFiles(context, type: FileType.image);
-    final pickedFile = picked.firstOrNull;
+    final pickedFile = await selectFile(context, type: FileType.image);
     if (pickedFile == null) return;
 
     await showFutureLoadingDialog(
@@ -111,14 +109,14 @@ class SettingsStyleController extends State<SettingsStyle> {
                   for (final value in DynamicSchemeVariant.values)
                     ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .primaryContainer,
                         child: Icon(
                           Icons.palette_outlined,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
                         ),
                       ),
                       title: Text(paletteNames[value]!),
@@ -240,6 +238,55 @@ class SettingsStyleController extends State<SettingsStyle> {
       });
       _messageStyle = value;
     });
+  }
+
+  String get bubbleSide => AppSettings.bubbleSide.value;
+
+  void setBubbleSide(String value) {
+    AppSettings.bubbleSide.setItem(value);
+    setState(() {});
+  }
+
+  void showBubbleSideSheet() async {
+    final current = bubbleSide;
+    await showAdaptiveBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return Scaffold(
+          appBar: AppBar(title: Text(L10n.of(context).bubbleSide)),
+          body: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Material(
+              color: Theme.of(sheetContext).colorScheme.surfaceContainerHigh,
+              clipBehavior: Clip.hardEdge,
+              borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+              child: ListView(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: [
+                  for (final (value, label) in [
+                    ('oneSide', L10n.of(context).bubbleSingleSided),
+                    ('adaptive', L10n.of(context).bubbleAdaptiveSide),
+                    ('both', L10n.of(context).bubbleBothSided),
+                  ])
+                    ListTile(
+                      title: Text(label),
+                      selected: current == value,
+                      trailing: current == value
+                          ? const Icon(Icons.check_circle)
+                          : null,
+                      onTap: () {
+                        setBubbleSide(value);
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   bool get showSeconds => AppSettings.showSeconds.value;

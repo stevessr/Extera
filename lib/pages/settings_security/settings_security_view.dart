@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -186,30 +185,29 @@ class SettingsSecurityView extends StatelessWidget {
                               );
                             },
                           ),
-                          if (Matrix.of(context).client.encryption != null) ...[
-                            if (PlatformInfos.isMobile) ...[
-                              const ListDivider(),
-                              ListTile(
-                                trailing: const Icon(
-                                  Icons.chevron_right_outlined,
-                                ),
-                                title: Text(L10n.of(context).appLock),
-                                subtitle: Text(
-                                  L10n.of(context).appLockDescription,
-                                ),
-                                onTap: controller.setAppLockAction,
+                          if (Matrix.of(context).client.encryption != null &&
+                              PlatformInfos.isMobile) ...[
+                            const ListDivider(),
+                            ListTile(
+                              trailing: const Icon(
+                                Icons.chevron_right_outlined,
                               ),
-                              if (controller.biometricsAvailable) ...[
-                                const ListDivider(),
-                                SettingsSwitchListTile.adaptive(
-                                  title: L10n.of(context).biometricUnlock,
-                                  subtitle: L10n.of(
-                                    context,
-                                  ).biometricUnlockDescription,
-                                  setting: AppSettings.biometricUnlock,
-                                  onChanged: controller.setBiometricUnlock,
-                                ),
-                              ],
+                              title: Text(L10n.of(context).appLock),
+                              subtitle: Text(
+                                L10n.of(context).appLockDescription,
+                              ),
+                              onTap: controller.setAppLockAction,
+                            ),
+                            if (controller.biometricsAvailable) ...[
+                              const ListDivider(),
+                              SettingsSwitchListTile.adaptive(
+                                title: L10n.of(context).biometricUnlock,
+                                subtitle: L10n.of(
+                                  context,
+                                ).biometricUnlockDescription,
+                                setting: AppSettings.biometricUnlock,
+                                onChanged: controller.setBiometricUnlock,
+                              ),
                             ],
                           ],
                         ],

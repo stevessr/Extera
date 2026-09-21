@@ -32,9 +32,14 @@ class CustomHttpClient {
 
     final client = HttpClient(context: context);
 
-    if (AppSettings.httpProxy.value.isNotEmpty) {
+    final envHttpProxy = Platform.environment['HTTP_PROXY']?.trim() ?? '';
+    final confHttpProxy = AppSettings.httpProxy.value.trim();
+
+    final httpProxy = confHttpProxy.isNotEmpty ? confHttpProxy : envHttpProxy;
+
+    if (httpProxy != '') {
       client.findProxy = (uri) {
-        return "PROXY ${AppSettings.httpProxy.value};";
+        return "PROXY ${httpProxy};";
       };
     }
 

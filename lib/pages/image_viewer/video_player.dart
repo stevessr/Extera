@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import 'package:chewie/chewie.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
@@ -15,6 +15,7 @@ import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/event_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/web_api/web_api.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 
 import '../../../utils/error_reporter.dart';
@@ -289,11 +290,12 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
         return;
       }
 
+      final allowContinuousPlayback = !PowerSaveMode.isEnabled;
       final chewieController = ChewieController(
         videoPlayerController: playback.controller,
         useRootNavigator: !kIsWeb,
-        autoPlay: true,
-        looping: true,
+        autoPlay: allowContinuousPlayback,
+        looping: allowContinuousPlayback,
       );
 
       setState(() {
@@ -443,9 +445,8 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     });
 
     if (error is IOException) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } else {
       ErrorReporter(
         context,
@@ -487,6 +488,20 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
     }
   }
 
+  void _onPowerSaveModeChanged() {
+    final videoPlayerController = _videoPlayerController;
+    if (videoPlayerController == null) return;
+
+    if (PowerSaveMode.isEnabled) {
+      unawaited(videoPlayerController.pause());
+      unawaited(videoPlayerController.setLooping(false));
+    } else {
+      // Restore normal looping semantics without unexpectedly resuming a video
+      // that Battery Saver / Low Power Mode paused on the user's behalf.
+      unawaited(videoPlayerController.setLooping(true));
+    }
+  }
+
   Widget _buildPlaybackError(BuildContext context) {
     return Center(
       child: Material(
@@ -524,6 +539,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
 
   @override
   void dispose() {
+    PowerSaveMode.enabled.removeListener(_onPowerSaveModeChanged);
     // Invalidate in-flight loads first so no pending continuation can touch
     // the controllers while they are being disposed below.
     _loadGeneration++;
@@ -534,6 +550,7 @@ class EventVideoPlayerState extends State<EventVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    PowerSaveMode.enabled.addListener(_onPowerSaveModeChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _downloadAction();
     });

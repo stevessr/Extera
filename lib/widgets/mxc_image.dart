@@ -1,12 +1,14 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
+import 'package:extera_next/utils/svg_image.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 enum MxcImageCacheCategory { general, sticker, userAvatar, roomAvatar }
@@ -179,6 +181,8 @@ class _MxcImageState extends State<MxcImage> {
   // newer MxcImage with bytes from the previous grid cell.
   int _loadGeneration = 0;
 
+  bool get _effectiveAnimated => widget.animated && !PowerSaveMode.isEnabled;
+
   MxcImageCacheCategory get _effectiveCacheCategory {
     if (widget.cacheCategory != MxcImageCacheCategory.general) {
       return widget.cacheCategory;
@@ -192,11 +196,13 @@ class _MxcImageState extends State<MxcImage> {
 
   String? get _effectiveCacheKey {
     final explicitKey = widget.cacheKey;
-    if (explicitKey != null) return explicitKey;
+    if (explicitKey != null) {
+      return '$explicitKey:${widget.isThumbnail}:$_effectiveAnimated';
+    }
     if (_effectiveCacheCategory != MxcImageCacheCategory.sticker) return null;
 
     final dimensions = '${widget.width}x${widget.height}';
-    final variant = '$dimensions:${widget.isThumbnail}:${widget.animated}';
+    final variant = '$dimensions:${widget.isThumbnail}:$_effectiveAnimated';
     final uri = widget.uri;
     if (uri != null) return 'uri:$uri:$variant';
 
@@ -254,6 +260,14 @@ class _MxcImageState extends State<MxcImage> {
                     height: widget.height,
                     placeholder: widget.placeholder,
                   )
+          : isSvgImage(data)
+          ? SvgPicture.memory(
+              data,
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit ?? BoxFit.contain,
+              errorBuilder: _imageError,
+            )
           : Image.memory(
               data,
               width: widget.width,
@@ -262,31 +276,58 @@ class _MxcImageState extends State<MxcImage> {
               filterQuality: widget.isThumbnail
                   ? FilterQuality.low
                   : FilterQuality.medium,
-              errorBuilder: (context, e, s) {
-                Logs().d('Unable to render mxc image', e, s);
-                return SizedBox(
-                  width: widget.width,
-                  height: widget.height,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                );
-              },
+              errorBuilder: _imageError,
             ),
+    );
+  }
+
+  Widget _imageError(BuildContext context, Object error, StackTrace? stack) {
+    Logs().d('Unable to render mxc image', error, stack);
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        child: Icon(
+          Icons.broken_image_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
     );
   }
 
   @override
   void initState() {
     super.initState();
+    PowerSaveMode.enabled.addListener(_onPowerSaveModeChanged);
     final generation = _loadGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _tryLoad(generation);
+    });
+  }
+
+  @override
+  void dispose() {
+    PowerSaveMode.enabled.removeListener(_onPowerSaveModeChanged);
+    super.dispose();
+  }
+
+  void _onPowerSaveModeChanged() {
+    if (!mounted || !widget.animated) return;
+
+    // Static and animated variants intentionally occupy separate cache keys.
+    // Reload when the OS policy changes so leaving power saver immediately
+    // restores animation without ever persisting or poisoning the other mode.
+    _loadGeneration++;
+    _imageDataNoCache = null;
+    _loadFailed = false;
+    final generation = _loadGeneration;
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && generation == _loadGeneration) {
+        _tryLoad(generation);
+      }
     });
   }
 
@@ -332,15 +373,34 @@ class _MxcImageState extends State<MxcImage> {
       final realWidth = width == null ? null : width * devicePixelRatio;
       final height = widget.height;
       final realHeight = height == null ? null : height * devicePixelRatio;
+      final forceStaticThumbnail = PowerSaveMode.isEnabled && widget.animated;
+      final effectiveIsThumbnail = widget.isThumbnail || forceStaticThumbnail;
 
-      final remoteData = await client.downloadMxcCached(
-        uri,
-        width: realWidth,
-        height: realHeight,
-        thumbnailMethod: widget.thumbnailMethod,
-        isThumbnail: widget.isThumbnail,
-        animated: widget.animated,
-      );
+      // Some homeservers cannot rasterize SVG media into thumbnails.
+      // Use the original response when thumbnail generation is unsupported.
+      Uint8List remoteData;
+      try {
+        remoteData = await client.downloadMxcCached(
+          uri,
+          width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
+          height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
+          thumbnailMethod: widget.thumbnailMethod,
+          isThumbnail: effectiveIsThumbnail,
+          animated: _effectiveAnimated,
+        );
+      } catch (error, stackTrace) {
+        if (!effectiveIsThumbnail) rethrow;
+        Logs().d(
+          'Unable to load mxc thumbnail; trying original',
+          error,
+          stackTrace,
+        );
+        remoteData = await client.downloadMxcCached(
+          uri,
+          isThumbnail: false,
+          animated: _effectiveAnimated,
+        );
+      }
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
@@ -349,7 +409,10 @@ class _MxcImageState extends State<MxcImage> {
     }
 
     if (event != null) {
-      final useThumbnail = widget.isThumbnail && event.hasThumbnail;
+      final useThumbnail =
+          (widget.isThumbnail ||
+              (PowerSaveMode.isEnabled && widget.animated)) &&
+          event.hasThumbnail;
       if (!useThumbnail &&
           !{
             MessageTypes.Image,
@@ -357,11 +420,22 @@ class _MxcImageState extends State<MxcImage> {
           }.contains(event.messageType)) {
         Logs().e('Event of type ${event.messageType} has no thumbnail!');
       }
-      final data = await event.downloadAndDecryptAttachment(
-        getThumbnail: useThumbnail,
-      );
+      MatrixFile data;
+      try {
+        data = await event.downloadAndDecryptAttachment(
+          getThumbnail: useThumbnail,
+        );
+      } catch (error, stackTrace) {
+        if (!useThumbnail) rethrow;
+        Logs().d(
+          'Unable to load event thumbnail; trying original',
+          error,
+          stackTrace,
+        );
+        data = await event.downloadAndDecryptAttachment(getThumbnail: false);
+      }
       if (generation != _loadGeneration) return;
-      if (data.detectFileType is MatrixImageFile) {
+      if (data.detectFileType is MatrixImageFile || isSvgImage(data.bytes)) {
         if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;

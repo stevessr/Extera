@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart' hide Notification;
-
+import 'package:material_ui/material_ui.dart' hide Notification;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/pages/notifications/notifications_view.dart';

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-
+import 'package:extera_next/pages/chat_list/chat_call_indicator.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -300,6 +300,7 @@ class ChatListItem extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ChatCallIndicator(room: room),
                   if (isMuted)
                     const Padding(
                       padding: EdgeInsets.only(left: 4.0),

@@ -96,7 +96,7 @@ extension MatrixRtcRoomExtension on Room {
   }
 
   Future<void> setMatrixRtcMembershipState(
-    final List<MatrixRtcFocusPreferred> fociPreferred, {
+    List<MatrixRtcFocusPreferred> fociPreferred, {
     MatrixRtcCallIntent intent = MatrixRtcCallIntent.video,
   }) => client.setRoomStateWithKey(
     id,
@@ -225,9 +225,9 @@ extension MatrixRtcRoomExtension on Room {
     final memberUrls =
         states[MatrixRtcCallMember.eventType]?.values
             .map(
-              (state) => MatrixRtcCallMember.fromJson(
-                state.content,
-              ).fociPreferred.map((focus) => focus.livekitServiceUrl),
+              (state) =>
+                  MatrixRtcCallMember.fromJson(state.content).fociPreferred
+                      .map((focus) => focus.livekitServiceUrl),
             )
             .fold<List<String>>([], (urls, foci) => [...urls, ...foci]) ??
         [];

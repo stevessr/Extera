@@ -4093,17 +4093,11 @@
         }
     },
     "powerLevelReadOnly": "Только чтение",
-    "elementCall": "Element Call",
-    "@elementCall": {},
-    "p2pCall": "P2P Звонок",
-    "@p2pCall": {},
-    "chooseCallType": "Выберите тип звонка",
-    "@chooseCallType": {},
-    "elementCallDescription": "Звонки через LiveKit",
+    "elementCallDescription": "Вы уверены, что хотите подключиться к звонку?",
     "@elementCallDescription": {},
-    "ongoingElementCall": "Element Call",
+    "ongoingElementCall": "Текущий звонок",
     "@ongoingElementCall": {},
-    "ongoingElementCallDetail": "Вы участвуете в звонке: {name}",
+    "ongoingElementCallDetail": "Текущий звонок: {name}",
     "@ongoingElementCallDetail": {
         "placeholders": {
             "name": {
@@ -4111,7 +4105,7 @@
             }
         }
     },
-    "elementCallLiveKit": "Element Call",
+    "elementCallLiveKit": "Экспериментальные звонки",
     "@elementCallLiveKit": {},
     "camera": "Камера",
     "@camera": {},
@@ -4235,5 +4229,38 @@
     },
     "appearance": "Внешний вид",
     "floatingInputBar": "Плавающая панель ввода",
-    "reactionUiTip": "Нажмите для ответа. Удерживайте, чтобы убрать реакцию."
+    "reactionUiTipReply": "Нажмите для ответа.",
+    "reactionUiTipRedact": "Зажмите, чтобы убрать реакцию.",
+    "bubblesAppearance": "Вид пузырей",
+    "bubbleSide": "Расположение сообщений",
+    "bubbleSingleSided": "Всегда на одной стороне",
+    "bubbleAdaptiveSide": "Адаптивное",
+    "bubbleBothSided": "С обеих сторон",
+    "pollResultsAreHidden": "Результаты опроса будут доступны после его окончания",
+    "sendMedia": "Отправить медиа",
+    "messageFontSize": "Размер шрифта сообщений",
+    "richPresenceElapsed": "Прошло {duration}",
+    "@richPresenceElapsed": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceRemaining": "Осталось {duration}",
+    "@richPresenceRemaining": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceOpenIdWarning": "Переход по этой ссылке запросит токен OpenID у Вашего домашнего сервера и передаст внешнему веб-сайту. Это может раскрыть ваш IP-адрес и метаданные браузера, а также позволит веб-сайту сопоставить это посещение с Вашим аккаунтом Matrix. Токен OpenID используется только для подтверждения владения аккаунтом: третьи лица не получат доступ к Вашим чатам.",
+    "changeYourBanner": "Изменить баннер",
+    "removeYourBanner": "Убрать баннер",
+    "pleaseEnterCountryCode": "Введите код страны.",
+    "verificationCodeSent2": "Код подтверждения был отправлен на Ваш номер телефона. Введите его ниже.",
+    "appBarAppearance": "Верхняя панель",
+    "appBarAppName": "Приложение",
+    "appBarAccountName": "Аккаунт"
 }

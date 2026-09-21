@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -8,7 +7,6 @@ import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/list_divider.dart';
-import 'package:extera_next/widgets/matrix.dart';
 
 /// Shows a dialog with detailed poll results
 ///
@@ -17,22 +15,19 @@ import 'package:extera_next/widgets/matrix.dart';
 /// Voter names are only shown for disclosed polls or ended disclosed polls
 Future<void> showPollResultsDialog(
   BuildContext context,
-  Event pollEvent,
-) async {
+  Event pollEvent, {
+  Timeline? timeline,
+}) async {
   final content =
       pollEvent.content[PollEvents.pollStart] as Map<String, dynamic>;
   final kind = content['kind'] as String?;
   final isDisclosed = kind == 'org.matrix.msc3381.poll.disclosed';
 
   // Check if poll has ended
-  final room = pollEvent.room;
-  final endEvents = await room.client.getRelatingEventsWithRelTypeAndEventType(
-    room.id,
-    pollEvent.eventId,
-    'm.reference',
-    'org.matrix.msc3381.poll.end',
-  );
-  final isEnded = endEvents.chunk.isNotEmpty;
+  if (timeline != null) {
+    await pollEvent.fetchPollResponses(timeline);
+  }
+  final isEnded = timeline != null && pollEvent.getPollHasBeenEnded(timeline);
 
   // Determine if we should show results and voter names
   final shouldShowResults = isDisclosed || isEnded;
@@ -41,59 +36,23 @@ Future<void> showPollResultsDialog(
   if (!shouldShowResults) {
     // Poll is undisclosed and not ended yet
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Poll results are hidden until the poll ends'),
-      ),
+      SnackBar(content: Text(L10n.of(context).pollResultsAreHidden)),
     );
     return;
   }
 
   // Calculate results
-  final pollContent =
-      pollEvent.content['org.matrix.msc3381.poll.start']! as Map;
-  final int maxAnswers = pollContent['max_selections'] ?? 1;
   final results = <String, int>{};
   final voters = <String, List<String>>{}; // answerId -> list of userIds
 
-  final rel = await Matrix.of(context).client
-      .getRelatingEventsWithRelTypeAndEventType(
-        room.id,
-        pollEvent.eventId,
-        "m.reference",
-        "org.matrix.msc3381.poll.response",
-      );
-
-  final responses = rel.chunk;
-  final userLatestResponse = <String, MatrixEvent>{};
-
-  for (final response in responses) {
-    final senderId = response.senderId;
-    final ts = response.originServerTs;
-
-    if (!userLatestResponse.containsKey(senderId) ||
-        ts.isAfter(userLatestResponse[senderId]!.originServerTs)) {
-      userLatestResponse[senderId] = response;
-    }
-  }
-
-  for (final response in userLatestResponse.values) {
-    final responseContent =
-        response.content['org.matrix.msc3381.poll.response']
-            as Map<String, dynamic>;
-
-    final List<dynamic> answersRaw = responseContent['answers'] ?? [];
-    final answers = answersRaw.cast<String>();
-    if (answers.length > maxAnswers) {
-      continue;
-    }
-
-    for (final answer in answers) {
-      results[answer] = (results[answer] ?? 0) + 1;
-      if (!voters.containsKey(answer)) {
-        voters[answer] = [];
+  if (timeline != null) {
+    final responses = pollEvent.getPollResponses(timeline);
+    responses.forEach((userId, answerIds) {
+      for (final answer in answerIds) {
+        results[answer] = (results[answer] ?? 0) + 1;
+        (voters[answer] ??= []).add(userId);
       }
-      voters[answer]!.add(response.senderId);
-    }
+    });
   }
 
   final List<dynamic> answers = content['answers'] ?? [];

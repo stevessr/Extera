@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -119,9 +118,10 @@ class ChatAppBarTitle extends StatelessWidget {
                               builder: (context, presence) {
                                 final lastActiveTimestamp =
                                     presence?.lastActiveTimestamp;
-                                final style = Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.copyWith(fontSize: 11);
+                                final style = Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(fontSize: 11);
                                 if (presence?.currentlyActive == true) {
                                   return OverflowMarquee(
                                     text:
@@ -247,9 +247,9 @@ class ChatAppBarTitle extends StatelessWidget {
                                     builder: (context, presence) {
                                       final lastActiveTimestamp =
                                           presence?.lastActiveTimestamp;
-                                      final style = Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall;
+                                      final style = Theme.of(context)
+                                          .textTheme
+                                          .bodySmall;
                                       if (presence?.currentlyActive == true) {
                                         return OverflowMarquee(
                                           text:
@@ -291,9 +291,9 @@ class ChatAppBarTitle extends StatelessWidget {
                                                   ? AlwaysStoppedAnimation<
                                                       Color
                                                     >(
-                                                      Theme.of(
-                                                        context,
-                                                      ).colorScheme.error,
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .error,
                                                     )
                                                   : null,
                                             ),
@@ -305,9 +305,9 @@ class ChatAppBarTitle extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: status.error != null
-                                                ? Theme.of(
-                                                    context,
-                                                  ).colorScheme.error
+                                                ? Theme.of(context)
+                                                      .colorScheme
+                                                      .error
                                                 : null,
                                           ),
                                         ),

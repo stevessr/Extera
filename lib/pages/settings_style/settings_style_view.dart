@@ -1,7 +1,7 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -13,9 +13,9 @@ import 'package:extera_next/utils/color_value.dart';
 import 'package:extera_next/utils/dummy_timeline.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/wallpaper.dart';
+import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
-import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 
@@ -50,6 +50,11 @@ class SettingsStyleView extends StatelessWidget {
 
     final wallpaperImage = globalWallpaper.image;
     final hasWallpaper = wallpaperImage != null;
+    final singleSided = switch (AppSettings.bubbleSide.value) {
+      'oneSide' => true,
+      'adaptive' => FluffyThemes.isColumnMode(context),
+      _ => false,
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +66,7 @@ class SettingsStyleView extends StatelessWidget {
       body: MaxWidthBody(
         withoutVerticalPadding: true,
         child: Padding(
-          padding: const .all(8),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -173,9 +178,9 @@ class SettingsStyleView extends StatelessWidget {
                                               child: Icon(
                                                 Icons.check,
                                                 size: 16,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onPrimary,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimary,
                                               ),
                                             )
                                           : null,
@@ -245,9 +250,8 @@ class SettingsStyleView extends StatelessWidget {
                                     )
                                   else
                                     FutureBuilder<Profile>(
-                                      future: Matrix.of(
-                                        context,
-                                      ).client.fetchOwnProfile(),
+                                      future: Matrix.of(context).client
+                                          .fetchOwnProfile(),
                                       builder: (context, snapshot) {
                                         return Text(
                                           snapshot.hasData &&
@@ -266,9 +270,8 @@ class SettingsStyleView extends StatelessWidget {
                                   const Icon(Icons.search),
                                   const SizedBox(width: 16),
                                   FutureBuilder<Profile>(
-                                    future: Matrix.of(
-                                      context,
-                                    ).client.fetchOwnProfile(),
+                                    future: Matrix.of(context).client
+                                        .fetchOwnProfile(),
                                     builder: (context, snapshot) {
                                       final client = Matrix.of(context).client;
                                       return Avatar(
@@ -287,7 +290,6 @@ class SettingsStyleView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      //
                       Padding(
                         padding: const EdgeInsets.only(
                           bottom: 16,
@@ -306,7 +308,7 @@ class SettingsStyleView extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Align(
-                                  alignment: .center,
+                                  alignment: Alignment.center,
                                   child: _LabeledRadio<String>(
                                     label: L10n.of(context).appBarAppName,
                                     value: "app",
@@ -315,7 +317,7 @@ class SettingsStyleView extends StatelessWidget {
                               ),
                               Expanded(
                                 child: Align(
-                                  alignment: .center,
+                                  alignment: Alignment.center,
                                   child: _LabeledRadio<String>(
                                     label: L10n.of(context).appBarAccountName,
                                     value: "user",
@@ -451,14 +453,12 @@ class SettingsStyleView extends StatelessWidget {
                                             eventId: 'style_dummy_1',
                                             content: {
                                               'msgtype': 'm.text',
-                                              'body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage1,
+                                              'body': L10n.of(context)
+                                                  .settingsStyleMessage1,
                                               'format':
                                                   'org.matrix.custom.html',
-                                              'formatted_body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage1,
+                                              'formatted_body': L10n.of(context)
+                                                  .settingsStyleMessage1,
                                             },
                                             originServerTs: DateTime.now(),
                                             senderId: client.userID!,
@@ -481,6 +481,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -493,14 +494,12 @@ class SettingsStyleView extends StatelessWidget {
                                             eventId: 'style_dummy_2',
                                             content: {
                                               'msgtype': 'm.text',
-                                              'body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage2,
+                                              'body': L10n.of(context)
+                                                  .settingsStyleMessage2,
                                               'format':
                                                   'org.matrix.custom.html',
-                                              'formatted_body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage2,
+                                              'formatted_body': L10n.of(context)
+                                                  .settingsStyleMessage2,
                                             },
                                             originServerTs: DateTime.now(),
                                             senderId: '@yuki:example.com',
@@ -523,6 +522,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -535,14 +535,12 @@ class SettingsStyleView extends StatelessWidget {
                                             eventId: 'style_dummy_3',
                                             content: {
                                               'msgtype': 'm.text',
-                                              'body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage3,
+                                              'body': L10n.of(context)
+                                                  .settingsStyleMessage3,
                                               'format':
                                                   'org.matrix.custom.html',
-                                              'formatted_body': L10n.of(
-                                                context,
-                                              ).settingsStyleMessage3,
+                                              'formatted_body': L10n.of(context)
+                                                  .settingsStyleMessage3,
                                             },
                                             originServerTs: DateTime.now(),
                                             senderId: client.userID!,
@@ -565,6 +563,7 @@ class SettingsStyleView extends StatelessWidget {
                                           highlightMarker: false,
                                           longPressSelect: false,
                                           selected: false,
+                                          singleSided: singleSided,
                                           wallpaperMode: false,
                                           colors: [
                                             theme.secondaryBubbleColor,
@@ -607,30 +606,29 @@ class SettingsStyleView extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Align(
-                                    alignment: .center,
+                                    alignment: Alignment.center,
                                     child: _LabeledRadio<MessageLayout>(
                                       label: L10n.of(context).bubblesLayout,
-                                      value: .bubbles,
+                                      value: MessageLayout.bubbles,
                                     ),
                                   ),
                                 ),
                                 Expanded(
                                   child: Align(
-                                    alignment: .center,
+                                    alignment: Alignment.center,
                                     child: _LabeledRadio<MessageLayout>(
-                                      label: L10n.of(
-                                        context,
-                                      ).legacyBubblesLayout,
-                                      value: .bubblesLegacy,
+                                      label: L10n.of(context)
+                                          .legacyBubblesLayout,
+                                      value: MessageLayout.bubblesLegacy,
                                     ),
                                   ),
                                 ),
                                 Expanded(
                                   child: Align(
-                                    alignment: .center,
+                                    alignment: Alignment.center,
                                     child: _LabeledRadio<MessageLayout>(
                                       label: L10n.of(context).modernLayout,
-                                      value: .modern,
+                                      value: MessageLayout.modern,
                                     ),
                                   ),
                                 ),
@@ -639,11 +637,25 @@ class SettingsStyleView extends StatelessWidget {
                           ),
                         ),
                         const ListDivider(),
-                        // SettingsSwitchListTile.adaptive(
-                        //   title: L10n.of(context).enableGradient,
-                        //   setting: AppSettings.enableGradient,
-                        // ),
-                        // const ListDivider(),
+                        ListTile(
+                          title: Text(
+                            L10n.of(context).bubblesAppearance,
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          title: Text(L10n.of(context).bubbleSide),
+                          subtitle: Text(switch (controller.bubbleSide) {
+                            'oneSide' => L10n.of(context).bubbleSingleSided,
+                            'adaptive' => L10n.of(context).bubbleAdaptiveSide,
+                            _ => L10n.of(context).bubbleBothSided,
+                          }),
+                          onTap: controller.showBubbleSideSheet,
+                        ),
+
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).enableChatFrostedGlass,
                           setting: AppSettings.enableChatFrostedGlass,
@@ -658,31 +670,26 @@ class SettingsStyleView extends StatelessWidget {
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).useNotoEmoji,
                           setting: AppSettings.notoEmojiFont,
-                          // Rebuild so that the animated emoji switch below
-                          // appears or disappears right away, and fetch the
-                          // font on demand when the setting turns on.
                           onChanged: controller.toggleNotoEmoji,
                         ),
                         if (AppSettings.notoEmojiFont.value) ...[
                           const ListDivider(),
                           SettingsSwitchListTile.adaptive(
                             title: L10n.of(context).useAnimatedEmoji,
-                            subtitle: L10n.of(
-                              context,
-                            ).useAnimatedEmojiDescription,
+                            subtitle: L10n.of(context)
+                                .useAnimatedEmojiDescription,
                             setting: AppSettings.animatedEmoji,
                           ),
                         ],
                         const ListDivider(),
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).unicodeFallbackFonts,
-                          subtitle: L10n.of(
-                            context,
-                          ).unicodeFallbackFontsDescription,
+                          subtitle: L10n.of(context)
+                              .unicodeFallbackFontsDescription,
                           setting: AppSettings.unicode18Fallback,
-                          onChanged: (value) => ThemeController.of(
-                            context,
-                          ).setUnicodeFallback(value),
+                          onChanged: (value) =>
+                              ThemeController.of(context)
+                                  .setUnicodeFallback(value),
                         ),
                         const ListDivider(),
                         const SizedBox(height: 8),
@@ -863,7 +870,7 @@ class _LabeledRadio<T> extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(AppConfig.borderRadius),
       child: Padding(
-        padding: const .only(right: 12),
+        padding: const EdgeInsets.only(right: 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import 'package:archive/archive.dart'
     if (dart.library.io) 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' hide Client;
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -446,11 +446,7 @@ class EmotesSettingsController extends State<EmotesSettings> {
   }
 
   void createStickers() async {
-    final pickedFiles = await selectFiles(
-      context,
-      type: FileType.image,
-      allowMultiple: true,
-    );
+    final pickedFiles = await selectFiles(context, type: FileType.image);
     if (pickedFiles.isEmpty) return;
     if (!mounted) return;
 
@@ -502,11 +498,11 @@ class EmotesSettingsController extends State<EmotesSettings> {
   }
 
   Future<void> importEmojiZip() async {
-    final result = await selectFiles(context, type: FileType.any);
+    final result = await selectFile(context, type: FileType.any);
 
-    if (result.isEmpty) return;
+    if (result == null) return;
 
-    final buffer = InputMemoryStream(await result.single.readAsBytes());
+    final buffer = InputMemoryStream(await result.readAsBytes());
 
     final archive = ZipDecoder().decodeStream(buffer);
 

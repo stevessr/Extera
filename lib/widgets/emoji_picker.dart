@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-
 import 'package:emojis/emoji.dart';
+import 'package:extera_next/utils/platform_infos.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/emoji_data.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -102,6 +102,8 @@ class CustomCategory {
 /// Updated callback: returns the wrapper so you can handle both types
 typedef EmojiSelectionCallback =
     void Function(Category? category, PickerEmoji emoji);
+
+typedef EmojiRemovalCallback = void Function(PickerEmoji emoji);
 
 /// Builder for rendering custom emoji tiles
 typedef CustomEmojiBuilder =
@@ -242,6 +244,7 @@ class _RecentTab extends _PickerTab {
 
 class MatrixEmojiPicker extends StatefulWidget {
   final EmojiSelectionCallback onEmojiSelected;
+  final EmojiRemovalCallback? onEmojiRemoved;
   final VoidCallback onBackspacePressed;
 
   /// A list of recent `PickerEmoji` items to show in the "Recent" tab.
@@ -257,6 +260,7 @@ class MatrixEmojiPicker extends StatefulWidget {
     super.key,
     required this.onEmojiSelected,
     required this.onBackspacePressed,
+    this.onEmojiRemoved,
     this.recentEmojis = const [],
     this.customCategories = const [],
     this.customEmojiBuilder,
@@ -504,21 +508,23 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
     final variations = _standardEmojiIndex.variationsByBaseName[lookupName];
     if (variations == null || variations.isEmpty) return;
 
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(globalPosition - const Offset(0, 50), globalPosition),
-      Offset.zero & overlay.size,
-    );
-
     showMenu(
       context: context,
-      position: position,
+      positionBuilder: (context, constraints) {
+        return RelativeRect.fromLTRB(
+          globalPosition.dx,
+          globalPosition.dy,
+          globalPosition.dx + constraints.minWidth,
+          globalPosition.dy + constraints.minHeight,
+        );
+      },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       color: Theme.of(context).cardColor,
+      useRootNavigator: !PlatformInfos.isMobile,
       items: [
         PopupMenuItem(
           enabled: true,
-          padding: .zero,
+          padding: EdgeInsets.zero,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.8,
@@ -531,7 +537,10 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
                 children: variations.map((v) {
                   return InkWell(
                     onTap: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(
+                        context,
+                        rootNavigator: !PlatformInfos.isMobile,
+                      ).pop();
                       _handleEmojiTap(v);
                     },
                     borderRadius: BorderRadius.circular(20),
@@ -604,8 +613,8 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
             labelColor: theme.colorScheme.secondary,
             unselectedLabelColor: Colors.grey,
             indicatorColor: theme.colorScheme.secondary,
-            padding: .zero,
-            tabAlignment: .start,
+            padding: EdgeInsets.zero,
+            tabAlignment: TabAlignment.start,
             onTap: _onTabTapped,
             tabs: _tabs.map((tab) {
               return Tooltip(
@@ -681,6 +690,11 @@ class MatrixEmojiPickerState extends State<MatrixEmojiPicker>
         onLongPress: hasVariations ? () {} : null,
         child: GestureDetector(
           onLongPressStart: (details) {
+            if (hasVariations) {
+              _showSkinToneMenu(context, emoji, details.globalPosition);
+            }
+          },
+          onSecondaryTapUp: (details) {
             if (hasVariations) {
               _showSkinToneMenu(context, emoji, details.globalPosition);
             }

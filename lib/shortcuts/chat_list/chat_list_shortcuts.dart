@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/utils/platform_infos.dart';
 

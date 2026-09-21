@@ -1,8 +1,7 @@
 // import 'package:extera_next/config/app_config.dart';
 
-import 'package:flutter/material.dart';
-
 import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -40,7 +39,8 @@ Future<(PresenceType, String?)?> showStatusInputDialog({
               children: [
                 SelectableLinkify(
                   text: L10n.of(context).leaveEmptyToClearStatus,
-                  linkStyle: TextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  linkStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     decorationColor: Theme.of(context).colorScheme.primary,
                   ),
@@ -58,8 +58,6 @@ Future<(PresenceType, String?)?> showStatusInputDialog({
                       initialText: initialText,
                       minLines: 1,
                       maxLines: 6,
-                      // Ensure maxLength is defined somewhere in your file or imports
-                      maxLength: 60,
                     );
                   },
                 ),

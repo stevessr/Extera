@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -17,9 +16,8 @@ class IntroPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final addMultiAccount = Matrix.of(
-      context,
-    ).widget.clients.any((client) => client.isLogged());
+    final addMultiAccount = Matrix.of(context).widget.clients
+        .any((client) => client.isLogged());
 
     return LoginScaffold(
       appBar: AppBar(
@@ -100,9 +98,8 @@ class IntroPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 32.0),
                       child: SelectableLinkify(
                         text: L10n.of(context).appIntro,
-                        textScaleFactor: MediaQuery.textScalerOf(
-                          context,
-                        ).scale(1),
+                        textScaleFactor: MediaQuery.textScalerOf(context)
+                            .scale(1),
                         textAlign: TextAlign.center,
                         linkStyle: TextStyle(
                           color: theme.colorScheme.secondary,
@@ -137,9 +134,8 @@ class IntroPage extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () async {
-                              final client = await Matrix.of(
-                                context,
-                              ).getLoginClient();
+                              final client = await Matrix.of(context)
+                                  .getLoginClient();
                               context.go(
                                 '${GoRouterState.of(context).uri.path}/login',
                                 extra: client,

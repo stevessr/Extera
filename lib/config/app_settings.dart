@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:extera_next/config/unicode_fallback_fonts.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 
 const _legacyEmojiFontKey = 'xyz.extera.next.twemojiFont';
 const _legacyUiChatFallbackFonts = 'Roboto,SystemFont,sans-serif';
@@ -31,6 +32,10 @@ enum AppSettings<T> {
   neurogateTokenExpiry<String>('xyz.extera.neurogateTokenExpiryDate', ''),
   selectedAccount<String>('xyz.extera.selectedAccount', ''),
   messageStyle<String>('xyz.extera.messageStyle', 'bubbles'),
+  bubbleSide<String>(
+    'xyz.extera.bubbleSide',
+    'both',
+  ), // oneSide | adaptive | both
 
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
   fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),
@@ -120,7 +125,6 @@ enum AppSettings<T> {
     'chat.fluffy.hide_member_changes_in_public_chats',
     false,
   ),
-  experimentalVoip<bool>('chat.fluffy.experimental_voip', false),
   showPresences<bool>('chat.fluffy.show_presences', true),
   presenceStatus<String>('xyz.extera.presence_status', 'online'),
   avatarBorderRadius<double>('xyz.extera.next.avatarBorderRadius', 1),
@@ -253,9 +257,10 @@ enum AppSettings<T> {
     }
     if (kIsWeb && loadWebConfigFile) {
       try {
-        final configJsonString = utf8.decode(
-          (await http.get(Uri.parse('config.json'))).bodyBytes,
-        );
+        final client = http.Client();
+        final response = await client.get(Uri.parse('config.json'));
+        final configJsonString = utf8.decode(response.bodyBytes);
+        client.close();
         final configJson =
             json.decode(configJsonString) as Map<String, Object?>;
         for (final setting in AppSettings.values) {
@@ -277,8 +282,8 @@ enum AppSettings<T> {
         }
       } on FormatException catch (_) {
         Logs().v('[ConfigLoader] config.json not found');
-      } catch (e) {
-        Logs().v('[ConfigLoader] config.json not found', e);
+      } catch (e, s) {
+        Logs().v('[ConfigLoader] config.json not found', e, s);
       }
     }
 
@@ -297,7 +302,20 @@ extension AppSettingsBoolExtension on AppSettings<bool> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (!PowerSaveMode.isEnabled) return configuredValue;
+
+    // Power saving is an ephemeral policy layer: do not write these overrides
+    // to SharedPreferences. The user's choices therefore come back instantly
+    // when the OS leaves battery/low-power mode.
+    return switch (this) {
+      AppSettings.animatedEmoji ||
+      AppSettings.autoplayImages ||
+      AppSettings.enableChatFrostedGlass ||
+      AppSettings.enableGradient => false,
+      _ => configuredValue,
+    };
   }
 
   Future<void> setItem(bool value) => AppSettings.store.setBool(key, value);
@@ -348,7 +366,12 @@ extension AppSettingsDoubleExtension on AppSettings<double> {
         error.stackTrace,
       );
     }
-    return value.asValue?.value ?? defaultValue;
+
+    final configuredValue = value.asValue?.value ?? defaultValue;
+    if (PowerSaveMode.isEnabled && this == AppSettings.wallpaperBlur) {
+      return 0.0;
+    }
+    return configuredValue;
   }
 
   Future<void> setItem(double value) => AppSettings.store.setDouble(key, value);

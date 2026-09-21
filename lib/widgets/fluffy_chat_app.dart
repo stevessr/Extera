@@ -1,21 +1,24 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:android_system_font/android_system_font.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/config/routes.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/download_manager/download_manager.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/widgets/app_lock.dart';
 import 'package:extera_next/widgets/background_audio_player.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 import 'package:extera_next/widgets/unicode_font_fallback_scope.dart';
+
 import '../config/app_config.dart';
 import '../utils/custom_scroll_behaviour.dart';
 import '../utils/platform_infos.dart';
@@ -57,6 +60,7 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
   @override
   void initState() {
     super.initState();
+    PowerSaveMode.initialize();
     initPlatformState();
   }
 
@@ -100,58 +104,75 @@ class _FluffyChatAppState extends State<FluffyChatApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeBuilder(
-      builder:
-          (
-            context,
-            themeMode,
-            primaryColor,
-            schemeVariant,
-            pureBlack,
-            notoEmoji,
-            unicodeFallback,
-          ) => MaterialApp.router(
-            title: AppConfig.applicationName,
-            themeMode: themeMode,
-            theme: FluffyThemes.buildTheme(
+    return ValueListenableBuilder<bool>(
+      valueListenable: PowerSaveMode.enabled,
+      builder: (context, powerSaveMode, _) => ThemeBuilder(
+        builder:
+            (
               context,
-              Brightness.light,
+              themeMode,
               primaryColor,
               schemeVariant,
               pureBlack,
               notoEmoji,
-            ),
-            darkTheme: FluffyThemes.buildTheme(
-              context,
-              Brightness.dark,
-              primaryColor,
-              schemeVariant,
-              pureBlack,
-              notoEmoji,
-            ),
-            scrollBehavior: CustomScrollBehavior(),
-            localizationsDelegates: L10n.localizationsDelegates,
-            supportedLocales: L10n.supportedLocales,
-            routerConfig: FluffyChatApp.router,
-            builder: (context, child) => UnicodeFontFallbackScope(
-              enabled: unicodeFallback,
-              child: AppLockWidget(
-                pincode: widget.pincode,
-                clients: widget.clients,
-                // Need a navigator above the Matrix widget for
-                // displaying dialogs
-                child: DownloadManager(
-                  child: BackgroundAudioPlayer(
-                    child: Matrix(
+              unicodeFallback,
+            ) => MaterialApp.router(
+              title: AppConfig.applicationName,
+              themeMode: themeMode,
+              themeAnimationDuration: powerSaveMode
+                  ? Duration.zero
+                  : kThemeAnimationDuration,
+              theme: FluffyThemes.buildTheme(
+                context,
+                Brightness.light,
+                primaryColor,
+                schemeVariant,
+                pureBlack,
+                notoEmoji,
+              ),
+              darkTheme: FluffyThemes.buildTheme(
+                context,
+                Brightness.dark,
+                primaryColor,
+                schemeVariant,
+                pureBlack,
+                notoEmoji,
+              ),
+              scrollBehavior: CustomScrollBehavior(),
+              localizationsDelegates: appLocalizationsDelegates,
+              supportedLocales: L10n.supportedLocales,
+              routerConfig: FluffyChatApp.router,
+              builder: (context, child) {
+                final mediaQuery = MediaQuery.of(context);
+                final effectiveMediaQuery =
+                    powerSaveMode && !mediaQuery.disableAnimations
+                    ? mediaQuery.copyWith(disableAnimations: true)
+                    : mediaQuery;
+
+                return MediaQuery(
+                  data: effectiveMediaQuery,
+                  child: UnicodeFontFallbackScope(
+                    enabled: unicodeFallback,
+                    child: AppLockWidget(
+                      pincode: widget.pincode,
                       clients: widget.clients,
-                      store: widget.store,
-                      child: widget.testWidget ?? child,
+                      // Need a navigator above the Matrix widget for
+                      // displaying dialogs
+                      child: DownloadManager(
+                        child: BackgroundAudioPlayer(
+                          child: Matrix(
+                            clients: widget.clients,
+                            store: widget.store,
+                            child: widget.testWidget ?? child,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
-          ),
+      ),
     );
   }
 }

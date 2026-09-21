@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-
 import 'package:collection/collection.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:slugify/slugify.dart';
 
@@ -173,9 +172,9 @@ class SettingsChatController extends State<SettingsChat> {
         body: SizedBox(
           height: double.infinity,
           child: MatrixEmojiPicker(
-            onEmojiSelected: (_, emoji) => Navigator.of(
-              context,
-            ).pop(emoji.customData ?? emoji.standardEmoji!.char),
+            onEmojiSelected: (_, emoji) =>
+                Navigator.of(context)
+                    .pop(emoji.customData ?? emoji.standardEmoji!.char),
             onBackspacePressed: () {},
             recentEmojis: recentPickerEmojis,
             customCategories: customCategories,

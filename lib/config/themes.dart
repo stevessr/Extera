@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/font_family.dart';
@@ -143,6 +144,7 @@ abstract class FluffyThemes {
           systemNavigationBarColor: colorScheme.surface,
         ),
       ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(year2023: false),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(width: 1, color: colorScheme.primary),

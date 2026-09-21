@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -30,11 +31,10 @@ class PollWidget extends StatefulWidget {
 class PollWidgetState extends State<PollWidget> {
   List<String> selectedAnswers = [];
   List<String> originalVote = []; // Store the original vote to detect changes
-  Map<String, int>? pollResults;
-  Map<String, List<String>>? pollVoters; // Map of answerId -> list of userIds
   bool hasVoted = false;
   bool isLoading = false;
-  bool hasEnded = false;
+  bool isVotesLoading = true;
+  StreamSubscription<Event>? subscription;
 
   @override
   void initState() {
@@ -42,109 +42,40 @@ class PollWidgetState extends State<PollWidget> {
     _loadPollData();
   }
 
-  void _loadPollData() {
-    final event = widget.event;
-    final content = event.content[PollEvents.pollStart] as Map<String, dynamic>;
-
-    // Check if user has already voted
+  Future<void> _loadPollData() async {
     _checkExistingVote();
-
-    // For disclosed polls, load initial results
-    final kind = content['kind'] as String?;
-    if (kind == 'org.matrix.msc3381.poll.disclosed') {
-      _calculateResults();
+    await widget.event.fetchPollResponses(widget.timeline);
+    if (mounted) {
+      setState(() {
+        isVotesLoading = false;
+      });
     }
   }
 
-  void _checkExistingVote() async {
-    final room = widget.event.room;
-    final currentUserId = room.client.userID;
-
-    final rel = await Matrix.of(context).client
-        .getRelatingEventsWithRelTypeAndEventType(
-          room.id,
-          widget.event.eventId,
-          "m.reference",
-          "org.matrix.msc3381.poll.response",
-        );
-
-    // Get all poll response events for this poll
-    final responses = rel.chunk;
-
-    if (responses.isNotEmpty) {
-      // Use the latest response
-      for (final response in responses) {
-        final responseContent =
-            response.content['org.matrix.msc3381.poll.response']
-                as Map<String, dynamic>;
-        if (response.senderId == currentUserId) {
-          final List<dynamic> answers = responseContent['answers'];
-          setState(() {
-            selectedAnswers = answers.cast<String>();
-            originalVote = List.from(
-              answers.cast<String>(),
-            ); // Store original vote
-            hasVoted = true;
-          });
-        }
+  void _checkExistingVote() {
+    final currentUserId = widget.event.room.client.userID;
+    if (currentUserId == null) return;
+    late final StreamSubscription<Event> sub;
+    sub = Matrix.of(context).client.onTimelineEvent.stream.listen((event) {
+      if (event.relationshipEventId != widget.event.eventId ||
+          event.type != PollEventContent.responseType) {
+        return;
       }
-    }
+      _applyExistingVote(currentUserId);
+    });
+    subscription = sub;
+    _applyExistingVote(currentUserId);
   }
 
-  void _calculateResults() async {
-    final room = widget.event.room;
-    final pollEventId = widget.event.eventId;
-    final pollContent =
-        widget.event.content['org.matrix.msc3381.poll.start']! as Map;
-    final int maxAnswers = pollContent['max_selections'] ?? 1;
-    final results = <String, int>{};
-    final voters = <String, List<String>>{}; // answerId -> list of userIds
-
-    final rel = await Matrix.of(context).client
-        .getRelatingEventsWithRelTypeAndEventType(
-          room.id,
-          pollEventId,
-          "m.reference",
-          "org.matrix.msc3381.poll.response",
-        );
-
-    final responses = rel.chunk;
-    final userLatestResponse = <String, MatrixEvent>{};
-
-    for (final response in responses) {
-      final senderId = response.senderId;
-      final ts = response.originServerTs;
-
-      if (!userLatestResponse.containsKey(senderId) ||
-          ts.isAfter(userLatestResponse[senderId]!.originServerTs)) {
-        userLatestResponse[senderId] = response;
-      }
-    }
-
-    for (final response in userLatestResponse.values) {
-      final responseContent =
-          response.content['org.matrix.msc3381.poll.response']
-              as Map<String, dynamic>;
-
-      // Безопасно приводим список ответов
-      final List<dynamic> answersRaw = responseContent['answers'] ?? [];
-      final answers = answersRaw.cast<String>();
-      if (answers.length > maxAnswers) {
-        continue;
-      }
-
-      for (final answer in answers) {
-        results[answer] = (results[answer] ?? 0) + 1;
-        if (!voters.containsKey(answer)) {
-          voters[answer] = [];
-        }
-        voters[answer]!.add(response.senderId);
-      }
-    }
-
+  void _applyExistingVote(String currentUserId) {
+    if (!mounted || hasVoted) return;
+    final responses = widget.event.getPollResponses(widget.timeline);
+    final answers = responses[currentUserId];
+    if (answers == null) return;
     setState(() {
-      pollResults = results;
-      pollVoters = voters;
+      selectedAnswers = answers.toList();
+      originalVote = List.from(selectedAnswers);
+      hasVoted = true;
     });
   }
 
@@ -156,31 +87,15 @@ class PollWidgetState extends State<PollWidget> {
     });
 
     try {
-      final room = widget.event.room;
-
-      // Send poll response event
-      await room.sendEvent({
-        'm.relates_to': {
-          'rel_type': 'm.reference',
-          'event_id': widget.event.eventId,
-        },
-        'org.matrix.msc3381.poll.response': {'answers': answers},
-      }, type: 'org.matrix.msc3381.poll.response');
+      await widget.event.answerPoll(answers);
 
       setState(() {
         selectedAnswers = answers;
         originalVote = List.from(answers); // Update original vote after voting
         hasVoted = true;
         isLoading = false;
+        isVotesLoading = false;
       });
-
-      // Recalculate results for disclosed polls
-      final content =
-          widget.event.content[PollEvents.pollStart] as Map<String, dynamic>;
-      final kind = content['kind'] as String?;
-      if (kind == 'org.matrix.msc3381.poll.disclosed') {
-        _calculateResults();
-      }
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -219,15 +134,7 @@ class PollWidgetState extends State<PollWidget> {
     });
   }
 
-  bool _isPollEnded() {
-    // Check if there's an end event for this poll
-    final endEvents = widget.timeline.events.where((e) {
-      return e.type == 'org.matrix.msc3381.poll.end' &&
-          e.senderId == widget.event.senderId &&
-          e.relationshipEventId == widget.event.eventId;
-    });
-    return endEvents.isNotEmpty;
-  }
+  bool _isPollEnded() => widget.event.getPollHasBeenEnded(widget.timeline);
 
   bool _shouldShowResults() {
     final content =
@@ -239,18 +146,13 @@ class PollWidgetState extends State<PollWidget> {
     return isDisclosed || isEnded;
   }
 
-  double _getAnswerPercentage(String answerId) {
-    if (pollResults == null || pollResults!.isEmpty) return 0.0;
-    final totalVotes = pollResults!.values.reduce((a, b) => a + b);
+  double _getAnswerPercentage(
+    Map<String, int> results,
+    int totalVotes,
+    String answerId,
+  ) {
     if (totalVotes == 0) return 0.0;
-
-    // if (_shouldShowResults()) {
-    //   Logs().w("Get answer percentage for $answerId");
-    //   Logs().w(pollResults.toString());
-    //   Logs().w("${pollResults![answerId]?.toDouble() ?? 0} / $totalVotes");
-    // }
-
-    return (pollResults![answerId]?.toDouble() ?? 0) / totalVotes.toDouble();
+    return (results[answerId]?.toDouble() ?? 0) / totalVotes.toDouble();
   }
 
   // Check if the current selection is different from the original vote
@@ -269,6 +171,12 @@ class PollWidgetState extends State<PollWidget> {
   }
 
   @override
+  void dispose() {
+    subscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final client = Matrix.of(context).client;
@@ -284,6 +192,15 @@ class PollWidgetState extends State<PollWidget> {
     final kind = content['kind'] as String?;
 
     final shouldShowResults = _shouldShowResults();
+    final responses = event.getPollResponses(widget.timeline);
+    var totalVotes = 0;
+    final results = <String, int>{};
+    for (final answers in responses.values) {
+      for (final answer in answers) {
+        results[answer] = (results[answer] ?? 0) + 1;
+      }
+      totalVotes++;
+    }
     final isEnded = _isPollEnded();
     final canVote = !isEnded && !isLoading;
     final hasChanged = _hasSelectionChanged();
@@ -318,7 +235,18 @@ class PollWidgetState extends State<PollWidget> {
                 )
                 .rateLimit(const Duration(seconds: 1)),
             builder: (context, _) {
-              _calculateResults();
+              if (isVotesLoading) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
               return Column(
                 children: [
                   ...answers.asMap().entries.map((entry) {
@@ -330,13 +258,17 @@ class PollWidgetState extends State<PollWidget> {
                         answer['org.matrix.msc1767.text'] as String? ??
                         'Answer ${index + 1}';
                     final isSelected = selectedAnswers.contains(answerId);
-                    final percentage = _getAnswerPercentage(answerId);
+                    final percentage = _getAnswerPercentage(
+                      results,
+                      totalVotes,
+                      answerId,
+                    );
                     // final voteCount = pollResults?[answerId] ?? 0;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Material(
-                        color: shouldShowResults && pollResults != null
+                        color: shouldShowResults && !isVotesLoading
                             ? widget.color.withValues(alpha: 0.04)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
@@ -358,7 +290,7 @@ class PollWidgetState extends State<PollWidget> {
                             child: Stack(
                               children: [
                                 // Progress bar background
-                                if (shouldShowResults && pollResults != null)
+                                if (shouldShowResults && !isVotesLoading)
                                   Positioned.fill(
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
@@ -439,7 +371,7 @@ class PollWidgetState extends State<PollWidget> {
 
                                       // Vote count and percentage
                                       if (shouldShowResults &&
-                                          pollResults != null) ...[
+                                          !isVotesLoading) ...[
                                         const SizedBox(width: 12),
                                         Container(
                                           padding: const EdgeInsets.symmetric(

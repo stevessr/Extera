@@ -2,35 +2,38 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:extera_next/config/themes.dart';
-import 'package:extera_next/utils/foreground_task_manager.dart';
-import 'package:extera_next/utils/error_reporter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart' show Client, Logs, DeviceKeys;
 
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/pages/dialer/dialer.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/pages/dialer/livekit_service.dart';
+import 'package:extera_next/pages/dialer/task_handler.dart';
+import 'package:extera_next/utils/error_reporter.dart';
+import 'package:extera_next/utils/foreground_task_manager.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
+import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/call_keys_event_content.dart';
-import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call_member.dart';
 
 class LiveKitCallScreen extends StatefulWidget {
   final String roomId;
   final List<String> liveKitServiceUrls;
   final String? callStateKey;
+  final bool noNotification;
+
   const LiveKitCallScreen({
     required this.roomId,
     required this.liveKitServiceUrls,
     this.callStateKey,
+    this.noNotification = false,
     super.key,
   });
 
@@ -423,6 +426,8 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final openId = await client.requestOpenIdToken(client.userID!, {});
       final deviceId = client.deviceID ?? '';
 
+      _registerMatrixListeners(client);
+
       await lk.LiveKitClient.initialize();
 
       LiveKitCredentials? creds;
@@ -431,12 +436,10 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       final keyProviderOptions = rtc.KeyProviderOptions(
         sharedKey: false,
         ratchetSalt: Uint8List.fromList('LKFrameEncryptionKey'.codeUnits),
-        // Must be > 0 so decryption can self-heal via ratcheting when the
-        // remote side rotates to a key index we have not applied yet.
-        // (Element Call uses 10, the livekit default is 16.)
-        ratchetWindowSize: 16,
+        ratchetWindowSize: 0,
         discardFrameWhenCryptorNotReady: true,
         keyDerivationAlgorithm: rtc.KeyDerivationAlgorithm.kHKDF,
+        keyRingSize: 255,
       );
       final nativeKeyProvider = await rtc.frameCryptorFactory
           .createDefaultKeyProvider(keyProviderOptions);
@@ -444,8 +447,6 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         nativeKeyProvider,
         keyProviderOptions,
       );
-
-      _registerMatrixListeners(client);
 
       final ownMemberId = '${client.userID}:${client.deviceID}';
       final otherActiveMembers = matrixRoom
@@ -500,7 +501,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
           // create receiver frame cryptors before any key material exists,
           // leaving them pinned at key index 0 with no way to recover once
           // the peer rotates to a higher index.
-          await _publishCallMember();
+          await _publishCallMember(notify: !widget.noNotification);
           membershipPublished = true;
           await _createKeyAndShare(room);
 
@@ -1542,7 +1543,11 @@ class _CallControls extends StatelessWidget {
   }
 }
 
-Future<void> openLiveKitCall(BuildContext context, String roomId) async {
+Future<void> openLiveKitCall(
+  BuildContext context,
+  String roomId, {
+  bool noNotification = false,
+}) async {
   final manager = LiveKitCallManager();
 
   // Check if we are already in THIS call. If so, just push the UI, don't send Matrix state events.
@@ -1553,6 +1558,7 @@ Future<void> openLiveKitCall(BuildContext context, String roomId) async {
           roomId: roomId,
           liveKitServiceUrls: const [],
           callStateKey: manager.callStateKey,
+          noNotification: noNotification,
         ),
       );
       manager.startCall(roomId, route);

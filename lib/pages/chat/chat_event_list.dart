@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-
+import 'package:material_ui/material_ui.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -46,11 +45,18 @@ class ChatEventList extends StatelessWidget {
       events: events,
     );
 
-    final horizontalPadding = FluffyThemes.isColumnMode(context) ? 8.0 : 0.0;
+    final isColumnMode = FluffyThemes.isColumnMode(context);
+    final horizontalPadding = isColumnMode ? 8.0 : 0.0;
 
     final threads = controller.room.threads;
 
     final hasWallpaper = AppSettings.wallpaperPath.value.isNotEmpty;
+
+    final singleSided = switch (AppSettings.bubbleSide.value) {
+      'oneSide' => true,
+      'adaptive' => isColumnMode,
+      _ => false,
+    };
 
     // eventsKeyMap is the eventId→index map over the same filteredEvents list.
     final latestReadEventIndex = latestReadEvent != null
@@ -96,6 +102,7 @@ class ChatEventList extends StatelessWidget {
         singleSelected:
             controller.selectedEvents.length == 1 &&
             controller.selectedEvents.first.eventId == event.eventId,
+        singleSided: singleSided,
         longPressSelect: controller.selectedEvents.isNotEmpty,
         selectable:
             controller.selectedEvents.isNotEmpty ||
@@ -133,6 +140,7 @@ class ChatEventList extends StatelessWidget {
           thread: thread,
           layout: controller.layout,
           singleSelected: deps.singleSelected,
+          singleSided: deps.singleSided,
           onSwipe: controller.replyAction,
           hasBeenRead: deps.hasBeenRead,
           onInfoTab: controller.showEventInfo,
@@ -173,8 +181,8 @@ class ChatEventList extends StatelessWidget {
       controller: controller.scrollController,
       reverse: true,
       center: _centerKey,
-      physics: controller.selectedEventId != null ||
-              controller.reactionsMenuOpen
+      physics:
+          controller.selectedEventId != null || controller.reactionsMenuOpen
           ? const NeverScrollableScrollPhysics()
           : null,
       keyboardDismissBehavior: PlatformInfos.isIOS
