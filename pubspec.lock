@@ -915,12 +915,11 @@ packages:
   flutter_rust_bridge:
     dependency: "direct main"
     description:
-      path: frb_dart
-      ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
-      resolved-ref: ba8d019eb374e70a6c144adc2c160772c0417e0c
-      url: "https://github.com/fzyzcjy/flutter_rust_bridge.git"
-    source: git
-    version: "2.13.0-beta.4"
+      name: flutter_rust_bridge
+      sha256: ec69331e2335ab4d456c0a9fc700892c2c85b72b9c0cb39df3ecfe8833d5d5c8
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.0"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -2886,12 +2885,11 @@ packages:
   vodozemac:
     dependency: "direct main"
     description:
-      path: dart
-      ref: "krille/frb-wasm-fix"
-      resolved-ref: b34b469a7075dd0c5c79c6c4792b7c5dd0a9d883
-      url: "https://github.com/famedly/dart-vodozemac.git"
-    source: git
-    version: "0.7.0"
+      name: vodozemac
+      sha256: efce261575f7de97ebd052b16775cd57f940e8212af47d288050c166b9f9a167
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.0"
   wakelock_plus:
     dependency: "direct main"
     description:
