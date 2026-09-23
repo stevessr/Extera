@@ -1,0 +1,39 @@
+name: PR 41 one-time analyzer fixes
+on:
+  push:
+    branches:
+      - fix/muted-thread-read-marker
+    paths:
+      - .github/workflows/pr41-analyzer-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/muted-thread-read-marker
+      - uses: ./.github/actions/setup-flutter
+      - name: Apply analyzer quick fixes and remove one-off workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart fix --apply
+          dart run tidy_imports --no-comments
+          dart format lib/ test/ integration_test/
+          git diff --stat
+          changed=$(git diff --name-only -- lib/ test/ integration_test/ pubspec.yaml | wc -l)
+          if (( changed > 45 )); then
+            echo "Analyzer changes unexpectedly broad ($changed files); refusing to push" >&2
+            exit 1
+          fi
+          git add -u -- lib/ test/ integration_test/ pubspec.yaml
+          git rm -- .github/workflows/pr41-analyzer-once.yml
+          git diff --cached --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "style: fix existing Dart analyzer warnings"
+          git push origin HEAD:fix/muted-thread-read-marker
