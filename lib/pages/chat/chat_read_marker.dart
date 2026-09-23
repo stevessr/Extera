@@ -16,3 +16,9 @@ String initialChatReadMarkerEventId({
   }
   return roomHasNewMessages ? roomFullyRead : '';
 }
+
+/// An older in-flight receipt must not clear unread counts for a newer reply.
+bool shouldClearThreadUnreadAfterReceipt({
+  required String acknowledgedEventId,
+  required String? latestSyncedEventId,
+}) => acknowledgedEventId == latestSyncedEventId;
