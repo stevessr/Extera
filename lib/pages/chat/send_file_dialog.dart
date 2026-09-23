@@ -230,8 +230,9 @@ class SendFileDialogState extends State<SendFileDialog> {
         if (relation != null) extraContent['m.relates_to'] = relation;
 
         final transactionId = widget.room.client.generateUniqueTransactionId();
+        String? sentEventId;
         try {
-          await widget.room.sendFileEvent(
+          sentEventId = await widget.room.sendFileEvent(
             file,
             txid: transactionId,
             thumbnail: thumbnail,
@@ -259,13 +260,20 @@ class SendFileDialogState extends State<SendFileDialog> {
 
           scaffoldMessenger.showLoadingSnackBar(l10n.sendingAttachment);
 
-          await widget.room.sendFileEvent(
+          sentEventId = await widget.room.sendFileEvent(
             file,
             txid: transactionId,
             thumbnail: thumbnail,
             // The relation is already stored in extraContent. Supplying the
             // SDK thread arguments would overwrite explicit in-thread replies.
             extraContent: extraContent,
+          );
+        }
+        // The SDK can return null after persisting a failed pending event.
+        // Leave the reply selected so the user can retry that event in place.
+        if (sentEventId == null) {
+          throw StateError(
+            'Attachment message failed to send. Retry the pending message.',
           );
         }
         widget.onClearReply?.call();
