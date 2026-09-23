@@ -45,6 +45,12 @@ void main() {
     expect(relation?['m.in_reply_to'], {'event_id': rootEventId});
   });
 
+  test('a thread with no known last event falls back to its root', () {
+    final relation = buildFileSendRelation(threadRootEventId: rootEventId);
+
+    expect(relation?['m.in_reply_to'], {'event_id': rootEventId});
+  });
+
   test('room-level reply has no thread relationship', () {
     expect(buildFileSendRelation(inReplyToEventId: replyEventId), {
       'm.in_reply_to': {'event_id': replyEventId},
