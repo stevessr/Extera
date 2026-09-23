@@ -214,7 +214,9 @@ class _ThreadChatController extends ChatController {
           _readMarkerRequestedWhilePending = false;
           _threadReadMarkerFuture = null;
           if (shouldRetry && mounted) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+            // A completed network request need not schedule a Flutter frame.
+            // Retry in a microtask so the pending flag cannot get stranded.
+            scheduleMicrotask(() {
               if (mounted) setReadMarker();
             });
           }
