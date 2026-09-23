@@ -59,4 +59,36 @@ void main() {
       );
     });
   });
+  group('shouldClearThreadUnreadAfterReceipt', () {
+    test('clears unread state when the newest reply was acknowledged', () {
+      expect(
+        shouldClearThreadUnreadAfterReceipt(
+          acknowledgedEventId: r'$reply-2',
+          latestSyncedEventId: r'$reply-2',
+        ),
+        isTrue,
+      );
+    });
+
+    test('keeps a newer reply unread while an older receipt completes', () {
+      expect(
+        shouldClearThreadUnreadAfterReceipt(
+          acknowledgedEventId: r'$reply-1',
+          latestSyncedEventId: r'$reply-2',
+        ),
+        isFalse,
+      );
+    });
+
+    test('does not clear unread state without a synced reply', () {
+      expect(
+        shouldClearThreadUnreadAfterReceipt(
+          acknowledgedEventId: r'$reply-1',
+          latestSyncedEventId: null,
+        ),
+        isFalse,
+      );
+    });
+  });
+
 }
