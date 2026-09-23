@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/chat_read_marker.dart';
 import 'package:extera_next/pages/chat/chat_view.dart';
 import 'package:extera_next/pages/chat/event_info_dialog.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
@@ -53,7 +54,6 @@ import 'package:extera_next/utils/show_scaffold_dialog.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
-import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
@@ -776,7 +776,20 @@ class ChatController extends State<ChatPageWithRoom>
       _ => .bubbles,
     };
     sendingClient = Matrix.of(context).client;
-    readMarkerEventId = room.hasNewMessages ? room.fullyRead : '';
+    final currentThread = thread;
+    readMarkerEventId = initialChatReadMarkerEventId(
+      roomHasNewMessages: room.hasNewMessages,
+      roomFullyRead: room.fullyRead,
+      threadRootEventId: currentThread?.rootEvent.eventId,
+      threadHasNewMessages: currentThread?.hasNewMessages ?? false,
+      threadReadEventId: currentThread == null
+          ? null
+          : room
+                .receiptState
+                .byThread[currentThread.rootEvent.eventId]
+                ?.latestOwnReceipt
+                ?.eventId,
+    );
     WidgetsBinding.instance.addObserver(this);
     _tryLoadTimeline();
     _subscribeTileInvalidation();
@@ -807,7 +820,10 @@ class ChatController extends State<ChatPageWithRoom>
                 )
                 .indexWhere((e) => e.eventId == readMarkerEventId);
 
-      if (timeline != null &&
+      // A thread receipt might refer to an uncached reply. Fetching room
+      // history or showing a room marker banner would block its acknowledgement.
+      if (thread == null &&
+          timeline != null &&
           timeline!.events.isNotEmpty &&
           readMarkerEventId.isNotEmpty &&
           readMarkerEventIndex == -1) {
@@ -824,7 +840,9 @@ class ChatController extends State<ChatPageWithRoom>
         Logs().v('Scroll up to visible event', readMarkerEventId);
         scrollToEventId(readMarkerEventId, null, highlightEvent: false);
         return;
-      } else if (readMarkerEventId.isNotEmpty && readMarkerEventIndex == -1) {
+      } else if (thread == null &&
+          readMarkerEventId.isNotEmpty &&
+          readMarkerEventIndex == -1) {
         _showScrollUpMaterialBanner(readMarkerEventId);
       }
 
@@ -1384,7 +1402,7 @@ class ChatController extends State<ChatPageWithRoom>
         .sendFileEvent(
           file,
           extraContent: {
-            if (relation != null) 'm.relates_to': relation,
+            'm.relates_to': ?relation,
             'info': {...file.info, 'duration': duration},
             'org.matrix.msc3245.voice': {},
             'org.matrix.msc1767.audio': {
@@ -1450,7 +1468,7 @@ class ChatController extends State<ChatPageWithRoom>
           file,
           thumbnail: thumbnail,
           extraContent: {
-            if (relation != null) 'm.relates_to': relation,
+            'm.relates_to': ?relation,
             'xyz.extera.video_note': {},
           },
           // Keep the explicit thread relation in extraContent; the SDK would

@@ -144,6 +144,9 @@ abstract class FluffyThemes {
           systemNavigationBarColor: colorScheme.surface,
         ),
       ),
+      // Preserve the explicitly selected 2024 appearance until the legacy
+      // switch can be replaced without changing the project's visual theme.
+      // ignore: deprecated_member_use
       progressIndicatorTheme: const ProgressIndicatorThemeData(year2023: false),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(

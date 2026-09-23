@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:latext/latext.dart';
+import 'package:material_ui/material_ui.dart';
 
 // Matrix's data-mx-maths attribute already tells us that the whole payload is
 // TeX. LaTexT is designed for mixed text + math and otherwise parses `$` and
@@ -23,7 +22,7 @@ Text _opaqueDelimitedLatex(Text laTeXCode) {
       : source;
 
   return Text(
-    '${_mathDelimiter}$math${_mathDelimiter}',
+    '$_mathDelimiter$math$_mathDelimiter',
     style: laTeXCode.style,
     textAlign: laTeXCode.textAlign,
     textDirection: laTeXCode.textDirection,

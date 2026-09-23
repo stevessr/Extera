@@ -39,7 +39,7 @@ class CustomHttpClient {
 
     if (httpProxy != '') {
       client.findProxy = (uri) {
-        return "PROXY ${httpProxy};";
+        return "PROXY $httpProxy;";
       };
     }
 

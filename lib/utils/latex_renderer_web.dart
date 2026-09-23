@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:latext/latext.dart' deferred as latext;
+import 'package:material_ui/material_ui.dart';
 
 Future<void>? _loaded;
 
@@ -21,7 +20,7 @@ Text _opaqueDelimitedLatex(Text laTeXCode) {
       : source;
 
   return Text(
-    '${_mathDelimiter}$math${_mathDelimiter}',
+    '$_mathDelimiter$math$_mathDelimiter',
     style: laTeXCode.style,
     textAlign: laTeXCode.textAlign,
     textDirection: laTeXCode.textDirection,

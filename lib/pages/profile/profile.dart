@@ -14,9 +14,8 @@ import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/msc2666_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/user_notes_extension.dart';
-import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/rich_presence.dart';
+import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 

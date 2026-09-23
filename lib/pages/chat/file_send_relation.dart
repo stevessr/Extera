@@ -15,8 +15,7 @@ Map<String, dynamic>? buildFileSendRelation({
       'event_id': threadRootEventId,
       'rel_type': 'm.thread',
       'is_falling_back': inReplyToEventId == null,
-      if (fallbackEventId != null)
-        'm.in_reply_to': {'event_id': fallbackEventId},
+      'm.in_reply_to': {'event_id': fallbackEventId},
     };
   }
 

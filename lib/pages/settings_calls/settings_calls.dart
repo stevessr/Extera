@@ -1,7 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'package:extera_next/widgets/matrix.dart';
-
 import 'settings_calls_view.dart';
 
 class SettingsCalls extends StatefulWidget {

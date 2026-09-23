@@ -1,5 +1,3 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:flutter_map/flutter_map.dart' deferred as fm;
 import 'package:latlong2/latlong.dart';
 import 'package:material_ui/material_ui.dart';
