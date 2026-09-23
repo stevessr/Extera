@@ -88,15 +88,23 @@ class SendLocationDialogState extends State<SendLocationDialog> {
     final lastThreadEvent = widget.thread?.lastEvent;
     final result = await showFutureLoadingDialog(
       context: context,
-      future: () => widget.room.sendEvent(
-        {'msgtype': 'm.location', 'body': body, 'geo_uri': uri},
-        inReplyTo: widget.replyEvent,
-        threadRootEventId: threadRootEventId,
-        threadLastEventId:
-            lastThreadEvent != null && lastThreadEvent.status.isSynced
-            ? lastThreadEvent.eventId
-            : threadRootEventId,
-      ),
+      future: () async {
+        final sentEventId = await widget.room.sendEvent(
+          {'msgtype': 'm.location', 'body': body, 'geo_uri': uri},
+          inReplyTo: widget.replyEvent,
+          threadRootEventId: threadRootEventId,
+          threadLastEventId:
+              lastThreadEvent != null && lastThreadEvent.status.isSynced
+              ? lastThreadEvent.eventId
+              : threadRootEventId,
+        );
+        if (sentEventId == null) {
+          throw StateError(
+            'Location message failed to send. Retry the pending message.',
+          );
+        }
+        return sentEventId;
+      },
     );
     if (!mounted) return;
     if (result.isError) {
