@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:latext/latext.dart' deferred as latext;
+import 'package:material_ui/material_ui.dart';
 
 Future<void>? _loaded;
 
