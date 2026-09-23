@@ -10,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/file_send_relation.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/utils/foreground_task_manager.dart';
@@ -60,11 +61,23 @@ class SendFileDialogState extends State<SendFileDialog> {
   final TextEditingController _labelTextController = TextEditingController();
 
   Future<void> _send() async {
+    if (isSending) return;
     final scaffoldMessenger = ScaffoldMessenger.of(widget.outerContext);
     final l10n = L10n.of(context);
     final convertLinebreaks = Matrix.of(
       context,
     ).client.convertLinebreaksInFormatting;
+    final label = _labelTextController.text.trim();
+    final warning = contentWarning;
+    final replyEventId = widget.replyEvent?.eventId;
+    final threadRootEventId = widget.thread?.rootEvent.eventId;
+    final lastThreadEvent = widget.thread?.lastEvent;
+    final threadLastEventId =
+        lastThreadEvent != null && lastThreadEvent.status.isSynced
+        ? lastThreadEvent.eventId
+        : threadRootEventId;
+    final files = List<XFile>.of(widget.files);
+    var foregroundUploadAcquired = false;
 
     try {
       setState(() {
@@ -77,16 +90,22 @@ class SendFileDialogState extends State<SendFileDialog> {
         Navigator.of(context, rootNavigator: false).pop();
       }
 
-      await ForegroundTaskManager.startFileUpload(context);
+      if (widget.outerContext.mounted) {
+        foregroundUploadAcquired = await ForegroundTaskManager.startFileUpload(
+          widget.outerContext,
+        );
+      }
 
-      for (final xfile in widget.files) {
+      for (final xfile in files) {
         MatrixFile file;
         MatrixImageFile? thumbnail;
         final length = await xfile.length();
         final mimeType = xfile.mimeType ?? lookupMimeType(xfile.path);
         final name = xfile.name.isNotEmpty
             ? xfile.name
-            : "file.${mimeType!.split('/').last}";
+            : mimeType == null
+            ? 'file'
+            : "file.${mimeType.split('/').last.split(';').first}";
         // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
         // not rewrite it. Some file pickers report .svg as octet-stream.
         final isSvg =
@@ -94,6 +113,19 @@ class SendFileDialogState extends State<SendFileDialog> {
                 'image/svg+xml' ||
             name.toLowerCase().endsWith('.svg');
         final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
+        final canShrinkImage =
+            !isSvg && effectiveMimeType?.startsWith('image') == true;
+        final canCompressVideo =
+            PlatformInfos.isMobile &&
+            effectiveMimeType?.startsWith('video') == true &&
+            length > minSizeToCompress &&
+            compress;
+
+        if (length > maxUploadSize &&
+            !(compress && canShrinkImage) &&
+            !canCompressVideo) {
+          throw FileTooBigMatrixException(length, maxUploadSize);
+        }
 
         // If file is a video, shrink it!
         if (PlatformInfos.isMobile &&
@@ -107,10 +139,6 @@ class SendFileDialogState extends State<SendFileDialog> {
             mimeType.startsWith('image') &&
             AppSettings.cleanExif.value &&
             !isSvg) {
-          if (length > maxUploadSize) {
-            throw FileTooBigMatrixException(length, maxUploadSize);
-          }
-
           // Else we just create a MatrixFile
           file = MatrixFile(
             bytes: Uint8List.fromList(
@@ -120,10 +148,6 @@ class SendFileDialogState extends State<SendFileDialog> {
             mimeType: effectiveMimeType,
           ).detectFileType;
         } else {
-          if (length > maxUploadSize) {
-            throw FileTooBigMatrixException(length, maxUploadSize);
-          }
-
           // Else we just create a MatrixFile
           file = MatrixFile(
             bytes: await xfile.readAsBytes(),
@@ -134,7 +158,7 @@ class SendFileDialogState extends State<SendFileDialog> {
 
         // Shrink images before sending, but keep the original if the
         // shrunk result would be bigger than the source file.
-        if (compress && !isSvg && file is MatrixImageFile) {
+        if (compress && canShrinkImage && file is MatrixImageFile) {
           file = await file.shrinkWithSizeCheck(
             maxDimension: 1600,
             client: widget.room.client,
@@ -142,7 +166,7 @@ class SendFileDialogState extends State<SendFileDialog> {
         }
 
         if (file.bytes.length > maxUploadSize) {
-          throw FileTooBigMatrixException(length, maxUploadSize);
+          throw FileTooBigMatrixException(file.bytes.length, maxUploadSize);
         }
 
         if (PlatformInfos.isMobile &&
@@ -155,27 +179,28 @@ class SendFileDialogState extends State<SendFileDialog> {
             thumbnail = await _getVideoPreview(xfile);
           } catch (e) {
             Logs().e("Failed to generate video thumbnail", e);
-            scaffoldMessenger.showLoadingSnackBar(
-              e.toLocalizedString(widget.outerContext),
-            );
+            if (widget.outerContext.mounted && scaffoldMessenger.mounted) {
+              scaffoldMessenger.showLoadingSnackBar(
+                e.toLocalizedString(widget.outerContext),
+              );
+            }
           }
         }
 
-        if (widget.files.length > 1) {
+        if (files.length > 1) {
           scaffoldMessenger.showLoadingSnackBar(
             l10n.sendingAttachmentCountOfCount(
-              widget.files.indexOf(xfile) + 1,
-              widget.files.length,
+              files.indexOf(xfile) + 1,
+              files.length,
             ),
           );
         } else {
           scaffoldMessenger.clearSnackBars();
         }
 
-        final label = _labelTextController.text.trim();
         final extraContent = <String, dynamic>{};
 
-        applyContentWarning(extraContent, contentWarning);
+        applyContentWarning(extraContent, warning);
 
         if (label.isNotEmpty) {
           extraContent['body'] = label;
@@ -197,23 +222,23 @@ class SendFileDialogState extends State<SendFileDialog> {
           }
         }
 
-        if (widget.replyEvent != null) {
-          extraContent['m.relates_to'] = {
-            'm.in_reply_to': {'event_id': widget.replyEvent!.eventId},
-          };
-        }
+        final relation = buildFileSendRelation(
+          threadRootEventId: threadRootEventId,
+          threadLastEventId: threadLastEventId,
+          inReplyToEventId: replyEventId,
+        );
+        if (relation != null) extraContent['m.relates_to'] = relation;
 
-        widget.onClearReply?.call();
-
+        final transactionId = widget.room.client.generateUniqueTransactionId();
+        String? sentEventId;
         try {
-          await widget.room.sendFileEvent(
+          sentEventId = await widget.room.sendFileEvent(
             file,
+            txid: transactionId,
             thumbnail: thumbnail,
+            // The relation is already stored in extraContent. Supplying the
+            // SDK thread arguments would overwrite explicit in-thread replies.
             extraContent: extraContent,
-            threadLastEventId:
-                widget.thread?.lastEvent?.eventId ??
-                widget.thread?.rootEvent.eventId,
-            threadRootEventId: widget.thread?.rootEvent.eventId,
           );
         } on MatrixException catch (e) {
           final retryAfterMs = e.retryAfterMs;
@@ -235,18 +260,25 @@ class SendFileDialogState extends State<SendFileDialog> {
 
           scaffoldMessenger.showLoadingSnackBar(l10n.sendingAttachment);
 
-          await widget.room.sendFileEvent(
+          sentEventId = await widget.room.sendFileEvent(
             file,
+            txid: transactionId,
             thumbnail: thumbnail,
-            threadLastEventId:
-                widget.thread?.lastEvent?.eventId ??
-                widget.thread?.rootEvent.eventId,
-            threadRootEventId: widget.thread?.rootEvent.eventId,
+            // The relation is already stored in extraContent. Supplying the
+            // SDK thread arguments would overwrite explicit in-thread replies.
+            extraContent: extraContent,
           );
         }
+        // The SDK can return null after persisting a failed pending event.
+        // Leave the reply selected so the user can retry that event in place.
+        if (sentEventId == null) {
+          throw StateError(
+            'Attachment message failed to send. Retry the pending message.',
+          );
+        }
+        widget.onClearReply?.call();
       }
       scaffoldMessenger.clearSnackBars();
-      await ForegroundTaskManager.stopTask(taskType: .fileUpload);
     } catch (e) {
       Logs().e('error on send', e);
       if (mounted) {
@@ -255,23 +287,26 @@ class SendFileDialogState extends State<SendFileDialog> {
         });
       }
       scaffoldMessenger.clearSnackBars();
-      final theme = Theme.of(widget.outerContext);
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          backgroundColor: theme.colorScheme.errorContainer,
-          closeIconColor: theme.colorScheme.onErrorContainer,
-          content: Text(
-            e.toLocalizedString(widget.outerContext),
-            style: TextStyle(color: theme.colorScheme.onErrorContainer),
+      if (widget.outerContext.mounted && scaffoldMessenger.mounted) {
+        final theme = Theme.of(widget.outerContext);
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            backgroundColor: theme.colorScheme.errorContainer,
+            closeIconColor: theme.colorScheme.onErrorContainer,
+            content: Text(
+              e.toLocalizedString(widget.outerContext),
+              style: TextStyle(color: theme.colorScheme.onErrorContainer),
+            ),
+            duration: const Duration(seconds: 30),
+            showCloseIcon: true,
           ),
-          duration: const Duration(seconds: 30),
-          showCloseIcon: true,
-        ),
-      );
-      rethrow;
+        );
+      }
+    } finally {
+      if (foregroundUploadAcquired) {
+        await ForegroundTaskManager.stopTask(taskType: .fileUpload);
+      }
     }
-
-    return;
   }
 
   Future<String> _calcCombinedFileSize() async {
