@@ -1385,8 +1385,8 @@ class ChatController extends State<ChatPageWithRoom>
               'waveform': waveform,
             },
           },
-          threadLastEventId: threadLastEventId,
-          threadRootEventId: threadRootEventId,
+          // Keep the explicit thread relation in extraContent; the SDK would
+          // otherwise replace it with a fallback relation.
         )
         .catchError((e) {
           scaffoldMessenger.showSnackBar(
@@ -1446,8 +1446,8 @@ class ChatController extends State<ChatPageWithRoom>
             if (relation != null) 'm.relates_to': relation,
             'xyz.extera.video_note': {},
           },
-          threadLastEventId: threadLastEventId,
-          threadRootEventId: threadRootEventId,
+          // Keep the explicit thread relation in extraContent; the SDK would
+          // otherwise replace it with a fallback relation.
         )
         .catchError((e) {
           scaffoldMessenger.showSnackBar(
