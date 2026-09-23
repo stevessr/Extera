@@ -27,7 +27,6 @@ import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/chat_settings_popup_menu.dart';
-import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mini_audio_player.dart';
 import 'package:extera_next/widgets/unread_rooms_badge.dart';
 

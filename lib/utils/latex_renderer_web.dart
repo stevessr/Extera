@@ -20,7 +20,7 @@ Text _opaqueDelimitedLatex(Text laTeXCode) {
       : source;
 
   return Text(
-    '${_mathDelimiter}$math${_mathDelimiter}',
+    '$_mathDelimiter$math$_mathDelimiter',
     style: laTeXCode.style,
     textAlign: laTeXCode.textAlign,
     textDirection: laTeXCode.textDirection,

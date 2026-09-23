@@ -14,7 +14,6 @@ import 'package:extera_next/pages/chat_list/chat_list_item.dart';
 import 'package:extera_next/pages/profile/profile.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/timezone_init.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';

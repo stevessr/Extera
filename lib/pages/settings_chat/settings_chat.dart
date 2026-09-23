@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:emojis/emoji.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:slugify/slugify.dart';
