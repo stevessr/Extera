@@ -107,7 +107,9 @@ class SendPollDialogState extends State<SendPollDialog> {
       if (!mounted) return;
       if (sentEventId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Poll failed to send. Retry the pending message.')),
+          const SnackBar(
+            content: Text('Poll failed to send. Retry the pending message.'),
+          ),
         );
         return;
       }
