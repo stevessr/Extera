@@ -252,17 +252,24 @@ class ChatController extends State<ChatPageWithRoom>
   Future<void> _showSendFileDialog(List<XFile> files) async {
     if (files.isEmpty || !mounted) return;
 
+    // Capture the target before presenting the dialog: uploads can continue
+    // after it closes and must not clear a newer reply started in the chat.
+    final targetRoom = room;
+    final targetThread = thread;
+    final replyForFiles = replyEvent;
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
       builder: (c) => SendFileDialog(
         files: files,
-        room: room,
-        thread: thread,
-        replyEvent: replyEvent,
+        room: targetRoom,
+        thread: targetThread,
+        replyEvent: replyForFiles,
         outerContext: context,
         onClearReply: () {
-          if (mounted) setState(() => replyEvent = null);
+          if (mounted && replyEvent?.eventId == replyForFiles?.eventId) {
+            setState(() => replyEvent = null);
+          }
         },
       ),
     );
