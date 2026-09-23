@@ -235,9 +235,9 @@ class SendFileDialogState extends State<SendFileDialog> {
             file,
             txid: transactionId,
             thumbnail: thumbnail,
+            // The relation is already stored in extraContent. Supplying the
+            // SDK thread arguments would overwrite explicit in-thread replies.
             extraContent: extraContent,
-            threadLastEventId: threadLastEventId,
-            threadRootEventId: threadRootEventId,
           );
         } on MatrixException catch (e) {
           final retryAfterMs = e.retryAfterMs;
@@ -263,9 +263,9 @@ class SendFileDialogState extends State<SendFileDialog> {
             file,
             txid: transactionId,
             thumbnail: thumbnail,
+            // The relation is already stored in extraContent. Supplying the
+            // SDK thread arguments would overwrite explicit in-thread replies.
             extraContent: extraContent,
-            threadLastEventId: threadLastEventId,
-            threadRootEventId: threadRootEventId,
           );
         }
         widget.onClearReply?.call();
