@@ -137,10 +137,10 @@ class _MessageSearchResultListTile extends StatelessWidget {
       subtitle: Linkify(
         textScaleFactor: MediaQuery.textScalerOf(context).scale(1),
         options: const LinkifyOptions(humanize: false),
-        linkStyle: TextStyle(
-          color: theme.colorScheme.primary,
-          decoration: TextDecoration.underline,
-          decorationColor: theme.colorScheme.primary,
+        style: Theme.of(context).textTheme.bodyMedium,
+        linkStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          decorationColor: Theme.of(context).colorScheme.primary,
         ),
         onOpen: (url) => UrlLauncher(context, url.url).launchUrl(),
         text: event
