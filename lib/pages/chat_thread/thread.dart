@@ -8,6 +8,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/pages/chat/chat_read_marker.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
@@ -127,15 +128,15 @@ class _ThreadChatController extends ChatController {
 
   @override
   void setReadMarker({String? eventId}) {
+    if (!mounted) return;
     if (_threadReadMarkerFuture != null) {
-      // A sync update can bring a newer reply while the previous receipt is
-      // in flight. Retry using the latest visible event once it completes.
+      // Recheck the most recent synced reply once the in-flight receipt
+      // completes; updates must not get lost while the request is pending.
       _readMarkerRequestedWhilePending = true;
       return;
     }
     if (scrolledUpNotifier.value) return;
     if (scrollUpBannerEventId != null) return;
-    if (!mounted) return;
     // Match the normal chat's foreground guard: background threads must not
     // silently clear their unread state on incoming sync updates.
     if (kIsWeb && !Matrix.of(context).webHasFocus) return;
@@ -177,11 +178,30 @@ class _ThreadChatController extends ChatController {
         )
         .then((_) {
           _lastAcknowledgedThreadEventId = eventId;
-          // Remove the local unread indicator immediately instead of waiting
-          // for the next /sync response to echo the threaded receipt.
-          currentThread.notificationCount = 0;
-          currentThread.highlightCount = 0;
-          if (mounted) setState(() {});
+          // An incoming reply may have arrived after this receipt started.
+          // Do not clear the unread state for that newer, unseen reply.
+          String? latestSyncedEventId;
+          for (final event in currentTimeline.events) {
+            if (event.status.isSynced) {
+              latestSyncedEventId = event.eventId;
+              break;
+            }
+          }
+          if (mounted &&
+              identical(timeline, currentTimeline) &&
+              shouldClearThreadUnreadAfterReceipt(
+                acknowledgedEventId: eventId!,
+                latestSyncedEventId: latestSyncedEventId,
+              )) {
+            currentThread.notificationCount = 0;
+            currentThread.highlightCount = 0;
+            setState(() {});
+          } else if (mounted &&
+              identical(timeline, currentTimeline) &&
+              latestSyncedEventId != null &&
+              latestSyncedEventId != eventId) {
+            _readMarkerRequestedWhilePending = true;
+          }
         })
         .catchError((Object error, StackTrace stackTrace) {
           Logs().w('Unable to set thread read marker', error, stackTrace);
