@@ -9,7 +9,8 @@ Map<String, dynamic>? buildFileSendRelation({
   String? inReplyToEventId,
 }) {
   if (threadRootEventId != null) {
-    final fallbackEventId = inReplyToEventId ?? threadLastEventId;
+    final fallbackEventId =
+        inReplyToEventId ?? threadLastEventId ?? threadRootEventId;
     return {
       'event_id': threadRootEventId,
       'rel_type': 'm.thread',
