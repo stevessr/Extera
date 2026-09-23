@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
@@ -7,6 +8,7 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/client_download_content_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_file_extension.dart';
 import 'package:extera_next/utils/power_save_mode.dart';
+import 'package:extera_next/utils/svg_image.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 enum MxcImageCacheCategory { general, sticker, userAvatar, roomAvatar }
@@ -258,6 +260,14 @@ class _MxcImageState extends State<MxcImage> {
                     height: widget.height,
                     placeholder: widget.placeholder,
                   )
+          : isSvgImage(data)
+          ? SvgPicture.memory(
+              data,
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit ?? BoxFit.contain,
+              errorBuilder: _imageError,
+            )
           : Image.memory(
               data,
               width: widget.width,
@@ -266,22 +276,24 @@ class _MxcImageState extends State<MxcImage> {
               filterQuality: widget.isThumbnail
                   ? FilterQuality.low
                   : FilterQuality.medium,
-              errorBuilder: (context, e, s) {
-                Logs().d('Unable to render mxc image', e, s);
-                return SizedBox(
-                  width: widget.width,
-                  height: widget.height,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                );
-              },
+              errorBuilder: _imageError,
             ),
+    );
+  }
+
+  Widget _imageError(BuildContext context, Object error, StackTrace? stack) {
+    Logs().d('Unable to render mxc image', error, stack);
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        child: Icon(
+          Icons.broken_image_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
     );
   }
 
@@ -364,14 +376,31 @@ class _MxcImageState extends State<MxcImage> {
       final forceStaticThumbnail = PowerSaveMode.isEnabled && widget.animated;
       final effectiveIsThumbnail = widget.isThumbnail || forceStaticThumbnail;
 
-      final remoteData = await client.downloadMxcCached(
-        uri,
-        width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
-        height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
-        thumbnailMethod: widget.thumbnailMethod,
-        isThumbnail: effectiveIsThumbnail,
-        animated: _effectiveAnimated,
-      );
+      // Some homeservers cannot rasterize SVG media into thumbnails.
+      // Use the original response when thumbnail generation is unsupported.
+      Uint8List remoteData;
+      try {
+        remoteData = await client.downloadMxcCached(
+          uri,
+          width: effectiveIsThumbnail ? (realWidth ?? 512) : realWidth,
+          height: effectiveIsThumbnail ? (realHeight ?? 512) : realHeight,
+          thumbnailMethod: widget.thumbnailMethod,
+          isThumbnail: effectiveIsThumbnail,
+          animated: _effectiveAnimated,
+        );
+      } catch (error, stackTrace) {
+        if (!effectiveIsThumbnail) rethrow;
+        Logs().d(
+          'Unable to load mxc thumbnail; trying original',
+          error,
+          stackTrace,
+        );
+        remoteData = await client.downloadMxcCached(
+          uri,
+          isThumbnail: false,
+          animated: _effectiveAnimated,
+        );
+      }
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _imageData = remoteData;
@@ -391,11 +420,22 @@ class _MxcImageState extends State<MxcImage> {
           }.contains(event.messageType)) {
         Logs().e('Event of type ${event.messageType} has no thumbnail!');
       }
-      final data = await event.downloadAndDecryptAttachment(
-        getThumbnail: useThumbnail,
-      );
+      MatrixFile data;
+      try {
+        data = await event.downloadAndDecryptAttachment(
+          getThumbnail: useThumbnail,
+        );
+      } catch (error, stackTrace) {
+        if (!useThumbnail) rethrow;
+        Logs().d(
+          'Unable to load event thumbnail; trying original',
+          error,
+          stackTrace,
+        );
+        data = await event.downloadAndDecryptAttachment(getThumbnail: false);
+      }
       if (generation != _loadGeneration) return;
-      if (data.detectFileType is MatrixImageFile) {
+      if (data.detectFileType is MatrixImageFile || isSvgImage(data.bytes)) {
         if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _imageData = data.bytes;
