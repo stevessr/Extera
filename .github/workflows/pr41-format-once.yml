@@ -16,10 +16,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: fix/muted-thread-read-marker
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: 3.47.1
+      - uses: ./.github/actions/setup-flutter
       - name: Format Dart source and remove one-off workflow
         shell: bash
         run: |
