@@ -98,7 +98,11 @@ class SendLocationDialogState extends State<SendLocationDialog> {
             : threadRootEventId,
       ),
     );
-    if (!mounted || result.isError) return;
+    if (!mounted) return;
+    if (result.isError) {
+      setState(() => isSending = false);
+      return;
+    }
     Navigator.of(context, rootNavigator: false).pop(true);
   }
 
