@@ -93,7 +93,7 @@ class SendPollDialogState extends State<SendPollDialog> {
     };
 
     try {
-      await widget.room.sendEvent(
+      final sentEventId = await widget.room.sendEvent(
         pollContent,
         type: 'org.matrix.msc3381.poll.start',
         inReplyTo: widget.replyEvent,
@@ -104,7 +104,13 @@ class SendPollDialogState extends State<SendPollDialog> {
             : widget.thread?.rootEvent.eventId,
         threadRootEventId: widget.thread?.rootEvent.eventId,
       );
-      // ignore: use_build_context_synchronously
+      if (!mounted) return;
+      if (sentEventId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Poll failed to send. Retry the pending message.')),
+        );
+        return;
+      }
       Navigator.of(context).pop(true);
     } catch (e) {
       // ignore: use_build_context_synchronously
