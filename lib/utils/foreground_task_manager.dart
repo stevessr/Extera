@@ -12,6 +12,7 @@ class ForegroundTaskManager {
   static ForegroundTaskType? _currentTask;
   static int _fileUploadUsers = 0;
   static Future<void>? _fileUploadStartFuture;
+  static Future<void>? _fileUploadStopFuture;
 
   static Future<void> _stopFgTaskIfRunning() async {
     if (!PlatformInfos.isAndroid) return;
@@ -22,12 +23,14 @@ class ForegroundTaskManager {
 
   static Future<void> _initTask(BuildContext context) async {
     if (!PlatformInfos.isAndroid) return;
+    // Resolve localization before awaiting: the originating chat may close.
+    final foregroundServiceRunning = L10n.of(context).foregroundServiceRunning;
     await ForegroundTaskManager._stopFgTaskIfRunning();
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'notification_channel_id',
         channelName: 'Foreground Notification',
-        channelDescription: L10n.of(context).foregroundServiceRunning,
+        channelDescription: foregroundServiceRunning,
       ),
       iosNotificationOptions: const IOSNotificationOptions(),
       foregroundTaskOptions: ForegroundTaskOptions(
@@ -38,6 +41,8 @@ class ForegroundTaskManager {
 
   static Future<bool> startFileUpload(BuildContext context) async {
     if (!PlatformInfos.isAndroid) return false;
+    // A new upload must not acquire a service that is still stopping.
+    if (_fileUploadStopFuture != null) await _fileUploadStopFuture;
     if (_currentTask == .livekitCall) return false;
 
     _fileUploadUsers++;
@@ -101,20 +106,41 @@ class ForegroundTaskManager {
     _currentTask = .livekitCall;
   }
 
+  static Future<void> _stopAndClearTask() async {
+    try {
+      await ForegroundTaskManager._stopFgTaskIfRunning();
+    } finally {
+      for (final callback in _taskCallbacks) {
+        FlutterForegroundTask.removeTaskDataCallback(callback);
+      }
+      _taskCallbacks.clear();
+      _fileUploadUsers = 0;
+      _fileUploadStartFuture = null;
+      _currentTask = null;
+    }
+  }
+
   static Future<void> stopTask({ForegroundTaskType? taskType}) async {
     if (!PlatformInfos.isAndroid) return;
     if (taskType != null && taskType != _currentTask) return;
+
     if (taskType == .fileUpload && _currentTask == .fileUpload) {
       if (_fileUploadUsers > 0) _fileUploadUsers--;
       if (_fileUploadUsers > 0) return;
+
+      // Share the stop operation with concurrent callers and make any new
+      // upload wait for it before attempting to start its own service.
+      final stopFuture = _fileUploadStopFuture ??= _stopAndClearTask();
+      try {
+        await stopFuture;
+      } finally {
+        if (identical(_fileUploadStopFuture, stopFuture)) {
+          _fileUploadStopFuture = null;
+        }
+      }
+      return;
     }
-    await ForegroundTaskManager._stopFgTaskIfRunning();
-    for (final callback in _taskCallbacks) {
-      FlutterForegroundTask.removeTaskDataCallback(callback);
-    }
-    _taskCallbacks.clear();
-    _fileUploadUsers = 0;
-    _fileUploadStartFuture = null;
-    _currentTask = null;
+
+    await _stopAndClearTask();
   }
 }
