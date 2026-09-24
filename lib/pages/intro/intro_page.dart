@@ -104,10 +104,14 @@ class IntroPage extends StatelessWidget {
                           context,
                         ).scale(1),
                         textAlign: TextAlign.center,
-                        linkStyle: TextStyle(
-                          color: theme.colorScheme.secondary,
-                          decorationColor: theme.colorScheme.secondary,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        linkStyle: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              decorationColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                            ),
                         onOpen: (link) => launchUrlString(link.url),
                       ),
                     ),

@@ -548,6 +548,14 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       // and unlike Element Call's membership manager nothing refreshes it.
       _startMembershipRefreshTimer();
 
+      if (!LiveKitCallManager().isInCall) {
+        // The call was ended while we were connecting (e.g. hangup from the
+        // chat list mini controls). Abort instead of registering the room.
+        await _cleanupCall(room, _client, widget.callStateKey);
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+
       _room = room;
       LiveKitCallManager().room = room;
       LiveKitCallManager().callStateKey = widget.callStateKey;
@@ -567,7 +575,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         ),
       );
       await _room!.localParticipant?.setMicrophoneEnabled(
-        false,
+        true,
         audioCaptureOptions: const lk.AudioCaptureOptions(
           echoCancellation: true,
           noiseSuppression: true,
