@@ -108,7 +108,9 @@ class _ChatListBottomNavbarState extends State<ChatListBottomNavbar> {
             child: Padding(
               padding: const .all(8),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: FluffyThemes.reduceMotionDuration(
+                  const Duration(milliseconds: 200),
+                ),
                 curve: Curves.easeInOut,
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(

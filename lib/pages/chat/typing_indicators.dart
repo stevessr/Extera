@@ -6,6 +6,7 @@ import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
@@ -40,7 +41,7 @@ class TypingIndicators extends StatelessWidget {
               maxWidth: FluffyThemes.columnWidth * 2.5,
             ),
             height: typingUsers.isEmpty ? 0 : avatarSize + 8,
-            duration: FluffyThemes.animationDuration,
+            duration: FluffyThemes.effectiveAnimationDuration,
             curve: FluffyThemes.animationCurve,
             alignment:
                 controller.timeline!.events.isNotEmpty &&
@@ -112,27 +113,40 @@ class _TypingDots extends StatefulWidget {
 
 class __TypingDotsState extends State<_TypingDots> {
   int _tick = 0;
-
-  late final Timer _timer;
+  Timer? _timer;
 
   static const Duration animationDuration = Duration(milliseconds: 300);
 
   @override
   void initState() {
-    _timer = Timer.periodic(animationDuration, (_) {
-      if (!mounted) {
-        return;
+    super.initState();
+    PowerSaveMode.enabled.addListener(_syncTicker);
+    _syncTicker();
+  }
+
+  void _syncTicker() {
+    if (PowerSaveMode.isEnabled) {
+      _timer?.cancel();
+      _timer = null;
+      if (_tick != 0 && mounted) {
+        setState(() => _tick = 0);
       }
+      return;
+    }
+
+    if (_timer != null) return;
+    _timer = Timer.periodic(animationDuration, (_) {
+      if (!mounted) return;
       setState(() {
         _tick = (_tick + 1) % 4;
       });
     });
-    super.initState();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    PowerSaveMode.enabled.removeListener(_syncTicker);
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -146,7 +160,9 @@ class __TypingDotsState extends State<_TypingDots> {
       children: [
         for (var i = 1; i <= 3; i++)
           AnimatedContainer(
-            duration: animationDuration * 1.5,
+            duration: FluffyThemes.reduceMotionDuration(
+              animationDuration * 1.5,
+            ),
             curve: FluffyThemes.animationCurve,
             width: size,
             height: _tick == i ? size * 2 : size,

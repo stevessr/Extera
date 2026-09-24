@@ -26,7 +26,7 @@ class StartChatFab extends StatelessWidget {
           : const EdgeInsets.symmetric(horizontal: 16),
       label: AnimatedSize(
         alignment: Alignment.centerLeft,
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: Curves.easeInOut,
         child: extended ? Text(L10n.of(context).newChat) : SizedBox.shrink(),
       ),

@@ -50,7 +50,7 @@ class NaviRailItem extends StatelessWidget {
                 left: 0,
                 child: AnimatedContainer(
                   width: isSelected ? 8 : 0,
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary,
@@ -64,7 +64,7 @@ class NaviRailItem extends StatelessWidget {
               Center(
                 child: AnimatedScale(
                   scale: hovered ? 1.1 : 1.0,
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   child: Material(
                     borderRadius: borderRadius,

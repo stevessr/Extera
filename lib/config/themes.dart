@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/utils/font_family.dart';
+import 'package:extera_next/utils/power_save_mode.dart';
 
 import 'app_config.dart';
 
@@ -36,6 +37,18 @@ abstract class FluffyThemes {
 
   static const Duration animationDuration = Duration(milliseconds: 300);
   static const Curve animationCurve = Curves.easeInOut;
+
+  /// Returns [Duration.zero] while the operating system is in a battery/
+  /// low-power mode, otherwise returns [normal]. This lets implicit and
+  /// explicit app animations opt into the same reduced-motion policy without
+  /// changing their normal timing.
+  static Duration reduceMotionDuration(Duration normal) =>
+      PowerSaveMode.isEnabled ? Duration.zero : normal;
+
+  /// Power-aware counterpart of [animationDuration] for the common 300 ms UI
+  /// transition used throughout the app.
+  static Duration get effectiveAnimationDuration =>
+      reduceMotionDuration(animationDuration);
 
   static ThemeData buildTheme(
     BuildContext context,

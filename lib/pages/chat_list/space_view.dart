@@ -120,7 +120,7 @@ class _LastMessageSubtitle extends StatelessWidget {
           width: typingText.isEmpty ? 0 : 18,
           clipBehavior: Clip.hardEdge,
           decoration: const BoxDecoration(),
-          duration: FluffyThemes.animationDuration,
+          duration: FluffyThemes.effectiveAnimationDuration,
           curve: FluffyThemes.animationCurve,
           padding: const EdgeInsets.only(right: 4),
           child: Icon(

@@ -732,11 +732,11 @@ class __AnimateInState extends State<_AnimateIn> {
       });
     }
     return AnimatedOpacity(
-      duration: FluffyThemes.animationDuration,
+      duration: FluffyThemes.effectiveAnimationDuration,
       curve: FluffyThemes.animationCurve,
       opacity: _animationFinished ? (widget.halfOpacity ? 0.5 : 1) : 0,
       child: AnimatedSize(
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         child: _animationFinished ? widget.child : const SizedBox.shrink(),
       ),
