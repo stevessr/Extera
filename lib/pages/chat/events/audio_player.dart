@@ -147,6 +147,7 @@ class AudioPlayerState extends State<AudioPlayerWidget> {
     final waveform = _waveform;
     final player = _player;
     final event = widget.event;
+    final animationDuration = FluffyThemes.effectiveAnimationDuration;
 
     final textColor = widget.color;
     final linkColor = widget.linkColor;
@@ -429,9 +430,7 @@ class AudioPlayerState extends State<AudioPlayerWidget> {
                                         crossFadeState: !isThisTrack
                                             ? CrossFadeState.showFirst
                                             : CrossFadeState.showSecond,
-                                        duration: FluffyThemes.reduceMotionDuration(
-                                          FluffyThemes.animationDuration,
-                                        ),
+                                        duration: animationDuration,
                                       ),
                                     ],
                                   ],
