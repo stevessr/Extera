@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:action_slider/action_slider.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
@@ -184,7 +183,7 @@ class LiveKitIncomingCallManager {
       final nav = Navigator.of(context, rootNavigator: false);
       if (nav.canPop()) nav.pop();
     }
-    unawaited(openLiveKitCall(context, roomId));
+    unawaited(openLiveKitCall(context, roomId, noNotification: true));
   }
 
   void _dismiss() {

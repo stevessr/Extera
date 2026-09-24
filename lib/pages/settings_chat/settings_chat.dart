@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:slugify/slugify.dart';
 
@@ -10,7 +11,6 @@ import 'package:extera_next/utils/image_pack_migration.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'settings_chat_view.dart';
 

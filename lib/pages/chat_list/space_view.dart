@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:collection/collection.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart' as sdk;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat_list/chat_call_indicator.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/localized_exception_extension.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
@@ -177,7 +177,7 @@ class _LastMessageSubtitle extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     spacing: 2,
                     children: [
-                      if (joinedRoom.membership == .join &&
+                      if (joinedRoom.membership == Membership.join &&
                           lastEvent?.senderId == client.userID)
                         Icon(
                           lastEvent != null &&
@@ -734,17 +734,6 @@ class _SpaceViewState extends State<SpaceView> {
                   .where((s) => s.hasRoomUpdate)
                   .rateLimit(const Duration(seconds: 1)),
               builder: (context, snapshot) {
-                // final childrenIds = room.spaceChildren
-                //     .map((c) => c.roomId)
-                //     .whereType<String>()
-                //     .toSet();
-
-                // final joinedRooms = Map.fromEntries(
-                //   room.client.rooms
-                //       .where((room) => childrenIds.remove(room.id))
-                //       .map((room) => MapEntry(room.id, room)),
-                // );
-
                 final joinedParents = room.spaceParents
                     .map((parent) {
                       final roomId = parent.roomId;
@@ -851,7 +840,7 @@ class _SpaceViewState extends State<SpaceView> {
                         }
                         final item = filteredChildren[i];
                         var joinedRoom = room.client.getRoomById(item.roomId);
-                        if (joinedRoom?.membership == .leave) {
+                        if (joinedRoom?.membership == Membership.leave) {
                           joinedRoom = null;
                         }
                         final client = Matrix.of(context).client;
@@ -957,6 +946,7 @@ class _SpaceViewState extends State<SpaceView> {
                                               : null,
                                         ),
                                   title: Row(
+                                    spacing: 8,
                                     children: [
                                       Expanded(
                                         child: Opacity(
@@ -978,6 +968,8 @@ class _SpaceViewState extends State<SpaceView> {
                                           ),
                                         ),
                                       ),
+                                      if (joinedRoom != null)
+                                        ChatCallIndicator(room: joinedRoom),
                                       if (joinedRoom != null)
                                         UnreadBubble(room: joinedRoom)
                                       else

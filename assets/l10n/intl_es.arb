@@ -128,7 +128,7 @@
 	"chatBackup": "Copia de seguridad de claves",
 	"pinCode": "Código PIN",
 	"@@locale": "es",
-	"@@last_modified": "2026-08-12T21:53:44.760Z",
+	"@@last_modified": "2026-09-17T22:57:36.447Z",
 	"chatBackupDescription": "La copia de seguridad de las claves está protegida con una clave de recuperación. Guárdala en un lugar seguro.",
 	"chatDetails": "Configuración del chat",
 	"chatHasBeenAddedToThisSpace": "El chat ha sido añadido a este espacio",
@@ -3871,14 +3871,6 @@
 	"messageCanOnlyBeReadByUsers": "Tus mensajes están cifrados y solo son accesibles para estos usuarios:",
 	"publicKey": "Clave pública: {key}",
 	"powerLevelReadOnly": "Solo lectura",
-	"elementCall": "Element Call",
-	"elementCallExperimental": "Element Call (Experimental)",
-	"p2pCall": "Llamada P2P",
-	"chooseCallType": "Selecciona el tipo de llamada",
-	"elementCallDescription": "Llamadas a través de LiveKit",
-	"ongoingElementCall": "Element Call",
-	"ongoingElementCallDetail": "Estás participando en una llamada: {name}",
-	"elementCallLiveKit": "Element Call",
 	"camera": "Cámara",
 	"connectingToCall": "Conectando a la llamada",
 	"waitingForParticipants": "Esperando participantes",
@@ -4025,20 +4017,6 @@
 			}
 		}
 	},
-	"@elementCall": {},
-	"@elementCallExperimental": {},
-	"@p2pCall": {},
-	"@chooseCallType": {},
-	"@elementCallDescription": {},
-	"@ongoingElementCall": {},
-	"@ongoingElementCallDetail": {
-		"placeholders": {
-			"name": {
-				"type": "String"
-			}
-		}
-	},
-	"@elementCallLiveKit": {},
 	"@camera": {},
 	"@connectingToCall": {},
 	"@waitingForParticipants": {},
@@ -4145,5 +4123,70 @@
 	"loadAudio": "Cargar audio",
 	"quickAction": "Acción rápida",
 	"quickActionDescription": "Ejecutar acción al doble toque en el mensaje.",
-	"react": "Reacción"
+	"react": "Reacción",
+	"elementCallDescription": "¿Seguro que quieres unirte a la llamada?",
+	"ongoingElementCall": "Llamada en curso",
+	"ongoingElementCallDetail": "Llamada en curso: {name}",
+	"elementCallLiveKit": "Llamadas experimentales",
+	"hideIgnoredUsers": "Ocultar usuarios ignorados",
+	"showIgnoredUsers": "Mostrar usuarios ignorados",
+	"callVideocam": "Vídeo",
+	"callMic": "Micrófono",
+	"callScreenShare": "Pantalla",
+	"lkCallSettings": "Ajustes",
+	"incomingCallFromRoom": "en {room}",
+	"appearance": "Apariencia",
+	"floatingInputBar": "Barra de entrada flotante",
+	"reactionUiTipReply": "Pulsa para responder.",
+	"reactionUiTipRedact": "Mantén pulsado para quitar la reacción.",
+	"bubblesAppearance": "Aspecto de las burbujas",
+	"bubbleSide": "Posición de los mensajes",
+	"bubbleSingleSided": "Siempre en un lado",
+	"bubbleAdaptiveSide": "Adaptativo",
+	"bubbleBothSided": "En ambos lados",
+	"pollResultsAreHidden": "Los resultados de la encuesta estarán disponibles cuando finalice",
+	"sendMedia": "Enviar multimedia",
+	"@elementCallDescription": {},
+	"@ongoingElementCall": {},
+	"@ongoingElementCallDetail": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"@elementCallLiveKit": {},
+	"@incomingCallFromRoom": {
+		"placeholders": {
+			"room": {
+				"type": "String"
+			}
+		}
+	},
+	"messageFontSize": "Tamaño de la fuente de los mensajes",
+	"richPresenceElapsed": "Transcurrido {duration}",
+	"richPresenceRemaining": "Queda {duration}",
+	"richPresenceOpenIdWarning": "Al abrir este enlace, se solicitará un token OpenID a tu servidor de inicio y se le entregará al sitio web externo. Esto puede revelar tu dirección IP y los metadatos de tu navegador, además de permitir que el sitio web asocie esta visita con tu cuenta de Matrix. El token OpenID se usa únicamente para confirmar que eres el propietario de la cuenta: los terceros no tendrán acceso a tus chats.",
+	"changeYourBanner": "Cambiar el banner",
+	"removeYourBanner": "Quitar el banner",
+	"pleaseEnterCountryCode": "Introduce el código de país.",
+	"verificationCodeSent2": "Se ha enviado un código de verificación a tu número de teléfono. Introdúcelo a continuación.",
+	"appBarAppearance": "Barra superior",
+	"appBarAppName": "Aplicación",
+	"appBarAccountName": "Cuenta",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

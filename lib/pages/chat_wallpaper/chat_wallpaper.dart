@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/utils/file_selector.dart';
 import 'package:extera_next/utils/wallpaper.dart';

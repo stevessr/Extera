@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 import 'package:uuid/uuid.dart';
 
@@ -94,16 +93,27 @@ class SendPollDialogState extends State<SendPollDialog> {
     };
 
     try {
-      await widget.room.sendEvent(
+      final sentEventId = await widget.room.sendEvent(
         pollContent,
         type: 'org.matrix.msc3381.poll.start',
+        inReplyTo: widget.replyEvent,
         threadLastEventId:
-            widget.thread?.lastEvent?.eventId ??
-            widget.thread?.rootEvent.eventId,
+            widget.thread?.lastEvent != null &&
+                widget.thread!.lastEvent!.status.isSynced
+            ? widget.thread!.lastEvent!.eventId
+            : widget.thread?.rootEvent.eventId,
         threadRootEventId: widget.thread?.rootEvent.eventId,
       );
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
+      if (!mounted) return;
+      if (sentEventId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Poll failed to send. Retry the pending message.'),
+          ),
+        );
+        return;
+      }
+      Navigator.of(context).pop(true);
     } catch (e) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(

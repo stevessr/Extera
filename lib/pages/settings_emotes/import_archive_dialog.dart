@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:archive/archive.dart';
 import 'package:collection/collection.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';

@@ -1,6 +1,6 @@
 {
 	"@@locale": "de",
-	"@@last_modified": "2026-08-12T21:54:46.749Z",
+	"@@last_modified": "2026-09-17T22:58:56.926Z",
 	"alwaysUse24HourFormat": "true",
 	"@alwaysUse24HourFormat": {
 		"description": "Set to true to always display time of day in 24 hour format."
@@ -4107,14 +4107,6 @@
 		}
 	},
 	"powerLevelReadOnly": "Nur Lesen",
-	"elementCall": "Element Call",
-	"elementCallExperimental": "Element Call (Experimentell)",
-	"p2pCall": "P2P-Anruf",
-	"chooseCallType": "Anruftyp auswählen",
-	"elementCallDescription": "Anrufe über LiveKit",
-	"ongoingElementCall": "Element Call",
-	"ongoingElementCallDetail": "Du nimmst an einem Anruf teil: {name}",
-	"elementCallLiveKit": "Element Call",
 	"camera": "Kamera",
 	"connectingToCall": "Verbindung zum Anruf wird hergestellt",
 	"waitingForParticipants": "Warten auf Teilnehmer",
@@ -4136,20 +4128,6 @@
 	"speakerN": "Lautsprecher {n}",
 	"cameraN": "Kamera {n}",
 	"screenShare": "Bildschirmfreigabe",
-	"@elementCall": {},
-	"@elementCallExperimental": {},
-	"@p2pCall": {},
-	"@chooseCallType": {},
-	"@elementCallDescription": {},
-	"@ongoingElementCall": {},
-	"@ongoingElementCallDetail": {
-		"placeholders": {
-			"name": {
-				"type": "String"
-			}
-		}
-	},
-	"@elementCallLiveKit": {},
 	"@camera": {},
 	"@connectingToCall": {},
 	"@waitingForParticipants": {},
@@ -4264,5 +4242,70 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"elementCallDescription": "Bist du sicher, dass du an dem Anruf teilnehmen möchtest?",
+	"ongoingElementCall": "Laufender Anruf",
+	"ongoingElementCallDetail": "Laufender Anruf: {name}",
+	"elementCallLiveKit": "Experimentelle Anrufe",
+	"hideIgnoredUsers": "Ignorierte ausblenden",
+	"showIgnoredUsers": "Ignorierte anzeigen",
+	"callVideocam": "Video",
+	"callMic": "Mikrofon",
+	"callScreenShare": "Bildschirm",
+	"lkCallSettings": "Einstellungen",
+	"incomingCallFromRoom": "in {room}",
+	"appearance": "Erscheinungsbild",
+	"floatingInputBar": "Schwebende Eingabeleiste",
+	"reactionUiTipReply": "Zum Antworten tippen.",
+	"reactionUiTipRedact": "Gedrückt halten, um die Reaktion zu entfernen.",
+	"bubblesAppearance": "Aussehen der Blasen",
+	"bubbleSide": "Position der Nachrichten",
+	"bubbleSingleSided": "Immer auf einer Seite",
+	"bubbleAdaptiveSide": "Adaptiv",
+	"bubbleBothSided": "Auf beiden Seiten",
+	"pollResultsAreHidden": "Die Umfrageergebnisse werden nach Ende der Umfrage verfügbar sein",
+	"sendMedia": "Medien senden",
+	"@elementCallDescription": {},
+	"@ongoingElementCall": {},
+	"@ongoingElementCallDetail": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"@elementCallLiveKit": {},
+	"@incomingCallFromRoom": {
+		"placeholders": {
+			"room": {
+				"type": "String"
+			}
+		}
+	},
+	"messageFontSize": "Schriftgröße der Nachrichten",
+	"richPresenceElapsed": "Verstrichen: {duration}",
+	"richPresenceRemaining": "Verbleibend: {duration}",
+	"richPresenceOpenIdWarning": "Wenn Sie diesem Link folgen, wird ein OpenID-Token von Ihrem Homeserver angefordert und an eine externe Website weitergegeben. Dies kann Ihre IP-Adresse und Browser-Metadaten preisgeben und es der Website ermöglichen, diesen Besuch Ihrem Matrix-Konto zuzuordnen. Das OpenID-Token wird nur zum Nachweis des Kontobesitzes verwendet: Dritte erhalten keinen Zugriff auf Ihre Chats.",
+	"changeYourBanner": "Banner ändern",
+	"removeYourBanner": "Banner entfernen",
+	"pleaseEnterCountryCode": "Bitte geben Sie den Ländercode ein.",
+	"verificationCodeSent2": "Ein Bestätigungscode wurde an Ihre Telefonnummer gesendet. Geben Sie ihn unten ein.",
+	"appBarAppearance": "Obere Leiste",
+	"appBarAppName": "App",
+	"appBarAccountName": "Konto",
+	"@richPresenceElapsed": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceRemaining": {
+		"placeholders": {
+			"duration": {
+				"type": "String"
+			}
+		}
+	},
+	"@richPresenceOpenIdWarning": {}
 }

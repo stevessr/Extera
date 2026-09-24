@@ -1,11 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';

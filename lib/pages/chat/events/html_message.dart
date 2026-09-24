@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
@@ -9,6 +8,7 @@ import 'package:highlight_selectable/theme_map.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:linkify/linkify.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';

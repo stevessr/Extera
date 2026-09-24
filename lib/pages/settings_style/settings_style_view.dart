@@ -1,8 +1,7 @@
 import 'dart:ui';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';

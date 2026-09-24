@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
-
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';

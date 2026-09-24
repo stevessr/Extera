@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:provider/provider.dart';
 

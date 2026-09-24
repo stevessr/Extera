@@ -1,7 +1,7 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:emojis/emoji.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:slugify/slugify.dart';
 
@@ -36,12 +36,11 @@ class InputBar extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
-  final ValueChanged<Uint8List?>? onSubmitImage;
+  final void Function(Uint8List? image, {String? mimeType})? onSubmitImage;
   final FocusNode? focusNode;
   final TextEditingController? controller;
   final InputDecoration decoration;
   final ValueChanged<String>? onChanged;
-  final bool? autofocus;
   final bool readOnly;
 
   static List<_CachedEmoji>? _cachedEmojis;
@@ -59,7 +58,6 @@ class InputBar extends StatelessWidget {
     this.controller,
     required this.decoration,
     this.onChanged,
-    this.autofocus,
     this.textInputAction,
     this.readOnly = false,
     super.key,
@@ -445,20 +443,14 @@ class InputBar extends StatelessWidget {
           onContentInserted: (KeyboardInsertedContent content) {
             final data = content.data;
             if (data == null) return;
-
-            final file = MatrixFile(
-              mimeType: content.mimeType,
-              bytes: data,
-              name: content.uri.split('/').last,
-            );
-            room.sendFileEvent(file, shrinkImageMaxDimension: 1600);
+            onSubmitImage?.call(data, mimeType: content.mimeType);
           },
         ),
         minLines: minLines,
         maxLines: maxLines,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
-        autofocus: autofocus!,
+        autofocus: false,
         spellCheckConfiguration: PlatformInfos.supportsSpellCheck
             ? const SpellCheckConfiguration()
             : null,

@@ -3536,7 +3536,7 @@
     "palette_content": "Content",
     "palette_rainbow": "Rainbow",
     "palette_fruitSalad": "Fruit salad",
-    "listeningTo": "Listening to {mediaPlayer}",
+    "listeningTo": "Listening on {mediaPlayer}",
     "@listeningTo": {
         "placeholders": {
             "mediaPlayer": {
@@ -3546,6 +3546,24 @@
     },
     "listeningToSomeTunes": "Listening to some tunes",
     "playing": "Playing",
+    "richPresenceElapsed": "{duration} elapsed",
+    "@richPresenceElapsed": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceRemaining": "{duration} remaining",
+    "@richPresenceRemaining": {
+        "placeholders": {
+            "duration": {
+                "type": "String"
+            }
+        }
+    },
+    "richPresenceOpenIdWarning": "This button will ask your homeserver for an OpenID token and share it with the destination site. This may disclose your IP address and browser metadata, and lets the site correlate this visit with your Matrix account. This won't allow third parties to access your Matrix account.",
+    "@richPresenceOpenIdWarning": {},
     "editedAt": "edited at {when}",
     "@editedAt": {
         "type": "text",
@@ -4011,15 +4029,9 @@
         }
     },
     "powerLevelReadOnly": "Read only",
-    "elementCall": "Element Call",
-    "@elementCall": {},
-    "p2pCall": "Legacy P2P call",
-    "@p2pCall": {},
-    "chooseCallType": "Choose call type",
-    "@chooseCallType": {},
-    "elementCallDescription": "Group calls using LiveKit",
+    "elementCallDescription": "Do you want to connect to a call?",
     "@elementCallDescription": {},
-    "ongoingElementCall": "Element Call",
+    "ongoingElementCall": "Ongoing call",
     "@ongoingElementCall": {},
     "ongoingElementCallDetail": "You are in a call: {name}",
     "@ongoingElementCallDetail": {
@@ -4029,7 +4041,7 @@
             }
         }
     },
-    "elementCallLiveKit": "Element Call",
+    "elementCallLiveKit": "Experimental calls",
     "@elementCallLiveKit": {},
     "camera": "Camera",
     "@camera": {},
@@ -4057,7 +4069,7 @@
     "@allLiveKitUnavailable": {},
     "shareCallLink": "Share call link",
     "@shareCallLink": {},
-    "couldNotFindCallServer": "Your homeserver does not support Element Calls.",
+    "couldNotFindCallServer": "Your homeserver does not support MatrixRTC calls. (Does it have LiveKit configured?)",
     "@couldNotFindCallServer": {},
     "errorWithMessage": "Error: {error}",
     "@errorWithMessage": {
@@ -4279,7 +4291,8 @@
             "room": {"type": "String"}
         }
     },
-    "reactionUiTip": "Tap to reply. Hold down to remove a reaction.",
+    "reactionUiTipReply": "Tap to reply.",
+    "reactionUiTipRedact": "Hold down to remove a reaction.",
     "bubblesAppearance": "Bubbles style",
     "bubbleSide": "Bubbles side",
     "bubbleSingleSided": "Always on one side",

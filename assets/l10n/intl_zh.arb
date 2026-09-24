@@ -2408,7 +2408,7 @@
   "@screenSharingTitle": {},
   "callingAccount": "呼叫账户",
   "@callingAccount": {},
-  "screenSharingDetail": "你正在 Extera 中共享屏幕",
+  "screenSharingDetail": "你正在与 {name} 共享屏幕",
   "@screenSharingDetail": {},
   "numChats": "{number} 个聊天",
   "@numChats": {
@@ -4430,5 +4430,11 @@
             "room": {"type": "String"}
         }
     },
-  "reactionUiTip": "轻触以回复。长按以移除回应。"
+  "reactionUiTip": "轻触以回复。长按以移除回应。",
+  "bubblesAppearance": "气泡样式",
+  "bubbleSide": "气泡位置",
+  "bubbleSingleSided": "始终在同一侧",
+  "bubbleAdaptiveSide": "自适应",
+  "bubbleBothSided": "两侧",
+  "pollResultsAreHidden": "投票结束前，结果会隐藏"
 }

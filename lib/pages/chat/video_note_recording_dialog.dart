@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
-
 import 'package:camera/camera.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';

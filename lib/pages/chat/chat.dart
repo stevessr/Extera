@@ -4,15 +4,14 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart' hide Category;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:collection/collection.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:mime/mime.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
@@ -21,9 +20,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/chat_read_marker.dart';
 import 'package:extera_next/pages/chat/chat_view.dart';
 import 'package:extera_next/pages/chat/event_info_dialog.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
+import 'package:extera_next/pages/chat/file_send_relation.dart';
 import 'package:extera_next/pages/chat/message_context_menu.dart';
 import 'package:extera_next/pages/chat/message_edits_dialog.dart';
 import 'package:extera_next/pages/chat/recovered_event_dialog.dart';
@@ -53,7 +54,6 @@ import 'package:extera_next/utils/show_scaffold_dialog.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/web_drop/web_drop.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
-import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/show_text_input_dialog.dart';
 import 'package:extera_next/widgets/emoji_picker.dart';
@@ -181,12 +181,24 @@ class ChatController extends State<ChatPageWithRoom>
   bool get showThreadRoots => (widget.showThreadRoots ?? false);
   Thread? get thread =>
       sendingClient.getRoomById(roomId)?.threads[threadRootEventId] ??
-      widget.room.threads[threadRootEventId];
+      widget.room.threads[threadRootEventId] ??
+      widget.thread;
+
+  String? get threadLastEventId {
+    final currentThread = thread;
+    if (currentThread == null) return null;
+    final lastEvent = currentThread.lastEvent;
+    return lastEvent != null && lastEvent.status.isSynced
+        ? lastEvent.eventId
+        : currentThread.rootEvent.eventId;
+  }
 
   MessageLayout _layout = .bubbles;
   MessageLayout get layout => _layout;
 
   late Client sendingClient;
+
+  bool keyboardWasActive = false;
 
   Timeline? timeline;
 
@@ -238,17 +250,27 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   Future<void> _showSendFileDialog(List<XFile> files) async {
-    if (files.isEmpty) return;
+    if (files.isEmpty || !mounted) return;
 
+    // Capture the target before presenting the dialog: uploads can continue
+    // after it closes and must not clear a newer reply started in the chat.
+    final targetRoom = room;
+    final targetThread = thread;
+    final replyForFiles = replyEvent;
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
       builder: (c) => SendFileDialog(
         files: files,
-        room: room,
-        thread: thread,
-        replyEvent: replyEvent,
+        room: targetRoom,
+        thread: targetThread,
+        replyEvent: replyForFiles,
         outerContext: context,
+        onClearReply: () {
+          if (mounted && replyEvent?.eventId == replyForFiles?.eventId) {
+            setState(() => replyEvent = null);
+          }
+        },
       ),
     );
   }
@@ -676,7 +698,13 @@ class ChatController extends State<ChatPageWithRoom>
     if (!mounted || !proceed) return;
     for (final item in shareItems) {
       if (item is FileShareItem) continue;
-      if (item is TextShareItem) room.sendTextEvent(item.value);
+      if (item is TextShareItem) {
+        room.sendTextEvent(
+          item.value,
+          threadRootEventId: threadRootEventId,
+          threadLastEventId: threadLastEventId,
+        );
+      }
       if (item is ContentShareItem) {
         final value = item.value;
 
@@ -709,7 +737,11 @@ class ChatController extends State<ChatPageWithRoom>
           value['xyz.extera.forward'] = {'attribution': item.attribution};
         }
 
-        room.sendEvent(value);
+        room.sendEvent(
+          value,
+          threadRootEventId: threadRootEventId,
+          threadLastEventId: threadLastEventId,
+        );
       }
     }
     final files = shareItems
@@ -717,16 +749,7 @@ class ChatController extends State<ChatPageWithRoom>
         .map((item) => item.value)
         .toList();
     if (files.isEmpty) return;
-    showAdaptiveDialog(
-      context: context,
-      builder: (c) => SendFileDialog(
-        files: files,
-        room: room,
-        thread: thread,
-        outerContext: context,
-        replyEvent: replyEvent,
-      ),
-    );
+    await _showSendFileDialog(files);
   }
 
   @override
@@ -735,6 +758,9 @@ class ChatController extends State<ChatPageWithRoom>
 
     scrollController.addListener(_updateScrollController);
     inputFocus.addListener(_inputFocusListener);
+
+    // Register window metrics observer
+    WidgetsBinding.instance.addObserver(this);
 
     _loadDraft();
     WidgetsBinding.instance.addPostFrameCallback(_shareItems);
@@ -750,7 +776,20 @@ class ChatController extends State<ChatPageWithRoom>
       _ => .bubbles,
     };
     sendingClient = Matrix.of(context).client;
-    readMarkerEventId = room.hasNewMessages ? room.fullyRead : '';
+    final currentThread = thread;
+    readMarkerEventId = initialChatReadMarkerEventId(
+      roomHasNewMessages: room.hasNewMessages,
+      roomFullyRead: room.fullyRead,
+      threadRootEventId: currentThread?.rootEvent.eventId,
+      threadHasNewMessages: currentThread?.hasNewMessages ?? false,
+      threadReadEventId: currentThread == null
+          ? null
+          : room
+                .receiptState
+                .byThread[currentThread.rootEvent.eventId]
+                ?.latestOwnReceipt
+                ?.eventId,
+    );
     WidgetsBinding.instance.addObserver(this);
     _tryLoadTimeline();
     _subscribeTileInvalidation();
@@ -781,7 +820,10 @@ class ChatController extends State<ChatPageWithRoom>
                 )
                 .indexWhere((e) => e.eventId == readMarkerEventId);
 
-      if (timeline != null &&
+      // A thread receipt might refer to an uncached reply. Fetching room
+      // history or showing a room marker banner would block its acknowledgement.
+      if (thread == null &&
+          timeline != null &&
           timeline!.events.isNotEmpty &&
           readMarkerEventId.isNotEmpty &&
           readMarkerEventIndex == -1) {
@@ -798,7 +840,9 @@ class ChatController extends State<ChatPageWithRoom>
         Logs().v('Scroll up to visible event', readMarkerEventId);
         scrollToEventId(readMarkerEventId, null, highlightEvent: false);
         return;
-      } else if (readMarkerEventId.isNotEmpty && readMarkerEventIndex == -1) {
+      } else if (thread == null &&
+          readMarkerEventId.isNotEmpty &&
+          readMarkerEventIndex == -1) {
         _showScrollUpMaterialBanner(readMarkerEventId);
       }
 
@@ -1059,6 +1103,7 @@ class ChatController extends State<ChatPageWithRoom>
     timeline = null;
     inputFocus.removeListener(_inputFocusListener);
     inputFocus.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     inputBarHeight.dispose();
     scrollController.dispose();
     sendController.dispose();
@@ -1154,9 +1199,8 @@ class ChatController extends State<ChatPageWithRoom>
       editEventId: editEvent?.eventId,
       eventContent: editEvent?.content,
       parseCommands: parseCommands,
-      threadRootEventId: thread?.rootEvent.eventId,
-      threadLastEventId:
-          thread?.lastEvent?.eventId ?? thread?.rootEvent.eventId,
+      threadRootEventId: threadRootEventId,
+      threadLastEventId: threadLastEventId,
     );
     sendController.value = TextEditingValue(
       text: pendingText,
@@ -1246,13 +1290,19 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendPollAction() async {
-    await showAdaptiveDialog(
+    final sent = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: false,
-      builder: (c) =>
-          SendPollDialog(room: room, thread: thread, outerContext: context),
+      builder: (c) => SendPollDialog(
+        room: room,
+        thread: thread,
+        outerContext: context,
+        replyEvent: replyEvent,
+      ),
     );
-    replyEvent = null;
+    if (sent == true && mounted) {
+      setState(() => replyEvent = null);
+    }
   }
 
   void sendFileAction({FileType type = .any}) async {
@@ -1263,64 +1313,35 @@ class ChatController extends State<ChatPageWithRoom>
       Logs().v("Returning in sendFileAction, bc files.isEmpty==true");
       return;
     }
-    await showAdaptiveDialog(
-      context: context,
-      useRootNavigator: false,
-      builder: (c) => SendFileDialog(
-        files: files,
-        room: room,
-        thread: thread,
-        outerContext: context,
-        replyEvent: replyEvent,
-        onClearReply: () {
-          replyEvent = null;
-        },
-      ),
-    );
-    // replyEvent = null;
+    await _showSendFileDialog(files);
   }
 
-  void sendImageFromClipBoard(
-    Uint8List? image, {
-    String mimeType = 'image/png',
-  }) async {
+  void sendImageFromClipBoard(Uint8List? image, {String? mimeType}) async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
-    Uint8List? pastedImage;
-    if (PlatformInfos.isLinux) {
-      pastedImage = await getImageFromClipboardLinux();
-    } else if (PlatformInfos.isWindows) {
-      pastedImage = await getImageFromClipboardWindows();
-    } else if (PlatformInfos.isMacOS) {
-      pastedImage = await getImageFromClipboardMacOS();
-    } else {
-      pastedImage = image;
+    var pastedImage = image;
+    if (pastedImage == null) {
+      if (PlatformInfos.isLinux) {
+        pastedImage = await getImageFromClipboardLinux();
+      } else if (PlatformInfos.isWindows) {
+        pastedImage = await getImageFromClipboardWindows();
+      } else if (PlatformInfos.isMacOS) {
+        pastedImage = await getImageFromClipboardMacOS();
+      }
     }
     if (pastedImage == null) return;
 
-    final extension = mimeType.split('/').last.split('+').first;
+    final resolvedMimeType = mimeType ?? 'image/png';
+    final extension = resolvedMimeType.split('/').last.split('+').first;
     final files = [
       XFile.fromData(
         pastedImage,
-        mimeType: mimeType,
+        mimeType: resolvedMimeType,
         name: 'clipboard.$extension',
       ),
     ];
 
-    await showAdaptiveDialog(
-      context: context,
-      useRootNavigator: false,
-      builder: (c) => SendFileDialog(
-        files: files,
-        room: room,
-        thread: thread,
-        outerContext: context,
-        replyEvent: replyEvent,
-        onClearReply: () {
-          replyEvent = null;
-        },
-      ),
-    );
+    await _showSendFileDialog(files);
   }
 
   void openCameraAction() async {
@@ -1330,16 +1351,7 @@ class ChatController extends State<ChatPageWithRoom>
     final file = await ImagePicker().pickImage(source: ImageSource.camera);
     if (file == null) return;
 
-    await showAdaptiveDialog(
-      context: context,
-      useRootNavigator: false,
-      builder: (c) => SendFileDialog(
-        files: [file],
-        room: room,
-        thread: thread,
-        outerContext: context,
-      ),
-    );
+    await _showSendFileDialog([file]);
   }
 
   void openVideoCameraAction() async {
@@ -1352,16 +1364,7 @@ class ChatController extends State<ChatPageWithRoom>
     );
     if (file == null) return;
 
-    await showAdaptiveDialog(
-      context: context,
-      useRootNavigator: false,
-      builder: (c) => SendFileDialog(
-        files: [file],
-        room: room,
-        thread: thread,
-        outerContext: context,
-      ),
-    );
+    await _showSendFileDialog([file]);
   }
 
   Future<void> onVoiceMessageSend(
@@ -1389,12 +1392,17 @@ class ChatController extends State<ChatPageWithRoom>
     }
 
     final file = MatrixAudioFile(bytes: bytes, name: fileName);
+    final relation = buildFileSendRelation(
+      threadRootEventId: threadRootEventId,
+      threadLastEventId: threadLastEventId,
+      inReplyToEventId: replyEvent?.eventId,
+    );
 
     await room
         .sendFileEvent(
           file,
-          inReplyTo: replyEvent,
           extraContent: {
+            'm.relates_to': ?relation,
             'info': {...file.info, 'duration': duration},
             'org.matrix.msc3245.voice': {},
             'org.matrix.msc1767.audio': {
@@ -1402,8 +1410,8 @@ class ChatController extends State<ChatPageWithRoom>
               'waveform': waveform,
             },
           },
-          threadLastEventId: thread?.lastEvent?.eventId,
-          threadRootEventId: thread?.rootEvent.eventId,
+          // Keep the explicit thread relation in extraContent; the SDK would
+          // otherwise replace it with a fallback relation.
         )
         .catchError((e) {
           scaffoldMessenger.showSnackBar(
@@ -1449,15 +1457,22 @@ class ChatController extends State<ChatPageWithRoom>
     }
 
     file.info['duration'] = duration;
+    final relation = buildFileSendRelation(
+      threadRootEventId: threadRootEventId,
+      threadLastEventId: threadLastEventId,
+      inReplyToEventId: replyEvent?.eventId,
+    );
 
     await room
         .sendFileEvent(
           file,
           thumbnail: thumbnail,
-          inReplyTo: replyEvent,
-          extraContent: {'xyz.extera.video_note': {}},
-          threadLastEventId: thread?.lastEvent?.eventId,
-          threadRootEventId: thread?.rootEvent.eventId,
+          extraContent: {
+            'm.relates_to': ?relation,
+            'xyz.extera.video_note': {},
+          },
+          // Keep the explicit thread relation in extraContent; the SDK would
+          // otherwise replace it with a fallback relation.
         )
         .catchError((e) {
           scaffoldMessenger.showSnackBar(
@@ -1495,11 +1510,18 @@ class ChatController extends State<ChatPageWithRoom>
   void sendLocationAction() async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
-    await showAdaptiveDialog(
+    final sent = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: false,
-      builder: (c) => SendLocationDialog(room: room, thread: thread),
+      builder: (c) => SendLocationDialog(
+        room: room,
+        thread: thread,
+        replyEvent: replyEvent,
+      ),
     );
+    if (sent == true && mounted) {
+      setState(() => replyEvent = null);
+    }
   }
 
   String _getSelectedEventString() {
@@ -1803,17 +1825,19 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void forwardEventsAction({Event? event}) async {
+    if (selectedEvents.isEmpty && event == null) return;
     await showScaffoldDialog(
       context: context,
       builder: (context) => ShareScaffoldDialog(
         items: selectedEvents.isEmpty
             ? [
-                ContentShareItem(
-                  sanitizeContent(
-                    event!.getDisplayEvent(timeline!).content.copy(),
+                if (event != null)
+                  ContentShareItem(
+                    sanitizeContent(
+                      event.getDisplayEvent(timeline!).content.copy(),
+                    ),
+                    attribution: generateAttributionString(event),
                   ),
-                  attribution: generateAttributionString(event),
-                ),
               ]
             : selectedEvents
                   .map(
@@ -2441,6 +2465,19 @@ class ChatController extends State<ChatPageWithRoom>
     }
   }
 
+  void _checkKeyboardChange(FlutterView view) {
+    final isKeyboardActive = view.viewInsets.bottom > 0;
+    if (keyboardWasActive && !isKeyboardActive) inputFocus.unfocus();
+    keyboardWasActive = isKeyboardActive;
+  }
+
+  @override
+  void didChangeMetrics() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+
+    _checkKeyboardChange(view);
+  }
+
   void _openMenu(Event event, Offset? tapPosition) {
     _setScrollAnchorForMenu();
     if (PlatformInfos.isMobile) {
@@ -2674,120 +2711,25 @@ class ChatController extends State<ChatPageWithRoom>
   void showEventInfo([Event? event]) =>
       (event ?? selectedEvents.single).showInfoDialog(context);
 
-  void onPhoneButtonTap() async {
-    // VoIP required Android SDK 21
-    if (PlatformInfos.isAndroid) {
-      DeviceInfoPlugin().androidInfo.then((value) {
-        if (value.version.sdkInt < 21) {
-          Navigator.pop(context);
-          showOkAlertDialog(
-            context: context,
-            title: L10n.of(context).unsupportedAndroidVersion,
-            message: L10n.of(context).unsupportedAndroidVersionLong,
-            okLabel: L10n.of(context).close,
-          );
-        }
-      });
-    }
-    final callType = await showModalActionPopup<CallType>(
-      context: context,
-      title: L10n.of(context).warning,
-      message: L10n.of(context).videoCallsBetaWarning,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).voiceCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: CallType.kVoice,
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).videoCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: CallType.kVideo,
-        ),
-      ],
-    );
-    if (callType == null) return;
-
-    final voipPlugin = Matrix.of(context).voipPlugin;
-    try {
-      final session = await voipPlugin!.voip.inviteToCall(room, callType);
-      voipPlugin.addCallingOverlay(session.callId, session);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-      Logs().e("onPhoneButtonTap", e);
-    }
-  }
-
   void onLiveKitCallButtonTap() async {
-    final callType = await showModalActionPopup<String>(
+    final confirmed = await showOkCancelAlertDialog(
       context: context,
       title: L10n.of(context).placeCall,
-      message: L10n.of(context).chooseCallType,
-      cancelLabel: L10n.of(context).cancel,
-      actions: [
-        AdaptiveModalAction(
-          label: L10n.of(context).elementCall,
-          icon: const Icon(Icons.video_call_outlined),
-          value: 'element_call',
-        ),
-        AdaptiveModalAction(
-          label: L10n.of(context).p2pCall,
-          icon: const Icon(Icons.phone_outlined),
-          value: 'p2p',
-        ),
-      ],
+      message: L10n.of(context).elementCallDescription,
+      okLabel: L10n.of(context).continueText,
     );
-    if (callType == null) return;
+    if (confirmed != OkCancelResult.ok) return;
 
-    if (callType == 'p2p') {
-      // Use traditional P2P call
-      final voipCallType = await showModalActionPopup<CallType>(
-        context: context,
-        title: L10n.of(context).warning,
-        message: L10n.of(context).videoCallsBetaWarning,
-        cancelLabel: L10n.of(context).cancel,
-        actions: [
-          AdaptiveModalAction(
-            label: L10n.of(context).voiceCall,
-            icon: const Icon(Icons.phone_outlined),
-            value: CallType.kVoice,
-          ),
-          AdaptiveModalAction(
-            label: L10n.of(context).videoCall,
-            icon: const Icon(Icons.video_call_outlined),
-            value: CallType.kVideo,
-          ),
-        ],
+    // Start a LiveKit (Element Call) call.
+    try {
+      await openLiveKitCall(context, roomId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.of(context).errorWithMessage('Element Call: $e')),
+        ),
       );
-      if (voipCallType == null) return;
-
-      final voipPlugin = Matrix.of(context).voipPlugin;
-      try {
-        final session = await voipPlugin!.voip.inviteToCall(room, voipCallType);
-        voipPlugin.addCallingOverlay(session.callId, session);
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toLocalizedString(context))));
-        Logs().e("onPhoneButtonTap", e);
-      }
-    } else if (callType == 'element_call') {
-      // Use Element Call (LiveKit)
-      try {
-        await openLiveKitCall(context, roomId);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              L10n.of(context).errorWithMessage('Element Call: $e'),
-            ),
-          ),
-        );
-        Logs().e("onLiveKitCallButtonTap", e);
-      }
+      Logs().e("onLiveKitCallButtonTap", e);
     }
   }
 

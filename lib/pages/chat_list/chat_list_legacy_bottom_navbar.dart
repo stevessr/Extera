@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart';
-
 import 'package:badges/badges.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';

@@ -1,6 +1,5 @@
-import 'package:material_ui/material_ui.dart' hide Intent;
-
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:material_ui/material_ui.dart' hide Intent;
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';

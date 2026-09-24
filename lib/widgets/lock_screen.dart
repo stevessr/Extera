@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
+import 'package:material_ui/material_ui.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';

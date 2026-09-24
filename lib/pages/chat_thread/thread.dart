@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
 
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
+import 'package:extera_next/pages/chat/chat_read_marker.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/share_scaffold_dialog.dart';
@@ -120,12 +122,27 @@ class _ThreadChatPageWithRoom extends ChatPageWithRoom {
 
 class _ThreadChatController extends ChatController {
   Future<void>? _threadReadMarkerFuture;
+  String? _lastAcknowledgedThreadEventId;
+  bool _readMarkerRequestedWhilePending = false;
 
   @override
   void setReadMarker({String? eventId}) {
-    if (_threadReadMarkerFuture != null) return;
+    if (!mounted) return;
+    if (_threadReadMarkerFuture != null) {
+      // Recheck the most recent synced reply once the in-flight receipt
+      // completes; updates must not get lost while the request is pending.
+      _readMarkerRequestedWhilePending = true;
+      return;
+    }
     if (scrolledUpNotifier.value) return;
     if (scrollUpBannerEventId != null) return;
+    // Match the normal chat's foreground guard: background threads must not
+    // silently clear their unread state on incoming sync updates.
+    if (kIsWeb && !Matrix.of(context).webHasFocus) return;
+    if (!kIsWeb &&
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
 
     final currentTimeline = timeline;
     final currentThread = thread;
@@ -143,7 +160,7 @@ class _ThreadChatController extends ChatController {
         }
       }
     }
-    if (eventId == null) return;
+    if (eventId == null || eventId == _lastAcknowledgedThreadEventId) return;
 
     Logs().d(
       'Set thread read marker ${currentThread.rootEvent.eventId}...',
@@ -159,19 +176,49 @@ class _ThreadChatController extends ChatController {
           public: shouldSendPublicReadReceipts(room.client, roomId),
         )
         .then((_) {
-          // Remove the local unread indicator immediately instead of waiting
-          // for the next /sync response to echo the threaded receipt.
-          currentThread.notificationCount = 0;
-          currentThread.highlightCount = 0;
-          if (mounted) setState(() {});
+          _lastAcknowledgedThreadEventId = eventId;
+          // An incoming reply may have arrived after this receipt started.
+          // Do not clear the unread state for that newer, unseen reply.
+          String? latestSyncedEventId;
+          for (final event in currentTimeline.events) {
+            if (event.status.isSynced) {
+              latestSyncedEventId = event.eventId;
+              break;
+            }
+          }
+          if (mounted &&
+              identical(timeline, currentTimeline) &&
+              shouldClearThreadUnreadAfterReceipt(
+                acknowledgedEventId: eventId!,
+                latestSyncedEventId: latestSyncedEventId,
+              )) {
+            currentThread.notificationCount = 0;
+            currentThread.highlightCount = 0;
+            setState(() {});
+          } else if (mounted &&
+              identical(timeline, currentTimeline) &&
+              latestSyncedEventId != null &&
+              latestSyncedEventId != eventId) {
+            _readMarkerRequestedWhilePending = true;
+          }
         })
         .catchError((Object error, StackTrace stackTrace) {
           Logs().w('Unable to set thread read marker', error, stackTrace);
         })
         .whenComplete(() {
           // Always unlock so a transient receipt failure can be retried by the
-          // next existing read-marker trigger.
+          // next existing read-marker trigger. Do not lose a newer reply that
+          // arrived while the previous receipt was in flight.
+          final shouldRetry = _readMarkerRequestedWhilePending;
+          _readMarkerRequestedWhilePending = false;
           _threadReadMarkerFuture = null;
+          if (shouldRetry && mounted) {
+            // A completed network request need not schedule a Flutter frame.
+            // Retry in a microtask so the pending flag cannot get stranded.
+            scheduleMicrotask(() {
+              if (mounted) setReadMarker();
+            });
+          }
         });
 
     unawaited(_threadReadMarkerFuture);

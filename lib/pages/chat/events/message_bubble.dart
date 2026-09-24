@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:swipe_to_action/swipe_to_action.dart';
 

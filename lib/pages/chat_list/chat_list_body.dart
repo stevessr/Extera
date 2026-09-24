@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
-
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
@@ -13,7 +12,6 @@ import 'package:extera_next/pages/chat_list/people_view.dart';
 import 'package:extera_next/pages/chat_list/search_title.dart';
 import 'package:extera_next/pages/chat_list/space_view.dart';
 import 'package:extera_next/pages/chat_list/status_msg_list.dart';
-import 'package:extera_next/pages/dialer/back_to_call_button.dart';
 import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/shortcuts/chat_list/chat_list_shortcuts.dart';
@@ -166,7 +164,6 @@ class ChatListViewBody extends StatelessWidget {
                         ),
                       ),
                     if (!FluffyThemes.isColumnMode(context)) ...[
-                      const BackToCallButton(),
                       ValueListenableBuilder<String?>(
                         valueListenable: LiveKitCallManager().currentCallRoomId,
                         builder: (context, roomId, _) {

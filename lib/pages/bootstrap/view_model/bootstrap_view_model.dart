@@ -3,12 +3,12 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/encryption.dart';
 import 'package:matrix/matrix.dart';
 
