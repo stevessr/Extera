@@ -430,7 +430,7 @@ class AudioPlayerState extends State<AudioPlayerWidget> {
                                             ? CrossFadeState.showFirst
                                             : CrossFadeState.showSecond,
                                         duration:
-                                            FluffyThemes.animationDuration,
+                                            FluffyThemes.effectiveAnimationDuration,
                                       ),
                                     ],
                                   ],

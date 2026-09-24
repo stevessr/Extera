@@ -437,7 +437,7 @@ class _ReactionsContextMenuOverlayState
                   filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                   child: AnimatedOpacity(
                     opacity: _reactionRect == null ? 0 : 1,
-                    duration: FluffyThemes.animationDuration,
+                    duration: FluffyThemes.effectiveAnimationDuration,
                     curve: FluffyThemes.animationCurve,
                     child: Container(
                       color: Colors.black.withValues(alpha: 0.5),
@@ -450,7 +450,7 @@ class _ReactionsContextMenuOverlayState
               delegate: _ReactionsMenuLayoutDelegate(rect: _reactionRect),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.1, end: 1.0),
-                duration: FluffyThemes.animationDuration,
+                duration: FluffyThemes.effectiveAnimationDuration,
                 curve: FluffyThemes.animationCurve,
                 builder: (context, value, child) {
                   return Opacity(opacity: value, child: child);

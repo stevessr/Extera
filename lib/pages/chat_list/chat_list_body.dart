@@ -131,7 +131,7 @@ class ChatListViewBody extends StatelessWidget {
                                 userSearchResult.results.isEmpty
                             ? 0
                             : 106,
-                        duration: FluffyThemes.animationDuration,
+                        duration: FluffyThemes.effectiveAnimationDuration,
                         curve: FluffyThemes.animationCurve,
                         child: userSearchResult == null
                             ? null
@@ -280,7 +280,7 @@ class PublicRoomsHorizontalList extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       decoration: const BoxDecoration(),
       height: publicRooms == null || publicRooms.isEmpty ? 0 : 106,
-      duration: FluffyThemes.animationDuration,
+      duration: FluffyThemes.effectiveAnimationDuration,
       curve: FluffyThemes.animationCurve,
       child: publicRooms == null
           ? null

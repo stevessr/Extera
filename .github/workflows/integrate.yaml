@@ -71,9 +71,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref }}
-          # Import ordering is enforced incrementally on touched Dart files, so
-          # the base commit must be available for an exact diff.
-          fetch-depth: 0
 
       - name: Check locale config is up to date
         run: |
@@ -101,32 +98,8 @@ jobs:
       - name: Check formatting
         run: dart format lib/ test/ integration_test/ --set-exit-if-changed
 
-      - name: Check import ordering for touched Dart files
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
-        run: |
-          set -euo pipefail
-
-          base_sha="${BASE_SHA:-}"
-          if [[ -z "$base_sha" ]]; then
-            base_sha="$(git rev-parse HEAD^ 2>/dev/null || true)"
-          fi
-          if [[ -z "$base_sha" ]]; then
-            echo "No base commit available; no touched Dart files to check."
-            exit 0
-          fi
-
-          mapfile -t dart_files < <(
-            git diff --name-only --diff-filter=ACMR "$base_sha"...HEAD -- '*.dart'
-          )
-          if (( ${#dart_files[@]} == 0 )); then
-            echo "No touched Dart files require import-order validation."
-            exit 0
-          fi
-
-          printf 'Checking import order in %d touched Dart file(s):\n' "${#dart_files[@]}"
-          printf '  %s\n' "${dart_files[@]}"
-          dart run tidy_imports --no-comments --exit-if-changed "${dart_files[@]}"
+      - name: Check import ordering
+        run: dart run tidy_imports --no-comments --exit-if-changed
 
       - name: Check license compliance
         run: dart run license_checker check-licenses -c licenses.yaml --problematic

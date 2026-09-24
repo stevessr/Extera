@@ -202,7 +202,7 @@ class ChatListItem extends StatelessWidget {
               onLongPress: () => onLongPress?.call(context),
               leading: HoverBuilder(
                 builder: (context, hovered) => AnimatedScale(
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   scale: hovered ? 1.1 : 1.0,
                   child: SizedBox(
@@ -265,7 +265,7 @@ class ChatListItem extends StatelessWidget {
                           child: GestureDetector(
                             onTap: () => onLongPress?.call(context),
                             child: AnimatedScale(
-                              duration: FluffyThemes.animationDuration,
+                              duration: FluffyThemes.effectiveAnimationDuration,
                               curve: FluffyThemes.animationCurve,
                               scale: listTileHovered ? 1.0 : 0.0,
                               child: Material(
@@ -360,7 +360,7 @@ class ChatListItem extends StatelessWidget {
                     width: typingText.isEmpty ? 0 : 18,
                     clipBehavior: Clip.hardEdge,
                     decoration: const BoxDecoration(),
-                    duration: FluffyThemes.animationDuration,
+                    duration: FluffyThemes.effectiveAnimationDuration,
                     curve: FluffyThemes.animationCurve,
                     padding: const EdgeInsets.only(right: 4),
                     child: Icon(
