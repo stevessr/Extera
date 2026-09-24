@@ -82,6 +82,9 @@ class ForegroundTaskManager {
   static Future<void> stopTask({ForegroundTaskType? taskType}) async {
     if (!PlatformInfos.isAndroid) return;
     if (taskType != null && taskType != _currentTask) return;
+    try {
+      FlutterForegroundTask.setOnLockScreenVisibility(false);
+    } catch (_) {}
     await ForegroundTaskManager._stopFgTaskIfRunning();
     for (final callback in _taskCallbacks) {
       FlutterForegroundTask.removeTaskDataCallback(callback);
