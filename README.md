@@ -39,7 +39,7 @@ A FluffyChat fork on steroids, aimed at adding more features.
 
 - Built-in message translation (toggleable)
 - Built-in image editor
-- More expressive profiles: "About", banner, Rich Presence (MSC4320)
+- More expressive profiles: "About", banner, Rich Presence (MSC4544)
 
 ## Supported languages
 
