@@ -125,7 +125,6 @@ abstract class ClientManager {
         EventTypes.RoomImagePack,
         'im.ponies.room_emotes',
         'org.matrix.msc3401.call.member',
-        'org.matrix.msc4705.rtc.notification',
       },
       roomPreviewLastEvents: <String>{
         EventTypes.Message,
