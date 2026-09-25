@@ -1723,17 +1723,21 @@ class ChatController extends State<ChatPageWithRoom>
 
   void endPollAction({Event? event}) async {
     event ??= selectedEvents.first;
-    final client = currentRoomBundle.firstWhere(
-      (cl) => event!.senderId == cl!.userID,
-      orElse: () => null,
+    if (event.type != PollEventContent.startType) return;
+    if (event.senderId != event.room.client.userID && !event.room.canRedact) {
+      return;
+    }
+    await event.room.sendEvent(
+      {
+        'm.relates_to': {
+          'rel_type': RelationshipTypes.reference,
+          'event_id': event.eventId,
+        },
+        PollEventContent.mTextJsonKey: 'The poll has ended.',
+        PollEventContent.endType: <String, dynamic>{},
+      },
+      type: PollEventContent.endType,
     );
-    if (client == null) return;
-    if (event.senderId != client.userID) return;
-    await room.sendEvent({
-      'org.matrix.msc1767.text': 'Ended poll',
-      'm.relates_to': {'rel_type': 'm.reference', 'event_id': event.eventId},
-      'body': 'Ended poll',
-    }, type: 'org.matrix.msc3381.poll.end');
   }
 
   void redactEventsAction({Event? event}) async {
