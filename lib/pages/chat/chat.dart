@@ -1723,7 +1723,21 @@ class ChatController extends State<ChatPageWithRoom>
 
   void endPollAction({Event? event}) async {
     event ??= selectedEvents.first;
-    await event.endPoll();
+    if (event.type != PollEventContent.startType) return;
+    if (event.senderId != event.room.client.userID && !event.room.canRedact) {
+      return;
+    }
+    await event.room.sendEvent(
+      {
+        'm.relates_to': {
+          'rel_type': RelationshipTypes.reference,
+          'event_id': event.eventId,
+        },
+        PollEventContent.mTextJsonKey: 'The poll has ended.',
+        PollEventContent.endType: <String, dynamic>{},
+      },
+      type: PollEventContent.endType,
+    );
   }
 
   void redactEventsAction({Event? event}) async {
