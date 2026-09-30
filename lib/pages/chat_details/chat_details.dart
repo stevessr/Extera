@@ -139,6 +139,7 @@ class ChatDetailsController extends State<ChatDetails> {
 
   void setAvatarAction() async {
     final room = Matrix.of(context).client.getRoomById(roomId!);
+    if (room == null) return;
     final actions = [
       if (PlatformInfos.isMobile)
         AdaptiveModalAction(
@@ -157,7 +158,13 @@ class ChatDetailsController extends State<ChatDetails> {
         label: L10n.of(context).avatarHistory,
         icon: const Icon(Icons.history_outlined),
       ),
-      if (room?.avatar != null)
+      if (room.avatar != null)
+        AdaptiveModalAction(
+          value: AvatarAction.addCurrentToHistory,
+          label: L10n.of(context).addToAvatarHistory,
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+      if (room.avatar != null)
         AdaptiveModalAction(
           value: AvatarAction.remove,
           label: L10n.of(context).delete,
@@ -174,13 +181,23 @@ class ChatDetailsController extends State<ChatDetails> {
             actions: actions,
           );
     if (action == null) return;
+    if (action == AvatarAction.addCurrentToHistory) {
+      await AvatarHistory.recordUri(room.avatar);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context).addedToAvatarHistory)),
+        );
+      }
+      return;
+    }
     if (action == AvatarAction.history) {
       final mxc = await showAvatarHistoryPicker(context);
       if (mxc == null || !mounted) return;
       await showFutureLoadingDialog(
         context: context,
         future: () async {
-          await room!.client.setRoomStateWithKey(
+          await AvatarHistory.recordUri(room.avatar);
+          await room.client.setRoomStateWithKey(
             room.id,
             EventTypes.RoomAvatar,
             '',
@@ -194,7 +211,10 @@ class ChatDetailsController extends State<ChatDetails> {
     if (action == AvatarAction.remove) {
       await showFutureLoadingDialog(
         context: context,
-        future: () => room!.setAvatar(null),
+        future: () async {
+          await AvatarHistory.recordUri(room.avatar);
+          await room.setAvatar(null);
+        },
       );
       return;
     }
@@ -203,11 +223,12 @@ class ChatDetailsController extends State<ChatDetails> {
     await showFutureLoadingDialog(
       context: context,
       future: () async {
-        final mxc = await room!.client.uploadContent(
+        final mxc = await room.client.uploadContent(
           file.bytes,
           filename: file.name,
           contentType: file.mimeType,
         );
+        await AvatarHistory.recordUri(room.avatar);
         await room.client.setRoomStateWithKey(
           room.id,
           EventTypes.RoomAvatar,
@@ -246,6 +267,12 @@ class ChatDetailsController extends State<ChatDetails> {
       ),
       if (currentAvatar != null && currentAvatar.toString().isNotEmpty)
         AdaptiveModalAction(
+          value: AvatarAction.addCurrentToHistory,
+          label: L10n.of(context).addToAvatarHistory,
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+      if (currentAvatar != null && currentAvatar.toString().isNotEmpty)
+        AdaptiveModalAction(
           value: AvatarAction.remove,
           label: L10n.of(context).removeYourAvatar,
           isDestructive: true,
@@ -261,12 +288,22 @@ class ChatDetailsController extends State<ChatDetails> {
             actions: actions,
           );
     if (action == null) return;
+    if (action == AvatarAction.addCurrentToHistory) {
+      await AvatarHistory.recordUri(currentAvatar);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context).addedToAvatarHistory)),
+        );
+      }
+      return;
+    }
     if (action == AvatarAction.history) {
       final mxc = await showAvatarHistoryPicker(context);
       if (mxc == null || !mounted) return;
       await showFutureLoadingDialog(
         context: context,
         future: () async {
+          await AvatarHistory.recordUri(currentAvatar);
           await _setOwnRoomMemberProfile(room, avatarUrl: mxc);
           await AvatarHistory.record(mxc);
         },
@@ -277,7 +314,10 @@ class ChatDetailsController extends State<ChatDetails> {
     if (action == AvatarAction.remove) {
       await showFutureLoadingDialog(
         context: context,
-        future: () => _setOwnRoomMemberProfile(room, clearAvatar: true),
+        future: () async {
+          await AvatarHistory.recordUri(currentAvatar);
+          await _setOwnRoomMemberProfile(room, clearAvatar: true);
+        },
       );
       return;
     }
@@ -291,6 +331,7 @@ class ChatDetailsController extends State<ChatDetails> {
           file.bytes,
           filename: file.name,
         );
+        await AvatarHistory.recordUri(currentAvatar);
         await _setOwnRoomMemberProfile(
           room,
           avatarUrl: uploadResponse.toString(),
