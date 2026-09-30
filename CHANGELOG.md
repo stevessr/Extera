@@ -1,3 +1,8 @@
+## Extera 26.5.4
+- Fix app still being available on lock screen after calls end.
+- Fix some text colors.
+- Add mini call controls.
+
 ## Extera 26.5.3
 - View MSC4544 rich presences.
 - Remove support for MSC4320 rich presences.

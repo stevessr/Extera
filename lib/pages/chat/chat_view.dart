@@ -812,16 +812,17 @@ class _ChatViewState extends State<ChatView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ValueListenableBuilder<String?>(
-                            valueListenable:
-                                LiveKitCallManager().currentCallRoomId,
-                            builder: (context, roomId, _) {
-                              if (roomId == null) {
-                                return const SizedBox.shrink();
-                              }
-                              return BackToLiveKitCallButton(roomId: roomId);
-                            },
-                          ),
+                          if (!FluffyThemes.isColumnMode(context))
+                            ValueListenableBuilder<String?>(
+                              valueListenable:
+                                  LiveKitCallManager().currentCallRoomId,
+                              builder: (context, roomId, _) {
+                                if (roomId == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return BackToLiveKitCallButton(roomId: roomId);
+                              },
+                            ),
                           const MiniAudioPlayer(),
                           if (scrollUpBannerEventId != null)
                             Row(

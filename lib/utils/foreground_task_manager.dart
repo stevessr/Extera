@@ -108,6 +108,9 @@ class ForegroundTaskManager {
 
   static Future<void> _stopAndClearTask() async {
     try {
+      FlutterForegroundTask.setOnLockScreenVisibility(false);
+    } catch (_) {}
+    try {
       await ForegroundTaskManager._stopFgTaskIfRunning();
     } finally {
       for (final callback in _taskCallbacks) {

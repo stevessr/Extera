@@ -188,6 +188,13 @@ class LiveKitIncomingCallManager {
 
   void _dismiss() {
     _stopRingtone();
+    if (PlatformInfos.isAndroid) {
+      try {
+        FlutterForegroundTask.setOnLockScreenVisibility(false);
+      } catch (e) {
+        Logs().e('[LiveKitIncoming] lock screen visibility reset failed', e);
+      }
+    }
     _lifetimeTimer?.cancel();
     _lifetimeTimer = null;
     _showing = false;
