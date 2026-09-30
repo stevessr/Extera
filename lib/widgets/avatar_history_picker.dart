@@ -25,11 +25,14 @@ Future<String?> showAvatarHistoryPicker(BuildContext context) async {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              L10n.of(context).avatarHistory,
+              L10n.of(sheetContext).avatarHistory,
               style: Theme.of(sheetContext).textTheme.titleMedium,
             ),
           ),
-          Flexible(
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.55,
+            ),
             child: GridView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -40,7 +43,7 @@ Future<String?> showAvatarHistoryPicker(BuildContext context) async {
               ),
               itemCount: entries.length,
               itemBuilder: (context, i) => Avatar(
-                mxContent: Uri.tryParse(entries[i]),
+                mxContent: Uri.parse(entries[i]),
                 name: null,
                 size: 80,
                 onTap: () => Navigator.of(context).pop(entries[i]),

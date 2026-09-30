@@ -329,6 +329,12 @@ class SettingsController extends State<Settings> {
       ),
       if (profile?.avatarUrl != null)
         AdaptiveModalAction(
+          value: AvatarAction.addCurrentToHistory,
+          label: L10n.of(context).addToAvatarHistory,
+          icon: const Icon(Icons.playlist_add_outlined),
+        ),
+      if (profile?.avatarUrl != null)
+        AdaptiveModalAction(
           value: AvatarAction.remove,
           label: L10n.of(context).removeYourAvatar,
           isDestructive: true,
@@ -344,6 +350,15 @@ class SettingsController extends State<Settings> {
             actions: actions,
           );
     if (action == null || !mounted) return;
+    if (action == AvatarAction.addCurrentToHistory) {
+      await AvatarHistory.recordUri(profile?.avatarUrl);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context).addedToAvatarHistory)),
+        );
+      }
+      return;
+    }
     if (action == AvatarAction.history) {
       final mxc = await showAvatarHistoryPicker(context);
       if (mxc == null || !mounted) return;
@@ -351,6 +366,7 @@ class SettingsController extends State<Settings> {
         context: context,
         future: () async {
           final client = Matrix.of(context).client;
+          await AvatarHistory.recordUri(profile?.avatarUrl);
           await client.setProfileField(client.userID!, 'avatar_url', {
             'avatar_url': mxc,
           });
@@ -368,6 +384,7 @@ class SettingsController extends State<Settings> {
       final success = await showFutureLoadingDialog(
         context: context,
         future: () async {
+          await AvatarHistory.recordUri(profile?.avatarUrl);
           await matrix.client.setAvatar(null);
           await matrix.client.refreshOwnProfile();
         },
@@ -387,6 +404,7 @@ class SettingsController extends State<Settings> {
           filename: file.name,
           contentType: file.mimeType,
         );
+        await AvatarHistory.recordUri(profile?.avatarUrl);
         await matrix.client.setProfileField(
           matrix.client.userID!,
           'avatar_url',
@@ -558,7 +576,7 @@ class SettingsController extends State<Settings> {
   }
 }
 
-enum AvatarAction { camera, file, remove, history }
+enum AvatarAction { camera, file, remove, history, addCurrentToHistory }
 
 class _TimezonePickerDialog extends StatefulWidget {
   final String? detectedTimezone;
