@@ -106,7 +106,7 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
           AdaptiveModalAction(
             value: _AvatarChoice.addCurrentToHistory,
             label: L10n.of(context).addToAvatarHistory,
-            icon: const Icon(Icons.playlist_add_outlined),
+            icon: const Icon(Icons.add_circle_outline),
           ),
       ],
     );

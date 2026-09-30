@@ -331,7 +331,7 @@ class SettingsController extends State<Settings> {
         AdaptiveModalAction(
           value: AvatarAction.addCurrentToHistory,
           label: L10n.of(context).addToAvatarHistory,
-          icon: const Icon(Icons.playlist_add_outlined),
+          icon: const Icon(Icons.add_circle_outline),
         ),
       if (profile?.avatarUrl != null)
         AdaptiveModalAction(
