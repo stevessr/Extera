@@ -3284,6 +3284,8 @@
             "room": {"type": "String"}
         }
     },
+    "reactionUiTipReply": "輕觸以回覆。",
+    "reactionUiTipRedact": "長按以移除回應。",
     "reactionUiTip": "輕觸以回覆。長按以移除回應。",
   "noSendPermission": "你沒有權限在此傳送訊息",
   "@noSendPermission": {},
@@ -3669,6 +3671,24 @@
   },
   "listeningToSomeTunes": "正在聽音樂",
   "playing": "正在播放",
+  "richPresenceElapsed": "已過去 {duration}",
+  "@richPresenceElapsed": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "richPresenceRemaining": "剩餘 {duration}",
+  "@richPresenceRemaining": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "richPresenceOpenIdWarning": "此按鈕會向你的主伺服器請求 OpenID 權杖，並將其分享給目標網站。這可能會洩露你的 IP 位址和瀏覽器中繼資料，並使該網站能將此次造訪與你的 Matrix 帳戶關聯。此操作不會允許第三方存取你的 Matrix 帳戶。",
+  "@richPresenceOpenIdWarning": {},
   "editedAt": "編輯於 {when}",
   "@editedAt": {
     "type": "text",
