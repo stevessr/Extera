@@ -232,7 +232,7 @@ class ChatController extends State<ChatPageWithRoom>
 
   void onDragDone(DropDoneDetails details) async {
     setState(() => dragging = false);
-    await _showSendFileDialog(details.files);
+    await _showSendFileDialog(details.files, replyForFiles: replyEvent);
   }
 
   // On web the `desktop_drop` package's `DropTarget` widget gates
@@ -246,17 +246,22 @@ class ChatController extends State<ChatPageWithRoom>
 
   void _onWebDrop(List<XFile> files) async {
     setState(() => dragging = false);
-    await _showSendFileDialog(files);
+    await _showSendFileDialog(files, replyForFiles: replyEvent);
   }
 
-  Future<void> _showSendFileDialog(List<XFile> files) async {
+  Future<void> _showSendFileDialog(
+    List<XFile> files, {
+    required Event? replyForFiles,
+  }) async {
     if (files.isEmpty || !mounted) return;
 
-    // Capture the target before presenting the dialog: uploads can continue
-    // after it closes and must not clear a newer reply started in the chat.
+    // The reply target is captured by the caller before any asynchronous file
+    // acquisition / Android rich-content handling. This prevents IME updates
+    // from clearing the active reply before the attachment dialog is shown.
+    // Room/thread are captured here because the dialog/upload can outlive the
+    // chat UI state that opened it.
     final targetRoom = room;
     final targetThread = thread;
-    final replyForFiles = replyEvent;
     await showAdaptiveDialog(
       context: context,
       useRootNavigator: false,
@@ -749,7 +754,7 @@ class ChatController extends State<ChatPageWithRoom>
         .map((item) => item.value)
         .toList();
     if (files.isEmpty) return;
-    await _showSendFileDialog(files);
+    await _showSendFileDialog(files, replyForFiles: replyEvent);
   }
 
   @override
@@ -1306,6 +1311,7 @@ class ChatController extends State<ChatPageWithRoom>
   }
 
   void sendFileAction({FileType type = .any}) async {
+    final replyForFiles = replyEvent;
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     final files = await selectFiles(context, type: type);
@@ -1313,10 +1319,14 @@ class ChatController extends State<ChatPageWithRoom>
       Logs().v("Returning in sendFileAction, bc files.isEmpty==true");
       return;
     }
-    await _showSendFileDialog(files);
+    await _showSendFileDialog(files, replyForFiles: replyForFiles);
   }
 
   void sendImageFromClipBoard(Uint8List? image, {String? mimeType}) async {
+    // Android delivers pasted images through KeyboardInsertedContent. Capture
+    // the reply synchronously before the trust check / clipboard decoding can
+    // yield back to the IME and mutate the input/reply state.
+    final replyForFiles = replyEvent;
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     var pastedImage = image;
@@ -1341,20 +1351,22 @@ class ChatController extends State<ChatPageWithRoom>
       ),
     ];
 
-    await _showSendFileDialog(files);
+    await _showSendFileDialog(files, replyForFiles: replyForFiles);
   }
 
   void openCameraAction() async {
+    final replyForFiles = replyEvent;
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     inputFocus.unfocus();
     final file = await ImagePicker().pickImage(source: ImageSource.camera);
     if (file == null) return;
 
-    await _showSendFileDialog([file]);
+    await _showSendFileDialog([file], replyForFiles: replyForFiles);
   }
 
   void openVideoCameraAction() async {
+    final replyForFiles = replyEvent;
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
     inputFocus.unfocus();
@@ -1364,7 +1376,7 @@ class ChatController extends State<ChatPageWithRoom>
     );
     if (file == null) return;
 
-    await _showSendFileDialog([file]);
+    await _showSendFileDialog([file], replyForFiles: replyForFiles);
   }
 
   Future<void> onVoiceMessageSend(
