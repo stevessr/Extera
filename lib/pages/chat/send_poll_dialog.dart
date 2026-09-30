@@ -23,15 +23,18 @@ class SendPollDialog extends StatefulWidget {
 }
 
 class SendPollDialogState extends State<SendPollDialog> {
+  static const int _maxAnswers = 20;
+
   final TextEditingController _questionController = TextEditingController();
   final List<TextEditingController> _answerControllers = [
     TextEditingController(),
     TextEditingController(),
   ];
   int _maxSelections = 1;
-  String _kind = 'org.matrix.msc3381.poll.disclosed';
+  PollKind _kind = PollKind.disclosed;
 
   void _addAnswer() {
+    if (_answerControllers.length >= _maxAnswers) return;
     setState(() {
       _answerControllers.add(TextEditingController());
     });
@@ -69,33 +72,22 @@ class SendPollDialogState extends State<SendPollDialog> {
       return;
     }
 
-    final pollContent = {
-      'org.matrix.msc3381.poll.start': {
-        'question': {
-          'org.matrix.msc1767.text': question,
-          'm.text': question,
-          'body': question,
-          'msgtype': 'm.text',
-        },
-        'answers': answers
-            .map(
-              (answer) => {
-                'id': const Uuid().v4(),
-                'org.matrix.msc1767.text': answer,
-                'm.text': answer,
-              },
-            )
+    final pollContent = PollEventContent(
+      mText: "$question\n${answers.join('\n')}",
+      pollStartContent: PollStartContent(
+        kind: _kind,
+        maxSelections: _maxSelections,
+        question: PollQuestion(mText: question),
+        answers: answers
+            .map((answer) => PollAnswer(id: const Uuid().v4(), mText: answer))
             .toList(),
-        'max_selections': _maxSelections,
-        'kind': _kind,
-      },
-      'org.matrix.msc1767.text': "$question\n${answers.join('\n')}",
-    };
+      ),
+    ).toJson();
 
     try {
       final sentEventId = await widget.room.sendEvent(
         pollContent,
-        type: 'org.matrix.msc3381.poll.start',
+        type: PollEventContent.startType,
         inReplyTo: widget.replyEvent,
         threadLastEventId:
             widget.thread?.lastEvent != null &&
@@ -192,7 +184,9 @@ class SendPollDialogState extends State<SendPollDialog> {
             // Add Answer Button
             Center(
               child: OutlinedButton.icon(
-                onPressed: _addAnswer,
+                onPressed: _answerControllers.length < _maxAnswers
+                    ? _addAnswer
+                    : null,
                 icon: const Icon(Icons.add),
                 label: Text(l10n.addAnswer),
               ),
@@ -245,22 +239,22 @@ class SendPollDialogState extends State<SendPollDialog> {
             ),
             SizedBox(
               width: double.infinity,
-              child: SegmentedButton<String>(
+              child: SegmentedButton<PollKind>(
                 showSelectedIcon: false, // Cleaner look for text-only segments
                 segments: [
-                  ButtonSegment<String>(
-                    value: 'org.matrix.msc3381.poll.disclosed',
+                  ButtonSegment<PollKind>(
+                    value: PollKind.disclosed,
                     label: Text(l10n.publicPoll),
                     icon: const Icon(Icons.visibility_outlined),
                   ),
-                  ButtonSegment<String>(
-                    value: 'org.matrix.msc3381.poll.undisclosed',
+                  ButtonSegment<PollKind>(
+                    value: PollKind.undisclosed,
                     label: Text(l10n.anonymousPoll),
                     icon: const Icon(Icons.visibility_off_outlined),
                   ),
                 ],
                 selected: {_kind},
-                onSelectionChanged: (Set<String> newSelection) {
+                onSelectionChanged: (Set<PollKind> newSelection) {
                   setState(() {
                     // SegmentedButton returns a Set, we just need the first (only) value
                     _kind = newSelection.first;
