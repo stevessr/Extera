@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
 import 'package:extera_next/utils/avatar_history.dart';
+import 'package:extera_next/widgets/adaptive_dialogs/show_modal_action_popup.dart';
 import 'package:extera_next/widgets/avatar.dart';
 
 /// Shows the locally cached historical avatars and returns the picked mxc
