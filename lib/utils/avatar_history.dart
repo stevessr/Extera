@@ -48,6 +48,15 @@ abstract final class AvatarHistory {
     Logs().v('AvatarHistory: recorded $mxcUri');
   }
 
+  /// Removes [mxcUri] from the local history.
+  static Future<void> remove(String mxcUri) async {
+    final prefs = await SharedPreferences.getInstance();
+    final entries = _read(prefs)
+      ..removeWhere((entry) => entry == mxcUri || !_isMxcUri(entry));
+    await _write(entries);
+    Logs().v('AvatarHistory: removed $mxcUri');
+  }
+
   /// Null-safe convenience for recording avatar values already parsed as URIs.
   static Future<void> recordUri(Uri? mxcUri) async {
     if (mxcUri == null) return;
