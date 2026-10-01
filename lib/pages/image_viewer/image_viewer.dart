@@ -120,28 +120,60 @@ class ImageViewerController extends State<ImageViewer> {
   /// videos/images always have one).
   Uri? get _attachmentMxc => currentEvent.attachmentMxcUrl;
 
+  /// Returns an MXC that can safely be referenced by stickers and avatar state
+  /// events. Encrypted room attachments point at ciphertext, so their original
+  /// MXC cannot be reused directly outside the message event. In that case,
+  /// decrypt the attachment and upload the plaintext once for the requested
+  /// reuse action.
+  Future<Uri?> _prepareReusableAttachment(Event event) async {
+    final mxc = event.attachmentMxcUrl;
+    if (mxc == null) return null;
+
+    if (event.content['file'] is! Map) {
+      return mxc;
+    }
+
+    final file = await event.downloadAndDecryptAttachment();
+    final reusableMxc = await event.room.client.uploadContent(
+      file.bytes,
+      filename: event.content.tryGet<String>('filename') ?? event.body,
+      contentType: file.mimeType,
+    );
+    Logs().v(
+      'Re-uploaded encrypted attachment as reusable media: $reusableMxc',
+    );
+    return reusableMxc;
+  }
+
   /// Opens the extended actions sheet: reuse this media as sticker or as any
-  /// kind of avatar without re-uploading it.
+  /// kind of avatar. Plain MXC media is reused directly; encrypted attachments
+  /// are decrypted and uploaded as plain media first.
   void showMoreActions(BuildContext context) {
     final event = currentEvent;
-    final mxc = _attachmentMxc;
+    final hasAttachment = _attachmentMxc != null;
     final client = event.room.client;
     final room = event.room;
 
     Future<void> run(
       String message,
-      Future<void> Function() task, {
+      Future<void> Function(Uri mxc) task, {
       bool recordHistory = false,
-    }) => _runAction(context, mxc, message, task, recordHistory);
+    }) => _runAttachmentAction(
+      context,
+      event,
+      message,
+      task,
+      recordHistory: recordHistory,
+    );
 
     final actions = <Widget>[
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.sticky_note_2_outlined),
           title: Text(L10n.of(context).addToMyStickers),
           onTap: () {
             Navigator.of(context).pop();
-            run(L10n.of(context).addedToMyStickers, () async {
+            run(L10n.of(context).addedToMyStickers, (mxc) async {
               await client.addFavouriteSticker(
                 ImagePackImageContent.fromJson({
                   'url': mxc.toString(),
@@ -153,7 +185,7 @@ class ImageViewerController extends State<ImageViewer> {
             });
           },
         ),
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.history),
           title: Text(L10n.of(context).addToAvatarHistory),
@@ -161,18 +193,18 @@ class ImageViewerController extends State<ImageViewer> {
             Navigator.of(context).pop();
             run(
               L10n.of(context).addedToAvatarHistory,
-              () => AvatarHistory.record(mxc.toString()),
+              (mxc) => AvatarHistory.record(mxc.toString()),
             );
           },
         ),
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),
           title: Text(L10n.of(context).setAsMyGlobalAvatar),
           onTap: () => _confirmAndRun(
             context,
             L10n.of(context).setAsMyGlobalAvatar,
-            () => run(L10n.of(context).setAsMyGlobalAvatar, () async {
+            () => run(L10n.of(context).setAsMyGlobalAvatar, (mxc) async {
               await client.setProfileField(client.userID!, 'avatar_url', {
                 'avatar_url': mxc.toString(),
               });
@@ -191,7 +223,7 @@ class ImageViewerController extends State<ImageViewer> {
             L10n.of(context).setAsMyRoomAvatar,
             () => run(
               L10n.of(context).setAsMyRoomAvatar,
-              () => _setOwnRoomAvatar(room, mxc),
+              (mxc) => _setOwnRoomAvatar(room, mxc),
               recordHistory: true,
             ),
           ),
@@ -205,7 +237,7 @@ class ImageViewerController extends State<ImageViewer> {
             L10n.of(context).setAsRoomIcon,
             () => run(
               L10n.of(context).setAsRoomIcon,
-              () => room.client.setRoomStateWithKey(
+              (mxc) => room.client.setRoomStateWithKey(
                 room.id,
                 EventTypes.RoomAvatar,
                 '',
@@ -215,7 +247,7 @@ class ImageViewerController extends State<ImageViewer> {
             ),
           ),
         ),
-      if (mxc != null) ..._spaceTiles(context, mxc),
+      if (hasAttachment) ..._spaceTiles(context, event),
     ];
 
     showAdaptiveBottomSheet<void>(
@@ -254,21 +286,26 @@ class ImageViewerController extends State<ImageViewer> {
     await action();
   }
 
-  /// Runs [task] behind a loading dialog, records the attachment in the
-  /// avatar history when [recordHistory] is set and shows [message] on
-  /// success.
-  Future<void> _runAction(
+  /// Runs an attachment reuse [task] behind a loading dialog. Encrypted
+  /// attachments are converted to a plain reusable MXC before the task runs.
+  /// When [recordHistory] is set, the reusable (never ciphertext) MXC is kept
+  /// in avatar history.
+  Future<void> _runAttachmentAction(
     BuildContext context,
-    Uri? mxc,
+    Event event,
     String message,
-    Future<void> Function() task,
-    bool recordHistory,
-  ) async {
+    Future<void> Function(Uri mxc) task, {
+    bool recordHistory = false,
+  }) async {
     final result = await showFutureLoadingDialog(
       context: context,
       future: () async {
-        await task();
-        if (recordHistory && mxc != null) {
+        final mxc = await _prepareReusableAttachment(event);
+        if (mxc == null) {
+          throw StateError('Image event has no reusable attachment');
+        }
+        await task(mxc);
+        if (recordHistory) {
           await AvatarHistory.record(mxc.toString());
         }
       },
@@ -279,7 +316,7 @@ class ImageViewerController extends State<ImageViewer> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  List<Widget> _spaceTiles(BuildContext context, Uri mxc) {
+  List<Widget> _spaceTiles(BuildContext context, Event event) {
     final client = currentEvent.room.client;
     final spaces = client.rooms
         .where(
@@ -328,17 +365,17 @@ class ImageViewerController extends State<ImageViewer> {
             return;
           }
           Navigator.of(context).pop();
-          _runAction(
+          _runAttachmentAction(
             context,
-            mxc,
+            event,
             L10n.of(context).setAsSpaceIcon,
-            () => space.client.setRoomStateWithKey(
+            (mxc) => space.client.setRoomStateWithKey(
               space.id,
               EventTypes.RoomAvatar,
               '',
               {'url': mxc.toString()},
             ),
-            true,
+            recordHistory: true,
           );
         },
       ),
