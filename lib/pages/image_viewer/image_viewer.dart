@@ -212,7 +212,7 @@ class ImageViewerController extends State<ImageViewer> {
             }, recordHistory: true),
           ),
         ),
-      if (mxc != null &&
+      if (hasAttachment &&
           room.membership == Membership.join &&
           room.canChangeStateEvent(EventTypes.RoomMember))
         ListTile(
@@ -228,7 +228,7 @@ class ImageViewerController extends State<ImageViewer> {
             ),
           ),
         ),
-      if (mxc != null && room.canChangeStateEvent(EventTypes.RoomAvatar))
+      if (hasAttachment && room.canChangeStateEvent(EventTypes.RoomAvatar))
         ListTile(
           leading: const Icon(Icons.image_outlined),
           title: Text(L10n.of(context).setAsRoomIcon),
