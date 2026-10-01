@@ -228,24 +228,27 @@ class ImageViewerController extends State<ImageViewer> {
             ),
           ),
         ),
-      if (hasAttachment && room.canChangeStateEvent(EventTypes.RoomAvatar))
+      if (hasAttachment)
         ListTile(
+          enabled: room.canChangeStateEvent(EventTypes.RoomAvatar),
           leading: const Icon(Icons.image_outlined),
           title: Text(L10n.of(context).setAsRoomIcon),
-          onTap: () => _confirmAndRun(
-            context,
-            L10n.of(context).setAsRoomIcon,
-            () => run(
-              L10n.of(context).setAsRoomIcon,
-              (mxc) => room.client.setRoomStateWithKey(
-                room.id,
-                EventTypes.RoomAvatar,
-                '',
-                {'url': mxc.toString()},
-              ),
-              recordHistory: true,
-            ),
-          ),
+          onTap: room.canChangeStateEvent(EventTypes.RoomAvatar)
+              ? () => _confirmAndRun(
+                  context,
+                  L10n.of(context).setAsRoomIcon,
+                  () => run(
+                    L10n.of(context).setAsRoomIcon,
+                    (mxc) => room.client.setRoomStateWithKey(
+                      room.id,
+                      EventTypes.RoomAvatar,
+                      '',
+                      {'url': mxc.toString()},
+                    ),
+                    recordHistory: true,
+                  ),
+                )
+              : null,
         ),
       if (hasAttachment) ..._spaceTiles(context, event),
     ];
@@ -317,24 +320,44 @@ class ImageViewerController extends State<ImageViewer> {
   }
 
   List<Widget> _spaceTiles(BuildContext context, Event event) {
-    final client = currentEvent.room.client;
-    final spaces = client.rooms
-        .where(
-          (room) =>
-              room.isSpace &&
-              room.membership == Membership.join &&
-              room.canChangeStateEvent(EventTypes.RoomAvatar),
-        )
-        .toList();
+    final room = event.room;
+    final client = room.client;
+    final spaces =
+        <Room>{
+          // Prefer the parent relation advertised by the room itself, but also
+          // include spaces that advertise this room as a child. Some homeservers
+          // can temporarily expose only one side of the relation during sync.
+          ...room.spaceParents
+              .map((parent) => client.getRoomById(parent.roomId ?? ''))
+              .whereType<Room>()
+              .where((space) => space.isSpace),
+          ...client.rooms.where(
+            (space) =>
+                space.isSpace &&
+                space.spaceChildren.any((child) => child.roomId == room.id),
+          ),
+        }.toList()..sort(
+          (a, b) => a.getLocalizedDisplayname().compareTo(
+            b.getLocalizedDisplayname(),
+          ),
+        );
+
     if (spaces.isEmpty) return const [];
+
+    bool canChangeAvatar(Room space) =>
+        space.membership == Membership.join &&
+        space.canChangeStateEvent(EventTypes.RoomAvatar);
+
+    final canChangeAnySpaceAvatar = spaces.any(canChangeAvatar);
+
     return [
       ListTile(
+        enabled: canChangeAnySpaceAvatar,
         leading: const Icon(Icons.workspaces_outlined),
         title: Text(L10n.of(context).setAsSpaceIcon),
-        onTap: () async {
-          final space = spaces.length == 1
-              ? spaces.single
-              : await showAdaptiveBottomSheet<Room>(
+        onTap: canChangeAnySpaceAvatar
+            ? () async {
+                final space = await showAdaptiveBottomSheet<Room>(
                   context: context,
                   builder: (sheetContext) => Material(
                     color: Theme.of(sheetContext).colorScheme.surface,
@@ -348,36 +371,44 @@ class ImageViewerController extends State<ImageViewer> {
                           );
                         }
                         final space = spaces[i - 1];
+                        final canEdit = canChangeAvatar(space);
                         return ListTile(
+                          enabled: canEdit,
                           leading: Avatar(
                             mxContent: space.avatar,
                             name: space.getLocalizedDisplayname(),
                           ),
                           title: Text(space.getLocalizedDisplayname()),
-                          onTap: () => Navigator.of(context).pop(space),
+                          onTap: canEdit
+                              ? () => Navigator.of(context).pop(space)
+                              : null,
                         );
                       },
                     ),
                   ),
                 );
-          if (!context.mounted || space == null) return;
-          if (!await _confirmApply(context, L10n.of(context).setAsSpaceIcon)) {
-            return;
-          }
-          Navigator.of(context).pop();
-          _runAttachmentAction(
-            context,
-            event,
-            L10n.of(context).setAsSpaceIcon,
-            (mxc) => space.client.setRoomStateWithKey(
-              space.id,
-              EventTypes.RoomAvatar,
-              '',
-              {'url': mxc.toString()},
-            ),
-            recordHistory: true,
-          );
-        },
+                if (!context.mounted || space == null) return;
+                if (!await _confirmApply(
+                  context,
+                  L10n.of(context).setAsSpaceIcon,
+                )) {
+                  return;
+                }
+                Navigator.of(context).pop();
+                _runAttachmentAction(
+                  context,
+                  event,
+                  L10n.of(context).setAsSpaceIcon,
+                  (mxc) => space.client.setRoomStateWithKey(
+                    space.id,
+                    EventTypes.RoomAvatar,
+                    '',
+                    {'url': mxc.toString()},
+                  ),
+                  recordHistory: true,
+                );
+              }
+            : null,
       ),
     ];
   }
