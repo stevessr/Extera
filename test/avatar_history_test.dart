@@ -52,19 +52,22 @@ void main() {
     expect(await AvatarHistory.load(), ['mxc://example.org/current']);
   });
 
-  test('remove deletes only the selected avatar and cleans invalid entries', () async {
-    SharedPreferences.setMockInitialValues({
-      'xyz.extera.avatar_history': <String>[
-        'mxc://example.org/a',
-        'https://example.org/not-mxc.png',
-        'mxc://example.org/b',
-      ],
-    });
+  test(
+    'remove deletes only the selected avatar and cleans invalid entries',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'xyz.extera.avatar_history': <String>[
+          'mxc://example.org/a',
+          'https://example.org/not-mxc.png',
+          'mxc://example.org/b',
+        ],
+      });
 
-    await AvatarHistory.remove('mxc://example.org/a');
+      await AvatarHistory.remove('mxc://example.org/a');
 
-    expect(await AvatarHistory.load(), ['mxc://example.org/b']);
-  });
+      expect(await AvatarHistory.load(), ['mxc://example.org/b']);
+    },
+  );
 
   test('history is capped at 32 entries', () async {
     SharedPreferences.setMockInitialValues({});
