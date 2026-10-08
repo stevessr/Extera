@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
@@ -22,6 +23,7 @@ import 'package:extera_next/pages/chat/reply_display.dart';
 import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
+import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
@@ -510,9 +512,13 @@ class _ChatViewState extends State<ChatView> {
                 ),
               ),
             ),
-            floatingActionButton: ValueListenableBuilder<bool>(
-              valueListenable: controller.scrolledUpNotifier,
-              builder: (context, scrolledUp, _) {
+            floatingActionButton: AnimatedBuilder(
+              animation: Listenable.merge([
+                controller.scrolledUpNotifier,
+                controller.floatingDateNotifier,
+              ]),
+              builder: (context, _) {
+                final scrolledUp = controller.scrolledUpNotifier.value;
                 final show =
                     (scrolledUp ||
                         controller.timeline?.allowNewEvent == false ||
@@ -798,6 +804,51 @@ class _ChatViewState extends State<ChatView> {
                         (AppBarTheme.of(context).toolbarHeight ??
                             kToolbarHeight) +
                         appbarBottomHeight +
+                        8,
+                    left: 0,
+                    right: 0,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: ValueListenableBuilder<DateTime?>(
+                        valueListenable: controller.floatingDateNotifier,
+                        builder: (context, date, _) => AnimatedSwitcher(
+                          duration: FluffyThemes.animationDuration,
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position:
+                                      Tween<Offset>(
+                                        begin: const Offset(0, -0.5),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutCubic,
+                                        ),
+                                      ),
+                                  child: child,
+                                ),
+                              ),
+                          child: date == null
+                              ? const SizedBox.shrink()
+                              : _FloatingDateChip(
+                                  key: ValueKey(
+                                    date.localizedMonthDay(context),
+                                  ),
+                                  date: date,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Positioned(
+                    top:
+                        MediaQuery.of(context).padding.top +
+                        (AppBarTheme.of(context).toolbarHeight ??
+                            kToolbarHeight) +
+                        appbarBottomHeight +
                         6,
                     left: 0,
                     right: 0,
@@ -855,6 +906,31 @@ class _ChatViewState extends State<ChatView> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _FloatingDateChip extends StatelessWidget {
+  final DateTime date;
+  const _FloatingDateChip({super.key, required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      borderRadius: BorderRadius.circular(AppConfig.borderRadius * 2),
+      color: theme.colorScheme.surface.withAlpha(180),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+        child: Text(
+          date.localizedMonthDay(context),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.secondary,
+          ),
+        ),
       ),
     );
   }

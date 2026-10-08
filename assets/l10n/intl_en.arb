@@ -4181,5 +4181,15 @@
         }
     },
     "useExperimentalGalleries": "Use experimental galleries",
-    "useExperimentalGalleriesDescription": "Send multiple pictures as a single gallery message (MSC4274)"
+    "useExperimentalGalleriesDescription": "Send multiple pictures as a single gallery message (MSC4274)",
+    "today": "Today",
+    "@today": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "yesterday": "Yesterday",
+    "@yesterday": {
+        "type": "String",
+        "placeholders": {}
+    }
 }
