@@ -353,25 +353,22 @@ class _MessageBubbleState extends State<MessageBubble> {
     var galleryLastItemIsMedia = false;
     if (event.messageType == MessageTypes.Gallery && !event.redacted) {
       final galleryMediaTiles = galleryItems(event).where(
-        (item) => {
-          MessageTypes.Image,
-          MessageTypes.Video,
-        }.contains(galleryItemtypeToMsgtype(
-          item.tryGet<String>('itemtype') ?? 'm.file',
-        )),
+        (item) => {MessageTypes.Image, MessageTypes.Video}.contains(
+          galleryItemtypeToMsgtype(item.tryGet<String>('itemtype') ?? 'm.file'),
+        ),
       );
       galleryBubbleWidth =
           GalleryContent.gridWidth(
             GalleryContent.gridColumnCount(galleryMediaTiles.length),
           ) +
           4; // grid padding (2 on each side)
-      galleryLastItemIsMedia = galleryItems(event).isNotEmpty &&
-          {
-            MessageTypes.Image,
-            MessageTypes.Video,
-          }.contains(galleryItemtypeToMsgtype(
-            galleryItems(event).last.tryGet<String>('itemtype') ?? 'm.file',
-          ));
+      galleryLastItemIsMedia =
+          galleryItems(event).isNotEmpty &&
+          {MessageTypes.Image, MessageTypes.Video}.contains(
+            galleryItemtypeToMsgtype(
+              galleryItems(event).last.tryGet<String>('itemtype') ?? 'm.file',
+            ),
+          );
     }
 
     final onlyMedia =
@@ -1017,25 +1014,6 @@ class _MessageBubbleState extends State<MessageBubble> {
       child: Center(
         child: Swipeable(
           key: ValueKey(event.eventId),
-          background: Padding(
-            padding: const .all(16.0),
-            child: Align(
-              alignment: AppSettings.swipeRightToLeftToReply.value
-                  ? .centerRight
-                  : .centerLeft,
-              child: Material(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(64),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    Icons.reply_outlined,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ),
           direction: AppSettings.swipeRightToLeftToReply.value
               ? SwipeDirection.endToStart
               : SwipeDirection.startToEnd,
