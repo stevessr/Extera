@@ -343,9 +343,12 @@ class _MessageBubbleState extends State<MessageBubble> {
         (event.messageType == MessageTypes.Sticker && !event.redacted);
 
     final onlyMedia =
-        {MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
-        event.fileDescription == null &&
-        !event.redacted;
+        ({MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
+            event.fileDescription == null &&
+            !event.redacted) ||
+        (event.messageType == MessageTypes.Gallery &&
+            event.body.isEmpty &&
+            !event.redacted);
 
     if (ownMessage) {
       color = displayEvent.status.isError
@@ -475,6 +478,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                   MessageTypes.Image,
                   MessageTypes.Video,
                   MessageTypes.Location,
+                  MessageTypes.Gallery,
                 }.contains(event.messageType) &&
                 !hasReplyRelation) ||
             event.messageType == MessageTypes.Sticker) &&

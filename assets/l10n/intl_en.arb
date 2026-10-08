@@ -4179,5 +4179,7 @@
                 "type": "int"
             }
         }
-    }
+    },
+    "useExperimentalGalleries": "Use experimental galleries",
+    "useExperimentalGalleriesDescription": "Send multiple pictures as a single gallery message (MSC4274)"
 }
