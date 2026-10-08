@@ -1,3 +1,9 @@
+## Extera 26.5.5
+- Experimental support for multiple media in one message (MSC4274)
+- Added reply icon when swiping.
+- Added floating date chip when scrolling through message history.
+- Minor improvements to modern message layout.
+
 ## Extera 26.5.4
 - Fix app still being available on lock screen after calls end.
 - Fix some text colors.

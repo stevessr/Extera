@@ -4261,5 +4261,17 @@
     "verificationCodeSent2": "Код подтверждения был отправлен на Ваш номер телефона. Введите его ниже.",
     "appBarAppearance": "Верхняя панель",
     "appBarAppName": "Приложение",
-    "appBarAccountName": "Аккаунт"
+    "appBarAccountName": "Аккаунт",
+    "useExperimentalGalleries": "Экспериментальные галереи",
+    "useExperimentalGalleriesDescription": "Отправлять несколько медиафайлов в одном сообщении.",
+    "today": "Сегодня",
+    "@today": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "yesterday": "Вчера",
+    "@yesterday": {
+        "type": "String",
+        "placeholders": {}
+    }
 }

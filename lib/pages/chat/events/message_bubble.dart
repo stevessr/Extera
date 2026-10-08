@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:extera_next/pages/chat/events/thread_preview.dart';
 import 'package:flutter/services.dart';
 
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:swipe_to_action/swipe_to_action.dart';
@@ -23,6 +23,8 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/member_actions_popup_menu_button.dart';
 import '../../../config/app_config.dart';
+import '../../../utils/matrix_sdk_extensions/event_extension.dart';
+import 'gallery_content.dart';
 import 'message_content.dart';
 import 'message_reactions.dart';
 import 'reply_content.dart';
@@ -97,7 +99,6 @@ class _MessageBubbleState extends State<MessageBubble> {
   // Cached futures to avoid re-creating them on every build
   late Future<User?> _senderUserFuture;
   Future<Event?>? _replyEventFuture;
-  Future<User?>? _threadSenderFuture;
 
   bool loadMedia = false;
   bool showHiddenMedia = false;
@@ -125,19 +126,12 @@ class _MessageBubbleState extends State<MessageBubble> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.event != widget.event) {
       _initFutures();
-    } else {
-      // Only re-init thread future if thread changed
-      if (oldWidget.thread?.lastEvent?.eventId !=
-          widget.thread?.lastEvent?.eventId) {
-        _initThreadFuture();
-      }
     }
   }
 
   void _initFutures() {
     _senderUserFuture = fetchSenderUser();
     _initReplyFuture();
-    _initThreadFuture();
   }
 
   Future<User?> fetchSenderUser() async {
@@ -155,16 +149,6 @@ class _MessageBubbleState extends State<MessageBubble> {
       _replyEventFuture = widget.event.getReplyEvent(widget.timeline);
     } else {
       _replyEventFuture = null;
-    }
-  }
-
-  void _initThreadFuture() {
-    final threadLastEvent = widget.thread?.lastEvent;
-    if (threadLastEvent != null &&
-        threadLastEvent.relationshipEventId == widget.event.eventId) {
-      _threadSenderFuture = threadLastEvent.fetchSenderUser();
-    } else {
-      _threadSenderFuture = null;
     }
   }
 
@@ -360,10 +344,44 @@ class _MessageBubbleState extends State<MessageBubble> {
     final noBubble =
         (event.messageType == MessageTypes.Sticker && !event.redacted);
 
+    // For galleries the status treatment is decided by the *last* gallery
+    // item: if it is an image/video, the bubble ends with media and the
+    // status floats over the grid like for a single image; if it is an
+    // audio/file row, the bubble is treated as a non-media bubble with the
+    // status as a bottom row, and the bubble width is clamped to the grid.
+    double? galleryBubbleWidth;
+    var galleryLastItemIsMedia = false;
+    if (event.messageType == MessageTypes.Gallery && !event.redacted) {
+      final galleryMediaTiles = galleryItems(event).where(
+        (item) => {
+          MessageTypes.Image,
+          MessageTypes.Video,
+        }.contains(galleryItemtypeToMsgtype(
+          item.tryGet<String>('itemtype') ?? 'm.file',
+        )),
+      );
+      galleryBubbleWidth =
+          GalleryContent.gridWidth(
+            GalleryContent.gridColumnCount(galleryMediaTiles.length),
+          ) +
+          4; // grid padding (2 on each side)
+      galleryLastItemIsMedia = galleryItems(event).isNotEmpty &&
+          {
+            MessageTypes.Image,
+            MessageTypes.Video,
+          }.contains(galleryItemtypeToMsgtype(
+            galleryItems(event).last.tryGet<String>('itemtype') ?? 'm.file',
+          ));
+    }
+
     final onlyMedia =
-        {MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
-        event.fileDescription == null &&
-        !event.redacted;
+        ({MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
+            event.fileDescription == null &&
+            !event.redacted) ||
+        (event.messageType == MessageTypes.Gallery &&
+            event.body.isEmpty &&
+            !event.redacted &&
+            galleryLastItemIsMedia);
 
     if (ownMessage) {
       color = displayEvent.status.isError
@@ -493,6 +511,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                   MessageTypes.Image,
                   MessageTypes.Video,
                   MessageTypes.Location,
+                  MessageTypes.Gallery,
                 }.contains(event.messageType) &&
                 !hasReplyRelation) ||
             event.messageType == MessageTypes.Sticker) &&
@@ -728,7 +747,12 @@ class _MessageBubbleState extends State<MessageBubble> {
                                   ),
                                 ),
                                 constraints: BoxConstraints(
+                                  // A gallery whose rows are narrower than the
+                                  // grid (or whose status floats over the
+                                  // grid) keeps the bubble as wide as the
+                                  // grid itself.
                                   maxWidth:
+                                      galleryBubbleWidth ??
                                       (_replyEventFuture != null
                                           ? _calculateMediaWidth(displayEvent)
                                           : null) ??
@@ -875,52 +899,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                               right: 8,
                               top: 8,
                             ),
-                            child: InkWell(
-                              child: Row(
-                                mainAxisSize: .min,
-                                children: [
-                                  Icon(
-                                    (widget.thread?.hasNewMessages ?? false)
-                                        ? Icons.mark_chat_unread_outlined
-                                        : Icons.chat_bubble_outline,
-                                    color: Colors.grey[200],
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  if (_threadSenderFuture != null)
-                                    FutureBuilder<User?>(
-                                      future: _threadSenderFuture,
-                                      builder: (context, snapshot) {
-                                        final threadUser =
-                                            snapshot.data ??
-                                            event.senderFromMemoryOrFallback;
-                                        return Avatar(
-                                          mxContent: threadUser.avatarUrl,
-                                          name: threadUser.calcDisplayname(),
-                                          size: 24,
-                                        );
-                                      },
-                                    )
-                                  else
-                                    const SizedBox.shrink(),
-                                  const SizedBox(width: 6),
-                                  widget.thread!.lastEvent != null
-                                      ? Text(
-                                          widget
-                                                      .thread!
-                                                      .lastEvent!
-                                                      .text
-                                                      .length >
-                                                  32
-                                              ? "${widget.thread!.lastEvent!.text.substring(0, 32)}..."
-                                              : widget.thread!.lastEvent!.text,
-                                        )
-                                      : const Text('Thread'),
-                                ],
-                              ),
-                              onTap: () => context.push(
-                                '/rooms/${event.roomId}/threads/${event.eventId}',
-                              ),
+                            child: ThreadPreview(
+                              event: widget.event,
+                              room: widget.event.room,
+                              thread: widget.thread!,
                             ),
                           ),
                         ),
@@ -1035,9 +1017,24 @@ class _MessageBubbleState extends State<MessageBubble> {
       child: Center(
         child: Swipeable(
           key: ValueKey(event.eventId),
-          background: const Padding(
-            padding: .symmetric(horizontal: 12.0),
-            child: Center(child: Icon(Icons.check_outlined)),
+          background: Padding(
+            padding: const .all(16.0),
+            child: Align(
+              alignment: AppSettings.swipeRightToLeftToReply.value
+                  ? .centerRight
+                  : .centerLeft,
+              child: Material(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(64),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.reply_outlined,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
+            ),
           ),
           direction: AppSettings.swipeRightToLeftToReply.value
               ? SwipeDirection.endToStart

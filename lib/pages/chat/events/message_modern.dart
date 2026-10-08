@@ -1,6 +1,6 @@
+import 'package:extera_next/pages/chat/events/thread_preview.dart';
 import 'package:flutter/services.dart';
 
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:swipe_to_action/swipe_to_action.dart';
@@ -84,15 +84,31 @@ class MessageModern extends StatefulWidget {
 }
 
 class _MessageModernState extends State<MessageModern> {
+  static const _groupableEventTypes = {
+    EventTypes.Message,
+    EventTypes.Sticker,
+    EventTypes.Encrypted,
+    PollEvents.pollStart,
+  };
+
+  static const _renderableEventTypes = {
+    EventTypes.Message,
+    EventTypes.Sticker,
+    EventTypes.Encrypted,
+    EventTypes.CallInvite,
+    PollEvents.pollStart,
+  };
+
+  static const double _statusRowReservedWidth = 68.0;
+
   Offset _tapPosition = Offset.zero;
 
-  /// Used for a custom double-tap detection that does not delay child taps.
   DateTime? _lastTapTime;
 
-  // Cached futures to avoid re-creating them on every build
   late Future<User?> _senderUserFuture;
   Future<Event?>? _replyEventFuture;
-  Future<User?>? _threadSenderFuture;
+
+  Event? _placeholderReplyEvent;
 
   bool loadMedia = false;
   bool showHiddenMedia = false;
@@ -120,23 +136,16 @@ class _MessageModernState extends State<MessageModern> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.event != widget.event) {
       _initFutures();
-    } else {
-      // Only re-init thread future if thread changed
-      if (oldWidget.thread?.lastEvent?.eventId !=
-          widget.thread?.lastEvent?.eventId) {
-        _initThreadFuture();
-      }
     }
   }
 
   void _initFutures() {
     _senderUserFuture = fetchSenderUser();
     _initReplyFuture();
-    _initThreadFuture();
   }
 
   Future<User?> fetchSenderUser() async {
-    final client = Matrix.of(context).client;
+    final client = widget.event.room.client;
     if (widget.event.senderId != client.userID) {
       return await widget.event.fetchSenderUser();
     }
@@ -150,21 +159,24 @@ class _MessageModernState extends State<MessageModern> {
   }
 
   void _initReplyFuture() {
-    if (widget.event.inReplyToEventId(includingFallback: false) != null) {
-      _replyEventFuture = widget.event.getReplyEvent(widget.timeline);
-    } else {
+    final inReplyToEventId = widget.event.inReplyToEventId(
+      includingFallback: false,
+    );
+    if (inReplyToEventId == null) {
       _replyEventFuture = null;
+      _placeholderReplyEvent = null;
+      return;
     }
-  }
-
-  void _initThreadFuture() {
-    final threadLastEvent = widget.thread?.lastEvent;
-    if (threadLastEvent != null &&
-        threadLastEvent.relationshipEventId == widget.event.eventId) {
-      _threadSenderFuture = threadLastEvent.fetchSenderUser();
-    } else {
-      _threadSenderFuture = null;
-    }
+    _replyEventFuture = widget.event.getReplyEvent(widget.timeline);
+    _placeholderReplyEvent = Event(
+      eventId: inReplyToEventId,
+      content: {'msgtype': 'm.text', 'body': '...'},
+      senderId: widget.event.senderId,
+      type: EventTypes.Message,
+      room: widget.event.room,
+      status: EventStatus.error,
+      originServerTs: widget.event.originServerTs,
+    );
   }
 
   void _scrollToEvent(Event event, Event? scrolledFrom) {
@@ -189,13 +201,7 @@ class _MessageModernState extends State<MessageModern> {
     final timeline = widget.timeline;
     final theme = Theme.of(context);
 
-    if (!{
-      EventTypes.Message,
-      EventTypes.Sticker,
-      EventTypes.Encrypted,
-      EventTypes.CallInvite,
-      PollEvents.pollStart,
-    }.contains(event.type)) {
+    if (!_renderableEventTypes.contains(event.type)) {
       if (event.type.startsWith('m.call.')) {
         return const SizedBox.shrink();
       }
@@ -231,27 +237,17 @@ class _MessageModernState extends State<MessageModern> {
         widget.exampleMessage != true;
     final nextEventSameSender =
         widget.nextEvent != null &&
-        {
-          EventTypes.Message,
-          EventTypes.Sticker,
-          EventTypes.Encrypted,
-          PollEvents.pollStart,
-        }.contains(widget.nextEvent!.type) &&
+        _groupableEventTypes.contains(widget.nextEvent!.type) &&
         widget.nextEvent!.senderId == event.senderId &&
         !displayTime;
 
-    // final previousEventSameSender =
-    //     widget.previousEvent != null &&
-    //     {
-    //       EventTypes.Message,
-    //       EventTypes.Sticker,
-    //       EventTypes.Encrypted,
-    //       PollEvents.PollStart,
-    //     }.contains(widget.previousEvent!.type) &&
-    //     widget.previousEvent!.senderId == event.senderId &&
-    //     widget.previousEvent!.originServerTs.sameEnvironment(
-    //       event.originServerTs,
-    //     );
+    final previousEventSameSender =
+        widget.previousEvent != null &&
+        _groupableEventTypes.contains(widget.previousEvent!.type) &&
+        widget.previousEvent!.senderId == event.senderId &&
+        widget.previousEvent!.originServerTs.sameEnvironment(
+          event.originServerTs,
+        );
 
     final displayEvent = event.getDisplayEvent(timeline);
 
@@ -305,38 +301,34 @@ class _MessageModernState extends State<MessageModern> {
       future: _senderUserFuture,
       builder: (context, snapshot) {
         final user = snapshot.data ?? event.senderFromMemoryOrFallback;
-        final displayname =
-            snapshot.data?.calcDisplayname() ??
-            event.senderFromMemoryOrFallback.calcDisplayname();
+        final displayname = user.calcDisplayname();
         return Stack(
           children: [
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: InkWell(
-                onTapDown: (details) => _tapPosition = details.globalPosition,
-                onSecondaryTapDown: (details) =>
-                    _tapPosition = details.globalPosition,
-                onTap: () => _handleQuickActionTap(),
-                onLongPress: () {
-                  if (PlatformInfos.isMobile) {
-                    widget.onSelect(event, _tapPosition);
-                  }
-                },
-                onSecondaryTap: () => widget.onSelect(event, _tapPosition),
-                child: Material(
-                  color: widget.selected || widget.highlightMarker
-                      ? theme.colorScheme.secondaryContainer.withAlpha(128)
-                      : Colors.transparent,
+            Positioned.fill(
+              child: Material(
+                color: widget.selected || widget.highlightMarker
+                    ? theme.colorScheme.secondaryContainer.withAlpha(128)
+                    : Colors.transparent,
+                child: InkWell(
+                  onTapDown: (details) => _tapPosition = details.globalPosition,
+                  onSecondaryTapDown: (details) =>
+                      _tapPosition = details.globalPosition,
+                  onTap: () => _handleQuickActionTap(),
+                  onLongPress: () {
+                    if (PlatformInfos.isMobile) {
+                      widget.onSelect(event, _tapPosition);
+                    }
+                  },
+                  onSecondaryTap: () => widget.onSelect(event, _tapPosition),
                 ),
               ),
             ),
             Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: nextEventSameSender ? 1.0 : 8.0,
-                horizontal: 8.0,
+              padding: EdgeInsets.only(
+                top: previousEventSameSender ? 1.0 : 8.0,
+                bottom: nextEventSameSender ? 1.0 : 8.0,
+                left: 8.0,
+                right: 8.0,
               ),
               child: Row(
                 crossAxisAlignment: .start,
@@ -357,7 +349,7 @@ class _MessageModernState extends State<MessageModern> {
                   else
                     Avatar(
                       mxContent: user.avatarUrl,
-                      name: user.calcDisplayname(),
+                      name: displayname,
                       size: 36,
                       onTap: () {
                         if (widget.exampleMessage != true) {
@@ -373,197 +365,141 @@ class _MessageModernState extends State<MessageModern> {
                           ? Colors.transparent
                           : null,
                     ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Stack(
                       children: [
-                        Column(
-                          crossAxisAlignment: .start,
-                          mainAxisSize: .min,
-                          children: [
-                            if (!nextEventSameSender)
-                              Text(
-                                displayname,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: (theme.brightness == Brightness.light
-                                      ? displayname.colorScheme.primary
-                                      : displayname
-                                            .colorScheme
-                                            .primaryContainer),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            const SizedBox(height: 4),
-                            GestureDetector(
-                              onTapDown: (details) =>
-                                  _tapPosition = details.globalPosition,
-                              onLongPress: widget.longPressSelect
-                                  ? null
-                                  : () {
-                                      HapticFeedback.heavyImpact();
-                                      widget.onSelect(event, _tapPosition);
-                                    },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  if (_replyEventFuture != null)
-                                    FutureBuilder<Event?>(
-                                      future: _replyEventFuture,
-                                      builder: (BuildContext context, snapshot) {
-                                        final replyEvent = snapshot.hasData
-                                            ? snapshot.data!
-                                            : Event(
-                                                eventId:
-                                                    event.inReplyToEventId() ??
-                                                    '\$fake_event_id',
-                                                content: {
-                                                  'msgtype': 'm.text',
-                                                  'body': '...',
-                                                },
-                                                senderId: event.senderId,
-                                                type: 'm.room.message',
-                                                room: event.room,
-                                                status: EventStatus.error,
-                                                originServerTs: DateTime.now(),
-                                              );
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 4,
-                                          ),
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            child: InkWell(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    AppConfig.borderRadius - 10,
-                                                  ),
-                                              onTap: () => _scrollToEvent(
-                                                replyEvent,
-                                                event,
-                                              ),
-                                              child: AbsorbPointer(
-                                                child: ReplyContent(
-                                                  replyEvent,
-                                                  noBubble: true,
-                                                  ownMessage: ownMessage,
-                                                  timeline: timeline,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  MessageContent(
-                                    displayEvent,
-                                    textColor: theme.colorScheme.onSurface,
-                                    linkColor: theme.colorScheme.primary,
-                                    onInfoTab: widget.onInfoTab,
-                                    timeline: timeline,
-                                    loadMedia:
-                                        loadMedia &&
-                                        (showHiddenMedia ||
-                                            contentWarning == null),
-                                    showHiddenMedia:
-                                        showHiddenMedia ||
-                                        contentWarning == null,
-                                    onLoadMedia: contentWarning != null
-                                        ? () {
-                                            setState(() {
-                                              if (!showHiddenMedia) {
-                                                showHiddenMedia = true;
-                                              } else if (!loadMedia) {
-                                                loadMedia = true;
-                                              }
-                                            });
-                                          }
-                                        : () {
-                                            setState(() {
-                                              loadMedia = true;
-                                            });
-                                          },
-                                    onRevealHiddenMedia: () {
-                                      setState(() {
-                                        if (!showHiddenMedia) {
-                                          showHiddenMedia = true;
-                                        } else if (!loadMedia) {
-                                          loadMedia = true;
-                                        }
-                                      });
-                                    },
-                                    contentWarning: contentWarning,
-                                    layout: .modern,
-                                    borderRadius: BorderRadius.zero,
-                                    selectable: widget.selectable,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (widget.thread != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: InkWell(
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        (widget.thread?.hasNewMessages ?? false)
-                                            ? Icons.mark_chat_unread_outlined
-                                            : Icons.chat_bubble_outline,
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      if (_threadSenderFuture != null)
-                                        FutureBuilder<User?>(
-                                          future: _threadSenderFuture,
-                                          builder: (context, snapshot) {
-                                            final threadUser =
-                                                snapshot.data ??
-                                                event
-                                                    .senderFromMemoryOrFallback;
-                                            return Avatar(
-                                              mxContent: threadUser.avatarUrl,
-                                              name: threadUser
-                                                  .calcDisplayname(),
-                                              size: 16,
-                                            );
-                                          },
-                                        ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        widget.thread!.lastEvent != null
-                                            ? widget
-                                                          .thread!
-                                                          .lastEvent!
-                                                          .text
-                                                          .length >
-                                                      32
-                                                  ? "${widget.thread!.lastEvent!.text.substring(0, 32)}..."
-                                                  : widget
-                                                        .thread!
-                                                        .lastEvent!
-                                                        .text
-                                            : 'Thread',
-                                        style: TextStyle(
-                                          color: theme
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            right: _statusRowReservedWidth,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: .start,
+                            mainAxisSize: .min,
+                            children: [
+                              if (!nextEventSameSender) ...[
+                                Text(
+                                  displayname,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: (theme.brightness == Brightness.light
+                                        ? displayname.colorScheme.primary
+                                        : displayname
                                               .colorScheme
-                                              .onSurfaceVariant,
-                                          fontSize: 12,
-                                        ),
+                                              .primaryContainer),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                              GestureDetector(
+                                onTapDown: (details) =>
+                                    _tapPosition = details.globalPosition,
+                                onLongPress: widget.longPressSelect
+                                    ? null
+                                    : () {
+                                        HapticFeedback.heavyImpact();
+                                        widget.onSelect(event, _tapPosition);
+                                      },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    if (_replyEventFuture != null)
+                                      FutureBuilder<Event?>(
+                                        future: _replyEventFuture,
+                                        builder:
+                                            (BuildContext context, snapshot) {
+                                              final replyEvent =
+                                                  snapshot.data ??
+                                                  _placeholderReplyEvent!;
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 4,
+                                                ),
+                                                child: Material(
+                                                  color: Colors.transparent,
+                                                  child: InkWell(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          AppConfig
+                                                                  .borderRadius -
+                                                              10,
+                                                        ),
+                                                    onTap: () => _scrollToEvent(
+                                                      replyEvent,
+                                                      event,
+                                                    ),
+                                                    child: AbsorbPointer(
+                                                      child: ReplyContent(
+                                                        replyEvent,
+                                                        noBubble: true,
+                                                        ownMessage: ownMessage,
+                                                        timeline: timeline,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                       ),
-                                    ],
-                                  ),
-                                  onTap: () => context.push(
-                                    '/rooms/${event.roomId}/threads/${event.eventId}',
-                                  ),
+                                    MessageContent(
+                                      displayEvent,
+                                      textColor: theme.colorScheme.onSurface,
+                                      linkColor: theme.colorScheme.primary,
+                                      onInfoTab: widget.onInfoTab,
+                                      timeline: timeline,
+                                      loadMedia:
+                                          loadMedia &&
+                                          (showHiddenMedia ||
+                                              contentWarning == null),
+                                      showHiddenMedia:
+                                          showHiddenMedia ||
+                                          contentWarning == null,
+                                      onLoadMedia: contentWarning != null
+                                          ? () {
+                                              setState(() {
+                                                if (!showHiddenMedia) {
+                                                  showHiddenMedia = true;
+                                                } else if (!loadMedia) {
+                                                  loadMedia = true;
+                                                }
+                                              });
+                                            }
+                                          : () {
+                                              setState(() {
+                                                loadMedia = true;
+                                              });
+                                            },
+                                      onRevealHiddenMedia: () {
+                                        setState(() {
+                                          if (!showHiddenMedia) {
+                                            showHiddenMedia = true;
+                                          } else if (!loadMedia) {
+                                            loadMedia = true;
+                                          }
+                                        });
+                                      },
+                                      contentWarning: contentWarning,
+                                      layout: .modern,
+                                      borderRadius: BorderRadius.zero,
+                                      selectable: widget.selectable,
+                                    ),
+                                  ],
                                 ),
                               ),
-                          ],
+                              if (widget.thread != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: ThreadPreview(
+                                    event: widget.event,
+                                    room: widget.event.room,
+                                    thread: widget.thread!,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                         Positioned(
                           right: 0,
@@ -624,7 +560,7 @@ class _MessageModernState extends State<MessageModern> {
           row,
           if (showReactionsRow)
             Padding(
-              padding: const .only(top: 2.0, left: 52.0, right: 12.0),
+              padding: const .only(bottom: 4.0, left: 52.0, right: 12.0),
               child: MessageReactions(
                 event,
                 timeline,
@@ -679,9 +615,24 @@ class _MessageModernState extends State<MessageModern> {
       halfOpacity: event.status == EventStatus.sending ? true : false,
       child: Swipeable(
         key: ValueKey(event.eventId),
-        background: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.0),
-          child: Center(child: Icon(Icons.check_outlined)),
+        background: Padding(
+          padding: const .all(16.0),
+          child: Align(
+            alignment: AppSettings.swipeRightToLeftToReply.value
+                ? .centerRight
+                : .centerLeft,
+            child: Material(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(64),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(
+                  Icons.reply_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ),
         ),
         direction: AppSettings.swipeRightToLeftToReply.value
             ? SwipeDirection.endToStart
@@ -716,6 +667,8 @@ class _AnimateIn extends StatefulWidget {
 
 class __AnimateInState extends State<_AnimateIn> {
   bool _animationFinished = false;
+  bool _animationScheduled = false;
+
   @override
   Widget build(BuildContext context) {
     if (!widget.animateIn) {
@@ -723,8 +676,10 @@ class __AnimateInState extends State<_AnimateIn> {
           ? Opacity(opacity: 0.5, child: widget.child)
           : widget.child;
     }
-    if (!_animationFinished) {
+    if (!_animationFinished && !_animationScheduled) {
+      _animationScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         setState(() {
           _animationFinished = true;
         });
@@ -737,6 +692,7 @@ class __AnimateInState extends State<_AnimateIn> {
       child: AnimatedSize(
         duration: FluffyThemes.animationDuration,
         curve: FluffyThemes.animationCurve,
+        alignment: Alignment.topCenter,
         child: _animationFinished ? widget.child : const SizedBox.shrink(),
       ),
     );

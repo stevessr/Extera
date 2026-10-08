@@ -1,6 +1,6 @@
 {
 	"@@locale": "nl",
-	"@@last_modified": "2026-09-17T22:58:35.942Z",
+	"@@last_modified": "2026-10-08T15:34:41.365Z",
 	"@choicesSelected": {
 		"type": "String",
 		"placeholders": {
@@ -4188,5 +4188,25 @@
 			}
 		}
 	},
-	"@richPresenceOpenIdWarning": {}
+	"@richPresenceOpenIdWarning": {},
+	"useExperimentalGalleries": "Experimentele galerijen",
+	"useExperimentalGalleriesDescription": "Stuur meerdere mediabestanden in één bericht.",
+	"today": "Vandaag",
+	"yesterday": "Gisteren",
+	"@repliesInThread": {
+		"type": "String",
+		"placeholders": {
+			"replyCount": {
+				"type": "int"
+			}
+		}
+	},
+	"@today": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@yesterday": {
+		"type": "String",
+		"placeholders": {}
+	}
 }
