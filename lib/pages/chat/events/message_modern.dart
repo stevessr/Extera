@@ -615,9 +615,24 @@ class _MessageModernState extends State<MessageModern> {
       halfOpacity: event.status == EventStatus.sending ? true : false,
       child: Swipeable(
         key: ValueKey(event.eventId),
-        background: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.0),
-          child: Center(child: Icon(Icons.check_outlined)),
+        background: Padding(
+          padding: const .all(16.0),
+          child: Align(
+            alignment: AppSettings.swipeRightToLeftToReply.value
+                ? .centerRight
+                : .centerLeft,
+            child: Material(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(64),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(
+                  Icons.reply_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ),
         ),
         direction: AppSettings.swipeRightToLeftToReply.value
             ? SwipeDirection.endToStart
