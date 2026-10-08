@@ -128,7 +128,7 @@
 	"chatBackup": "Copia de seguridad de claves",
 	"pinCode": "Código PIN",
 	"@@locale": "es",
-	"@@last_modified": "2026-09-17T22:57:36.447Z",
+	"@@last_modified": "2026-10-08T15:35:40.089Z",
 	"chatBackupDescription": "La copia de seguridad de las claves está protegida con una clave de recuperación. Guárdala en un lugar seguro.",
 	"chatDetails": "Configuración del chat",
 	"chatHasBeenAddedToThisSpace": "El chat ha sido añadido a este espacio",
@@ -4188,5 +4188,25 @@
 			}
 		}
 	},
-	"@richPresenceOpenIdWarning": {}
+	"@richPresenceOpenIdWarning": {},
+	"useExperimentalGalleries": "Galerías experimentales",
+	"useExperimentalGalleriesDescription": "Enviar varios archivos multimedia en un solo mensaje.",
+	"today": "Hoy",
+	"yesterday": "Ayer",
+	"@repliesInThread": {
+		"type": "String",
+		"placeholders": {
+			"replyCount": {
+				"type": "int"
+			}
+		}
+	},
+	"@today": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@yesterday": {
+		"type": "String",
+		"placeholders": {}
+	}
 }
