@@ -14,6 +14,7 @@ import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
@@ -76,6 +77,77 @@ class GalleryContent extends StatelessWidget {
   Map<String, dynamic> _itemInfo(Map<String, dynamic> item) =>
       item.tryGetMap<String, dynamic>('info') ?? <String, dynamic>{};
 
+  String _tileContentWarningReason(BuildContext context) {
+    final l10n = L10n.of(context);
+    switch (contentWarning) {
+      case 'town.robin.msc3725.spoiler':
+        return l10n.contentWarningReason(l10n.contentWarningSpoiler);
+      case 'town.robin.msc3725.nsfw':
+        return l10n.contentWarningReason(l10n.contentWarningNsfw);
+      case 'town.robin.msc3725.graphic':
+        return l10n.contentWarningReason(l10n.contentWarningGraphic);
+      case 'town.robin.msc3725.medical':
+        return l10n.contentWarningReason(l10n.contentWarningMedical);
+      default:
+        return l10n.contentWarningReason(l10n.contentWarning);
+    }
+  }
+
+  /// Placeholder shown while media is not loaded. When a non-null [button] is
+  /// given, an overlay button is rendered on top, like [ImageBubble]'s
+  /// `_buildUnloaded` / `_buildHidden` overlays.
+  Widget _buildTilePlaceholder(
+    BuildContext context,
+    Event itemEvent, {
+    String? blurhash,
+    VoidCallback? onPressed,
+    IconData icon = Icons.image,
+    String tooltip = '',
+  }) {
+    final label = tooltip.isEmpty
+        ? ''
+        : (itemEvent.content
+                  .tryGetMap<String, dynamic>('info')
+                  ?.tryGet<num>('size'))
+              ?.sizeString;
+    return Stack(
+      alignment: Alignment.center,
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: BlurHash(
+            blurhash: blurhash,
+            width: double.infinity,
+            height: gridTileSize,
+          ),
+        ),
+        if (onPressed != null)
+          Positioned.fill(
+            child: Center(
+              child: label == null || label.isEmpty
+                  ? IconButton.filledTonal(
+                      onPressed: onPressed,
+                      icon: Icon(icon),
+                      tooltip: tooltip,
+                    )
+                  : FilledButton.tonal(
+                      onPressed: onPressed,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Row(
+                        mainAxisSize: .min,
+                        spacing: 8,
+                        children: [Icon(icon, size: 20), Text(label)],
+                      ),
+                    ),
+            ),
+          ),
+      ],
+    );
+  }
+
   /// Builds a tile for an `m.image` or `m.video` gallery item.
   Widget _buildMediaTile(BuildContext context, Event itemEvent) {
     final isVideo = itemEvent.messageType == MessageTypes.Video;
@@ -85,33 +157,42 @@ class GalleryContent extends StatelessWidget {
     // downloading the full attachment, so keep the placeholder for them.
     final canRenderImage =
         itemEvent.hasAttachment && (!isVideo || itemEvent.hasThumbnail);
+    final isHidden = contentWarning != null && !showHiddenMedia;
+
     // Individual tiles stay square; the whole grid is clipped once to the
     // bubble radius ([_gridBorderRadius]), like [ImageBubble].
     // No fixed width here so the lone tile in the last (odd) row can stretch.
-    final tile = canRenderImage
-        ? loadMedia
-              ? MxcImage(
-                  event: itemEvent,
-                  fit: BoxFit.cover,
-                  isThumbnail: true,
-                  placeholder: (context) => BlurHash(
-                    blurhash: blurhash,
-                    width: gridTileSize,
-                    height: gridTileSize,
-                  ),
-                )
-              : BlurHash(
-                  blurhash: blurhash,
-                  width: double.infinity,
-                  height: gridTileSize,
-                )
-        : BlurHash(
-            blurhash: blurhash,
-            width: double.infinity,
-            height: gridTileSize,
-          );
+    final Widget tile;
+    if (canRenderImage && loadMedia && !isHidden) {
+      tile = MxcImage(
+        event: itemEvent,
+        fit: BoxFit.cover,
+        isThumbnail: true,
+        placeholder: (context) => BlurHash(
+          blurhash: blurhash,
+          width: gridTileSize,
+          height: gridTileSize,
+        ),
+      );
+    } else if (isHidden) {
+      // The hidden state is covered by a single reveal button overlaying
+      // the whole grid (see [build]); tiles stay as bare placeholders.
+      tile = _buildTilePlaceholder(context, itemEvent, blurhash: blurhash);
+    } else {
+      tile = _buildTilePlaceholder(
+        context,
+        itemEvent,
+        blurhash: blurhash,
+        onPressed: loadMedia ? null : onLoadMedia,
+        icon: isVideo ? Icons.video_library : Icons.image,
+        tooltip: isVideo
+            ? L10n.of(context).downloadVideoNoSize
+            : L10n.of(context).loadImageNoSize,
+      );
+    }
     return InkWell(
       onTap: () {
+        if (isHidden) return;
         if (!loadMedia) {
           onLoadMedia?.call();
           return;
@@ -128,7 +209,7 @@ class GalleryContent extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Positioned.fill(child: tile),
-          if (isVideo)
+          if (isVideo && !isHidden && loadMedia && canRenderImage)
             Icon(
               Icons.play_circle_outline,
               size: 48,
@@ -310,7 +391,27 @@ class GalleryContent extends StatelessWidget {
               decoration: BoxDecoration(borderRadius: _gridBorderRadius()),
               clipBehavior: Clip.antiAlias,
               width: gridWidth,
-              child: _GridLayout(tiles: gridTiles, tileSize: gridTileSize),
+              child: contentWarning != null && !showHiddenMedia
+                  // The content warning applies to the gallery as a whole,
+                  // so a single button reveals all tiles at once.
+                  ? Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _GridLayout(tiles: gridTiles, tileSize: gridTileSize),
+                        FilledButton.tonal(
+                          onPressed: onRevealHiddenMedia,
+                          child: Row(
+                            mainAxisSize: .min,
+                            children: [
+                              const Icon(Icons.visibility_off_outlined),
+                              const SizedBox(width: 12),
+                              Text(_tileContentWarningReason(context)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : _GridLayout(tiles: gridTiles, tileSize: gridTileSize),
             ),
           ),
         if (rows.isNotEmpty) ...rows,
