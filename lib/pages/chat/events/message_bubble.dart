@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:extera_next/pages/chat/events/thread_preview.dart';
 import 'package:flutter/services.dart';
 
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:swipe_to_action/swipe_to_action.dart';
@@ -97,7 +97,6 @@ class _MessageBubbleState extends State<MessageBubble> {
   // Cached futures to avoid re-creating them on every build
   late Future<User?> _senderUserFuture;
   Future<Event?>? _replyEventFuture;
-  Future<User?>? _threadSenderFuture;
 
   bool loadMedia = false;
   bool showHiddenMedia = false;
@@ -125,19 +124,12 @@ class _MessageBubbleState extends State<MessageBubble> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.event != widget.event) {
       _initFutures();
-    } else {
-      // Only re-init thread future if thread changed
-      if (oldWidget.thread?.lastEvent?.eventId !=
-          widget.thread?.lastEvent?.eventId) {
-        _initThreadFuture();
-      }
     }
   }
 
   void _initFutures() {
     _senderUserFuture = fetchSenderUser();
     _initReplyFuture();
-    _initThreadFuture();
   }
 
   Future<User?> fetchSenderUser() async {
@@ -155,16 +147,6 @@ class _MessageBubbleState extends State<MessageBubble> {
       _replyEventFuture = widget.event.getReplyEvent(widget.timeline);
     } else {
       _replyEventFuture = null;
-    }
-  }
-
-  void _initThreadFuture() {
-    final threadLastEvent = widget.thread?.lastEvent;
-    if (threadLastEvent != null &&
-        threadLastEvent.relationshipEventId == widget.event.eventId) {
-      _threadSenderFuture = threadLastEvent.fetchSenderUser();
-    } else {
-      _threadSenderFuture = null;
     }
   }
 
@@ -875,52 +857,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                               right: 8,
                               top: 8,
                             ),
-                            child: InkWell(
-                              child: Row(
-                                mainAxisSize: .min,
-                                children: [
-                                  Icon(
-                                    (widget.thread?.hasNewMessages ?? false)
-                                        ? Icons.mark_chat_unread_outlined
-                                        : Icons.chat_bubble_outline,
-                                    color: Colors.grey[200],
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  if (_threadSenderFuture != null)
-                                    FutureBuilder<User?>(
-                                      future: _threadSenderFuture,
-                                      builder: (context, snapshot) {
-                                        final threadUser =
-                                            snapshot.data ??
-                                            event.senderFromMemoryOrFallback;
-                                        return Avatar(
-                                          mxContent: threadUser.avatarUrl,
-                                          name: threadUser.calcDisplayname(),
-                                          size: 24,
-                                        );
-                                      },
-                                    )
-                                  else
-                                    const SizedBox.shrink(),
-                                  const SizedBox(width: 6),
-                                  widget.thread!.lastEvent != null
-                                      ? Text(
-                                          widget
-                                                      .thread!
-                                                      .lastEvent!
-                                                      .text
-                                                      .length >
-                                                  32
-                                              ? "${widget.thread!.lastEvent!.text.substring(0, 32)}..."
-                                              : widget.thread!.lastEvent!.text,
-                                        )
-                                      : const Text('Thread'),
-                                ],
-                              ),
-                              onTap: () => context.push(
-                                '/rooms/${event.roomId}/threads/${event.eventId}',
-                              ),
+                            child: ThreadPreview(
+                              event: widget.event,
+                              room: widget.event.room,
+                              thread: widget.thread!,
                             ),
                           ),
                         ),
