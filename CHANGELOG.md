@@ -1,3 +1,7 @@
+## Extera 26.5.5
+- Experimental support for multiple media in one message (MSC4274)
+- 
+
 ## Extera 26.5.4
 - Fix app still being available on lock screen after calls end.
 - Fix some text colors.

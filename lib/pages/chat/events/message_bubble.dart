@@ -23,6 +23,8 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/member_actions_popup_menu_button.dart';
 import '../../../config/app_config.dart';
+import '../../../utils/matrix_sdk_extensions/event_extension.dart';
+import 'gallery_content.dart';
 import 'message_content.dart';
 import 'message_reactions.dart';
 import 'reply_content.dart';
@@ -342,13 +344,44 @@ class _MessageBubbleState extends State<MessageBubble> {
     final noBubble =
         (event.messageType == MessageTypes.Sticker && !event.redacted);
 
+    // For galleries the status treatment is decided by the *last* gallery
+    // item: if it is an image/video, the bubble ends with media and the
+    // status floats over the grid like for a single image; if it is an
+    // audio/file row, the bubble is treated as a non-media bubble with the
+    // status as a bottom row, and the bubble width is clamped to the grid.
+    double? galleryBubbleWidth;
+    var galleryLastItemIsMedia = false;
+    if (event.messageType == MessageTypes.Gallery && !event.redacted) {
+      final galleryMediaTiles = galleryItems(event).where(
+        (item) => {
+          MessageTypes.Image,
+          MessageTypes.Video,
+        }.contains(galleryItemtypeToMsgtype(
+          item.tryGet<String>('itemtype') ?? 'm.file',
+        )),
+      );
+      galleryBubbleWidth =
+          GalleryContent.gridWidth(
+            GalleryContent.gridColumnCount(galleryMediaTiles.length),
+          ) +
+          4; // grid padding (2 on each side)
+      galleryLastItemIsMedia = galleryItems(event).isNotEmpty &&
+          {
+            MessageTypes.Image,
+            MessageTypes.Video,
+          }.contains(galleryItemtypeToMsgtype(
+            galleryItems(event).last.tryGet<String>('itemtype') ?? 'm.file',
+          ));
+    }
+
     final onlyMedia =
         ({MessageTypes.Image, MessageTypes.Video}.contains(event.messageType) &&
             event.fileDescription == null &&
             !event.redacted) ||
         (event.messageType == MessageTypes.Gallery &&
             event.body.isEmpty &&
-            !event.redacted);
+            !event.redacted &&
+            galleryLastItemIsMedia);
 
     if (ownMessage) {
       color = displayEvent.status.isError
@@ -714,7 +747,12 @@ class _MessageBubbleState extends State<MessageBubble> {
                                   ),
                                 ),
                                 constraints: BoxConstraints(
+                                  // A gallery whose rows are narrower than the
+                                  // grid (or whose status floats over the
+                                  // grid) keeps the bubble as wide as the
+                                  // grid itself.
                                   maxWidth:
+                                      galleryBubbleWidth ??
                                       (_replyEventFuture != null
                                           ? _calculateMediaWidth(displayEvent)
                                           : null) ??

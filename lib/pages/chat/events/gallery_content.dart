@@ -44,6 +44,7 @@ class GalleryContent extends StatelessWidget {
   final InlineSpan? trailingSpan;
 
   static const double gridTileSize = 176;
+  static const double gridSpacing = 2;
 
   const GalleryContent(
     this.event, {
@@ -64,14 +65,19 @@ class GalleryContent extends StatelessWidget {
     super.key,
   });
 
-  /// Target width of the gallery (both grid tiles + caption), so the bubble
-  /// is not just as wide as a single tile or caption text.
-  static double _gridWidth() {
+  /// Number of tile columns the grid uses for [tileCount] media tiles. A
+  /// single tile gets a single (full-width) column so the bubble doesn't
+  /// stay empty on the sides.
+  static int gridColumnCount(int tileCount) => tileCount == 1 ? 1 : 2;
+
+  /// The width of the tile grid (and thus of the gallery bubble) for the
+  /// given number of columns: [columnCount] tiles of [gridTileSize] plus the
+  /// [gridSpacing] gaps between them, clamped to the chat width.
+  static double gridWidth(int columnCount) {
     final available = FluffyThemes.columnWidth * 1.5;
-    const tileSize = gridTileSize;
-    // Two columns of ~tileSize px, plus internal spacing, clamped so we don't
-    // exceed the available chat width. Keep it reasonable on tiny screens too.
-    return (tileSize + tileSize + 2).clamp(220.0, available - 16.0);
+    final width =
+        gridTileSize * columnCount + gridSpacing * (columnCount - 1);
+    return width.clamp(gridTileSize, available);
   }
 
   Map<String, dynamic> _itemInfo(Map<String, dynamic> item) =>
@@ -269,34 +275,32 @@ class GalleryContent extends StatelessWidget {
 
     var borderRadius = BorderRadius.all(roundedCorner);
 
-    if (layout != .modern) {
-      if (!isLeftAligned) {
-        borderRadius = borderRadius.copyWith(
-          topRight: nextEventSameSender ? hardCorner : roundedCorner,
-          bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
-        );
-      } else {
-        borderRadius = borderRadius.copyWith(
-          topLeft: nextEventSameSender ? hardCorner : roundedCorner,
-          bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
-        );
-      }
+    if (!isLeftAligned) {
+      borderRadius = borderRadius.copyWith(
+        topRight: nextEventSameSender ? hardCorner : roundedCorner,
+        bottomRight: previousEventSameSender ? hardCorner : roundedCorner,
+      );
+    } else {
+      borderRadius = borderRadius.copyWith(
+        topLeft: nextEventSameSender ? hardCorner : roundedCorner,
+        bottomLeft: previousEventSameSender ? hardCorner : roundedCorner,
+      );
+    }
 
-      final hasCaption = event.body.isNotEmpty;
-      if (hasCaption) {
-        borderRadius = borderRadius.copyWith(
-          bottomLeft: hardCorner,
-          bottomRight: hardCorner,
-        );
-      }
+    final hasCaption = event.body.isNotEmpty;
+    if (hasCaption) {
+      borderRadius = borderRadius.copyWith(
+        bottomLeft: hardCorner,
+        bottomRight: hardCorner,
+      );
+    }
 
-      if (event.inReplyToEventId(includingFallback: false) != null &&
-          hasCaption) {
-        borderRadius = borderRadius.copyWith(
-          topLeft: hardCorner,
-          topRight: hardCorner,
-        );
-      }
+    if (event.inReplyToEventId(includingFallback: false) != null &&
+        hasCaption) {
+      borderRadius = borderRadius.copyWith(
+        topLeft: hardCorner,
+        topRight: hardCorner,
+      );
     }
 
     return borderRadius;
@@ -378,7 +382,8 @@ class GalleryContent extends StatelessWidget {
       );
     }
 
-    final gridWidth = _gridWidth();
+    final columnCount = gridColumnCount(gridTiles.length);
+    final width = gridWidth(columnCount);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,18 +391,23 @@ class GalleryContent extends StatelessWidget {
       children: [
         if (gridTiles.isNotEmpty)
           Padding(
-            padding: .all(layout == .modern ? 0 : 2),
+            padding: const .all(2),
             child: Container(
               decoration: BoxDecoration(borderRadius: _gridBorderRadius()),
               clipBehavior: Clip.antiAlias,
-              width: gridWidth,
+              width: width,
               child: contentWarning != null && !showHiddenMedia
                   // The content warning applies to the gallery as a whole,
                   // so a single button reveals all tiles at once.
                   ? Stack(
                       alignment: Alignment.center,
                       children: [
-                        _GridLayout(tiles: gridTiles, tileSize: gridTileSize),
+                        _GridLayout(
+                          tiles: gridTiles,
+                          tileSize: gridTileSize,
+                          columns: columnCount,
+                          spacing: gridSpacing,
+                        ),
                         FilledButton.tonal(
                           onPressed: onRevealHiddenMedia,
                           child: Row(
@@ -411,7 +421,12 @@ class GalleryContent extends StatelessWidget {
                         ),
                       ],
                     )
-                  : _GridLayout(tiles: gridTiles, tileSize: gridTileSize),
+                  : _GridLayout(
+                      tiles: gridTiles,
+                      tileSize: gridTileSize,
+                      columns: columnCount,
+                      spacing: gridSpacing,
+                    ),
             ),
           ),
         if (rows.isNotEmpty) ...rows,
@@ -425,29 +440,38 @@ class GalleryContent extends StatelessWidget {
   }
 }
 
-/// Lays gallery tiles in rows of up to 2. A lone tile in the last row
-/// stretches to the full grid width instead of leaving an empty cell.
+/// Lays gallery tiles in rows of [columns]. A lone tile in the last row
+/// stretches across the remaining cells instead of leaving empty space.
 class _GridLayout extends StatelessWidget {
   final List<Widget> tiles;
   final double tileSize;
+  final int columns;
+  final double spacing;
 
-  const _GridLayout({required this.tiles, required this.tileSize});
+  const _GridLayout({
+    required this.tiles,
+    required this.tileSize,
+    this.columns = 2,
+    this.spacing = 2,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 2,
-      runSpacing: 2,
+      spacing: spacing,
+      runSpacing: spacing,
       children: [
         for (var i = 0; i < tiles.length; i++)
           Builder(
             builder: (context) {
-              final isLastLone = tiles.length.isOdd && i == tiles.length - 1;
-              return SizedBox(
-                width: isLastLone ? (tileSize * 2 + 2) : tileSize,
-                height: tileSize,
-                child: tiles[i],
-              );
+              final remainder = tiles.length % columns;
+              final lastRowCount = remainder == 0 ? columns : remainder;
+              final isLastLone =
+                  lastRowCount < columns && i >= tiles.length - lastRowCount;
+              final width = isLastLone
+                  ? tileSize * columns + spacing * (columns - 1)
+                  : tileSize;
+              return SizedBox(width: width, height: tileSize, child: tiles[i]);
             },
           ),
       ],
