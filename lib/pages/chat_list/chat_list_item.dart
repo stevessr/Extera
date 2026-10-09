@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat_list/chat_call_indicator.dart';
 import 'package:extera_next/pages/chat_list/unread_bubble.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/cached_localized_body.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
@@ -203,7 +204,7 @@ class ChatListItem extends StatelessWidget {
               onLongPress: () => onLongPress?.call(context),
               leading: HoverBuilder(
                 builder: (context, hovered) => AnimatedScale(
-                  duration: FluffyThemes.animationDuration,
+                  duration: FluffyThemes.effectiveAnimationDuration,
                   curve: FluffyThemes.animationCurve,
                   scale: hovered ? 1.1 : 1.0,
                   child: SizedBox(
@@ -266,7 +267,7 @@ class ChatListItem extends StatelessWidget {
                           child: GestureDetector(
                             onTap: () => onLongPress?.call(context),
                             child: AnimatedScale(
-                              duration: FluffyThemes.animationDuration,
+                              duration: FluffyThemes.effectiveAnimationDuration,
                               curve: FluffyThemes.animationCurve,
                               scale: listTileHovered ? 1.0 : 0.0,
                               child: Material(
@@ -361,7 +362,7 @@ class ChatListItem extends StatelessWidget {
                     width: typingText.isEmpty ? 0 : 18,
                     clipBehavior: Clip.hardEdge,
                     decoration: const BoxDecoration(),
-                    duration: FluffyThemes.animationDuration,
+                    duration: FluffyThemes.effectiveAnimationDuration,
                     curve: FluffyThemes.animationCurve,
                     padding: const EdgeInsets.only(right: 4),
                     child: Icon(

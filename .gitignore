@@ -3,4 +3,9 @@ web/native_impl_worker.dart.js.deps
 web/native_impl_worker.dart.js.map
 untranslated.json
 
+untranslated.json
+
+/web/native_executor.js
+/web/native_executor.js.deps
+/web/native_executor.js.map
 /untranslated_messages.txt

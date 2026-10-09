@@ -131,7 +131,7 @@ class ChatInputRow extends StatelessWidget {
                 : <Widget>[
                     const SizedBox(width: 4),
                     AnimatedContainer(
-                      duration: FluffyThemes.animationDuration,
+                      duration: FluffyThemes.effectiveAnimationDuration,
                       curve: FluffyThemes.animationCurve,
                       width: controller.sendController.text.isNotEmpty
                           ? 0
@@ -218,7 +218,7 @@ class ChatInputRow extends StatelessWidget {
                     if (PlatformInfos.isMobile &&
                         AppSettings.showCameraButton.value)
                       AnimatedContainer(
-                        duration: FluffyThemes.animationDuration,
+                        duration: FluffyThemes.effectiveAnimationDuration,
                         curve: FluffyThemes.animationCurve,
                         width: controller.sendController.text.isNotEmpty
                             ? 0

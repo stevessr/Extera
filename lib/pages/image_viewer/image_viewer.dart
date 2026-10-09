@@ -19,6 +19,12 @@ import 'package:extera_next/widgets/share_scaffold_dialog.dart';
 import '../../utils/matrix_sdk_extensions/event_extension.dart';
 import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 
+/// Returns true if the given msgtype can be rendered by the image viewer.
+bool _isViewerMediaType(String msgType) =>
+    msgType == MessageTypes.Image ||
+    msgType == MessageTypes.Sticker ||
+    (msgType == MessageTypes.Video && PlatformInfos.supportsVideoPlayer);
+
 class ImageViewer extends StatefulWidget {
   final Event event;
   final Timeline? timeline;
@@ -41,19 +47,25 @@ class ImageViewerController extends State<ImageViewer> {
   @override
   void initState() {
     super.initState();
-    allEvents =
-        widget.timeline?.events
-            .where(
-              (event) => {
-                MessageTypes.Image,
-                MessageTypes.Sticker,
-                if (PlatformInfos.supportsVideoPlayer) MessageTypes.Video,
-              }.contains(event.messageType),
-            )
-            .toList()
-            .reversed
-            .toList() ??
-        [widget.event];
+    final timeline = widget.timeline;
+    allEvents = timeline == null
+        ? [widget.event]
+        : <Event>[
+            for (final event in timeline.events)
+              if (event.messageType == 'm.gallery' &&
+                  event.eventId != widget.event.eventId) ...[
+                for (final item in galleryItems(
+                  event,
+                ).asMap().entries.toList().reversed)
+                  if (_isViewerMediaType(
+                    galleryItemtypeToMsgtype(
+                      item.value.tryGet<String>('itemtype') ?? 'm.file',
+                    ),
+                  ))
+                    galleryItemEvent(event, item.value, item.key),
+              ] else if (_isViewerMediaType(event.messageType))
+                event,
+          ].reversed.toList();
     var index = allEvents.indexWhere(
       (event) => event.eventId == widget.event.eventId,
     );
@@ -120,28 +132,60 @@ class ImageViewerController extends State<ImageViewer> {
   /// videos/images always have one).
   Uri? get _attachmentMxc => currentEvent.attachmentMxcUrl;
 
+  /// Returns an MXC that can safely be referenced by stickers and avatar state
+  /// events. Encrypted room attachments point at ciphertext, so their original
+  /// MXC cannot be reused directly outside the message event. In that case,
+  /// decrypt the attachment and upload the plaintext once for the requested
+  /// reuse action.
+  Future<Uri?> _prepareReusableAttachment(Event event) async {
+    final mxc = event.attachmentMxcUrl;
+    if (mxc == null) return null;
+
+    if (event.content['file'] is! Map) {
+      return mxc;
+    }
+
+    final file = await event.downloadAndDecryptAttachment();
+    final reusableMxc = await event.room.client.uploadContent(
+      file.bytes,
+      filename: event.content.tryGet<String>('filename') ?? event.body,
+      contentType: file.mimeType,
+    );
+    Logs().v(
+      'Re-uploaded encrypted attachment as reusable media: $reusableMxc',
+    );
+    return reusableMxc;
+  }
+
   /// Opens the extended actions sheet: reuse this media as sticker or as any
-  /// kind of avatar without re-uploading it.
+  /// kind of avatar. Plain MXC media is reused directly; encrypted attachments
+  /// are decrypted and uploaded as plain media first.
   void showMoreActions(BuildContext context) {
     final event = currentEvent;
-    final mxc = _attachmentMxc;
+    final hasAttachment = _attachmentMxc != null;
     final client = event.room.client;
     final room = event.room;
 
     Future<void> run(
       String message,
-      Future<void> Function() task, {
+      Future<void> Function(Uri mxc) task, {
       bool recordHistory = false,
-    }) => _runAction(context, mxc, message, task, recordHistory);
+    }) => _runAttachmentAction(
+      context,
+      event,
+      message,
+      task,
+      recordHistory: recordHistory,
+    );
 
     final actions = <Widget>[
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.sticky_note_2_outlined),
           title: Text(L10n.of(context).addToMyStickers),
           onTap: () {
             Navigator.of(context).pop();
-            run(L10n.of(context).addedToMyStickers, () async {
+            run(L10n.of(context).addedToMyStickers, (mxc) async {
               await client.addFavouriteSticker(
                 ImagePackImageContent.fromJson({
                   'url': mxc.toString(),
@@ -153,7 +197,7 @@ class ImageViewerController extends State<ImageViewer> {
             });
           },
         ),
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.history),
           title: Text(L10n.of(context).addToAvatarHistory),
@@ -161,18 +205,18 @@ class ImageViewerController extends State<ImageViewer> {
             Navigator.of(context).pop();
             run(
               L10n.of(context).addedToAvatarHistory,
-              () => AvatarHistory.record(mxc.toString()),
+              (mxc) => AvatarHistory.record(mxc.toString()),
             );
           },
         ),
-      if (mxc != null)
+      if (hasAttachment)
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),
           title: Text(L10n.of(context).setAsMyGlobalAvatar),
           onTap: () => _confirmAndRun(
             context,
             L10n.of(context).setAsMyGlobalAvatar,
-            () => run(L10n.of(context).setAsMyGlobalAvatar, () async {
+            () => run(L10n.of(context).setAsMyGlobalAvatar, (mxc) async {
               await client.setProfileField(client.userID!, 'avatar_url', {
                 'avatar_url': mxc.toString(),
               });
@@ -180,7 +224,7 @@ class ImageViewerController extends State<ImageViewer> {
             }, recordHistory: true),
           ),
         ),
-      if (mxc != null &&
+      if (hasAttachment &&
           room.membership == Membership.join &&
           room.canChangeStateEvent(EventTypes.RoomMember))
         ListTile(
@@ -191,31 +235,34 @@ class ImageViewerController extends State<ImageViewer> {
             L10n.of(context).setAsMyRoomAvatar,
             () => run(
               L10n.of(context).setAsMyRoomAvatar,
-              () => _setOwnRoomAvatar(room, mxc),
+              (mxc) => _setOwnRoomAvatar(room, mxc),
               recordHistory: true,
             ),
           ),
         ),
-      if (mxc != null && room.canChangeStateEvent(EventTypes.RoomAvatar))
+      if (hasAttachment)
         ListTile(
+          enabled: room.canChangeStateEvent(EventTypes.RoomAvatar),
           leading: const Icon(Icons.image_outlined),
           title: Text(L10n.of(context).setAsRoomIcon),
-          onTap: () => _confirmAndRun(
-            context,
-            L10n.of(context).setAsRoomIcon,
-            () => run(
-              L10n.of(context).setAsRoomIcon,
-              () => room.client.setRoomStateWithKey(
-                room.id,
-                EventTypes.RoomAvatar,
-                '',
-                {'url': mxc.toString()},
-              ),
-              recordHistory: true,
-            ),
-          ),
+          onTap: room.canChangeStateEvent(EventTypes.RoomAvatar)
+              ? () => _confirmAndRun(
+                  context,
+                  L10n.of(context).setAsRoomIcon,
+                  () => run(
+                    L10n.of(context).setAsRoomIcon,
+                    (mxc) => room.client.setRoomStateWithKey(
+                      room.id,
+                      EventTypes.RoomAvatar,
+                      '',
+                      {'url': mxc.toString()},
+                    ),
+                    recordHistory: true,
+                  ),
+                )
+              : null,
         ),
-      if (mxc != null) ..._spaceTiles(context, mxc),
+      if (hasAttachment) ..._spaceTiles(context, event),
     ];
 
     showAdaptiveBottomSheet<void>(
@@ -254,21 +301,26 @@ class ImageViewerController extends State<ImageViewer> {
     await action();
   }
 
-  /// Runs [task] behind a loading dialog, records the attachment in the
-  /// avatar history when [recordHistory] is set and shows [message] on
-  /// success.
-  Future<void> _runAction(
+  /// Runs an attachment reuse [task] behind a loading dialog. Encrypted
+  /// attachments are converted to a plain reusable MXC before the task runs.
+  /// When [recordHistory] is set, the reusable (never ciphertext) MXC is kept
+  /// in avatar history.
+  Future<void> _runAttachmentAction(
     BuildContext context,
-    Uri? mxc,
+    Event event,
     String message,
-    Future<void> Function() task,
-    bool recordHistory,
-  ) async {
+    Future<void> Function(Uri mxc) task, {
+    bool recordHistory = false,
+  }) async {
     final result = await showFutureLoadingDialog(
       context: context,
       future: () async {
-        await task();
-        if (recordHistory && mxc != null) {
+        final mxc = await _prepareReusableAttachment(event);
+        if (mxc == null) {
+          throw StateError('Image event has no reusable attachment');
+        }
+        await task(mxc);
+        if (recordHistory) {
           await AvatarHistory.record(mxc.toString());
         }
       },
@@ -279,25 +331,45 @@ class ImageViewerController extends State<ImageViewer> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  List<Widget> _spaceTiles(BuildContext context, Uri mxc) {
-    final client = currentEvent.room.client;
-    final spaces = client.rooms
-        .where(
-          (room) =>
-              room.isSpace &&
-              room.membership == Membership.join &&
-              room.canChangeStateEvent(EventTypes.RoomAvatar),
-        )
-        .toList();
+  List<Widget> _spaceTiles(BuildContext context, Event event) {
+    final room = event.room;
+    final client = room.client;
+    final spaces =
+        <Room>{
+          // Prefer the parent relation advertised by the room itself, but also
+          // include spaces that advertise this room as a child. Some homeservers
+          // can temporarily expose only one side of the relation during sync.
+          ...room.spaceParents
+              .map((parent) => client.getRoomById(parent.roomId ?? ''))
+              .whereType<Room>()
+              .where((space) => space.isSpace),
+          ...client.rooms.where(
+            (space) =>
+                space.isSpace &&
+                space.spaceChildren.any((child) => child.roomId == room.id),
+          ),
+        }.toList()..sort(
+          (a, b) => a.getLocalizedDisplayname().compareTo(
+            b.getLocalizedDisplayname(),
+          ),
+        );
+
     if (spaces.isEmpty) return const [];
+
+    bool canChangeAvatar(Room space) =>
+        space.membership == Membership.join &&
+        space.canChangeStateEvent(EventTypes.RoomAvatar);
+
+    final canChangeAnySpaceAvatar = spaces.any(canChangeAvatar);
+
     return [
       ListTile(
+        enabled: canChangeAnySpaceAvatar,
         leading: const Icon(Icons.workspaces_outlined),
         title: Text(L10n.of(context).setAsSpaceIcon),
-        onTap: () async {
-          final space = spaces.length == 1
-              ? spaces.single
-              : await showAdaptiveBottomSheet<Room>(
+        onTap: canChangeAnySpaceAvatar
+            ? () async {
+                final space = await showAdaptiveBottomSheet<Room>(
                   context: context,
                   builder: (sheetContext) => Material(
                     color: Theme.of(sheetContext).colorScheme.surface,
@@ -311,36 +383,44 @@ class ImageViewerController extends State<ImageViewer> {
                           );
                         }
                         final space = spaces[i - 1];
+                        final canEdit = canChangeAvatar(space);
                         return ListTile(
+                          enabled: canEdit,
                           leading: Avatar(
                             mxContent: space.avatar,
                             name: space.getLocalizedDisplayname(),
                           ),
                           title: Text(space.getLocalizedDisplayname()),
-                          onTap: () => Navigator.of(context).pop(space),
+                          onTap: canEdit
+                              ? () => Navigator.of(context).pop(space)
+                              : null,
                         );
                       },
                     ),
                   ),
                 );
-          if (!context.mounted || space == null) return;
-          if (!await _confirmApply(context, L10n.of(context).setAsSpaceIcon)) {
-            return;
-          }
-          Navigator.of(context).pop();
-          _runAction(
-            context,
-            mxc,
-            L10n.of(context).setAsSpaceIcon,
-            () => space.client.setRoomStateWithKey(
-              space.id,
-              EventTypes.RoomAvatar,
-              '',
-              {'url': mxc.toString()},
-            ),
-            true,
-          );
-        },
+                if (!context.mounted || space == null) return;
+                if (!await _confirmApply(
+                  context,
+                  L10n.of(context).setAsSpaceIcon,
+                )) {
+                  return;
+                }
+                Navigator.of(context).pop();
+                _runAttachmentAction(
+                  context,
+                  event,
+                  L10n.of(context).setAsSpaceIcon,
+                  (mxc) => space.client.setRoomStateWithKey(
+                    space.id,
+                    EventTypes.RoomAvatar,
+                    '',
+                    {'url': mxc.toString()},
+                  ),
+                  recordHistory: true,
+                );
+              }
+            : null,
       ),
     ];
   }

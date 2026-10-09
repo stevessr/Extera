@@ -1,7 +1,8 @@
 name: swipe_to_action
-description: A widget which can be used to call functions when the wrapped child is dragged or flinged.
-version: 0.3.0
+description: Local patched copy of swipe_to_action with a disposed-state guard.
+version: 0.3.0+extera.1
 homepage: https://inex.dev/inex/swipe_to_action
+publish_to: none
 
 environment:
   sdk: ">=2.12.0 <4.0.0"
@@ -12,14 +13,3 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-
-dev_dependencies:
-  flutter_lints: ^5.0.0
-  flutter_test:
-    sdk: flutter
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter.
-flutter:

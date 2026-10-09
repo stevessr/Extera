@@ -11,6 +11,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/message.dart';
+import 'package:extera_next/pages/chat/events/gallery_content.dart';
 import 'package:extera_next/pages/chat/events/poll_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/chat/events/video_player.dart';
@@ -161,6 +162,25 @@ class MessageContent extends StatelessWidget {
       case PollEvents.pollStart:
         // temporary solution
         switch (event.messageType) {
+          case 'm.gallery':
+            if (event.redacted) continue textmessage;
+            return GalleryContent(
+              event,
+              timeline: timeline,
+              textColor: textColor,
+              linkColor: linkColor,
+              layout: layout,
+              selectable: selectable,
+              loadMedia: loadMedia,
+              onLoadMedia: onLoadMedia,
+              showHiddenMedia: showHiddenMedia,
+              onRevealHiddenMedia: onRevealHiddenMedia,
+              contentWarning: contentWarning,
+              isLeftAligned: isLeftAligned,
+              nextEventSameSender: nextEventSameSender,
+              previousEventSameSender: previousEventSameSender,
+              trailingSpan: trailingSpan,
+            );
           case MessageTypes.Poll:
             if (event.redacted) continue textmessage;
             return PollWidget(

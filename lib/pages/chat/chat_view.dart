@@ -22,6 +22,7 @@ import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/utils/wallpaper.dart';
@@ -815,16 +816,17 @@ class _ChatViewState extends State<ChatView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ValueListenableBuilder<String?>(
-                            valueListenable:
-                                LiveKitCallManager().currentCallRoomId,
-                            builder: (context, roomId, _) {
-                              if (roomId == null) {
-                                return const SizedBox.shrink();
-                              }
-                              return BackToLiveKitCallButton(roomId: roomId);
-                            },
-                          ),
+                          if (!FluffyThemes.isColumnMode(context))
+                            ValueListenableBuilder<String?>(
+                              valueListenable:
+                                  LiveKitCallManager().currentCallRoomId,
+                              builder: (context, roomId, _) {
+                                if (roomId == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return BackToLiveKitCallButton(roomId: roomId);
+                              },
+                            ),
                           const MiniAudioPlayer(),
                           if (scrollUpBannerEventId != null)
                             Row(

@@ -5,11 +5,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
+import 'package:matrix/src/utils/markdown.dart';
 import 'package:mime/mime.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/file_send_relation.dart';
 import 'package:extera_next/utils/clean_exif.dart';
 import 'package:extera_next/utils/content_warning.dart';
 import 'package:extera_next/utils/foreground_task_manager.dart';
@@ -24,6 +26,9 @@ import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
 import 'package:extera_next/widgets/matrix.dart';
 
 import '../../utils/resize_video.dart';
+
+// ignore: implementation_imports
+// ignore: depend_on_referenced_packages
 
 class SendFileDialog extends StatefulWidget {
   final Room room;
@@ -60,11 +65,23 @@ class SendFileDialogState extends State<SendFileDialog> {
   final TextEditingController _labelTextController = TextEditingController();
 
   Future<void> _send() async {
+    if (isSending) return;
     final scaffoldMessenger = ScaffoldMessenger.of(widget.outerContext);
     final l10n = L10n.of(context);
     final convertLinebreaks = Matrix.of(
       context,
     ).client.convertLinebreaksInFormatting;
+    final label = _labelTextController.text.trim();
+    final warning = contentWarning;
+    final replyEventId = widget.replyEvent?.eventId;
+    final threadRootEventId = widget.thread?.rootEvent.eventId;
+    final lastThreadEvent = widget.thread?.lastEvent;
+    final threadLastEventId =
+        lastThreadEvent != null && lastThreadEvent.status.isSynced
+        ? lastThreadEvent.eventId
+        : threadRootEventId;
+    final files = List<XFile>.of(widget.files);
+    var foregroundUploadAcquired = false;
 
     try {
       setState(() {
@@ -77,176 +94,208 @@ class SendFileDialogState extends State<SendFileDialog> {
         Navigator.of(context, rootNavigator: false).pop();
       }
 
-      await ForegroundTaskManager.startFileUpload(context);
+      if (widget.outerContext.mounted) {
+        foregroundUploadAcquired = await ForegroundTaskManager.startFileUpload(
+          widget.outerContext,
+        );
+      }
 
-      for (final xfile in widget.files) {
-        MatrixFile file;
-        MatrixImageFile? thumbnail;
-        final length = await xfile.length();
-        final mimeType = xfile.mimeType ?? lookupMimeType(xfile.path);
-        final name = xfile.name.isNotEmpty
-            ? xfile.name
-            : "file.${mimeType!.split('/').last}";
-        // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
-        // not rewrite it. Some file pickers report .svg as octet-stream.
-        final isSvg =
-            mimeType?.split(';').first.trim().toLowerCase() ==
-                'image/svg+xml' ||
-            name.toLowerCase().endsWith('.svg');
-        final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
+      final useGalleries =
+          AppSettings.useExperimentalGalleries.value && files.length > 1;
+      if (useGalleries) {
+        await _sendGallery(
+          scaffoldMessenger,
+          l10n,
+          maxUploadSize,
+          convertLinebreaks,
+        );
+      } else {
+        for (final xfile in files) {
+          MatrixFile file;
+          MatrixImageFile? thumbnail;
+          final length = await xfile.length();
+          final mimeType = xfile.mimeType ?? lookupMimeType(xfile.path);
+          final name = xfile.name.isNotEmpty
+              ? xfile.name
+              : mimeType == null
+              ? 'file'
+              : "file.${mimeType.split('/').last.split(';').first}";
+          // SVG is an XML vector image: EXIF cleanup and bitmap resizing must
+          // not rewrite it. Some file pickers report .svg as octet-stream.
+          final isSvg =
+              mimeType?.split(';').first.trim().toLowerCase() ==
+                  'image/svg+xml' ||
+              name.toLowerCase().endsWith('.svg');
+          final effectiveMimeType = isSvg ? 'image/svg+xml' : mimeType;
+          final canShrinkImage =
+              !isSvg && effectiveMimeType?.startsWith('image') == true;
+          final canCompressVideo =
+              PlatformInfos.isMobile &&
+              effectiveMimeType?.startsWith('video') == true &&
+              length > minSizeToCompress &&
+              compress;
 
-        // If file is a video, shrink it!
-        if (PlatformInfos.isMobile &&
-            mimeType != null &&
-            mimeType.startsWith('video') &&
-            length > minSizeToCompress &&
-            compress) {
-          scaffoldMessenger.showLoadingSnackBar(l10n.compressVideo);
-          file = await xfile.resizeVideo();
-        } else if (mimeType != null &&
-            mimeType.startsWith('image') &&
-            AppSettings.cleanExif.value &&
-            !isSvg) {
-          if (length > maxUploadSize) {
+          if (length > maxUploadSize &&
+              !(compress && canShrinkImage) &&
+              !canCompressVideo) {
             throw FileTooBigMatrixException(length, maxUploadSize);
           }
 
-          // Else we just create a MatrixFile
-          file = MatrixFile(
-            bytes: Uint8List.fromList(
-              ExifCleaner.removeExifData(await xfile.readAsBytes()),
-            ),
-            name: name,
-            mimeType: effectiveMimeType,
-          ).detectFileType;
-        } else {
-          if (length > maxUploadSize) {
-            throw FileTooBigMatrixException(length, maxUploadSize);
-          }
-
-          // Else we just create a MatrixFile
-          file = MatrixFile(
-            bytes: await xfile.readAsBytes(),
-            name: name,
-            mimeType: effectiveMimeType,
-          ).detectFileType;
-        }
-
-        // Shrink images before sending, but keep the original if the
-        // shrunk result would be bigger than the source file.
-        if (compress && !isSvg && file is MatrixImageFile) {
-          file = await file.shrinkWithSizeCheck(
-            maxDimension: 1600,
-            client: widget.room.client,
-          );
-        }
-
-        if (file.bytes.length > maxUploadSize) {
-          throw FileTooBigMatrixException(length, maxUploadSize);
-        }
-
-        if (PlatformInfos.isMobile &&
-            mimeType != null &&
-            mimeType.startsWith('video')) {
-          try {
-            scaffoldMessenger.showLoadingSnackBar(
-              l10n.generatingVideoThumbnail,
-            );
-            thumbnail = await _getVideoPreview(xfile);
-          } catch (e) {
-            Logs().e("Failed to generate video thumbnail", e);
-            scaffoldMessenger.showLoadingSnackBar(
-              e.toLocalizedString(widget.outerContext),
-            );
-          }
-        }
-
-        if (widget.files.length > 1) {
-          scaffoldMessenger.showLoadingSnackBar(
-            l10n.sendingAttachmentCountOfCount(
-              widget.files.indexOf(xfile) + 1,
-              widget.files.length,
-            ),
-          );
-        } else {
-          scaffoldMessenger.clearSnackBars();
-        }
-
-        final label = _labelTextController.text.trim();
-        final extraContent = <String, dynamic>{};
-
-        applyContentWarning(extraContent, contentWarning);
-
-        if (label.isNotEmpty) {
-          extraContent['body'] = label;
-          final html = markdown(
-            label,
-            getEmotePacks: () =>
-                widget.room.getImagePacksFlat(ImagePackUsage.emoticon),
-            getMention: widget.room.getMention,
-            convertLinebreaks: convertLinebreaks,
-          );
-
-          // if the decoded html is the same as the body, there is no need in sending a formatted message
-          if (HtmlUnescape().convert(
-                html.replaceAll(RegExp(r'<br />\n?'), '\n'),
-              ) !=
-              label) {
-            extraContent['format'] = 'org.matrix.custom.html';
-            extraContent['formatted_body'] = html;
-          }
-        }
-
-        if (widget.replyEvent != null) {
-          extraContent['m.relates_to'] = {
-            'm.in_reply_to': {'event_id': widget.replyEvent!.eventId},
-          };
-        }
-
-        widget.onClearReply?.call();
-
-        try {
-          await widget.room.sendFileEvent(
-            file,
-            thumbnail: thumbnail,
-            extraContent: extraContent,
-            threadLastEventId:
-                widget.thread?.lastEvent?.eventId ??
-                widget.thread?.rootEvent.eventId,
-            threadRootEventId: widget.thread?.rootEvent.eventId,
-          );
-        } on MatrixException catch (e) {
-          final retryAfterMs = e.retryAfterMs;
-          if (e.error != MatrixError.M_LIMIT_EXCEEDED || retryAfterMs == null) {
-            rethrow;
-          }
-          final retryAfterDuration = Duration(
-            milliseconds: retryAfterMs + 1000,
-          );
-
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.serverLimitReached(retryAfterDuration.inSeconds),
+          // If file is a video, shrink it!
+          if (PlatformInfos.isMobile &&
+              mimeType != null &&
+              mimeType.startsWith('video') &&
+              length > minSizeToCompress &&
+              compress) {
+            scaffoldMessenger.showLoadingSnackBar(l10n.compressVideo);
+            file = await xfile.resizeVideo();
+          } else if (mimeType != null &&
+              mimeType.startsWith('image') &&
+              AppSettings.cleanExif.value &&
+              !isSvg) {
+            // Else we just create a MatrixFile
+            file = MatrixFile(
+              bytes: Uint8List.fromList(
+                ExifCleaner.removeExifData(await xfile.readAsBytes()),
               ),
-            ),
-          );
-          await Future.delayed(retryAfterDuration);
+              name: name,
+              mimeType: effectiveMimeType,
+            ).detectFileType;
+          } else {
+            // Else we just create a MatrixFile
+            file = MatrixFile(
+              bytes: await xfile.readAsBytes(),
+              name: name,
+              mimeType: effectiveMimeType,
+            ).detectFileType;
+          }
 
-          scaffoldMessenger.showLoadingSnackBar(l10n.sendingAttachment);
+          // Shrink images before sending, but keep the original if the
+          // shrunk result would be bigger than the source file.
+          if (compress && canShrinkImage && file is MatrixImageFile) {
+            file = await file.shrinkWithSizeCheck(
+              maxDimension: 1600,
+              client: widget.room.client,
+            );
+          }
 
-          await widget.room.sendFileEvent(
-            file,
-            thumbnail: thumbnail,
-            threadLastEventId:
-                widget.thread?.lastEvent?.eventId ??
-                widget.thread?.rootEvent.eventId,
-            threadRootEventId: widget.thread?.rootEvent.eventId,
+          if (file.bytes.length > maxUploadSize) {
+            throw FileTooBigMatrixException(file.bytes.length, maxUploadSize);
+          }
+
+          if (PlatformInfos.isMobile &&
+              mimeType != null &&
+              mimeType.startsWith('video')) {
+            try {
+              scaffoldMessenger.showLoadingSnackBar(
+                l10n.generatingVideoThumbnail,
+              );
+              thumbnail = await _getVideoPreview(xfile);
+            } catch (e) {
+              Logs().e("Failed to generate video thumbnail", e);
+              if (widget.outerContext.mounted && scaffoldMessenger.mounted) {
+                scaffoldMessenger.showLoadingSnackBar(
+                  e.toLocalizedString(widget.outerContext),
+                );
+              }
+            }
+          }
+
+          if (files.length > 1) {
+            scaffoldMessenger.showLoadingSnackBar(
+              l10n.sendingAttachmentCountOfCount(
+                files.indexOf(xfile) + 1,
+                files.length,
+              ),
+            );
+          } else {
+            scaffoldMessenger.clearSnackBars();
+          }
+
+          final extraContent = <String, dynamic>{};
+
+          applyContentWarning(extraContent, warning);
+
+          if (label.isNotEmpty) {
+            extraContent['body'] = label;
+            final html = markdown(
+              label,
+              getEmotePacks: () =>
+                  widget.room.getImagePacksFlat(ImagePackUsage.emoticon),
+              getMention: widget.room.getMention,
+              convertLinebreaks: convertLinebreaks,
+            );
+
+            // if the decoded html is the same as the body, there is no need in sending a formatted message
+            if (HtmlUnescape().convert(
+                  html.replaceAll(RegExp(r'<br />\n?'), '\n'),
+                ) !=
+                label) {
+              extraContent['format'] = 'org.matrix.custom.html';
+              extraContent['formatted_body'] = html;
+            }
+          }
+
+          final relation = buildFileSendRelation(
+            threadRootEventId: threadRootEventId,
+            threadLastEventId: threadLastEventId,
+            inReplyToEventId: replyEventId,
           );
+          if (relation != null) extraContent['m.relates_to'] = relation;
+
+          final transactionId = widget.room.client
+              .generateUniqueTransactionId();
+          String? sentEventId;
+          try {
+            sentEventId = await widget.room.sendFileEvent(
+              file,
+              txid: transactionId,
+              thumbnail: thumbnail,
+              // The relation is already stored in extraContent. Supplying the
+              // SDK thread arguments would overwrite explicit in-thread replies.
+              extraContent: extraContent,
+            );
+          } on MatrixException catch (e) {
+            final retryAfterMs = e.retryAfterMs;
+            if (e.error != MatrixError.M_LIMIT_EXCEEDED ||
+                retryAfterMs == null) {
+              rethrow;
+            }
+            final retryAfterDuration = Duration(
+              milliseconds: retryAfterMs + 1000,
+            );
+
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  l10n.serverLimitReached(retryAfterDuration.inSeconds),
+                ),
+              ),
+            );
+            await Future.delayed(retryAfterDuration);
+
+            scaffoldMessenger.showLoadingSnackBar(l10n.sendingAttachment);
+
+            sentEventId = await widget.room.sendFileEvent(
+              file,
+              txid: transactionId,
+              thumbnail: thumbnail,
+              // The relation is already stored in extraContent. Supplying the
+              // SDK thread arguments would overwrite explicit in-thread replies.
+              extraContent: extraContent,
+            );
+          }
+          // The SDK can return null after persisting a failed pending event.
+          // Leave the reply selected so the user can retry that event in place.
+          if (sentEventId == null) {
+            throw StateError(
+              'Attachment message failed to send. Retry the pending message.',
+            );
+          }
+          widget.onClearReply?.call();
         }
       }
       scaffoldMessenger.clearSnackBars();
-      await ForegroundTaskManager.stopTask(taskType: .fileUpload);
     } catch (e) {
       Logs().e('error on send', e);
       if (mounted) {
@@ -255,23 +304,26 @@ class SendFileDialogState extends State<SendFileDialog> {
         });
       }
       scaffoldMessenger.clearSnackBars();
-      final theme = Theme.of(widget.outerContext);
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          backgroundColor: theme.colorScheme.errorContainer,
-          closeIconColor: theme.colorScheme.onErrorContainer,
-          content: Text(
-            e.toLocalizedString(widget.outerContext),
-            style: TextStyle(color: theme.colorScheme.onErrorContainer),
+      if (widget.outerContext.mounted && scaffoldMessenger.mounted) {
+        final theme = Theme.of(widget.outerContext);
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            backgroundColor: theme.colorScheme.errorContainer,
+            closeIconColor: theme.colorScheme.onErrorContainer,
+            content: Text(
+              e.toLocalizedString(widget.outerContext),
+              style: TextStyle(color: theme.colorScheme.onErrorContainer),
+            ),
+            duration: const Duration(seconds: 30),
+            showCloseIcon: true,
           ),
-          duration: const Duration(seconds: 30),
-          showCloseIcon: true,
-        ),
-      );
-      rethrow;
+        );
+      }
+    } finally {
+      if (foregroundUploadAcquired) {
+        await ForegroundTaskManager.stopTask(taskType: .fileUpload);
+      }
     }
-
-    return;
   }
 
   Future<String> _calcCombinedFileSize() async {
@@ -335,6 +387,297 @@ class SendFileDialogState extends State<SendFileDialog> {
         },
       ),
     );
+  }
+
+  /// Prepares a single [XFile] exactly like the per-file send path (EXIF
+  /// cleaning, video compression, video thumbnails) and uploads it, returning
+  /// the MSC4274 item content map. Mirrors the upload/encryption/content
+  /// building of [Room.sendFileEvent].
+  Future<Map<String, dynamic>> _prepareGalleryItem({
+    required ScaffoldMessengerState scaffoldMessenger,
+    required L10n l10n,
+    required int maxUploadSize,
+    required XFile xfile,
+  }) async {
+    final length = await xfile.length();
+    final mimeType = xfile.mimeType ?? lookupMimeType(xfile.path);
+    final name = xfile.name.isNotEmpty
+        ? xfile.name
+        : "file.${mimeType!.split('/').last}";
+
+    MatrixFile file;
+    MatrixImageFile? thumbnail;
+
+    // If file is a video, shrink it!
+    if (PlatformInfos.isMobile &&
+        mimeType != null &&
+        mimeType.startsWith('video') &&
+        length > minSizeToCompress &&
+        compress) {
+      scaffoldMessenger.showLoadingSnackBar(l10n.compressVideo);
+      file = await xfile.resizeVideo();
+    } else if (mimeType != null &&
+        mimeType.startsWith('image') &&
+        AppSettings.cleanExif.value) {
+      if (length > maxUploadSize) {
+        throw FileTooBigMatrixException(length, maxUploadSize);
+      }
+
+      file = MatrixFile(
+        bytes: Uint8List.fromList(
+          ExifCleaner.removeExifData(await xfile.readAsBytes()),
+        ),
+        name: name,
+        mimeType: mimeType,
+      ).detectFileType;
+    } else {
+      if (length > maxUploadSize) {
+        throw FileTooBigMatrixException(length, maxUploadSize);
+      }
+
+      file = MatrixFile(
+        bytes: await xfile.readAsBytes(),
+        name: name,
+        mimeType: mimeType,
+      ).detectFileType;
+    }
+
+    if (file.bytes.length > maxUploadSize) {
+      throw FileTooBigMatrixException(length, maxUploadSize);
+    }
+
+    if (PlatformInfos.isMobile &&
+        mimeType != null &&
+        mimeType.startsWith('video')) {
+      try {
+        scaffoldMessenger.showLoadingSnackBar(l10n.generatingVideoThumbnail);
+        thumbnail = await xfile.getVideoThumbnail();
+      } catch (e) {
+        Logs().e("Failed to generate video thumbnail", e);
+        scaffoldMessenger.showLoadingSnackBar(
+          e.toLocalizedString(widget.outerContext),
+        );
+      }
+    }
+
+    scaffoldMessenger.showLoadingSnackBar(
+      l10n.sendingAttachmentCountOfCount(
+        widget.files.indexOf(xfile) + 1,
+        widget.files.length,
+      ),
+    );
+
+    final client = widget.room.client;
+
+    // Shrink images and/or generate an image thumbnail like
+    // Room.sendFileEvent does.
+    if (file is MatrixImageFile && (thumbnail == null || compress)) {
+      try {
+        thumbnail ??= await file.generateThumbnail(
+          nativeImplementations: client.nativeImplementations,
+          customImageResizer: client.customImageResizer,
+        );
+        if (compress) {
+          file = await MatrixImageFile.shrink(
+            bytes: file.bytes,
+            name: file.name,
+            maxDimension: 1600,
+            customImageResizer: client.customImageResizer,
+            nativeImplementations: client.nativeImplementations,
+          );
+        }
+        if (thumbnail != null && file.size < thumbnail.size) {
+          thumbnail = null;
+        }
+      } catch (e, s) {
+        Logs().e('Unable to shrink image before sending!', e, s);
+      }
+    }
+
+    // Encrypt file and thumbnail when in an encrypted room, like
+    // Room.sendFileEvent does.
+    MatrixFile? uploadFile;
+    MatrixFile? uploadThumbnail = thumbnail;
+    EncryptedFile? encryptedFile;
+    EncryptedFile? encryptedThumbnail;
+    if (widget.room.encrypted && client.fileEncryptionEnabled) {
+      encryptedFile = await file.encrypt();
+      uploadFile = encryptedFile.toMatrixFile();
+      if (thumbnail != null) {
+        encryptedThumbnail = await thumbnail.encrypt();
+        uploadThumbnail = encryptedThumbnail.toMatrixFile();
+      }
+    }
+
+    final uploadResp = await client.uploadContent(
+      (uploadFile ?? file).bytes,
+      filename: (uploadFile ?? file).name,
+      contentType: (uploadFile ?? file).mimeType,
+    );
+    final thumbnailUploadResp = uploadThumbnail != null
+        ? await client.uploadContent(
+            uploadThumbnail.bytes,
+            filename: uploadThumbnail.name,
+            contentType: uploadThumbnail.mimeType,
+          )
+        : null;
+
+    final itemtype = MatrixFile.msgTypeFromMime(file.mimeType);
+
+    return {
+      'itemtype': itemtype,
+      'body': file.name,
+      'filename': file.name,
+      if (encryptedFile == null) 'url': uploadResp.toString(),
+      if (encryptedFile != null)
+        'file': {
+          'url': uploadResp.toString(),
+          'mimetype': file.mimeType,
+          'v': 'v2',
+          'key': {
+            'alg': 'A256CTR',
+            'ext': true,
+            'k': encryptedFile.k,
+            'key_ops': ['encrypt', 'decrypt'],
+            'kty': 'oct',
+          },
+          'iv': encryptedFile.iv,
+          'hashes': {'sha256': encryptedFile.sha256},
+        },
+      'info': {
+        ...file.info,
+        if (thumbnail != null && encryptedThumbnail == null)
+          'thumbnail_url': thumbnailUploadResp.toString(),
+        if (thumbnail != null && encryptedThumbnail != null)
+          'thumbnail_file': {
+            'url': thumbnailUploadResp.toString(),
+            'mimetype': thumbnail.mimeType,
+            'v': 'v2',
+            'key': {
+              'alg': 'A256CTR',
+              'ext': true,
+              'k': encryptedThumbnail.k,
+              'key_ops': ['encrypt', 'decrypt'],
+              'kty': 'oct',
+            },
+            'iv': encryptedThumbnail.iv,
+            'hashes': {'sha256': encryptedThumbnail.sha256},
+          },
+        if (thumbnail != null) 'thumbnail_info': thumbnail.info,
+        if (thumbnail?.blurhash != null &&
+            ((file is MatrixImageFile && file.blurhash == null) ||
+                file is MatrixVideoFile))
+          'xyz.amorgan.blurhash': thumbnail!.blurhash,
+      },
+    };
+  }
+
+  /// Sends all files as a single MSC4274 gallery event.
+  Future<void> _sendGallery(
+    ScaffoldMessengerState scaffoldMessenger,
+    L10n l10n,
+    int maxUploadSize,
+    bool convertLinebreaks,
+  ) async {
+    final items = <Map<String, dynamic>>[];
+    for (final xfile in widget.files) {
+      items.add(
+        await _prepareGalleryItem(
+          scaffoldMessenger: scaffoldMessenger,
+          l10n: l10n,
+          maxUploadSize: maxUploadSize,
+          xfile: xfile,
+        ),
+      );
+    }
+
+    final label = _labelTextController.text.trim();
+
+    final content = <String, dynamic>{
+      'msgtype': 'm.gallery',
+      'body': label,
+      'itemtypes': items,
+      ...extraGalleryContent(label, convertLinebreaks),
+    };
+
+    widget.onClearReply?.call();
+
+    final txid = widget.room.client.generateUniqueTransactionId();
+    try {
+      await widget.room.sendEvent(
+        content,
+        txid: txid,
+        threadRootEventId: widget.thread?.rootEvent.eventId,
+        threadLastEventId:
+            widget.thread?.lastEvent?.eventId ??
+            widget.thread?.rootEvent.eventId,
+      );
+    } on MatrixException catch (e) {
+      final retryAfterMs = e.retryAfterMs;
+      if (e.error != MatrixError.M_LIMIT_EXCEEDED || retryAfterMs == null) {
+        rethrow;
+      }
+      final retryAfterDuration = Duration(milliseconds: retryAfterMs + 1000);
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.serverLimitReached(retryAfterDuration.inSeconds)),
+        ),
+      );
+      await Future.delayed(retryAfterDuration);
+
+      scaffoldMessenger.showLoadingSnackBar(l10n.sendingAttachment);
+
+      await widget.room.sendEvent(
+        content,
+        txid: txid,
+        threadRootEventId: widget.thread?.rootEvent.eventId,
+        threadLastEventId:
+            widget.thread?.lastEvent?.eventId ??
+            widget.thread?.rootEvent.eventId,
+      );
+    }
+  }
+
+  /// Builds the caption/format/content-warning/reply keys for the gallery
+  /// event content, mirroring the per-file extraContent logic.
+  Map<String, dynamic> extraGalleryContent(
+    String label,
+    bool convertLinebreaks,
+  ) {
+    final extraContent = <String, dynamic>{};
+
+    if (contentWarning != null) {
+      extraContent['town.robin.msc3725.content_warning'] = {
+        'type': contentWarning,
+      };
+      extraContent['page.codeberg.everypizza.msc4193.spoiler'] = true;
+    }
+
+    if (label.isNotEmpty) {
+      final html = markdown(
+        label,
+        getEmotePacks: () =>
+            widget.room.getImagePacksFlat(ImagePackUsage.emoticon),
+        getMention: widget.room.getMention,
+        convertLinebreaks: convertLinebreaks,
+      );
+
+      // if the decoded html is the same as the body, there is no need in sending a formatted message
+      if (HtmlUnescape().convert(html.replaceAll(RegExp(r'<br />\n?'), '\n')) !=
+          label) {
+        extraContent['format'] = 'org.matrix.custom.html';
+        extraContent['formatted_body'] = html;
+      }
+    }
+
+    if (widget.replyEvent != null) {
+      extraContent['m.relates_to'] = {
+        'm.in_reply_to': {'event_id': widget.replyEvent!.eventId},
+      };
+    }
+
+    return extraContent;
   }
 
   void editImage(int index) async {

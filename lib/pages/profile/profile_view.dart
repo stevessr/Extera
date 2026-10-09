@@ -275,16 +275,16 @@ class ProfileView extends StatelessWidget {
                                             options: const LinkifyOptions(
                                               humanize: false,
                                             ),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
                                             linkStyle: Theme.of(context)
                                                 .textTheme
                                                 .bodyMedium
                                                 ?.copyWith(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .primary,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
                                                   decorationColor: Theme.of(
                                                     context,
                                                   ).colorScheme.primary,

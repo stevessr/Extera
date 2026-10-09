@@ -1,6 +1,6 @@
 {
 	"@@locale": "ko",
-	"@@last_modified": "2026-09-17T22:56:20.466Z",
+	"@@last_modified": "2026-10-08T15:36:27.181Z",
 	"about": "소개",
 	"@about": {
 		"type": "String",
@@ -4281,5 +4281,25 @@
 			}
 		}
 	},
-	"@richPresenceOpenIdWarning": {}
+	"@richPresenceOpenIdWarning": {},
+	"useExperimentalGalleries": "실험적 갤러리 사용",
+	"useExperimentalGalleriesDescription": "하나의 메시지로 여러 미디어 파일을 보냅니다.",
+	"today": "오늘",
+	"yesterday": "어제",
+	"@repliesInThread": {
+		"type": "String",
+		"placeholders": {
+			"replyCount": {
+				"type": "int"
+			}
+		}
+	},
+	"@today": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@yesterday": {
+		"type": "String",
+		"placeholders": {}
+	}
 }

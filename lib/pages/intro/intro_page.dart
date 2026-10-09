@@ -101,9 +101,10 @@ class IntroPage extends StatelessWidget {
                         textScaleFactor: MediaQuery.textScalerOf(context)
                             .scale(1),
                         textAlign: TextAlign.center,
-                        linkStyle: TextStyle(
-                          color: theme.colorScheme.secondary,
-                          decorationColor: theme.colorScheme.secondary,
+                        style: theme.textTheme.bodyMedium,
+                        linkStyle: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          decorationColor: theme.colorScheme.primary,
                         ),
                         onOpen: (link) => openLink(link.url),
                       ),

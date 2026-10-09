@@ -4458,5 +4458,26 @@
     "bubbleSingleSided": "Always on one side",
     "bubbleAdaptiveSide": "Adaptive",
     "bubbleBothSided": "Both sides",
-    "pollResultsAreHidden": "Poll results are hidden until the poll ends"
+    "pollResultsAreHidden": "Poll results are hidden until the poll ends",
+    "repliesInThread": "{replyCount, plural, =1{1 reply} other{{replyCount} replies}}",
+    "@repliesInThread": {
+        "type": "String",
+        "placeholders": {
+            "replyCount": {
+                "type": "int"
+            }
+        }
+    },
+    "useExperimentalGalleries": "Use experimental galleries",
+    "useExperimentalGalleriesDescription": "Send multiple pictures as a single gallery message (MSC4274)",
+    "today": "Today",
+    "@today": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "yesterday": "Yesterday",
+    "@yesterday": {
+        "type": "String",
+        "placeholders": {}
+    }
 }

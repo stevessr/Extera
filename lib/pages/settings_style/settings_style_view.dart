@@ -617,8 +617,9 @@ class SettingsStyleView extends StatelessWidget {
                                   child: Align(
                                     alignment: Alignment.center,
                                     child: _LabeledRadio<MessageLayout>(
-                                      label: L10n.of(context)
-                                          .legacyBubblesLayout,
+                                      label: L10n.of(
+                                        context,
+                                      ).legacyBubblesLayout,
                                       value: MessageLayout.bubblesLegacy,
                                     ),
                                   ),

@@ -60,6 +60,36 @@ extension DateTimeExtension on DateTime {
           L10n.of(context).localeName,
         ).format(this);
 
+  bool isSameDay(DateTime other) =>
+      year == other.year && month == other.month && day == other.day;
+  String localizedMonthDay(BuildContext context) {
+    final now = DateTime.now();
+
+    if (isSameDay(now)) {
+      return L10n.of(context).today;
+    }
+    if (isSameDay(now.subtract(const Duration(days: 1)))) {
+      return L10n.of(context).yesterday;
+    }
+
+    final sameYear = now.year == year;
+
+    if (sameYear &&
+        now.millisecondsSinceEpoch - millisecondsSinceEpoch <
+            1000 * 60 * 60 * 24 * 7) {
+      return DateFormat.EEEE(
+        Localizations.localeOf(context).languageCode,
+      ).format(this);
+    } else if (sameYear) {
+      return DateFormat.MMMMd(
+        Localizations.localeOf(context).languageCode,
+      ).format(this);
+    }
+    return DateFormat.yMMMMd(
+      Localizations.localeOf(context).languageCode,
+    ).format(this);
+  }
+
   /// Returns a simple time String.
   String localizedTimeOfDay(BuildContext context) =>
       (MediaQuery.alwaysUse24HourFormatOf(context) ||

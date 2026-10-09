@@ -111,7 +111,7 @@ class ChatAppBarTitle extends StatelessWidget {
                             status.status != SyncStatus.error &&
                             room.client.prevBatch != null);
                     return AnimatedSize(
-                      duration: FluffyThemes.animationDuration,
+                      duration: FluffyThemes.effectiveAnimationDuration,
                       child: hide
                           ? PresenceBuilder(
                               userId: room.directChatMatrixID,
@@ -240,7 +240,7 @@ class ChatAppBarTitle extends StatelessWidget {
                                   status.status != SyncStatus.error &&
                                   room.client.prevBatch != null);
                           return AnimatedSize(
-                            duration: FluffyThemes.animationDuration,
+                            duration: FluffyThemes.effectiveAnimationDuration,
                             child: hide
                                 ? PresenceBuilder(
                                     userId: room.directChatMatrixID,

@@ -63,6 +63,10 @@ enum AppSettings<T> {
   wallpaperOpacity<double>('xyz.extera.wallpaper_opacity', 0.5),
   wallpaperBlur<double>('xyz.extera.wallpaper_blur', 0.0),
   experimentalLiveKit<bool>('xyz.extera.experimental_livekit', false),
+  useExperimentalGalleries<bool>(
+    'xyz.extera.next.useExperimentalGalleries',
+    false,
+  ),
   livekitServerUrl<String>('xyz.extera.livekit_server_url', ''),
   applicationName<String>('xyz.extera.app_name', 'Extera'),
   logoUrl<String>('xyz.extera.logo_url', 'https://extera.xyz/logo.svg'),

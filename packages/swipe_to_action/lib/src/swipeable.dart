@@ -83,10 +83,10 @@ class Swipeable extends StatefulWidget {
 
   /// Gives the app an opportunity to confirm or veto a pending dismissal.
   ///
-  /// If the returned `Future<bool>` completes true, then this widget will be
+  /// If the returned Future<bool> completes true, then this widget will be
   /// dismissed, otherwise it will be moved back to its original location.
   ///
-  /// If the returned `Future<bool>` completes to false or null the [onSwipe]
+  /// If the returned Future<bool> completes to false or null the [onSwipe]
   /// callback will not run.
   final ConfirmSwipeCallback? confirmSwipe;
 
@@ -466,13 +466,13 @@ class _SwipeableState extends State<Swipeable>
 
     // Get system screen size and system gesture insets
     // to avoid starting a swipe in this areas
-    final mediaQuery = MediaQuery.maybeOf(context);
+    final MediaQueryData? mediaQuery = MediaQuery.maybeOf(context);
     if (mediaQuery != null) {
       if (_widthReference == null || _widthReference != mediaQuery.size.width) {
         WidgetsBinding.instance.addPostFrameCallback((final _) {
-          // A route change can remove a swipeable before this callback runs.
-          // The hosted 0.3.0 package unconditionally called setState here,
-          // which produced scheduler exceptions during navigation.
+          // The swipeable may have been removed from a lazy list before this
+          // callback runs. Calling setState after dispose crashes Flutter
+          // (notably on web when a thread's message list is rebuilt).
           if (!mounted) return;
           setState(() {
             _widthReference = mediaQuery.size.width;

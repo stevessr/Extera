@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart' show FileType;
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -18,7 +19,7 @@ import 'package:extera_next/widgets/matrix.dart';
 
 import 'chat_room_profile_view.dart';
 
-enum _AvatarChoice { file, history }
+enum _AvatarChoice { file, history, addCurrentToHistory }
 
 /// Edits the own member state of a single room, so that name and avatar can
 /// differ from the account profile just for this chat (the equivalent of the
@@ -74,7 +75,19 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
     await _applyPatch({'displayname': input.trim().isEmpty ? null : input});
   }
 
+  Future<Uri?> _effectiveAvatarUrl() async {
+    final override = avatarUrl;
+    if (override != null) return override;
+    try {
+      return (await accountProfile).avatarUrl;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> changeAvatar() async {
+    final currentAvatar = await _effectiveAvatarUrl();
+    if (!mounted) return;
     final action = await showModalActionPopup<_AvatarChoice>(
       context: context,
       title: L10n.of(context).changeYourAvatar,
@@ -91,12 +104,28 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
           label: L10n.of(context).avatarHistory,
           icon: const Icon(Icons.history_outlined),
         ),
+        if (currentAvatar != null)
+          AdaptiveModalAction(
+            value: _AvatarChoice.addCurrentToHistory,
+            label: L10n.of(context).addToAvatarHistory,
+            icon: const Icon(Icons.add_circle_outline),
+          ),
       ],
     );
     if (!mounted) return;
+    if (action == _AvatarChoice.addCurrentToHistory) {
+      await AvatarHistory.recordUri(currentAvatar);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context).addedToAvatarHistory)),
+        );
+      }
+      return;
+    }
     if (action == _AvatarChoice.history) {
       final mxc = await showAvatarHistoryPicker(context);
       if (mxc == null || !mounted) return;
+      await AvatarHistory.recordUri(currentAvatar);
       await _applyPatch({'avatar_url': mxc});
       await AvatarHistory.record(mxc);
       return;
@@ -121,15 +150,21 @@ class ChatRoomProfileController extends State<ChatRoomProfile> {
       },
     );
     if (mxc.error != null || !mounted) return;
+    await AvatarHistory.recordUri(currentAvatar);
     await _applyPatch({'avatar_url': mxc.result!.toString()});
     await AvatarHistory.record(mxc.result!.toString());
   }
 
-  Future<void> removeAvatar() => _applyPatch({'avatar_url': null});
+  Future<void> removeAvatar() async {
+    await AvatarHistory.recordUri(avatarUrl);
+    await _applyPatch({'avatar_url': null});
+  }
 
   /// Drops both overrides, so this chat shows the account profile again.
-  Future<void> resetToAccountProfile() =>
-      _applyPatch({'displayname': null, 'avatar_url': null});
+  Future<void> resetToAccountProfile() async {
+    await AvatarHistory.recordUri(avatarUrl);
+    await _applyPatch({'displayname': null, 'avatar_url': null});
+  }
 
   /// Merges [patch] into the current member content and sends it; `null`
   /// values remove the key, which makes the field fall back to the account

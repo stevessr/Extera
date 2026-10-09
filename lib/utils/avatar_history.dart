@@ -11,24 +11,55 @@ abstract final class AvatarHistory {
   static List<String> _read(SharedPreferences prefs) =>
       List.of(prefs.getStringList(_prefKey) ?? const <String>[]);
 
+  static bool _isMxcUri(String value) {
+    final uri = Uri.tryParse(value);
+    return uri != null &&
+        uri.scheme == 'mxc' &&
+        uri.hasAuthority &&
+        uri.authority.isNotEmpty;
+  }
+
   static Future<void> _write(List<String> entries) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefKey, entries.take(_maxEntries).toList());
   }
 
   /// All known historical avatar mxc URIs, newest first.
+  ///
+  /// Invalid or duplicated values left by older versions are filtered out so
+  /// the picker never tries to render a non-Matrix media URI.
   static Future<List<String>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    return _read(prefs).where((e) => Uri.tryParse(e) != null).toList();
+    final seen = <String>{};
+    return _read(prefs)
+        .where((entry) => _isMxcUri(entry) && seen.add(entry))
+        .take(_maxEntries)
+        .toList();
   }
 
   /// Records [mxcUri] at the front of the history, deduplicated.
   static Future<void> record(String mxcUri) async {
-    if (mxcUri.isEmpty || Uri.tryParse(mxcUri)?.scheme != 'mxc') return;
+    if (!_isMxcUri(mxcUri)) return;
     final prefs = await SharedPreferences.getInstance();
-    final entries = _read(prefs)..remove(mxcUri);
+    final entries = _read(prefs)
+      ..removeWhere((entry) => entry == mxcUri || !_isMxcUri(entry));
     entries.insert(0, mxcUri);
     await _write(entries);
     Logs().v('AvatarHistory: recorded $mxcUri');
+  }
+
+  /// Removes [mxcUri] from the local history.
+  static Future<void> remove(String mxcUri) async {
+    final prefs = await SharedPreferences.getInstance();
+    final entries = _read(prefs)
+      ..removeWhere((entry) => entry == mxcUri || !_isMxcUri(entry));
+    await _write(entries);
+    Logs().v('AvatarHistory: removed $mxcUri');
+  }
+
+  /// Null-safe convenience for recording avatar values already parsed as URIs.
+  static Future<void> recordUri(Uri? mxcUri) async {
+    if (mxcUri == null) return;
+    await record(mxcUri.toString());
   }
 }

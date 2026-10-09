@@ -5,6 +5,8 @@ import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/pages/chat_list/chat_list.dart';
 import 'package:extera_next/pages/chat_list/chat_list_bottom_navbar.dart';
 import 'package:extera_next/pages/chat_list/chat_list_legacy_bottom_navbar.dart';
+import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
+import 'package:extera_next/pages/dialer/mini_livekit_call_controls.dart';
 import 'package:extera_next/widgets/drawer.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/navigation_rail.dart';
@@ -30,6 +32,11 @@ class ChatListView extends StatelessWidget {
                 StartChatFab(extended: scrolledToTop),
           )
         : StartChatFab();
+
+    final modern =
+        !controller.isSearchMode &&
+        !AppSettings.useLegacyNavBar.value &&
+        client.rooms.isNotEmpty;
 
     return PopScope(
       canPop: !controller.isSearchMode && controller.activeSpaceId == null,
@@ -111,6 +118,18 @@ class ChatListView extends StatelessWidget {
                               bottom: 16,
                               child: ChatListBottomNavbar(controller, fab: fab),
                             ),
+                          Positioned(
+                            left: modern ? 32 : 16,
+                            right: modern ? 32 : 16,
+                            bottom: modern ? 84 : 16,
+                            child: ValueListenableBuilder<String?>(
+                              valueListenable:
+                                  LiveKitCallManager().currentCallRoomId,
+                              builder: (context, roomId, _) => roomId == null
+                                  ? const SizedBox.shrink()
+                                  : MiniLiveKitCallControls(),
+                            ),
+                          ),
                         ],
                       ),
                     ),

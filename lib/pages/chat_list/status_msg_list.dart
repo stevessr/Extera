@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 
@@ -76,7 +77,7 @@ class _StatusMessageListState extends State<StatusMessageList> {
       stream: _getSyncStream(client),
       builder: (context, snapshot) {
         return AnimatedSize(
-          duration: FluffyThemes.animationDuration,
+          duration: FluffyThemes.effectiveAnimationDuration,
           curve: Curves.easeInOut,
           child: FutureBuilder<List<CachedPresence>>(
             future: _getPresenceFuture(client),
@@ -180,7 +181,7 @@ class PresenceAvatar extends StatelessWidget {
                   builder: (context, hovered) {
                     return AnimatedScale(
                       scale: hovered ? 1.15 : 1.0,
-                      duration: FluffyThemes.animationDuration,
+                      duration: FluffyThemes.effectiveAnimationDuration,
                       curve: FluffyThemes.animationCurve,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(

@@ -2529,7 +2529,7 @@ packages:
       path: "packages/swipe_to_action"
       relative: true
     source: path
-    version: "0.3.0"
+    version: "0.3.0+extera.1"
   sync_http:
     dependency: transitive
     description:

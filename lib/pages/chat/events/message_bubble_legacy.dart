@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:swipe_to_action/swipe_to_action.dart';
 
@@ -1108,11 +1109,11 @@ class __AnimateInState extends State<_AnimateIn> {
       });
     }
     return AnimatedOpacity(
-      duration: FluffyThemes.animationDuration,
+      duration: FluffyThemes.effectiveAnimationDuration,
       curve: FluffyThemes.animationCurve,
       opacity: _animationFinished ? (widget.halfOpacity ? 0.5 : 1) : 0,
       child: AnimatedSize(
-        duration: FluffyThemes.animationDuration,
+        duration: FluffyThemes.effectiveAnimationDuration,
         curve: FluffyThemes.animationCurve,
         child: _animationFinished ? widget.child : const SizedBox.shrink(),
       ),

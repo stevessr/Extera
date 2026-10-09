@@ -3682,6 +3682,24 @@
   },
   "listeningToSomeTunes": "正在听音乐",
   "playing": "正在播放",
+  "richPresenceElapsed": "已过去 {duration}",
+  "@richPresenceElapsed": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "richPresenceRemaining": "剩余 {duration}",
+  "@richPresenceRemaining": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "richPresenceOpenIdWarning": "此按钮将向你的主服务器请求 OpenID 令牌，并将其分享给目标网站。这可能会泄露你的 IP 地址和浏览器元数据，并使该网站能够将此次访问与你的 Matrix 账户关联。此操作不会允许第三方访问你的 Matrix 账户。",
+  "@richPresenceOpenIdWarning": {},
   "editedAt": "编辑于 {when}",
   "@editedAt": {
     "type": "text",
@@ -4559,6 +4577,8 @@
             "room": {"type": "String"}
         }
     },
+  "reactionUiTipReply": "轻触以回复。",
+  "reactionUiTipRedact": "长按以移除回应。",
   "reactionUiTip": "轻触以回复。长按以移除回应。",
   "bubblesAppearance": "气泡样式",
   "bubbleSide": "气泡位置",
