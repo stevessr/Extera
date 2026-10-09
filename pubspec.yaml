@@ -195,3 +195,7 @@ msix_config:
   execution_alias: exteranext
   sign_msix: false
   install_certificate: false
+
+dependency_overrides:
+  swipe_to_action:
+    path: packages/swipe_to_action

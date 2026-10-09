@@ -1,0 +1,15 @@
+name: swipe_to_action
+description: Local patched copy of swipe_to_action with a disposed-state guard.
+version: 0.3.0+extera.1
+homepage: https://inex.dev/inex/swipe_to_action
+publish_to: none
+
+environment:
+  sdk: ">=2.12.0 <4.0.0"
+  flutter: ">=2.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
