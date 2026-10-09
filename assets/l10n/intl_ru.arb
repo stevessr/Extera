@@ -4262,5 +4262,26 @@
     "verificationCodeSent2": "Код подтверждения был отправлен на Ваш номер телефона. Введите его ниже.",
     "appBarAppearance": "Верхняя панель",
     "appBarAppName": "Приложение",
-    "appBarAccountName": "Аккаунт"
+    "appBarAccountName": "Аккаунт",
+    "useExperimentalGalleries": "Экспериментальные галереи",
+    "useExperimentalGalleriesDescription": "Отправлять несколько медиафайлов в одном сообщении.",
+    "today": "Сегодня",
+    "@today": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "yesterday": "Вчера",
+    "@yesterday": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "repliesInThread": "{replyCount, plural, =1{1 ответ} one{{replyCount} ответ} few{{replyCount} ответа} many{{replyCount} ответов} other{{replyCount} ответов}}",
+    "@repliesInThread": {
+        "type": "String",
+        "placeholders": {
+            "replyCount": {
+                "type": "int"
+            }
+        }
+    }
 }

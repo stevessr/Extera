@@ -1,6 +1,6 @@
 {
 	"@@locale": "de",
-	"@@last_modified": "2026-09-17T22:58:56.926Z",
+	"@@last_modified": "2026-10-08T15:34:19.867Z",
 	"alwaysUse24HourFormat": "true",
 	"@alwaysUse24HourFormat": {
 		"description": "Set to true to always display time of day in 24 hour format."
@@ -4307,5 +4307,25 @@
 			}
 		}
 	},
-	"@richPresenceOpenIdWarning": {}
+	"@richPresenceOpenIdWarning": {},
+	"useExperimentalGalleries": "Experimentelle Galerien",
+	"useExperimentalGalleriesDescription": "Mehrere Mediendateien in einer Nachricht senden.",
+	"today": "Heute",
+	"yesterday": "Gestern",
+	"@repliesInThread": {
+		"type": "String",
+		"placeholders": {
+			"replyCount": {
+				"type": "int"
+			}
+		}
+	},
+	"@today": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@yesterday": {
+		"type": "String",
+		"placeholders": {}
+	}
 }

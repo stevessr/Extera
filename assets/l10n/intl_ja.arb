@@ -32,7 +32,7 @@
 	"cleanExif": "EXIFを削除",
 	"cleanExifDescription": "送信前に画像からEXIFメタデータ（カメラモデル、位置情報、時刻）を削除します。",
 	"@@locale": "ja",
-	"@@last_modified": "2026-09-17T22:57:09.809Z",
+	"@@last_modified": "2026-10-08T15:36:03.352Z",
 	"doNotSendIfCantClean": "クリーンできない画像を送信しない",
 	"doNotSendIfCantCleanDescription": "EXIFメタデータを削除できない場合、画像を送信しません",
 	"repeatPassword": "パスワードを再入力",
@@ -4188,5 +4188,25 @@
 			}
 		}
 	},
-	"@richPresenceOpenIdWarning": {}
+	"@richPresenceOpenIdWarning": {},
+	"useExperimentalGalleries": "実験的なギャラリー",
+	"useExperimentalGalleriesDescription": "複数のメディアファイルを1つのメッセージで送信します。",
+	"today": "今日",
+	"yesterday": "昨日",
+	"@repliesInThread": {
+		"type": "String",
+		"placeholders": {
+			"replyCount": {
+				"type": "int"
+			}
+		}
+	},
+	"@today": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@yesterday": {
+		"type": "String",
+		"placeholders": {}
+	}
 }

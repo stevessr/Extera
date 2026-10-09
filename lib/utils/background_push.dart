@@ -583,7 +583,7 @@ class BackgroundPush {
       flutterLocalNotificationsPlugin: _flutterLocalNotificationsPlugin,
       instance: i,
       useNotificationActions:
-          false, // Buggy with UP: https://codeberg.org/UnifiedPush/flutter-connector/issues/34
+          true, // Buggy with UP: https://codeberg.org/UnifiedPush/flutter-connector/issues/34
     );
   }
 }

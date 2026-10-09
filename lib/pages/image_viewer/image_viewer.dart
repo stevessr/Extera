@@ -19,6 +19,12 @@ import 'package:extera_next/widgets/share_scaffold_dialog.dart';
 import '../../utils/matrix_sdk_extensions/event_extension.dart';
 import '../../widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 
+/// Returns true if the given msgtype can be rendered by the image viewer.
+bool _isViewerMediaType(String msgType) =>
+    msgType == MessageTypes.Image ||
+    msgType == MessageTypes.Sticker ||
+    (msgType == MessageTypes.Video && PlatformInfos.supportsVideoPlayer);
+
 class ImageViewer extends StatefulWidget {
   final Event event;
   final Timeline? timeline;
@@ -41,19 +47,25 @@ class ImageViewerController extends State<ImageViewer> {
   @override
   void initState() {
     super.initState();
-    allEvents =
-        widget.timeline?.events
-            .where(
-              (event) => {
-                MessageTypes.Image,
-                MessageTypes.Sticker,
-                if (PlatformInfos.supportsVideoPlayer) MessageTypes.Video,
-              }.contains(event.messageType),
-            )
-            .toList()
-            .reversed
-            .toList() ??
-        [widget.event];
+    final timeline = widget.timeline;
+    allEvents = timeline == null
+        ? [widget.event]
+        : <Event>[
+            for (final event in timeline.events)
+              if (event.messageType == 'm.gallery' &&
+                  event.eventId != widget.event.eventId) ...[
+                for (final item in galleryItems(
+                  event,
+                ).asMap().entries.toList().reversed)
+                  if (_isViewerMediaType(
+                    galleryItemtypeToMsgtype(
+                      item.value.tryGet<String>('itemtype') ?? 'm.file',
+                    ),
+                  ))
+                    galleryItemEvent(event, item.value, item.key),
+              ] else if (_isViewerMediaType(event.messageType))
+                event,
+          ].reversed.toList();
     var index = allEvents.indexWhere(
       (event) => event.eventId == widget.event.eventId,
     );

@@ -210,6 +210,14 @@ class SettingsChatView extends StatelessWidget {
                           setting: AppSettings.enableVideoNotes,
                         ),
                       ],
+                      const ListDivider(),
+                      SettingsSwitchListTile.adaptive(
+                        title: L10n.of(context).useExperimentalGalleries,
+                        subtitle: L10n.of(
+                          context,
+                        ).useExperimentalGalleriesDescription,
+                        setting: AppSettings.useExperimentalGalleries,
+                      ),
                       // const ListDivider(),
                       // ListTile(
                       //   title: Text(L10n.of(context).messageFontSize),

@@ -334,6 +334,11 @@ class ChatController extends State<ChatPageWithRoom>
 
   ValueNotifier<bool> get scrolledUpNotifier => _scrolledUp;
 
+  final ValueNotifier<DateTime?> floatingDateNotifier =
+      ValueNotifier<DateTime?>(null);
+
+  int? _floatingDateEventIndex;
+
   /// The event ID of the newest visible event when the user scrolled up.
   /// Used as the split point between the pre-center sliver (new events) and
   /// the center sliver (existing events). Events before this anchor in
@@ -670,6 +675,55 @@ class ChatController extends State<ChatPageWithRoom>
       _scrollAnchorEventId = null;
       setReadMarker();
       setState(() {});
+    }
+
+    _updateFloatingDateIndicator(position);
+  }
+
+  void _updateFloatingDateIndicator(ScrollPosition position) {
+    final timeline = this.timeline;
+    if (timeline == null) {
+      _clearFloatingDateIndicator();
+      return;
+    }
+
+    if (!position.hasPixels) {
+      _clearFloatingDateIndicator();
+      return;
+    }
+    final atBottom = position.pixels <= position.minScrollExtent;
+    if (atBottom) {
+      _clearFloatingDateIndicator();
+      return;
+    }
+
+    final cachedIndex = _floatingDateEventIndex;
+    if (cachedIndex != null &&
+        cachedIndex < filteredEvents.length &&
+        _isEventVisibleInScroll(filteredEvents[cachedIndex].eventId)) {
+      _applyFloatingDate(filteredEvents[cachedIndex].originServerTs);
+      return;
+    }
+
+    for (var i = 0; i < filteredEvents.length; i++) {
+      final event = filteredEvents[i];
+      if (!_isEventVisibleInScroll(event.eventId)) continue;
+      _floatingDateEventIndex = i;
+      _applyFloatingDate(event.originServerTs);
+      return;
+    }
+  }
+
+  void _applyFloatingDate(DateTime date) {
+    if (floatingDateNotifier.value != date) {
+      floatingDateNotifier.value = date;
+    }
+  }
+
+  void _clearFloatingDateIndicator() {
+    _floatingDateEventIndex = null;
+    if (floatingDateNotifier.value != null) {
+      floatingDateNotifier.value = null;
     }
   }
 
@@ -1103,6 +1157,7 @@ class ChatController extends State<ChatPageWithRoom>
   void dispose() {
     _unsubscribeTileInvalidation();
     _scrolledUp.dispose();
+    floatingDateNotifier.dispose();
     timeline?.cancelSubscriptions();
     _updateViewTimer?.cancel();
     timeline = null;
