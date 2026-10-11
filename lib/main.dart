@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +17,7 @@ import 'package:extera_next/utils/client_manager.dart';
 import 'package:extera_next/utils/notification_background_handler.dart';
 import 'package:extera_next/utils/noto_emoji_font.dart';
 import 'package:extera_next/utils/platform_infos.dart';
+import 'package:extera_next/utils/vodozemac_init.dart';
 import 'package:extera_next/utils/wallpaper.dart';
 import 'package:extera_next/widgets/error_widget.dart';
 
@@ -63,7 +63,9 @@ void main() async {
   // independent. Start both before parsing timezone data so browser I/O can
   // overlap the remaining synchronous startup work.
   final storeFuture = AppSettings.init();
-  final vodozemacFuture = vod.init(wasmPath: './assets/assets/vodozemac/');
+  final vodozemacFuture = initVodozemac(
+    wasmPath: './assets/assets/vodozemac/',
+  );
 
   if (!PlatformInfos.isWeb) {
     FlutterForegroundTask.initCommunicationPort();
