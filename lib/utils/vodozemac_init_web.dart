@@ -48,8 +48,23 @@ class _WasmDcoHandler extends BaseHandler {
       throw PanicException('EXECUTE_SYNC_ABORT $e $s');
     }
 
-    // JSAny.dartify recursively converts nested JS arrays to Dart lists.
     // FRB's web freeWireSyncRust2DartDco is a no-op; JS owns this result.
-    return task.codec.decodeObject((jsResult as JSAny?)?.dartify());
+    return task.codec.decodeObject(_decodeDcoValue(jsResult as JSAny?));
   }
+}
+
+/// Turn wasm-bindgen arrays into real Dart lists while preserving JS BigInts.
+///
+/// A blanket JSAny.dartify() is not sufficient: JS BigInt is not JSON-like,
+/// and FRB's dcoDecodeU64/dcoDecodeI64 helpers require the original JS value.
+Object? _decodeDcoValue(JSAny? value) {
+  if (value == null) return null;
+  if (value.isA<JSArray>()) {
+    return (value as JSArray<JSAny?>)
+        .toDart
+        .map(_decodeDcoValue)
+        .toList();
+  }
+  if (value.isA<JSBigInt>()) return value;
+  return value.dartify();
 }
