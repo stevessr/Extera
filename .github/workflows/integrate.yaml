@@ -158,10 +158,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Debug parity check for the release web bundle (target js).
+      # Compile the actual Wasm target for PRs into the wasm preview branch.
+      # JS remains the default for production-targeted PRs.
       - uses: ./.github/actions/build-web-app
         with:
-          target: js
+          target: ${{ github.event_name == 'pull_request' && github.base_ref == 'wasm' && 'wasm' || 'js' }}
           mode: debug
 
   build-linux:
