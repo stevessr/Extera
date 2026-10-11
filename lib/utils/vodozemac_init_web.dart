@@ -1,6 +1,7 @@
 import 'dart:js_interop';
 
 import 'package:flutter/foundation.dart';
+
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
 import 'package:vodozemac/src/generated/frb_generated.dart' as generated;
@@ -60,10 +61,7 @@ class _WasmDcoHandler extends BaseHandler {
 Object? _decodeDcoValue(JSAny? value) {
   if (value == null) return null;
   if (value.isA<JSArray>()) {
-    return (value as JSArray<JSAny?>)
-        .toDart
-        .map(_decodeDcoValue)
-        .toList();
+    return (value as JSArray<JSAny?>).toDart.map(_decodeDcoValue).toList();
   }
   if (value.isA<JSBigInt>()) return value;
   return value.dartify();
