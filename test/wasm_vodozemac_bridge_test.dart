@@ -12,6 +12,7 @@ void main() {
 
       // Account construction exercises the failing synchronous DCO return.
       final account = vod.Account();
+      expect(account.maxNumberOfOneTimeKeys, greaterThan(0));
       final keys = account.identityKeys;
       expect(keys.curve25519.toBase64(), isNotEmpty);
       expect(keys.ed25519.toBase64(), isNotEmpty);
