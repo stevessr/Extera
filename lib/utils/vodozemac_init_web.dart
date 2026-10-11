@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_vodozemac/flutter_vodozemac.dart' as vod;
+// The public initializer cannot install the custom Dart2Wasm handler.
+// ignore: implementation_imports
 import 'package:vodozemac/src/generated/frb_generated.dart' as generated;
 
 /// Initialize vodozemac with a Wasm-compatible DartCObject decoder.
 ///
-/// flutter_rust_bridge 2.13.0's web DCO codec expects Dart List<dynamic>,
+/// flutter_rust_bridge 2.13.0's web DCO codec expects a Dart `List<dynamic>`,
 /// while wasm-bindgen returns JavaScript arrays. dart2js can represent both
 /// using JavaScript arrays, but dart2wasm keeps Dart and JS lists distinct.
 /// Without converting the result, creating a Matrix Olm account throws a
@@ -50,19 +52,26 @@ class _WasmDcoHandler extends BaseHandler {
     }
 
     // FRB's web freeWireSyncRust2DartDco is a no-op; JS owns this result.
-    return task.codec.decodeObject(_decodeDcoValue(jsResult as JSAny?));
+    return task.codec.decodeObject(decodeWasmDcoValue(jsResult as JSAny?));
   }
 }
 
-/// Turn wasm-bindgen arrays into real Dart lists while preserving JS BigInts.
+/// Turn wasm-bindgen arrays into Dart values while preserving JS BigInts.
 ///
-/// A blanket JSAny.dartify() is not sufficient: JS BigInt is not JSON-like,
-/// and FRB's dcoDecodeU64/dcoDecodeI64 helpers require the original JS value.
-Object? _decodeDcoValue(JSAny? value) {
+/// FRB's DCO codec expects Dart lists and integer action tags. Dart2Wasm keeps
+/// JS arrays separate, and `dartify()` turns JavaScript numbers into doubles.
+@visibleForTesting
+Object? decodeWasmDcoValue(JSAny? value) {
   if (value == null) return null;
   if (value.isA<JSArray>()) {
-    return (value as JSArray<JSAny?>).toDart.map(_decodeDcoValue).toList();
+    return (value as JSArray<JSAny?>).toDart.map(decodeWasmDcoValue).toList();
   }
   if (value.isA<JSBigInt>()) return value;
-  return value.dartify();
+  final dartified = value.dartify();
+  if (dartified is double &&
+      dartified.isFinite &&
+      dartified == dartified.truncateToDouble()) {
+    return dartified.toInt();
+  }
+  return dartified;
 }

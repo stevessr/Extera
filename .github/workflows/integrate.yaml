@@ -165,6 +165,10 @@ jobs:
           target: ${{ github.event_name == 'pull_request' && github.base_ref == 'wasm' && 'wasm' || 'js' }}
           mode: debug
 
+      - name: Test Dart2Wasm vodozemac DCO decoding
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'wasm' }}
+        run: flutter test --wasm --platform chrome --no-pub test/wasm_vodozemac_bridge_test.dart
+
   build-linux:
     name: Debug Linux (x64)
     needs: changes
