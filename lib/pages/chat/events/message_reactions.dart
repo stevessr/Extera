@@ -31,11 +31,17 @@ class MessageReactions extends StatelessWidget {
   final OpenReactionDetails? onOpenDetails;
   final bool isLeftAligned;
 
+  /// Called instead of showing a loading dialog when the user taps a reaction
+  /// they have already sent. Lets overlays close themselves before a route
+  /// dialog is pushed (routes render below root overlay entries).
+  final void Function(Event reactionEvent)? onUnreact;
+
   const MessageReactions(
     this.event,
     this.timeline, {
     this.chatController,
     this.onOpenDetails,
+    this.onUnreact,
     this.isLeftAligned = false,
     super.key,
   });
@@ -98,10 +104,15 @@ class MessageReactions extends StatelessWidget {
                       e.content.tryGetMap('m.relates_to')?['key'] == r.key,
                 );
                 if (evt != null) {
-                  showFutureLoadingDialog(
-                    context: context,
-                    future: () => evt.redactEvent(),
-                  );
+                  final unreact = onUnreact;
+                  if (unreact != null) {
+                    unreact(evt);
+                  } else {
+                    showFutureLoadingDialog(
+                      context: context,
+                      future: () => evt.redactEvent(),
+                    );
+                  }
                 }
               } else {
                 event.room.sendReaction(event.eventId, r.key);
@@ -640,6 +651,10 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
       customCategories: customCategories,
     );
 
+    // This menu lives in an OverlayEntry above every navigator route, so a
+    // bottom sheet opened from here would render below its blur backdrop.
+    // Close the menu first so the emoji picker becomes the top-most route.
+    widget.onClose();
     final emoji = await showAdaptiveBottomSheet<String>(
       context: context,
       builder: (context) => Scaffold(
@@ -699,7 +714,15 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
         if (Characters(level.reactionKey).length > 10)
           Align(
             alignment: .topLeft,
-            child: Text(level.reactionKey, style: theme.textTheme.labelMedium),
+            child: level.reactionKey.startsWith('mxc://')
+                ? MxcImage(
+                    uri: Uri.parse(level.reactionKey),
+                    width: 32,
+                    height: 32,
+                    animated: true,
+                    isThumbnail: false,
+                  )
+                : Text(level.reactionKey, style: theme.textTheme.labelMedium),
           ),
         Material(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
@@ -716,11 +739,19 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
                     onPressed: _goBack,
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  title: Text(
-                    level.reactionKey,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  title: level.reactionKey.startsWith('mxc://')
+                      ? MxcImage(
+                          uri: Uri.parse(level.reactionKey),
+                          width: 24,
+                          height: 24,
+                          animated: true,
+                          isThumbnail: false,
+                        )
+                      : Text(
+                          level.reactionKey,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                   trailing: Text('${_levels.length}'),
                 ),
               Flexible(
@@ -824,6 +855,17 @@ class _ReactionsMenuBodyState extends State<_ReactionsMenuBody> {
                                         timeline!,
                                         chatController: chatController,
                                         onOpenDetails: _openNestedDetails,
+                                        onUnreact: (reactionEvent) {
+                                          // Route dialogs opened from inside
+                                          // this overlay render below its blur
+                                          // backdrop, so close it first.
+                                          widget.onClose();
+                                          showFutureLoadingDialog(
+                                            context: context,
+                                            future: () =>
+                                                reactionEvent.redactEvent(),
+                                          );
+                                        },
                                       ),
                                     ),
                                   ),
