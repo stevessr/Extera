@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:material_ui/material_ui.dart';
-import 'package:matrix/matrix.dart' show Client, Logs, DeviceKeys;
+import 'package:matrix/matrix.dart' show Client, DeviceKeys, Logs, Room;
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -56,6 +56,7 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
   DateTime? _keyCreatedAt;
   Uint8List? _lastKey;
   Timer? _membershipRefreshTimer;
+  Room? room;
 
   /// Latest encryption key index received per remote membership identity.
   /// Used to drop out-of-order keys and to resync receiver frame cryptors.
@@ -76,12 +77,15 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
             (pub) => pub.isScreenShare,
           ) ??
           false;
+
       _setupRoomListeners();
       // The previous screen state was disposed and cancelled the matrix
       // listeners with it. Re-register them, otherwise incoming E2EE keys
       // from other members are silently dropped after re-entering a call.
       if (_client != null) {
         _registerMatrixListeners(_client!);
+
+        room = _client!.getRoomById(widget.roomId);
       }
       // The call kept running while this screen was closed; make sure our
       // membership keeps being refreshed.
@@ -204,6 +208,15 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
         'Received a new key but the keyProvider is not ready yet!',
       ).onErrorCallback(Exception(), StackTrace.current);
       return;
+    }
+
+    if (room != null) {
+      final knownCallId = room!.ownMatrixRtcMembership?.callId;
+      if (callKeys.roomId != room!.id ||
+          (knownCallId != null && callKeys.session.callId != knownCallId)) {
+        Logs().d('Received call key for wrong group call.');
+        return;
+      }
     }
 
     final identity = '${event.sender}:${callKeys.member.claimedDeviceId}';
