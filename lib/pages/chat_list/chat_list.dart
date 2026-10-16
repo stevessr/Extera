@@ -408,7 +408,8 @@ class ChatListController extends State<ChatList>
     files.removeWhere(
       (file) =>
           file.path.startsWith(AppConfig.deepLinkPrefix) ||
-          file.path.startsWith(AppConfig.appSsoUrlScheme),
+          file.path.startsWith(AppConfig.appSsoUrlScheme) ||
+          Uri.tryParse(file.path)?.scheme == 'matrix',
     );
 
     showScaffoldDialog(
@@ -434,7 +435,11 @@ class ChatListController extends State<ChatList>
     Logs().w("Processing incoming url: ${uri.toString()}");
     context.go('/rooms');
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      UrlLauncher(context, uri.toString()).openMatrixToUrl();
+      if (uri.host == 'matrix.to') {
+        UrlLauncher(context, uri.toString()).openMatrixToUrl();
+      } else if (uri.scheme == 'matrix') {
+        UrlLauncher(context, uri.toString()).openMatrixUrl();
+      }
     });
   }
 
