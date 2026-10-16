@@ -403,14 +403,14 @@ class ChatListController extends State<ChatList>
   String? get activeChat => widget.activeChat;
 
   void _processIncomingSharedMedia(List<SharedMediaFile> files) {
-    if (files.isEmpty) return;
-
     files.removeWhere(
       (file) =>
           file.path.startsWith(AppConfig.deepLinkPrefix) ||
           file.path.startsWith(AppConfig.appSsoUrlScheme) ||
           Uri.tryParse(file.path)?.scheme == 'matrix',
     );
+
+    if (files.isEmpty) return;
 
     showScaffoldDialog(
       context: context,
