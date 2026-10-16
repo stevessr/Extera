@@ -45,6 +45,14 @@ extension PushRuleExtension on PushRule {
         return l10n.notificationRuleServerAcl;
       case '.im.vector.jitsi':
         return l10n.notificationRuleJitsi;
+      case '.org.matrix.msc3930.rule.poll_start_one_to_one':
+        return l10n.notificationRulePollStartOneToOne;
+      case '.org.matrix.msc3930.rule.poll_start':
+        return l10n.notificationRulePollStart;
+      case '.org.matrix.msc3930.rule.poll_end_one_to_one':
+        return l10n.notificationRulePollEndOneToOne;
+      case '.org.matrix.msc3930.rule.poll_end':
+        return l10n.notificationRulePollEnd;
       default:
         return ruleId.split('.').last.replaceAll('_', ' ').capitalize();
     }
@@ -92,6 +100,14 @@ extension PushRuleExtension on PushRule {
         return l10n.notificationRuleServerAclDescription;
       case '.im.vector.jitsi':
         return l10n.notificationRuleJitsiDescription;
+      case '.org.matrix.msc3930.rule.poll_start_one_to_one':
+        return l10n.notificationRulePollStartOneToOneDescription;
+      case '.org.matrix.msc3930.rule.poll_start':
+        return l10n.notificationRulePollStartDescription;
+      case '.org.matrix.msc3930.rule.poll_end_one_to_one':
+        return l10n.notificationRulePollEndOneToOneDescription;
+      case '.org.matrix.msc3930.rule.poll_end':
+        return l10n.notificationRulePollEndDescription;
       default:
         return l10n.unknownPushRule(ruleId);
     }
