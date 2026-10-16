@@ -3387,6 +3387,10 @@
     "notificationRulePollEndDescription": "Notifies the user about poll ends in rooms.",
     "notificationRulePollEndOneToOne": "Poll End One-to-One",
     "notificationRulePollEndOneToOneDescription": "Notifies the user about poll ends in one-to-one rooms.",
+    "viewAvatarChange": "View avatar change",
+    "avatarChangeTitle": "Avatar change",
+    "avatarChangePrevious": "Previous avatar",
+    "avatarChangeNew": "New avatar",
     "unknownPushRule": "Unknown push rule '{rule}'",
     "@unknownPushRule": {
         "type": "String",

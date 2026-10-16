@@ -365,7 +365,11 @@ class _MessageBubbleLegacyState extends State<MessageBubbleLegacy> {
         if (event.hasAggregatedEvents(timeline, RelationshipTypes.edit))
           Padding(
             padding: const EdgeInsets.only(left: 3.0),
-            child: Icon(Icons.edit_outlined, color: color, size: 12),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => widget.chatController?.showEdits(event: event),
+              child: Icon(Icons.edit_outlined, color: color, size: 12),
+            ),
           ),
         if (ownMessage)
           Padding(

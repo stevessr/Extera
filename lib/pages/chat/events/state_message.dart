@@ -3,6 +3,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/avatar_change_dialog.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat/events/message_reactions.dart';
 import 'package:extera_next/utils/matrix_sdk_extensions/matrix_locals.dart';
@@ -61,6 +62,9 @@ class _StateMessageState extends State<StateMessage> {
                   onSecondaryTap: () {
                     widget.controller?.onSelectMessage(event, _tapPosition);
                   },
+                  onTap: isAvatarChangeEvent(event)
+                      ? () => showAvatarChangeDialog(context, event)
+                      : null,
                   child: Padding(
                     padding: const .symmetric(horizontal: 8.0, vertical: 4.0),
                     child: Text(

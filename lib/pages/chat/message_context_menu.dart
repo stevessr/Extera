@@ -8,6 +8,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
+import 'package:extera_next/pages/chat/avatar_change_dialog.dart';
 import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/download_manager/download_manager.dart';
 import 'package:extera_next/utils/adaptive_bottom_sheet.dart';
@@ -477,6 +478,20 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                                     controller.closeMessageMenu();
                                   }
                                   controller.showEdits(event: event);
+                                },
+                              ),
+                              const ListDivider(),
+                            ],
+                            if (isAvatarChangeEvent(event)) ...[
+                              _buildMenuItem(
+                                event: event,
+                                icon: Icons.account_circle_outlined,
+                                label: L10n.of(context).viewAvatarChange,
+                                onPressed: () {
+                                  if (!PlatformInfos.isMobile) {
+                                    controller.closeMessageMenu();
+                                  }
+                                  showAvatarChangeDialog(context, event);
                                 },
                               ),
                               const ListDivider(),
