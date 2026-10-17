@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -516,38 +515,23 @@ class ChatController extends State<ChatPageWithRoom>
       if (item is FileShareItem) continue;
       if (item is TextShareItem) room.sendTextEvent(item.value);
       if (item is ContentShareItem) {
-        final value = item.value;
-
-        if (item.attribution != null) {
-          // Сохраняем оригинальные значения ДО модификации
-          final originalBody = value['body'] as String?;
-          final originalFormattedBody = value['formatted_body'] as String?;
-
-          if (originalBody is String) {
-            if (['m.text', 'm.notice'].contains(value['msgtype'] as String) ||
-                value['filename'] is String) {
-              value['body'] = "${item.attribution}\n$originalBody";
-            } else {
-              value['filename'] = originalBody;
-              value['body'] = item.attribution;
-            }
-          }
-
-          // Формируем formatted_body на основе ОРИГИНАЛЬНЫХ значений
-          if (value['format'] == 'org.matrix.custom.html' &&
-              originalFormattedBody is String) {
-            value['formatted_body'] =
-                "<strong>${item.attribution}</strong><blockquote>$originalFormattedBody</blockquote>";
-          } else if (originalBody is String) {
-            value['formatted_body'] =
-                "<strong>${item.attribution}</strong><blockquote>${HtmlEscape().convert(originalBody)}</blockquote>";
-            value['format'] = 'org.matrix.custom.html';
-          }
-
-          value['xyz.extera.forward'] = {'attribution': item.attribution};
+        final forwarded = item.forwarded;
+        final senderId = forwarded?['sender'];
+        String? displayName;
+        if (senderId is String) {
+          displayName =
+              room
+                  .getState('m.room.member', senderId)
+                  ?.content
+                  .tryGet<String>('displayname') ??
+              senderId;
         }
-
-        room.sendEvent(value);
+        room.sendEvent(
+          forwarded == null
+              ? item.value
+              : buildForwardContent(forwarded, senderDisplayName: displayName),
+          type: item.eventType ?? EventTypes.Message,
+        );
       }
     }
     final files = shareItems
@@ -1549,29 +1533,21 @@ class ChatController extends State<ChatPageWithRoom>
       context: context,
       builder: (context) => ShareScaffoldDialog(
         items: selectedEvents.isEmpty
-            ? [
-                if (event != null)
-                  ContentShareItem(
-                    sanitizeContent(
-                      event.getDisplayEvent(timeline!).content.copy(),
-                    ),
-                    attribution: generateAttributionString(event),
-                  ),
-              ]
-            : selectedEvents
-                  .map(
-                    (event) => ContentShareItem(
-                      sanitizeContent(
-                        event.getDisplayEvent(timeline!).content.copy(),
-                      ),
-                      attribution: generateAttributionString(event),
-                    ),
-                  )
-                  .toList(),
+            ? [if (event != null) _buildForwardContentShareItem(event)]
+            : selectedEvents.map(_buildForwardContentShareItem).toList(),
       ),
     );
     if (!mounted) return;
     setState(() => selectedEvents.clear());
+  }
+
+  ContentShareItem _buildForwardContentShareItem(Event event) {
+    final displayEvent = event.getDisplayEvent(timeline!);
+    return ContentShareItem(
+      sanitizeContent(displayEvent.content.copy()),
+      eventType: displayEvent.type,
+      forwarded: buildForwardedObject(event, displayEvent),
+    );
   }
 
   void sendAgainAction({Event? event}) {
