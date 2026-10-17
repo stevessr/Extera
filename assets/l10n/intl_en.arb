@@ -4151,6 +4151,8 @@
     "callMic": "Mic",
     "callScreenShare": "Screen",
     "lkCallSettings": "Settings",
+    "stopWatching": "Stop watching",
+    "chooseStreamToWatch": "Choose screen share to watch",
     "appearance": "Appearance",
     "floatingInputBar": "Floating input bar",
     "appBarAppearance": "App bar",

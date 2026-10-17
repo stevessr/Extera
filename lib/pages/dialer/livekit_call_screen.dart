@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:material_ui/material_ui.dart';
-import 'package:matrix/matrix.dart' show Client, DeviceKeys, Logs, Room;
+import 'package:matrix/matrix.dart' show Client, DeviceKeys, Logs, Room, User;
 
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
@@ -110,7 +110,25 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     }
   }
 
+  User? _profileFor(String identity) {
+    final idx = identity.lastIndexOf(':');
+    final userId = idx > 0 ? identity.substring(0, idx) : identity;
+    final profile = (_client ?? Matrix.of(context).client)
+        .getRoomById(widget.roomId)
+        ?.unsafeGetUserFromMemoryOrFallback(userId);
+    return profile;
+  }
+
   bool _screenShareActive = false;
+
+  /// Participant identity whose CAMERA is pinned to the main stage.
+  String? _pinnedIdentity;
+
+  /// Identity whose SCREEN SHARE was explicitly selected in the picker.
+  String? _watchedShareIdentity;
+
+  /// Set when the user chose "Stop watching"; disables auto-watch.
+  bool _stopWatchingShares = false;
 
   Future<void> _startFgTaskIfNeeded() async {
     if (!PlatformInfos.isAndroid) return;
@@ -825,65 +843,251 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
     );
   }
 
+  void togglePin(lk.RemoteParticipant participant) {
+    setState(() {
+      _pinnedIdentity = (_pinnedIdentity == participant.identity)
+          ? null
+          : participant.identity;
+    });
+  }
+
   Widget _buildCallUI() {
     final theme = Theme.of(context);
     final participants = _room?.remoteParticipants.values.toList() ?? [];
 
     final screenShares = <lk.RemoteParticipant>[];
-    final regularParticipants = <lk.RemoteParticipant>[];
     for (final p in participants) {
       final hasScreenShare = p.videoTrackPublications.any(
         (pub) => pub.isScreenShare && pub.subscribed,
       );
       if (hasScreenShare) {
         screenShares.add(p);
-      } else {
-        regularParticipants.add(p);
       }
+    }
+
+    // Validate the pinned camera: the participant must still be in the room,
+    // otherwise render unpinned and clear the stale identity after this frame.
+    lk.RemoteParticipant? pinnedParticipant;
+    final pinnedIdentity = _pinnedIdentity;
+    if (pinnedIdentity != null) {
+      for (final p in participants) {
+        if (p.identity == pinnedIdentity) {
+          pinnedParticipant = p;
+          break;
+        }
+      }
+      if (pinnedParticipant == null && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _pinnedIdentity = null);
+        });
+      }
+    }
+
+    lk.RemoteParticipant? watchedShareParticipant;
+    final watchedIdentity = _watchedShareIdentity;
+    if (watchedIdentity != null) {
+      for (final p in screenShares) {
+        if (p.identity == watchedIdentity) {
+          watchedShareParticipant = p;
+          break;
+        }
+      }
+      if (watchedShareParticipant == null && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _watchedShareIdentity = null);
+        });
+      }
+    }
+
+    lk.RemoteParticipant? stageShare;
+    if (watchedShareParticipant != null) {
+      stageShare = watchedShareParticipant;
+    } else if (!_stopWatchingShares && screenShares.isNotEmpty) {
+      stageShare = screenShares.first;
+    }
+
+    final stageIdentity = pinnedParticipant?.identity;
+    final stripParticipants = participants
+        .where((p) => p.identity != stageIdentity)
+        .toList();
+    final showStrip =
+        (pinnedParticipant != null || stageShare != null) &&
+        stripParticipants.isNotEmpty;
+
+    final columnMode = FluffyThemes.isColumnMode(context);
+    final stagePaddingBottom = showStrip && !columnMode ? 278.0 : 150.0;
+    final stagePaddingRight = showStrip && columnMode ? 258.0 : 0.0;
+
+    final Widget mainArea;
+    if (pinnedParticipant != null) {
+      final pinned = pinnedParticipant;
+      final pinnedUser = _profileFor(pinned.identity);
+      mainArea = Padding(
+        padding: EdgeInsets.fromLTRB(
+          8,
+          8,
+          8 + stagePaddingRight,
+          stagePaddingBottom,
+        ),
+        child: _ParticipantView(
+          pinned,
+          onTap: () => togglePin(pinned),
+          pinned: true,
+          displayName: pinnedUser?.displayName ?? _shortId(pinned.identity),
+          avatar: pinnedUser?.avatarUrl,
+        ),
+      );
+    } else if (stageShare != null) {
+      mainArea = Padding(
+        padding: EdgeInsets.only(
+          bottom: stagePaddingBottom,
+          right: stagePaddingRight,
+        ),
+        child: _ScreenShareView(
+          participant: stageShare,
+          displayName: _profileFor(stageShare.identity)?.displayName,
+        ),
+      );
+    } else if (participants.isEmpty) {
+      mainArea = Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              L10n.of(context).waitingForParticipants,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (participants.length == 1) {
+      final participant = participants.first;
+      final user = _profileFor(participant.identity);
+      mainArea = Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 150),
+        child: _ParticipantView(
+          participant,
+          onTap: () => togglePin(participant),
+          pinned: _pinnedIdentity == participant.identity,
+          displayName: user?.displayName ?? _shortId(participant.identity),
+          avatar: user?.avatarUrl,
+        ),
+      );
+    } else {
+      mainArea = GridView.builder(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 150),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: participants.length > 4 ? 3 : 2,
+          childAspectRatio: participants.length > 4 ? 1.0 : 0.8,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+        ),
+        itemCount: participants.length,
+        itemBuilder: (context, index) {
+          final participant = participants[index];
+          final user = _profileFor(participant.identity);
+          return _ParticipantView(
+            participant,
+            onTap: () => togglePin(participant),
+            pinned: _pinnedIdentity == participant.identity,
+            displayName: user?.displayName ?? _shortId(participant.identity),
+            avatar: user?.avatarUrl,
+          );
+        },
+      );
     }
 
     return Stack(
       children: [
-        Positioned.fill(
-          child: screenShares.isNotEmpty
-              ? Padding(
-                  padding: const EdgeInsets.only(bottom: 150.0),
-                  child: _ScreenShareView(participant: screenShares.first),
-                )
-              : regularParticipants.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        L10n.of(context).waitingForParticipants,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 18,
+        Positioned.fill(child: mainArea),
+        if (showStrip)
+          columnMode
+              ? Positioned(
+                  top: 8,
+                  bottom: 150,
+                  right:
+                      140, // left of the local PiP column (right:16, width:110)
+                  width: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.vertical,
+                    itemCount: stripParticipants.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final participant = stripParticipants[index];
+                      final user = _profileFor(participant.identity);
+                      return SizedBox(
+                        height: 120,
+                        child: _ParticipantView(
+                          participant,
+                          onTap: () => togglePin(participant),
+                          pinned: false,
+                          displayName:
+                              user?.displayName ??
+                              _shortId(participant.identity),
+                          avatar: user?.avatarUrl,
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 )
-              : regularParticipants.length == 1
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 150),
-                  child: _ParticipantView(regularParticipants.first),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 150),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: regularParticipants.length > 4 ? 3 : 2,
-                    childAspectRatio: regularParticipants.length > 4
-                        ? 1.0
-                        : 0.8,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
+              : Positioned(
+                  left: 8,
+                  right:
+                      140, // keeps clear of the local PiP column (right:16, width:110)
+                  bottom:
+                      150, // sits in the gap the stage's bottom padding leaves, above the call controls
+                  height: 120,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: stripParticipants.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final participant = stripParticipants[index];
+                      final user = _profileFor(participant.identity);
+                      return SizedBox(
+                        width: 110,
+                        child: _ParticipantView(
+                          participant,
+                          onTap: () => togglePin(participant),
+                          pinned: false,
+                          displayName:
+                              user?.displayName ??
+                              _shortId(participant.identity),
+                          avatar: user?.avatarUrl,
+                        ),
+                      );
+                    },
                   ),
-                  itemCount: regularParticipants.length,
-                  itemBuilder: (context, index) =>
-                      _ParticipantView(regularParticipants[index]),
                 ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (screenShares.isNotEmpty && _pinnedIdentity == null)
+                  IconButton.filledTonal(
+                    onPressed: _showScreenSharePicker,
+                    tooltip: L10n.of(context).chooseStreamToWatch,
+                    icon: const Icon(Icons.screen_share),
+                  ),
+                if (_pinnedIdentity != null)
+                  IconButton.filledTonal(
+                    onPressed: () => setState(() => _pinnedIdentity = null),
+                    tooltip: L10n.of(context).unpin,
+                    icon: const Icon(Icons.push_pin),
+                  ),
+              ],
+            ),
+          ),
         ),
         Positioned(
           right: 16,
@@ -923,11 +1127,66 @@ class _LiveKitCallScreenState extends State<LiveKitCallScreen> {
       ],
     );
   }
+
+  void _showScreenSharePicker() {
+    final theme = Theme.of(context);
+    final participants =
+        _room?.remoteParticipants.values.toList() ?? <lk.RemoteParticipant>[];
+    final sharers = participants
+        .where(
+          (p) => p.videoTrackPublications.any(
+            (pub) => pub.isScreenShare && pub.subscribed,
+          ),
+        )
+        .toList();
+
+    lk.RemoteParticipant? stageShare;
+    if (_pinnedIdentity == null) {
+      final watchedIdentity = _watchedShareIdentity;
+      for (final p in sharers) {
+        if (p.identity == watchedIdentity) {
+          stageShare = p;
+          break;
+        }
+      }
+      if (stageShare == null && !_stopWatchingShares && sharers.isNotEmpty) {
+        stageShare = sharers.first;
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ScreenSharePickerSheet(
+        sharers: sharers,
+        watchedIdentity: stageShare?.identity,
+        watchActive: stageShare != null,
+        profileOf: _profileFor,
+        onWatch: (identity) => setState(() {
+          _watchedShareIdentity = identity;
+          _stopWatchingShares = false;
+        }),
+        onStopWatching: () => setState(() {
+          _watchedShareIdentity = null;
+          _stopWatchingShares = true;
+        }),
+      ),
+    );
+  }
+}
+
+String _shortId(String identity) {
+  final at = identity.indexOf(':');
+  return at > 0 ? identity.substring(1, at).toLowerCase() : identity;
 }
 
 class _ScreenShareView extends StatefulWidget {
   final lk.RemoteParticipant participant;
-  const _ScreenShareView({required this.participant});
+  final String? displayName;
+  const _ScreenShareView({required this.participant, this.displayName});
 
   @override
   State<_ScreenShareView> createState() => _ScreenShareViewState();
@@ -998,7 +1257,9 @@ class _ScreenShareViewState extends State<_ScreenShareView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  L10n.of(context).isScreenSharing(_shortId(p.identity)),
+                  L10n.of(
+                    context,
+                  ).isScreenSharing(widget.displayName ?? _shortId(p.identity)),
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 16,
@@ -1031,7 +1292,7 @@ class _ScreenShareViewState extends State<_ScreenShareView> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _shortId(p.identity),
+                  widget.displayName ?? _shortId(p.identity),
                   style: TextStyle(
                     color: theme.colorScheme.onPrimaryContainer,
                     fontSize: 12,
@@ -1045,16 +1306,22 @@ class _ScreenShareViewState extends State<_ScreenShareView> {
       ],
     );
   }
-
-  String _shortId(String identity) {
-    final at = identity.indexOf(':');
-    return at > 0 ? identity.substring(1, at).toLowerCase() : identity;
-  }
 }
 
 class _ParticipantView extends StatefulWidget {
   final lk.RemoteParticipant participant;
-  const _ParticipantView(this.participant);
+  final VoidCallback? onTap;
+  final bool pinned;
+  final String? displayName;
+  final Uri? avatar;
+
+  const _ParticipantView(
+    this.participant, {
+    this.onTap,
+    this.pinned = false,
+    this.displayName,
+    this.avatar,
+  });
 
   @override
   State<_ParticipantView> createState() => _ParticipantViewState();
@@ -1098,84 +1365,84 @@ class _ParticipantViewState extends State<_ParticipantView> {
     final micPub = p.audioTrackPublications.firstOrNull;
     final micMuted = micPub?.muted ?? true;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: speaking ? theme.colorScheme.tertiary : Colors.transparent,
-          width: speaking ? 3 : 0,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (videoTrack != null)
-            lk.VideoTrackRenderer(videoTrack, fit: lk.VideoViewFit.contain)
-          else
-            Center(
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  Icons.person,
-                  size: 40,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 64,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: speaking
+                ? theme.colorScheme.tertiary
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            width: speaking ? 3 : 1,
           ),
-          Positioned(
-            bottom: 8,
-            left: 8,
-            right: 8,
-            child: Row(
-              children: [
-                if (micMuted)
-                  _statusBadge(Icons.mic_off, theme.colorScheme.error),
-                if (!micMuted && speaking)
-                  _statusBadge(Icons.mic, theme.colorScheme.tertiary),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _shortId(p.identity),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black54,
-                          blurRadius: 2,
-                          offset: Offset(1, 1),
-                        ),
-                      ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (videoTrack != null)
+              lk.VideoTrackRenderer(videoTrack, fit: lk.VideoViewFit.contain)
+            else
+              Center(
+                child: Avatar(
+                  mxContent: widget.avatar,
+                  name: widget.displayName ?? _shortId(p.identity),
+                  size: 56,
+                ),
+              ),
+            Positioned(
+              bottom: 8,
+              left: 8,
+              right: 8,
+              child: Row(
+                children: [
+                  if (micMuted)
+                    _statusBadge(Icons.mic_off, theme.colorScheme.error),
+                  if (!micMuted && speaking)
+                    _statusBadge(Icons.mic, theme.colorScheme.tertiary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      widget.displayName ?? _shortId(p.identity),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 2,
+                            offset: Offset(1, 1),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (widget.pinned)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.push_pin,
+                    color: theme.colorScheme.tertiary,
+                    size: 16,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1190,11 +1457,6 @@ class _ParticipantViewState extends State<_ParticipantView> {
       ),
       child: Icon(icon, color: color, size: 16),
     );
-  }
-
-  String _shortId(String identity) {
-    final at = identity.indexOf(':');
-    return at > 0 ? identity.substring(1, at).toLowerCase() : identity;
   }
 }
 
@@ -1254,24 +1516,6 @@ class _LocalVideoView extends StatelessWidget {
             Center(
               child: Avatar(mxContent: avatar, name: displayName, size: 48),
             ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 40,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.6),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
           Positioned(
             bottom: 4,
             left: 4,
@@ -1919,6 +2163,73 @@ class _CallSettingsSheetState extends State<_CallSettingsSheet> {
       title: Text(title),
       value: value,
       onChanged: onChanged,
+    );
+  }
+}
+
+class _ScreenSharePickerSheet extends StatelessWidget {
+  final List<lk.RemoteParticipant> sharers;
+  final String? watchedIdentity;
+  final bool watchActive;
+  final User? Function(String identity) profileOf;
+  final ValueChanged<String> onWatch;
+  final VoidCallback onStopWatching;
+
+  const _ScreenSharePickerSheet({
+    required this.sharers,
+    required this.watchedIdentity,
+    required this.watchActive,
+    required this.profileOf,
+    required this.onWatch,
+    required this.onStopWatching,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            L10n.of(context).chooseStreamToWatch,
+            style: TextStyle(
+              color: theme.colorScheme.primary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ...sharers.map((sharer) {
+            final profile = profileOf(sharer.identity);
+            return ListTile(
+              leading: Avatar(
+                mxContent: profile?.avatarUrl,
+                name: profile?.displayName ?? _shortId(sharer.identity),
+                size: 36,
+              ),
+              title: Text(profile?.displayName ?? _shortId(sharer.identity)),
+              trailing: sharer.identity == watchedIdentity
+                  ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                  : null,
+              onTap: () {
+                onWatch(sharer.identity);
+                Navigator.of(context).pop();
+              },
+            );
+          }),
+          if (watchActive)
+            ListTile(
+              leading: Icon(Icons.close, color: theme.colorScheme.error),
+              title: Text(L10n.of(context).stopWatching),
+              onTap: () {
+                onStopWatching();
+                Navigator.of(context).pop();
+              },
+            ),
+        ],
+      ),
     );
   }
 }
