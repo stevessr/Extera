@@ -226,7 +226,7 @@ class _MessageModernState extends State<MessageModern> {
 
     final client = Matrix.of(context).client;
     final ownMessage = event.senderId == client.userID;
-    final hasBeenRead = widget.hasBeenRead;
+    // final hasBeenRead = widget.hasBeenRead;
 
     final displayTime =
         (event.type == EventTypes.RoomCreate ||
@@ -256,46 +256,46 @@ class _MessageModernState extends State<MessageModern> {
       RelationshipTypes.reaction,
     );
 
-    Widget buildStatusRow({required Color color}) => Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: .end,
-      mainAxisAlignment: .end,
-      children: [
-        if (event.hasAggregatedEvents(timeline, RelationshipTypes.edit))
-          Padding(
-            padding: const EdgeInsets.only(left: 3.0),
-            child: Icon(Icons.edit_outlined, color: color, size: 12),
-          ),
-        if (ownMessage)
-          Padding(
-            padding: const EdgeInsets.only(left: 3.0),
-            child: event.fileSendingStatus != null
-                ? FileSendingStatusIndicator(
-                    event.fileSendingStatus!,
-                    color: color,
-                    size: 13,
-                  )
-                : Icon(
-                    event.status == EventStatus.sending
-                        ? Icons.watch_later_outlined
-                        : event.status == EventStatus.error
-                        ? Icons.error_outline
-                        : hasBeenRead
-                        ? Icons.done_all
-                        : Icons.check,
-                    color: color,
-                    size: 13,
-                  ),
-          ),
-        Text(
-          event.originServerTs.localizedMessageTime(context),
-          style: TextStyle(color: color, fontSize: 11, height: 1.0),
-        ),
-      ],
-    );
+    // Widget buildStatusRow({required Color color}) => Row(
+    //   mainAxisSize: MainAxisSize.min,
+    //   crossAxisAlignment: .end,
+    //   mainAxisAlignment: .end,
+    //   children: [
+    //     if (event.hasAggregatedEvents(timeline, RelationshipTypes.edit))
+    //       Padding(
+    //         padding: const EdgeInsets.only(left: 3.0),
+    //         child: Icon(Icons.edit_outlined, color: color, size: 12),
+    //       ),
+    //     if (ownMessage)
+    //       Padding(
+    //         padding: const EdgeInsets.only(left: 3.0),
+    //         child: event.fileSendingStatus != null
+    //             ? FileSendingStatusIndicator(
+    //                 event.fileSendingStatus!,
+    //                 color: color,
+    //                 size: 13,
+    //               )
+    //             : Icon(
+    //                 event.status == EventStatus.sending
+    //                     ? Icons.watch_later_outlined
+    //                     : event.status == EventStatus.error
+    //                     ? Icons.error_outline
+    //                     : hasBeenRead
+    //                     ? Icons.done_all
+    //                     : Icons.check,
+    //                 color: color,
+    //                 size: 13,
+    //               ),
+    //       ),
+    //     Text(
+    //       event.originServerTs.localizedMessageTime(context),
+    //       style: TextStyle(color: color, fontSize: 11, height: 1.0),
+    //     ),
+    //   ],
+    // );
 
-    final statusColor = theme.colorScheme.onSurfaceVariant;
-    final messageStatusRow = buildStatusRow(color: statusColor);
+    // final statusColor = theme.colorScheme.onSurfaceVariant;
+    // final messageStatusRow = buildStatusRow(color: statusColor);
 
     final row = FutureBuilder<User?>(
       future: _senderUserFuture,
@@ -378,19 +378,38 @@ class _MessageModernState extends State<MessageModern> {
                             mainAxisSize: .min,
                             children: [
                               if (!nextEventSameSender) ...[
-                                Text(
-                                  displayname,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: (theme.brightness == Brightness.light
-                                        ? displayname.colorScheme.primary
-                                        : displayname
-                                              .colorScheme
-                                              .primaryContainer),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  mainAxisSize: .min,
+                                  spacing: 8,
+                                  children: [
+                                    Text(
+                                      displayname,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            (theme.brightness ==
+                                                Brightness.light
+                                            ? displayname.colorScheme.primary
+                                            : displayname
+                                                  .colorScheme
+                                                  .primaryContainer),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      event.originServerTs.localizedMessageTime(
+                                        context,
+                                      ),
+                                      style: TextStyle(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                        fontSize: 11,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                               ],
@@ -501,11 +520,11 @@ class _MessageModernState extends State<MessageModern> {
                             ],
                           ),
                         ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: messageStatusRow,
-                        ),
+                        // Positioned(
+                        //   right: 0,
+                        //   bottom: 0,
+                        //   child: messageStatusRow,
+                        // ),
                       ],
                     ),
                   ),
