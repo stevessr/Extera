@@ -197,7 +197,7 @@ class _ChatViewState extends State<ChatView> {
                 mainAxisSize: .min,
                 spacing: 2,
                 children: [
-                  const Icon(Icons.video_call_outlined),
+                  const Icon(Icons.call_outlined),
                   Text(callMembers.toString()),
                 ],
               ),
@@ -205,7 +205,7 @@ class _ChatViewState extends State<ChatView> {
           else
             IconButton(
               onPressed: () => controller.onLiveKitCallButtonTap(),
-              icon: const Icon(Icons.video_call_outlined),
+              icon: const Icon(Icons.call_outlined),
               tooltip: L10n.of(context).placeCall,
             ),
         EncryptionButton(controller.room),
