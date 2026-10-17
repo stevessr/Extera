@@ -1603,7 +1603,18 @@ class ChatController extends State<ChatPageWithRoom>
       (event) => event.eventId == eventId,
     );
 
-    // print('Scrolling to $eventId.');
+    final threadRootId =
+        foundEvent?.relationshipType == RelationshipTypes.thread
+        ? foundEvent?.relationshipEventId
+        : null;
+    if (threadRootEventId == null && threadRootId != null) {
+      // TODO: open thread and scroll to event
+      return scrollToEventId(
+        threadRootId,
+        scrolledFromEventId,
+        highlightEvent: highlightEvent,
+      );
+    }
 
     final eventIndex = foundEvent == null
         ? -1
@@ -1621,6 +1632,7 @@ class ChatController extends State<ChatPageWithRoom>
     _cachedFilteredEvents = null;
 
     if (eventIndex == -1) {
+      if (foundEvent != null) return;
       if (isRetry) {
         _showScrollUpMaterialBanner(eventId);
         return;
