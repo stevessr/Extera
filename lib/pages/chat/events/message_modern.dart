@@ -9,7 +9,7 @@ import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
-import 'package:extera_next/pages/chat/events/file_sending_indicator.dart';
+// import 'package:extera_next/pages/chat/events/file_sending_indicator.dart';
 import 'package:extera_next/pages/chat/events/room_creation_state_event.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
@@ -99,7 +99,7 @@ class _MessageModernState extends State<MessageModern> {
     PollEvents.pollStart,
   };
 
-  static const double _statusRowReservedWidth = 68.0;
+  // static const double _statusRowReservedWidth = 68.0;
 
   Offset _tapPosition = Offset.zero;
 
@@ -325,8 +325,8 @@ class _MessageModernState extends State<MessageModern> {
             ),
             Padding(
               padding: EdgeInsets.only(
-                top: previousEventSameSender ? 1.0 : 8.0,
-                bottom: nextEventSameSender ? 1.0 : 8.0,
+                top: nextEventSameSender ? 1.0 : 8.0,
+                bottom: previousEventSameSender ? 1.0 : 8.0,
                 left: 8.0,
                 right: 8.0,
               ),
@@ -369,156 +369,151 @@ class _MessageModernState extends State<MessageModern> {
                   Expanded(
                     child: Stack(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            right: _statusRowReservedWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: .start,
-                            mainAxisSize: .min,
-                            children: [
-                              if (!nextEventSameSender) ...[
-                                Row(
-                                  mainAxisSize: .min,
-                                  spacing: 8,
-                                  children: [
-                                    Text(
-                                      displayname,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color:
-                                            (theme.brightness ==
-                                                Brightness.light
-                                            ? displayname.colorScheme.primary
-                                            : displayname
-                                                  .colorScheme
-                                                  .primaryContainer),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                        Column(
+                          crossAxisAlignment: .start,
+                          mainAxisSize: .min,
+                          children: [
+                            if (!nextEventSameSender) ...[
+                              Row(
+                                mainAxisSize: .min,
+                                spacing: 8,
+                                children: [
+                                  Text(
+                                    displayname,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          (theme.brightness == Brightness.light
+                                          ? displayname.colorScheme.primary
+                                          : displayname
+                                                .colorScheme
+                                                .primaryContainer),
                                     ),
-                                    Text(
-                                      event.originServerTs.localizedMessageTime(
-                                        context,
-                                      ),
-                                      style: TextStyle(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                        fontSize: 11,
-                                        height: 1.0,
-                                      ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    event.originServerTs.localizedMessageTime(
+                                      context,
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                              ],
-                              GestureDetector(
-                                onTapDown: (details) =>
-                                    _tapPosition = details.globalPosition,
-                                onLongPress: widget.longPressSelect
-                                    ? null
-                                    : () {
-                                        HapticFeedback.heavyImpact();
-                                        widget.onSelect(event, _tapPosition);
-                                      },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    if (_replyEventFuture != null)
-                                      FutureBuilder<Event?>(
-                                        future: _replyEventFuture,
-                                        builder:
-                                            (BuildContext context, snapshot) {
-                                              final replyEvent =
-                                                  snapshot.data ??
-                                                  _placeholderReplyEvent!;
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 4,
-                                                ),
-                                                child: Material(
-                                                  color: Colors.transparent,
-                                                  child: InkWell(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          AppConfig
-                                                                  .borderRadius -
-                                                              10,
-                                                        ),
-                                                    onTap: () => _scrollToEvent(
-                                                      replyEvent,
-                                                      event,
-                                                    ),
-                                                    child: AbsorbPointer(
-                                                      child: ReplyContent(
-                                                        replyEvent,
-                                                        noBubble: true,
-                                                        ownMessage: ownMessage,
-                                                        timeline: timeline,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 11,
+                                      height: 1.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                            GestureDetector(
+                              onTapDown: (details) =>
+                                  _tapPosition = details.globalPosition,
+                              onLongPress: widget.longPressSelect
+                                  ? null
+                                  : () {
+                                      HapticFeedback.heavyImpact();
+                                      widget.onSelect(event, _tapPosition);
+                                    },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  if (_replyEventFuture != null)
+                                    FutureBuilder<Event?>(
+                                      future: _replyEventFuture,
+                                      builder:
+                                          (BuildContext context, snapshot) {
+                                            final replyEvent =
+                                                snapshot.data ??
+                                                _placeholderReplyEvent!;
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 4,
+                                              ),
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        AppConfig.borderRadius -
+                                                            10,
                                                       ),
+                                                  onTap: () => _scrollToEvent(
+                                                    replyEvent,
+                                                    event,
+                                                  ),
+                                                  child: AbsorbPointer(
+                                                    child: ReplyContent(
+                                                      replyEvent,
+                                                      noBubble: true,
+                                                      ownMessage: ownMessage,
+                                                      timeline: timeline,
                                                     ),
                                                   ),
                                                 ),
-                                              );
-                                            },
-                                      ),
-                                    MessageContent(
-                                      displayEvent,
-                                      textColor: theme.colorScheme.onSurface,
-                                      linkColor: theme.colorScheme.primary,
-                                      onInfoTab: widget.onInfoTab,
-                                      timeline: timeline,
-                                      loadMedia:
-                                          loadMedia &&
-                                          (showHiddenMedia ||
-                                              contentWarning == null),
-                                      showHiddenMedia:
-                                          showHiddenMedia ||
-                                          contentWarning == null,
-                                      onLoadMedia: contentWarning != null
-                                          ? () {
-                                              setState(() {
-                                                if (!showHiddenMedia) {
-                                                  showHiddenMedia = true;
-                                                } else if (!loadMedia) {
-                                                  loadMedia = true;
-                                                }
-                                              });
-                                            }
-                                          : () {
-                                              setState(() {
-                                                loadMedia = true;
-                                              });
-                                            },
-                                      onRevealHiddenMedia: () {
-                                        setState(() {
-                                          if (!showHiddenMedia) {
-                                            showHiddenMedia = true;
-                                          } else if (!loadMedia) {
-                                            loadMedia = true;
-                                          }
-                                        });
-                                      },
-                                      contentWarning: contentWarning,
-                                      layout: .modern,
-                                      borderRadius: BorderRadius.zero,
-                                      selectable: widget.selectable,
+                                              ),
+                                            );
+                                          },
                                     ),
-                                  ],
+                                  MessageContent(
+                                    displayEvent,
+                                    textColor: theme.colorScheme.onSurface,
+                                    linkColor: theme.colorScheme.primary,
+                                    onInfoTab: widget.onInfoTab,
+                                    timeline: timeline,
+                                    loadMedia:
+                                        loadMedia &&
+                                        (showHiddenMedia ||
+                                            contentWarning == null),
+                                    showHiddenMedia:
+                                        showHiddenMedia ||
+                                        contentWarning == null,
+                                    onLoadMedia: contentWarning != null
+                                        ? () {
+                                            setState(() {
+                                              if (!showHiddenMedia) {
+                                                showHiddenMedia = true;
+                                              } else if (!loadMedia) {
+                                                loadMedia = true;
+                                              }
+                                            });
+                                          }
+                                        : () {
+                                            setState(() {
+                                              loadMedia = true;
+                                            });
+                                          },
+                                    onRevealHiddenMedia: () {
+                                      setState(() {
+                                        if (!showHiddenMedia) {
+                                          showHiddenMedia = true;
+                                        } else if (!loadMedia) {
+                                          loadMedia = true;
+                                        }
+                                      });
+                                    },
+                                    contentWarning: contentWarning,
+                                    layout: .modern,
+                                    borderRadius: BorderRadius.zero,
+                                    selectable: widget.selectable,
+                                    nextEventSameSender: nextEventSameSender,
+                                    previousEventSameSender:
+                                        previousEventSameSender,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (widget.thread != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: ThreadPreview(
+                                  event: widget.event,
+                                  room: widget.event.room,
+                                  thread: widget.thread!,
                                 ),
                               ),
-                              if (widget.thread != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: ThreadPreview(
-                                    event: widget.event,
-                                    room: widget.event.room,
-                                    thread: widget.thread!,
-                                  ),
-                                ),
-                            ],
-                          ),
+                          ],
                         ),
                         // Positioned(
                         //   right: 0,
