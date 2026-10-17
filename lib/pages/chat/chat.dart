@@ -851,7 +851,7 @@ class ChatController extends State<ChatPageWithRoom>
     timeline
         .setReadMarker(
           eventId: eventId,
-          public: AppSettings.sendPublicReadReceipts.value,
+          public: shouldSendPublicReadReceipts(sendingClient, roomId),
         )
         .whenComplete(() {
           if (_setReadMarkerEventId == eventId) _setReadMarkerEventId = null;
