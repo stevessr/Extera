@@ -1,3 +1,11 @@
+## Extera 26.5.6
+- Add pinning participant view in calls
+- Add separate row/column for other participants in calls
+- Support opening new 'matrix:' URLs
+- Send MSC4553 forwarded content
+- Move message timestamp next to sender name in modern message layout
+- Change call button icon in chat header
+
 ## Extera 26.5.5
 - Experimental support for multiple media in one message (MSC4274)
 - Added floating date chip when scrolling through message history.
