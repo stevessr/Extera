@@ -10,8 +10,8 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
-import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/chat/events/gallery_content.dart';
+import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/chat/events/poll_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/chat/events/video_player.dart';
