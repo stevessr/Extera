@@ -4,8 +4,7 @@ import 'package:matrix/matrix.dart';
 import 'package:extera_next/pages/chat/retry_failed_event.dart';
 
 class _RecordingRoom implements Room {
-  final calls =
-      <({Map<String, dynamic> content, String type, String? txid})>[];
+  final calls = <({Map<String, dynamic> content, String type, String? txid})>[];
 
   @override
   String get id => '!test:example.org';
