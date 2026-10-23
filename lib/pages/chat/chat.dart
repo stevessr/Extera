@@ -28,6 +28,7 @@ import 'package:extera_next/pages/chat/file_send_relation.dart';
 import 'package:extera_next/pages/chat/message_context_menu.dart';
 import 'package:extera_next/pages/chat/message_edits_dialog.dart';
 import 'package:extera_next/pages/chat/recovered_event_dialog.dart';
+import 'package:extera_next/pages/chat/retry_failed_event.dart';
 import 'package:extera_next/pages/chat/seen_by_row.dart';
 import 'package:extera_next/pages/chat/send_poll_dialog.dart';
 import 'package:extera_next/pages/chat/translated_event_dialog.dart';
@@ -1925,7 +1926,7 @@ class ChatController extends State<ChatPageWithRoom>
   void sendAgainAction({Event? event}) {
     event ??= selectedEvents.first;
     if (event.status.isError) {
-      event.sendAgain();
+      retryFailedEventPreservingType(event);
     }
     final allEditEvents = event
         .aggregatedEvents(timeline!, RelationshipTypes.edit)

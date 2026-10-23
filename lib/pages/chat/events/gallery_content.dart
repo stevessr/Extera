@@ -5,6 +5,7 @@ import 'package:matrix/matrix.dart';
 
 import 'package:extera_next/config/app_config.dart';
 import 'package:extera_next/config/app_settings.dart';
+import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/events/audio_player.dart';
 import 'package:extera_next/pages/chat/events/html_message.dart';
@@ -12,12 +13,12 @@ import 'package:extera_next/pages/chat/events/message.dart';
 import 'package:extera_next/pages/chat/events/message_download_content.dart';
 import 'package:extera_next/pages/chat/events/redacted_content.dart';
 import 'package:extera_next/pages/image_viewer/image_viewer.dart';
-import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import '../../../utils/matrix_sdk_extensions/event_extension.dart';
 
 /// Renders an MSC4274 inline media gallery (`dm.filament.gallery`) message:
@@ -75,8 +76,7 @@ class GalleryContent extends StatelessWidget {
   /// [gridSpacing] gaps between them, clamped to the chat width.
   static double gridWidth(int columnCount) {
     final available = FluffyThemes.columnWidth * 1.5;
-    final width =
-        gridTileSize * columnCount + gridSpacing * (columnCount - 1);
+    final width = gridTileSize * columnCount + gridSpacing * (columnCount - 1);
     return width.clamp(gridTileSize, available);
   }
 
