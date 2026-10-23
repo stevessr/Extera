@@ -557,7 +557,7 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                               const ListDivider(),
                             ],
                             if (event.type ==
-                                'org.matrix.msc3381.poll.start') ...[
+                                PollEventContent.startType) ...[
                               _buildMenuItem(
                                 event: event,
                                 icon: Icons.info_outline,
@@ -569,9 +569,10 @@ class _MessageContextMenuState extends State<MessageContextMenu> {
                               ),
                               const ListDivider(),
                             ],
-                            if (event.type == 'org.matrix.msc3381.poll.start' &&
-                                event.senderId ==
-                                    Matrix.of(context).client.userID)
+                            if (event.type == PollEventContent.startType &&
+                                (event.senderId ==
+                                        Matrix.of(context).client.userID ||
+                                    event.room.canRedact))
                               _buildMenuItem(
                                 event: event,
                                 icon: Icons.check,
