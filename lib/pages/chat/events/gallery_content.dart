@@ -18,6 +18,7 @@ import 'package:extera_next/utils/size_string.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/blur_hash.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
+
 import '../../../utils/matrix_sdk_extensions/event_extension.dart';
 
 /// Renders an MSC4274 inline media gallery (`dm.filament.gallery`) message:
@@ -75,8 +76,7 @@ class GalleryContent extends StatelessWidget {
   /// [gridSpacing] gaps between them, clamped to the chat width.
   static double gridWidth(int columnCount) {
     final available = FluffyThemes.columnWidth * 1.5;
-    final width =
-        gridTileSize * columnCount + gridSpacing * (columnCount - 1);
+    final width = gridTileSize * columnCount + gridSpacing * (columnCount - 1);
     return width.clamp(gridTileSize, available);
   }
 

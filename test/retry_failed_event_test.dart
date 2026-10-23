@@ -47,46 +47,52 @@ Event _failedEvent(
 );
 
 void main() {
-  test('failed sticker retries as m.sticker with its original payload', () async {
-    final room = _RecordingRoom();
-    final content = <String, dynamic>{
-      'body': ':cat:',
-      'url': 'mxc://example.org/cat',
-      'info': {'mimetype': 'image/webp', 'w': 128, 'h': 128},
-      'm.relates_to': {
-        'rel_type': 'm.thread',
-        'event_id': r'$thread-root',
-        'm.in_reply_to': {'event_id': r'$thread-last'},
-      },
-    };
-    final event = _failedEvent(
-      room,
-      type: EventTypes.Sticker,
-      content: content,
-      unsigned: {'transaction_id': 'original-txn'},
-    );
+  test(
+    'failed sticker retries as m.sticker with its original payload',
+    () async {
+      final room = _RecordingRoom();
+      final content = <String, dynamic>{
+        'body': ':cat:',
+        'url': 'mxc://example.org/cat',
+        'info': {'mimetype': 'image/webp', 'w': 128, 'h': 128},
+        'm.relates_to': {
+          'rel_type': 'm.thread',
+          'event_id': r'$thread-root',
+          'm.in_reply_to': {'event_id': r'$thread-last'},
+        },
+      };
+      final event = _failedEvent(
+        room,
+        type: EventTypes.Sticker,
+        content: content,
+        unsigned: {'transaction_id': 'original-txn'},
+      );
 
-    expect(await retryFailedEventPreservingType(event), r'$sent');
+      expect(await retryFailedEventPreservingType(event), r'$sent');
 
-    expect(room.calls, hasLength(1));
-    expect(room.calls.single.type, EventTypes.Sticker);
-    expect(room.calls.single.txid, 'original-txn');
-    expect(room.calls.single.content, content);
-  });
+      expect(room.calls, hasLength(1));
+      expect(room.calls.single.type, EventTypes.Sticker);
+      expect(room.calls.single.txid, 'original-txn');
+      expect(room.calls.single.content, content);
+    },
+  );
 
-  test('sticker without an unsigned transaction ID reuses its local ID', () async {
-    final room = _RecordingRoom();
-    final event = _failedEvent(
-      room,
-      type: EventTypes.Sticker,
-      content: {'body': ':cat:', 'url': 'mxc://example.org/cat'},
-    );
+  test(
+    'sticker without an unsigned transaction ID reuses its local ID',
+    () async {
+      final room = _RecordingRoom();
+      final event = _failedEvent(
+        room,
+        type: EventTypes.Sticker,
+        content: {'body': ':cat:', 'url': 'mxc://example.org/cat'},
+      );
 
-    await retryFailedEventPreservingType(event);
+      await retryFailedEventPreservingType(event);
 
-    expect(room.calls.single.txid, r'$local-event');
-    expect(room.calls.single.type, EventTypes.Sticker);
-  });
+      expect(room.calls.single.txid, r'$local-event');
+      expect(room.calls.single.type, EventTypes.Sticker);
+    },
+  );
 
   test('ordinary text retries through the normal SDK path', () async {
     final room = _RecordingRoom();
