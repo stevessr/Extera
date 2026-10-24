@@ -1,14 +1,16 @@
+import 'package:flutter/material.dart';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:matrix/matrix.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/avatar_change_dialog.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mxc_image.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:matrix/matrix.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   late MatrixSdkDatabase database;

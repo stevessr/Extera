@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -83,10 +84,10 @@ class Swipeable extends StatefulWidget {
 
   /// Gives the app an opportunity to confirm or veto a pending dismissal.
   ///
-  /// If the returned Future<bool> completes true, then this widget will be
+  /// If the returned `Future<bool>` completes true, then this widget will be
   /// dismissed, otherwise it will be moved back to its original location.
   ///
-  /// If the returned Future<bool> completes to false or null the [onSwipe]
+  /// If the returned `Future<bool>` completes to false or null the [onSwipe]
   /// callback will not run.
   final ConfirmSwipeCallback? confirmSwipe;
 
@@ -466,7 +467,7 @@ class _SwipeableState extends State<Swipeable>
 
     // Get system screen size and system gesture insets
     // to avoid starting a swipe in this areas
-    final MediaQueryData? mediaQuery = MediaQuery.maybeOf(context);
+    final mediaQuery = MediaQuery.maybeOf(context);
     if (mediaQuery != null) {
       if (_widthReference == null || _widthReference != mediaQuery.size.width) {
         WidgetsBinding.instance.addPostFrameCallback((final _) {

@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:extera_next/config/localizations.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/image_editor_dialog.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 /// The editor feature (and its deferred chunk) contains no app-localization
 /// for its own labels, which come from the in-file zh/zh_Hant tables. This
