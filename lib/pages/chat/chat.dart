@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -765,39 +764,22 @@ class ChatController extends State<ChatPageWithRoom>
         );
       }
       if (item is ContentShareItem) {
-        final value = item.value;
-
-        if (item.attribution != null) {
-          // Сохраняем оригинальные значения ДО модификации
-          final originalBody = value['body'] as String?;
-          final originalFormattedBody = value['formatted_body'] as String?;
-
-          if (originalBody is String) {
-            if (['m.text', 'm.notice'].contains(value['msgtype'] as String) ||
-                value['filename'] is String) {
-              value['body'] = "${item.attribution}\n$originalBody";
-            } else {
-              value['filename'] = originalBody;
-              value['body'] = item.attribution;
-            }
-          }
-
-          // Формируем formatted_body на основе ОРИГИНАЛЬНЫХ значений
-          if (value['format'] == 'org.matrix.custom.html' &&
-              originalFormattedBody is String) {
-            value['formatted_body'] =
-                "<strong>${item.attribution}</strong><blockquote>$originalFormattedBody</blockquote>";
-          } else if (originalBody is String) {
-            value['formatted_body'] =
-                "<strong>${item.attribution}</strong><blockquote>${HtmlEscape().convert(originalBody)}</blockquote>";
-            value['format'] = 'org.matrix.custom.html';
-          }
-
-          value['xyz.extera.forward'] = {'attribution': item.attribution};
+        final forwarded = item.forwarded;
+        final senderId = forwarded?['sender'];
+        String? displayName;
+        if (senderId is String) {
+          displayName =
+              room
+                  .getState('m.room.member', senderId)
+                  ?.content
+                  .tryGet<String>('displayname') ??
+              senderId;
         }
-
         room.sendEvent(
-          value,
+          forwarded == null
+              ? item.value
+              : buildForwardContent(forwarded, senderDisplayName: displayName),
+          type: item.eventType ?? EventTypes.Message,
           threadRootEventId: threadRootEventId,
           threadLastEventId: threadLastEventId,
         );
@@ -1073,48 +1055,78 @@ class ChatController extends State<ChatPageWithRoom>
     setReadMarker();
   }
 
-  Future<void>? _setReadMarkerFuture;
+  String? _setReadMarkerEventId;
 
   void setReadMarker({String? eventId}) {
-    if (_setReadMarkerFuture != null) return;
-    if (_scrolledUp.value) return;
-    if (scrollUpBannerEventId != null) return;
-
-    if (eventId == null &&
-        !room.hasNewMessages &&
-        room.notificationCount == 0) {
-      return;
-    }
-
-    // Do not send read markers when app is not in foreground
     if (kIsWeb && !Matrix.of(context).webHasFocus) return;
     if (!kIsWeb &&
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
       return;
     }
 
+    final setOnLatestEvent = eventId == null;
+
+    // We only set read marker if we are at the bottom
+    if (_scrolledUp.value && setOnLatestEvent) return;
+
+    // We do not set read marker if we offer user the scroll up banner
+    if (scrollUpBannerEventId != null) return;
+
+    // We do not set read marker if timeline is empty
     final timeline = this.timeline;
     if (timeline == null || timeline.events.isEmpty) return;
 
+    eventId ??= timeline.events.firstWhereOrNull((event) {
+      if (event.eventId == room.lastEvent?.eventId) return true;
+      if (room.client.pushruleEvaluator.match(event).notify) {
+        return true;
+      }
+      final original = event.originalSource;
+      if (original != null &&
+          room.client.pushruleEvaluator
+              .match(Event.fromMatrixEvent(original, room))
+              .notify) {
+        return true;
+      }
+      return false;
+    })?.eventId;
+
+    if (setOnLatestEvent && (room.hasNewMessages || room.isUnread)) {
+      eventId ??=
+          room.lastEvent?.eventId ?? timeline.events.firstOrNull?.eventId;
+    }
+
+    // There is no event we could place a read marker
+    if (eventId == null) return;
+
+    // This is a sending event, we do not set a readmarker yet
+    if (eventId.isValidMatrixIdStrict() == false) return;
+
+    // We are already setting a read marker on this event
+    if (_setReadMarkerEventId == eventId) return;
+
+    // Already set a read marker on this event
+    if (room.fullyRead == eventId && !setOnLatestEvent) return;
+
+    // Set a readmarker on a specific event, not latest, but room is not unread
+    // at all.
+    if (setOnLatestEvent &&
+        !room.hasNewMessages &&
+        room.notificationCount == 0) {
+      return;
+    }
+
     Logs().d('Set read marker...', eventId);
+    _setReadMarkerEventId = eventId;
     // ignore: unawaited_futures
-    _setReadMarkerFuture = timeline
+    timeline
         .setReadMarker(
           eventId: eventId,
-          public: shouldSendPublicReadReceipts(room.client, roomId),
+          public: shouldSendPublicReadReceipts(sendingClient, roomId),
         )
-        .then((_) {
-          _setReadMarkerFuture = null;
+        .whenComplete(() {
+          if (_setReadMarkerEventId == eventId) _setReadMarkerEventId = null;
         });
-
-    if (timeline is RoomTimeline) {
-      if (eventId == null || eventId == timeline.room.lastEvent?.eventId) {
-        Matrix.of(
-          context,
-        ).backgroundPush?.cancelNotification(room.client, roomId);
-      }
-    }
-    // TODO same for Threads
   }
 
   void performQuickAction(Event event) {
@@ -1897,29 +1909,21 @@ class ChatController extends State<ChatPageWithRoom>
       context: context,
       builder: (context) => ShareScaffoldDialog(
         items: selectedEvents.isEmpty
-            ? [
-                if (event != null)
-                  ContentShareItem(
-                    sanitizeContent(
-                      event.getDisplayEvent(timeline!).content.copy(),
-                    ),
-                    attribution: generateAttributionString(event),
-                  ),
-              ]
-            : selectedEvents
-                  .map(
-                    (event) => ContentShareItem(
-                      sanitizeContent(
-                        event.getDisplayEvent(timeline!).content.copy(),
-                      ),
-                      attribution: generateAttributionString(event),
-                    ),
-                  )
-                  .toList(),
+            ? [if (event != null) _buildForwardContentShareItem(event)]
+            : selectedEvents.map(_buildForwardContentShareItem).toList(),
       ),
     );
     if (!mounted) return;
     setState(() => selectedEvents.clear());
+  }
+
+  ContentShareItem _buildForwardContentShareItem(Event event) {
+    final displayEvent = event.getDisplayEvent(timeline!);
+    return ContentShareItem(
+      sanitizeContent(displayEvent.content.copy()),
+      eventType: displayEvent.type,
+      forwarded: buildForwardedObject(event, displayEvent),
+    );
   }
 
   void sendAgainAction({Event? event}) {
@@ -2022,7 +2026,18 @@ class ChatController extends State<ChatPageWithRoom>
       (event) => event.eventId == eventId,
     );
 
-    // print('Scrolling to $eventId.');
+    final threadRootId =
+        foundEvent?.relationshipType == RelationshipTypes.thread
+        ? foundEvent?.relationshipEventId
+        : null;
+    if (threadRootEventId == null && threadRootId != null) {
+      // TODO: open thread and scroll to event
+      return scrollToEventId(
+        threadRootId,
+        scrolledFromEventId,
+        highlightEvent: highlightEvent,
+      );
+    }
 
     final eventIndex = foundEvent == null
         ? -1
@@ -2044,7 +2059,6 @@ class ChatController extends State<ChatPageWithRoom>
       // is never part of a thread timeline. Before reloading anything, check
       // whether the event we already have simply belongs somewhere else.
       if (foundEvent != null && _goToEventTimeline(foundEvent)) return;
-
       if (isRetry) {
         // The event is not in this timeline at all. It may still be a thread
         // reply that was never loaded here, so ask the server about it.

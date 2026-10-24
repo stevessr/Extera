@@ -53,9 +53,6 @@ class UrlLauncher {
       return;
     }
 
-    //if (name != null && url != name) {
-    // If there is a name which differs from the url, we need to make sure
-    // that the user can see the actual url before opening the browser.
     final consent = await showOkCancelAlertDialog(
       context: context,
       title: L10n.of(context).openLinkInBrowser,
@@ -64,7 +61,6 @@ class UrlLauncher {
       cancelLabel: L10n.of(context).cancel,
     );
     if (consent != OkCancelResult.ok) return;
-    //}
 
     if (!{'https', 'http'}.contains(uri.scheme)) {
       // just launch non-https / non-http uris directly

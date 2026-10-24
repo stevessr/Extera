@@ -22,7 +22,6 @@ import 'package:extera_next/pages/dialer/back_to_livekit_call_button.dart';
 import 'package:extera_next/pages/dialer/livekit_call_manager.dart';
 import 'package:extera_next/utils/matrix_live_kit_calls/matrix_live_kit_call.dart';
 import 'package:extera_next/utils/platform_infos.dart';
-import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/stream_extension.dart';
 import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/utils/wallpaper.dart';
@@ -197,7 +196,7 @@ class _ChatViewState extends State<ChatView> {
                 mainAxisSize: .min,
                 spacing: 2,
                 children: [
-                  const Icon(Icons.video_call_outlined),
+                  const Icon(Icons.call_outlined),
                   Text(callMembers.toString()),
                 ],
               ),
@@ -205,7 +204,7 @@ class _ChatViewState extends State<ChatView> {
           else
             IconButton(
               onPressed: () => controller.onLiveKitCallButtonTap(),
-              icon: const Icon(Icons.video_call_outlined),
+              icon: const Icon(Icons.call_outlined),
               tooltip: L10n.of(context).placeCall,
             ),
         EncryptionButton(controller.room),

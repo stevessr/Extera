@@ -415,13 +415,14 @@ class ChatListController extends State<ChatList>
   String? get activeChat => widget.activeChat;
 
   void _processIncomingSharedMedia(List<SharedMediaFile> files) {
-    if (files.isEmpty) return;
-
     files.removeWhere(
       (file) =>
           file.path.startsWith(AppConfig.deepLinkPrefix) ||
-          file.path.startsWith(AppConfig.appSsoUrlScheme),
+          file.path.startsWith(AppConfig.appSsoUrlScheme) ||
+          Uri.tryParse(file.path)?.scheme == 'matrix',
     );
+
+    if (files.isEmpty) return;
 
     showScaffoldDialog(
       context: context,
@@ -446,7 +447,11 @@ class ChatListController extends State<ChatList>
     Logs().w("Processing incoming url: ${uri.toString()}");
     context.go('/rooms');
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      UrlLauncher(context, uri.toString()).openMatrixToUrl();
+      if (uri.host == 'matrix.to') {
+        UrlLauncher(context, uri.toString()).openMatrixToUrl();
+      } else if (uri.scheme == 'matrix') {
+        UrlLauncher(context, uri.toString()).openMatrixUrl();
+      }
     });
   }
 

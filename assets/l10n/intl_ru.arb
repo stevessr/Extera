@@ -4283,5 +4283,7 @@
                 "type": "int"
             }
         }
-    }
+    },
+    "stopWatching": "Прекратить просмотр",
+    "chooseStreamToWatch": "Текущие трансляции"
 }

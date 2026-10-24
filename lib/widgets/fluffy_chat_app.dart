@@ -46,6 +46,15 @@ class FluffyChatApp extends StatefulWidget {
   // the current path.
   static final GoRouter router = GoRouter(
     routes: AppRoutes.routes,
+    redirect: (context, state) {
+      if (state.uri.scheme == 'content') return '/';
+
+      if (state.uri.scheme == 'matrix') {
+        return '/';
+      }
+
+      return null;
+    },
     debugLogDiagnostics: true,
   );
 

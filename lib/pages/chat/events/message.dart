@@ -67,6 +67,9 @@ class Message extends StatelessWidget {
     super.key,
   });
 
+  // nextEvent and previousEvent are in reverse since we are using reversed listview.
+  // so visually, nextEvent is event before this one and previousEvent is next one
+
   @override
   Widget build(BuildContext context) {
     final Widget message = switch (layout) {
