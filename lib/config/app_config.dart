@@ -7,7 +7,8 @@ abstract class AppConfig {
   static const String bannerProfileField = 'chat.commet.profile_banner';
 
   static const String aboutProfileField = 'xyz.extera.about';
-  static const String updateCheckUrl = 'https://extera.xyz/next/version.txt';
+  static const String updateCheckUrl =
+      'https://source.extera.xyz/api/v1/repos/Extera/Extera/releases';
   static const String downloadUpdateUrl = 'https://extera.xyz/';
   static const String donateUrl = 'https://extera.xyz/donate.html';
 

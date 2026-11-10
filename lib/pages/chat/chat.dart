@@ -1590,6 +1590,27 @@ class ChatController extends State<ChatPageWithRoom>
   void sendLocationAction() async {
     final proceed = await showTrustUserInRoomDialog(context, room);
     if (!mounted || !proceed) return;
+    if (room.joinRules == .public) {
+      if (await showOkCancelAlertDialog(
+            context: context,
+            title: L10n.of(context).locationPublicRoomWarningTitle,
+            message: L10n.of(context).locationPublicRoomWarningText,
+            okLabel: L10n.of(context).continueText,
+          ) !=
+          .ok) {
+        return;
+      }
+    } else if (room.getParticipants().length >= 50) {
+      if (await showOkCancelAlertDialog(
+            context: context,
+            title: L10n.of(context).locationLargeRoomWarningTitle,
+            message: L10n.of(context).locationLargeRoomWarningText,
+            okLabel: L10n.of(context).continueText,
+          ) !=
+          .ok) {
+        return;
+      }
+    }
     final sent = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: false,

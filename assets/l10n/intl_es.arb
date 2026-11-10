@@ -128,7 +128,7 @@
 	"chatBackup": "Copia de seguridad de claves",
 	"pinCode": "Código PIN",
 	"@@locale": "es",
-	"@@last_modified": "2026-10-08T15:35:40.089Z",
+	"@@last_modified": "2026-10-25T20:17:25.234Z",
 	"chatBackupDescription": "La copia de seguridad de las claves está protegida con una clave de recuperación. Guárdala en un lugar seguro.",
 	"chatDetails": "Configuración del chat",
 	"chatHasBeenAddedToThisSpace": "El chat ha sido añadido a este espacio",
@@ -4208,5 +4208,62 @@
 	"@yesterday": {
 		"type": "String",
 		"placeholders": {}
+	},
+	"forwardedFrom": "Reenviado de {sender}",
+	"forwardedMessage": "Mensaje reenviado",
+	"updateReleasesBehind": "{count, plural, one{Estás # versión por detrás de la última.} many{Estás # versiones por detrás de la última.} other{Estás # versiones por detrás de la última.}}",
+	"repliesInThread": "{replyCount, plural, =1{1 respuesta} one{{replyCount} respuesta} many{{replyCount} respuestas} other{{replyCount} respuestas}}",
+	"stopWatching": "Dejar de ver",
+	"chooseStreamToWatch": "Transmisiones actuales",
+	"locationPublicRoomWarningTitle": "Este es un chat público",
+	"locationPublicRoomWarningText": "Tu ubicación permanecerá en el historial de mensajes y puede ser guardada por otros participantes. ¿Seguro que quieres continuar?",
+	"locationLargeRoomWarningTitle": "Parece que este chat tiene muchos participantes",
+	"locationLargeRoomWarningText": "Hay más de 50 participantes aquí. Tu ubicación permanecerá en el historial de mensajes y puede ser guardada por otros participantes. ¿Seguro que quieres continuar?",
+	"@forwardedFrom": {
+		"type": "String",
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
+	},
+	"@forwardedMessage": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@updateReleasesBehind": {
+		"placeholders": {
+			"count": {
+				"type": "int",
+				"example": "1"
+			}
+		}
+	},
+	"createNewTag": "Crear nueva etiqueta",
+	"removeTag": "Eliminar etiqueta",
+	"addTag": "Añadir etiqueta",
+	"tagName": "Nombre de la etiqueta",
+	"@createNewTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@removeTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@addTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@tagName": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@incomingCallFrom": {
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
 	}
 }

@@ -32,7 +32,7 @@
 	"cleanExif": "EXIFを削除",
 	"cleanExifDescription": "送信前に画像からEXIFメタデータ（カメラモデル、位置情報、時刻）を削除します。",
 	"@@locale": "ja",
-	"@@last_modified": "2026-10-08T15:36:03.352Z",
+	"@@last_modified": "2026-10-25T20:18:08.794Z",
 	"doNotSendIfCantClean": "クリーンできない画像を送信しない",
 	"doNotSendIfCantCleanDescription": "EXIFメタデータを削除できない場合、画像を送信しません",
 	"repeatPassword": "パスワードを再入力",
@@ -4208,5 +4208,62 @@
 	"@yesterday": {
 		"type": "String",
 		"placeholders": {}
+	},
+	"forwardedFrom": "{sender}から転送",
+	"forwardedMessage": "転送されたメッセージ",
+	"updateReleasesBehind": "{count, plural, other{最新版から#リリース遅れています。}}",
+	"repliesInThread": "{replyCount, plural, =1{1件の返信} other{{replyCount}件の返信}}",
+	"stopWatching": "視聴を停止",
+	"chooseStreamToWatch": "現在の配信",
+	"locationPublicRoomWarningTitle": "これは公開チャットです",
+	"locationPublicRoomWarningText": "あなたの位置情報はメッセージ履歴に残り、他の参加者に保存される可能性があります。本当に続行しますか？",
+	"locationLargeRoomWarningTitle": "このチャットには多くの参加者がいるようです",
+	"locationLargeRoomWarningText": "ここには50人以上の参加者がいます。あなたの位置情報はメッセージ履歴に残り、他の参加者に保存される可能性があります。本当に続行しますか？",
+	"@forwardedFrom": {
+		"type": "String",
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
+	},
+	"@forwardedMessage": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@updateReleasesBehind": {
+		"placeholders": {
+			"count": {
+				"type": "int",
+				"example": "1"
+			}
+		}
+	},
+	"createNewTag": "新しいタグを作成",
+	"removeTag": "タグを削除",
+	"addTag": "タグを追加",
+	"tagName": "タグ名",
+	"@createNewTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@removeTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@addTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@tagName": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@incomingCallFrom": {
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
 	}
 }

@@ -1,3 +1,16 @@
+## Extera 26.5.8
+- Performance improvements related to chat latest message preview
+- Add custom chat tags
+- Update style settings page (use M3 Expressive segmented buttons)
+
+## Extera 26.5.7
+- Fix reactions and message edits sometimes not loading in fragmented timelines
+- Fix non-floating chat input row background wrong layout
+- Use Forgejo for checking updates
+- Add forwarded message headers for MSC4553 message forwards
+- Add warning before sending location into public or large rooms
+- Smoother swipe to reply
+
 ## Extera 26.5.6
 - Add pinning participant view in calls
 - Add separate row/column for other participants in calls

@@ -2,29 +2,32 @@ import 'package:flutter/services.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
-import 'package:swipe_to_action/swipe_to_action.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
 import 'package:extera_next/generated/l10n/l10n.dart';
 import 'package:extera_next/pages/chat/chat.dart';
-// import 'package:extera_next/pages/chat/events/file_sending_indicator.dart';
 import 'package:extera_next/pages/chat/events/room_creation_state_event.dart';
 import 'package:extera_next/pages/chat/events/thread_preview.dart';
+import 'package:extera_next/pages/chat/swipe_to_reply.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/poll_events.dart';
 import 'package:extera_next/utils/privacy_options.dart';
 import 'package:extera_next/utils/string_color.dart';
+import 'package:extera_next/utils/url_launcher.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/matrix.dart';
 import 'package:extera_next/widgets/member_actions_popup_menu_button.dart';
 
 import '../../../config/app_config.dart';
+import '../../../utils/matrix_sdk_extensions/event_forwarded.dart';
 import 'message_content.dart';
 import 'message_reactions.dart';
 import 'reply_content.dart';
 import 'state_message.dart';
+
+// import 'package:extera_next/pages/chat/events/file_sending_indicator.dart';
 
 class MessageModern extends StatefulWidget {
   final Event event;
@@ -252,6 +255,8 @@ class _MessageModernState extends State<MessageModern> {
 
     final displayEvent = event.getDisplayEvent(timeline);
 
+    final forwarded = displayEvent.forwarded;
+
     final showReactionsRow = event.hasAggregatedEvents(
       timeline,
       RelationshipTypes.reaction,
@@ -297,6 +302,51 @@ class _MessageModernState extends State<MessageModern> {
 
     // final statusColor = theme.colorScheme.onSurfaceVariant;
     // final messageStatusRow = buildStatusRow(color: statusColor);
+
+    Widget? forwardedHeader;
+    if (forwarded != null) {
+      final forwardedSenderId = forwarded.sender;
+      final forwardedSenderName = forwardedSenderId == null
+          ? null
+          : event.room
+                    .getState('m.room.member', forwardedSenderId)
+                    ?.content
+                    .tryGet<String>('displayname') ??
+                forwardedSenderId;
+      final forwardedLink = forwarded.permalink;
+      forwardedHeader = Padding(
+        padding: const .only(bottom: 2, left: 0, right: 0),
+        child: GestureDetector(
+          onTap: forwardedLink == null
+              ? null
+              : () => UrlLauncher(context, forwardedLink).launchUrl(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.reply_outlined,
+                size: 14,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  forwardedSenderName == null
+                      ? L10n.of(context).forwardedMessage
+                      : L10n.of(context).forwardedFrom(forwardedSenderName),
+                  style: TextStyle(
+                    fontSize: 12 * AppSettings.fontSizeFactor.value,
+                    color: theme.colorScheme.secondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final row = FutureBuilder<User?>(
       future: _senderUserFuture,
@@ -457,8 +507,11 @@ class _MessageModernState extends State<MessageModern> {
                                             );
                                           },
                                     ),
+                                  ?forwardedHeader,
                                   MessageContent(
-                                    displayEvent,
+                                    forwarded == null
+                                        ? displayEvent
+                                        : displayEvent.forwardedContentEvent,
                                     textColor: theme.colorScheme.onSurface,
                                     linkColor: theme.colorScheme.primary,
                                     onInfoTab: widget.onInfoTab,
@@ -628,12 +681,10 @@ class _MessageModernState extends State<MessageModern> {
     return _AnimateIn(
       animateIn: widget.animateIn,
       halfOpacity: event.status == EventStatus.sending ? true : false,
-      child: Swipeable(
+      child: SwipeToReply(
         key: ValueKey(event.eventId),
-        direction: AppSettings.swipeRightToLeftToReply.value
-            ? SwipeDirection.endToStart
-            : SwipeDirection.startToEnd,
-        onSwipe: (_) => widget.onSwipe(event),
+        rightToLeft: AppSettings.swipeRightToLeftToReply.value,
+        onReply: () => widget.onSwipe(event),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(

@@ -17,6 +17,7 @@ import 'package:extera_next/utils/show_profile.dart';
 import 'package:extera_next/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/mini_audio_player.dart';
+import 'package:extera_next/widgets/segmented_button/segmented_button.dart';
 
 import '../../config/themes.dart';
 import '../../widgets/matrix.dart';
@@ -164,6 +165,39 @@ class ChatListViewBody extends StatelessWidget {
                     if (!FluffyThemes.isColumnMode(context)) ...[
                       const MiniAudioPlayer(),
                     ],
+                    if (!controller.isSearchMode &&
+                        controller.roomTags.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: ExpressiveSegmentedButton<String>(
+                          expanded: true,
+                          segments: [
+                            ExpressiveButtonSegment(
+                              value: '',
+                              label: Text(L10n.of(context).all),
+                            ),
+                            ...controller.roomTags.keys.map(
+                              (tag) => ExpressiveButtonSegment(
+                                value: tag,
+                                label: Text(tag.replaceFirst('u.', '')),
+                              ),
+                            ),
+                          ],
+                          selected: controller.activeFilter == .tag
+                              ? controller.activeTag ?? ''
+                              : '',
+                          onSelectionChanged: (value) => value.isEmpty
+                              ? controller.setActiveFilter(
+                                  AppSettings.separateChatTypes.value
+                                      ? .messages
+                                      : .allChats,
+                                )
+                              : controller.setActiveFilter(.tag, value),
+                        ),
+                      ),
                     if (controller.isSearchMode)
                       Padding(
                         padding: const .all(8),

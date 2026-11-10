@@ -17,6 +17,7 @@ import 'package:extera_next/widgets/avatar.dart';
 import 'package:extera_next/widgets/layouts/max_width_body.dart';
 import 'package:extera_next/widgets/list_divider.dart';
 import 'package:extera_next/widgets/matrix.dart';
+import 'package:extera_next/widgets/segmented_button/segmented_button.dart';
 import 'package:extera_next/widgets/theme_builder.dart';
 
 import '../../config/app_config.dart';
@@ -76,24 +77,33 @@ class SettingsStyleView extends StatelessWidget {
                 borderRadius: borderRadius,
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: SegmentedButton<ThemeMode>(
-                        selected: {controller.currentTheme},
+                    ListTile(
+                      title: Text(
+                        L10n.of(context).setColorTheme,
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      title: Text(L10n.of(context).theme),
+                      trailing: ExpressiveSegmentedButton<ThemeMode>(
+                        selected: controller.currentTheme,
                         onSelectionChanged: (selected) =>
-                            controller.switchTheme(selected.single),
+                            controller.switchTheme(selected),
                         segments: [
-                          ButtonSegment(
+                          ExpressiveButtonSegment(
                             value: ThemeMode.light,
                             label: Text(L10n.of(context).lightTheme),
                             icon: const Icon(Icons.light_mode_outlined),
                           ),
-                          ButtonSegment(
+                          ExpressiveButtonSegment(
                             value: ThemeMode.dark,
                             label: Text(L10n.of(context).darkTheme),
                             icon: const Icon(Icons.dark_mode_outlined),
                           ),
-                          ButtonSegment(
+                          ExpressiveButtonSegment(
                             value: ThemeMode.system,
                             label: Text(L10n.of(context).systemTheme),
                             icon: const Icon(Icons.auto_mode_outlined),
@@ -110,25 +120,7 @@ class SettingsStyleView extends StatelessWidget {
                         setting: AppSettings.pureBlack,
                       ),
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Material(
-                color: theme.colorScheme.surfaceContainerHigh,
-                clipBehavior: Clip.hardEdge,
-                borderRadius: borderRadius,
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: Text(
-                        L10n.of(context).setColorTheme,
-                        style: TextStyle(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    const ListDivider(),
                     DynamicColorBuilder(
                       builder: (light, dark) {
                         final systemColor =
@@ -298,36 +290,19 @@ class SettingsStyleView extends StatelessWidget {
                           left: 32,
                           right: 32,
                         ),
-                        child: RadioGroup<String>(
-                          onChanged: (value) {
-                            if (value != null) {
-                              controller.setTitleBarText(value);
-                            }
-                          },
-                          groupValue: controller.titleBarText,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: _LabeledRadio<String>(
-                                    label: L10n.of(context).appBarAppName,
-                                    value: "app",
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: _LabeledRadio<String>(
-                                    label: L10n.of(context).appBarAccountName,
-                                    value: "user",
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: ExpressiveSegmentedButton<String>(
+                          selected: controller.titleBarText,
+                          onSelectionChanged: controller.setTitleBarText,
+                          segments: [
+                            ExpressiveButtonSegment(
+                              value: 'app',
+                              label: Text(L10n.of(context).appBarAppName),
+                            ),
+                            ExpressiveButtonSegment(
+                              value: 'user',
+                              label: Text(L10n.of(context).appBarAccountName),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -595,76 +570,48 @@ class SettingsStyleView extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 16,
-                            left: 32,
-                            right: 32,
+                          trailing: ExpressiveSegmentedButton<MessageLayout>(
+                            selected: controller.messageStyle,
+                            onSelectionChanged: controller.setMessageStyle,
+                            segments: [
+                              ExpressiveButtonSegment(
+                                value: MessageLayout.bubbles,
+                                label: Text(L10n.of(context).bubblesLayout),
+                              ),
+                              ExpressiveButtonSegment(
+                                value: MessageLayout.bubblesLegacy,
+                                label: Text(
+                                  L10n.of(context).legacyBubblesLayout,
+                                ),
+                              ),
+                              ExpressiveButtonSegment(
+                                value: MessageLayout.modern,
+                                label: Text(L10n.of(context).modernLayout),
+                              ),
+                            ],
                           ),
-                          child: RadioGroup<MessageLayout>(
-                            onChanged: (value) {
-                              if (value != null) {
-                                controller.setMessageStyle(value);
-                              }
-                            },
-                            groupValue: controller.messageStyle,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: _LabeledRadio<MessageLayout>(
-                                      label: L10n.of(context).bubblesLayout,
-                                      value: MessageLayout.bubbles,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: _LabeledRadio<MessageLayout>(
-                                      label: L10n.of(
-                                        context,
-                                      ).legacyBubblesLayout,
-                                      value: MessageLayout.bubblesLegacy,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: _LabeledRadio<MessageLayout>(
-                                      label: L10n.of(context).modernLayout,
-                                      value: MessageLayout.modern,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        ),
+                        if (controller.messageStyle == .bubbles) ...[
+                          const ListDivider(),
+                          ListTile(
+                            title: Text(
+                              L10n.of(context).bubblesAppearance,
+                              style: TextStyle(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        const ListDivider(),
-                        ListTile(
-                          title: Text(
-                            L10n.of(context).bubblesAppearance,
-                            style: TextStyle(
-                              color: theme.colorScheme.secondary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          ListTile(
+                            title: Text(L10n.of(context).bubbleSide),
+                            subtitle: Text(switch (controller.bubbleSide) {
+                              'oneSide' => L10n.of(context).bubbleSingleSided,
+                              'adaptive' => L10n.of(context).bubbleAdaptiveSide,
+                              _ => L10n.of(context).bubbleBothSided,
+                            }),
+                            onTap: controller.showBubbleSideSheet,
                           ),
-                        ),
-                        ListTile(
-                          title: Text(L10n.of(context).bubbleSide),
-                          subtitle: Text(switch (controller.bubbleSide) {
-                            'oneSide' => L10n.of(context).bubbleSingleSided,
-                            'adaptive' => L10n.of(context).bubbleAdaptiveSide,
-                            _ => L10n.of(context).bubbleBothSided,
-                          }),
-                          onTap: controller.showBubbleSideSheet,
-                        ),
-
+                        ],
                         SettingsSwitchListTile.adaptive(
                           title: L10n.of(context).enableChatFrostedGlass,
                           setting: AppSettings.enableChatFrostedGlass,
@@ -850,33 +797,6 @@ class SettingsStyleView extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LabeledRadio<T> extends StatelessWidget {
-  const _LabeledRadio({required this.label, required this.value});
-
-  final String label;
-  final T value;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        RadioGroup.maybeOf<T>(context)?.onChanged(value);
-      },
-      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-      child: Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Radio<T>(value: value),
-            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-          ],
         ),
       ),
     );

@@ -83,6 +83,14 @@ typedef ChatListItemDeps = ({
 final MemoizedTileCache<ChatListItemDeps, Widget> _chatListItemTiles =
     MemoizedTileCache(maxEntries: 512);
 
+// Laying out a huge lastEvent body costs hundreds of ms per frame; cap the preview.
+String _truncateLastEventPreview(String text) {
+  const maxPreviewCharacters = 200;
+  final characters = text.characters;
+  if (characters.length <= maxPreviewCharacters) return text;
+  return '${characters.take(maxPreviewCharacters)}...';
+}
+
 class ChatListItem extends StatelessWidget {
   final Room room;
   final Room? space;
@@ -441,23 +449,25 @@ class ChatListItem extends StatelessWidget {
                                   ),
                                 Flexible(
                                   child: Text(
-                                    room.membership == Membership.invite
-                                        ? room
-                                                  .getState(
-                                                    EventTypes.RoomMember,
-                                                    room.client.userID!,
-                                                  )
-                                                  ?.content
-                                                  .tryGet<String>('reason') ??
-                                              (isDirectChat
-                                                  ? L10n.of(
-                                                      context,
-                                                    ).newChatRequest
-                                                  : L10n.of(
-                                                      context,
-                                                    ).inviteGroupChat)
-                                        : snapshot.data ??
-                                              L10n.of(context).noMessagesYet,
+                                    _truncateLastEventPreview(
+                                      room.membership == Membership.invite
+                                          ? room
+                                                    .getState(
+                                                      EventTypes.RoomMember,
+                                                      room.client.userID!,
+                                                    )
+                                                    ?.content
+                                                    .tryGet<String>('reason') ??
+                                                (isDirectChat
+                                                    ? L10n.of(
+                                                        context,
+                                                      ).newChatRequest
+                                                    : L10n.of(
+                                                        context,
+                                                      ).inviteGroupChat)
+                                          : snapshot.data ??
+                                                L10n.of(context).noMessagesYet,
+                                    ),
                                     softWrap: false,
                                     maxLines: room.notificationCount >= 1
                                         ? 2

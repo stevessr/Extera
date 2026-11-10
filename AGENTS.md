@@ -5,7 +5,7 @@
 - git commits: use conventional commits, short lowercase messages. no detailed messages unless necessary.
 - avoid nested functions (functions inside functions)
 - use english language in code and comments
-- don't comment every function/piece of code, only non-obvious or complicated parts
+- comment only non self-explanatory code (e.g. workarounds)
 - write only to assets/l10n/intl_en.arb and assets/l10n/intl_ru.arb when writing new translation strings
 - do not commit without user consent
 - do not automate creating pull request/writing PR description

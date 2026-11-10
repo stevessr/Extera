@@ -784,6 +784,11 @@
         "type": "String",
         "placeholders": {}
     },
+    "createNewTag": "Create new tag",
+    "@createNewTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "currentlyActive": "Currently active",
     "@currentlyActive": {
         "type": "String",
@@ -1068,6 +1073,20 @@
     "avatarBorderRadius": "Avatar border radius",
     "forward": "Forward",
     "@forward": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "forwardedFrom": "Forwarded from {sender}",
+    "@forwardedFrom": {
+        "type": "String",
+        "placeholders": {
+            "sender": {
+                "type": "String"
+            }
+        }
+    },
+    "forwardedMessage": "Forwarded message",
+    "@forwardedMessage": {
         "type": "String",
         "placeholders": {}
     },
@@ -2904,6 +2923,11 @@
     "@roomUpgradeDescription": {},
     "removeDevicesDescription": "You will be logged out of this device and will no longer be able to receive messages.",
     "@removeDevicesDescription": {},
+    "removeTag": "Remove tag",
+    "@removeTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "banUserDescription": "Do you want to ban this user? They won't be able to rejoin. You also can provide a reason.",
     "@banUserDescription": {},
     "unbanUserDescription": "The user will be able to enter the chat again if they try.",
@@ -3315,6 +3339,11 @@
     "pleaseFillOut": "Please fill out",
     "invalidUrl": "Invalid url",
     "addLink": "Add link",
+    "addTag": "Add tag",
+    "@addTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "unableToJoinChat": "Unable to join chat. Maybe the other party has already closed the conversation.",
     "previous": "Previous",
     "otherPartyNotLoggedIn": "The other party is currently not logged in and therefore cannot receive messages!",
@@ -3408,6 +3437,11 @@
     "crossVerifiedDevicesIfEnabled": "Cross verified devices if enabled",
     "crossVerifiedDevices": "Cross verified devices",
     "verifiedDevicesOnly": "Verified devices only",
+    "tagName": "Tag name",
+    "@tagName": {
+        "type": "String",
+        "placeholders": {}
+    },
     "takeAPhoto": "Take a photo",
     "recordAVideo": "Record a video",
     "optionalMessage": "(Optional) message...",
@@ -3514,6 +3548,15 @@
         "placeholders": {
             "version": {
                 "type": "String"
+            }
+        }
+    },
+    "updateReleasesBehind": "{count, plural, one{You are # release behind the latest version.} other{You are # releases behind the latest version.}}",
+    "@updateReleasesBehind": {
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "1"
             }
         }
     },
@@ -4333,5 +4376,16 @@
     "@yesterday": {
         "type": "String",
         "placeholders": {}
-    }
+    },
+    "locationPublicRoomWarningTitle": "This is a public room",
+    "locationPublicRoomWarningText": "Your location will remain in the room's message history and can be saved by other members. Do you really want to continue?",
+    "locationLargeRoomWarningTitle": "This seems to be a large room",
+    "locationLargeRoomWarningText": "There are a lot of members in this room. Your location will remain in the room's message history and can be saved by other members. Do you really want to continue?",
+    "incomingCallFrom": "Incoming call from {sender}",
+    "@incomingCallFrom": {
+        "placeholders": {
+            "sender": {"type": "String"}
+        }
+    },
+    "theme": "Theme"
 }

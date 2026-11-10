@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:matrix/matrix.dart';
-import 'package:swipe_to_action/swipe_to_action.dart';
 
 import 'package:extera_next/config/app_settings.dart';
 import 'package:extera_next/config/themes.dart';
@@ -14,6 +13,7 @@ import 'package:extera_next/pages/chat/chat.dart';
 import 'package:extera_next/pages/chat/events/file_sending_indicator.dart';
 import 'package:extera_next/pages/chat/events/room_creation_state_event.dart';
 import 'package:extera_next/pages/chat/events/thread_preview.dart';
+import 'package:extera_next/pages/chat/swipe_to_reply.dart';
 import 'package:extera_next/utils/date_time_extension.dart';
 import 'package:extera_next/utils/platform_infos.dart';
 import 'package:extera_next/utils/poll_events.dart';
@@ -25,6 +25,8 @@ import 'package:extera_next/widgets/member_actions_popup_menu_button.dart';
 
 import '../../../config/app_config.dart';
 import '../../../utils/matrix_sdk_extensions/event_extension.dart';
+import '../../../utils/matrix_sdk_extensions/event_forwarded.dart';
+import '../../../utils/url_launcher.dart';
 import 'gallery_content.dart';
 import 'message_content.dart';
 import 'message_reactions.dart';
@@ -326,6 +328,8 @@ class _MessageBubbleState extends State<MessageBubble> {
         : MainAxisAlignment.end;
 
     final displayEvent = event.getDisplayEvent(timeline);
+    final forwarded = displayEvent.forwarded;
+    final forwardContentEvent = displayEvent.forwardedContentEvent;
     const hardCorner = Radius.circular(4);
     const roundedCorner = Radius.circular(AppConfig.borderRadius);
     final borderRadius = BorderRadius.only(
@@ -805,7 +809,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                                                 bottom: useInlineStatus ? 8 : 0,
                                               ),
                                               child: MessageContent(
-                                                displayEvent,
+                                                forwardContentEvent,
                                                 textColor: textColor,
                                                 linkColor: linkColor,
                                                 backgroundColor: color,
@@ -924,11 +928,61 @@ class _MessageBubbleState extends State<MessageBubble> {
       },
     );
 
+    Widget? forwardedHeader;
+    if (forwarded != null) {
+      final forwardedSenderId = forwarded.sender;
+      final forwardedSenderName = forwardedSenderId == null
+          ? null
+          : event.room
+                    .getState('m.room.member', forwardedSenderId)
+                    ?.content
+                    .tryGet<String>('displayname') ??
+                forwardedSenderId;
+      final forwardedLink = forwarded.permalink;
+      forwardedHeader = Padding(
+        padding: EdgeInsets.only(
+          bottom: 2,
+          left: isLeftAligned ? 30 + 12.0 : 12.0,
+          right: isLeftAligned ? 12.0 : 0,
+        ),
+        child: GestureDetector(
+          onTap: forwardedLink == null
+              ? null
+              : () => UrlLauncher(context, forwardedLink).launchUrl(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.reply_outlined,
+                size: 14,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  forwardedSenderName == null
+                      ? L10n.of(context).forwardedMessage
+                      : L10n.of(context).forwardedFrom(forwardedSenderName),
+                  style: TextStyle(
+                    fontSize: 12 * AppSettings.fontSizeFactor.value,
+                    color: theme.colorScheme.secondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     Widget container;
     if (showReactionsRow ||
         displayTime ||
         widget.selected ||
-        widget.displayReadMarker) {
+        widget.displayReadMarker ||
+        forwardedHeader != null) {
       container = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: isLeftAligned
@@ -961,6 +1015,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 ),
               ),
             ),
+          ?forwardedHeader,
           row,
           if (showReactionsRow)
             Padding(
@@ -1018,12 +1073,10 @@ class _MessageBubbleState extends State<MessageBubble> {
       animateIn: widget.animateIn,
       halfOpacity: event.status == .sending ? true : false,
       child: Center(
-        child: Swipeable(
+        child: SwipeToReply(
           key: ValueKey(event.eventId),
-          direction: AppSettings.swipeRightToLeftToReply.value
-              ? SwipeDirection.endToStart
-              : SwipeDirection.startToEnd,
-          onSwipe: (_) => widget.onSwipe(event),
+          rightToLeft: AppSettings.swipeRightToLeftToReply.value,
+          onReply: () => widget.onSwipe(event),
           child: Container(
             constraints: const BoxConstraints(
               maxWidth: FluffyThemes.columnWidth * 2.5,

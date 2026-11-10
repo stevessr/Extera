@@ -36,6 +36,7 @@ enum AppSettings<T> {
     'both',
   ), // oneSide | adaptive | both
 
+  chatFilter<String>('xyz.extera.chatFilter', ''),
   uiFont<String>('xyz.extera.uiFont', 'Roboto'),
   fallbackFonts<String>('xyz.extera.fallbackFonts', 'sans-serif'),
 

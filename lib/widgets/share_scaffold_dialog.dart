@@ -28,6 +28,7 @@ Map<String, Object?> sanitizeContent(Map<String, Object?> content) {
     'info',
     'url',
     'file',
+    'itemtypes',
   ];
   final newContent = <String, Object?>{};
   for (final field in allowedFields) {
@@ -104,16 +105,20 @@ Map<String, Object?> buildForwardContent(
   final msgtype = src['msgtype'] as String?;
   final isTextLike = msgtype == 'm.text' || msgtype == 'm.notice';
   final isEmote = msgtype == 'm.emote';
+  // MSC4274 galleries use `body` as the caption directly and have no `filename`.
+  final isGallery = msgtype == 'dm.filament.gallery';
   final isCaptionable = [
     'm.image',
     'm.video',
     'm.audio',
     'm.file',
+    'dm.filament.gallery',
   ].contains(msgtype);
-  final hasCaption =
-      isCaptionable &&
-      src['filename'] is String &&
-      src['filename'] != src['body'];
+  final hasCaption = isGallery
+      ? (src['body'] as String?)?.isNotEmpty ?? false
+      : isCaptionable &&
+            src['filename'] is String &&
+            src['filename'] != src['body'];
 
   final top = jsonDecode(jsonEncode(src)) as Map<String, Object?>;
   for (final key in [
@@ -167,7 +172,9 @@ Map<String, Object?> buildForwardContent(
         ? headerHtml
         : '$headerHtml<br><blockquote>$quotedHtml</blockquote>';
   } else if (isCaptionable) {
-    top['filename'] = (src['filename'] as String?) ?? src['body'];
+    if (!isGallery) {
+      top['filename'] = (src['filename'] as String?) ?? src['body'];
+    }
     top['body'] = hasCaption
         ? '$firstLinePlain\n${src['body']}'
         : firstLinePlain;

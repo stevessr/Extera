@@ -794,6 +794,11 @@
         "type": "String",
         "placeholders": {}
     },
+    "createNewTag": "Создать новый тег",
+    "@createNewTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "currentlyActive": "В сети",
     "@currentlyActive": {
         "type": "String",
@@ -1072,6 +1077,20 @@
     },
     "forward": "Переслать",
     "@forward": {
+        "type": "String",
+        "placeholders": {}
+    },
+    "forwardedFrom": "Переслано от {sender}",
+    "@forwardedFrom": {
+        "type": "String",
+        "placeholders": {
+            "sender": {
+                "type": "String"
+            }
+        }
+    },
+    "forwardedMessage": "Пересланное сообщение",
+    "@forwardedMessage": {
         "type": "String",
         "placeholders": {}
     },
@@ -2875,6 +2894,11 @@
     "@roomUpgradeDescription": {},
     "removeDevicesDescription": "Вы выйдете с этого устройства и больше не будете получать сообщения.",
     "@removeDevicesDescription": {},
+    "removeTag": "Удалить тег",
+    "@removeTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "banUserDescription": "Вы уверены что хотите забанить этого пользователя? Они больше не смогут войти в этот чат. Вы также можете указать причину.",
     "@banUserDescription": {},
     "unbanUserDescription": "Пользователь сможет зайти в чат снова.",
@@ -3290,6 +3314,11 @@
     "pleaseFillOut": "Пожалуйста, заполните",
     "invalidUrl": "Не верный URL",
     "addLink": "Добавить ссылку",
+    "addTag": "Добавить тег",
+    "@addTag": {
+        "type": "String",
+        "placeholders": {}
+    },
     "unableToJoinChat": "Невозможно присоединиться к чату. Возможно, другая сторона уже завершила разговор.",
     "previous": "Предыдущий",
     "otherPartyNotLoggedIn": "Другая сторона не может получать сообщения.",
@@ -3371,6 +3400,11 @@
     "crossVerifiedDevicesIfEnabled": "С устройствами, заверенными перекрёстной подписью, если включено",
     "crossVerifiedDevices": "С устройствами, заверенными перекрёстной подписью",
     "verifiedDevicesOnly": "Только с подтверждёнными устройствами",
+    "tagName": "Название тега",
+    "@tagName": {
+        "type": "String",
+        "placeholders": {}
+    },
     "takeAPhoto": "Сделать фото",
     "recordAVideo": "Записать видео",
     "optionalMessage": "Подпись (необязательно)...",
@@ -3590,6 +3624,15 @@
         "placeholders": {
             "version": {
                 "type": "String"
+            }
+        }
+    },
+    "updateReleasesBehind": "{count, plural, one{Вы отстаете на # версию от последней.} few{Вы отстаете на # версии от последней.} many{Вы отстаете на # версий от последней.} other{Вы отстаете на # версии от последней.}}",
+    "@updateReleasesBehind": {
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "1"
             }
         }
     },
@@ -4285,5 +4328,9 @@
         }
     },
     "stopWatching": "Прекратить просмотр",
-    "chooseStreamToWatch": "Текущие трансляции"
+    "chooseStreamToWatch": "Текущие трансляции",
+    "locationPublicRoomWarningTitle": "Это общедоступный чат",
+    "locationPublicRoomWarningText": "Ваше местоположение останется в истории сообщений и может быть сохранено другими участниками. Вы точно хотите продолжить?",
+    "locationLargeRoomWarningTitle": "Похоже, этом чате много участников",
+    "locationLargeRoomWarningText": "Здесь больше 50 участников. Ваше местоположение останется в истории сообщений и может быть сохранено другими участниками. Вы точно хотите продолжить?"
 }

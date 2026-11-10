@@ -46,7 +46,7 @@ enum PopupMenuAction {
   archive,
 }
 
-enum ActiveFilter { allChats, messages, groups, unread, spaces, people }
+enum ActiveFilter { allChats, messages, groups, unread, spaces, people, tag }
 
 extension LocalizedActiveFilter on ActiveFilter {
   String toLocalizedString(BuildContext context) {
@@ -63,6 +63,8 @@ extension LocalizedActiveFilter on ActiveFilter {
         return L10n.of(context).spaces;
       case ActiveFilter.people:
         return L10n.of(context).people;
+      case ActiveFilter.tag:
+        throw 'Tags should not directly be displayed!';
     }
   }
 
@@ -80,6 +82,8 @@ extension LocalizedActiveFilter on ActiveFilter {
         return outline ? Icons.grid_view_outlined : Icons.grid_view_sharp;
       case .people:
         return outline ? Icons.people_alt_outlined : Icons.people_alt;
+      case .tag:
+        return outline ? Icons.bookmark_outline : Icons.bookmark;
     }
   }
 }
@@ -113,6 +117,7 @@ class ChatListController extends State<ChatList>
 
   String? _activeSpaceId;
   String? get activeSpaceId => _activeSpaceId;
+  String? activeTag;
 
   void setActiveSpace(String spaceId) async {
     await Matrix.of(context).client.getRoomById(spaceId)!.postLoad();
@@ -193,6 +198,8 @@ class ChatListController extends State<ChatList>
         return (room) => room.isSpace;
       case .people:
         return (room) => false;
+      case .tag:
+        return (room) => room.tags.keys.contains(activeTag);
     }
   }
 
@@ -203,6 +210,29 @@ class ChatListController extends State<ChatList>
       context,
     ).client.rooms.where(getRoomFilterByActiveFilter(activeFilter)).toList();
     return _cachedFilteredRooms!;
+  }
+
+  Map<String, int> roomTags = {};
+
+  StreamSubscription<SyncUpdate>? _onRoomTagUpdate;
+
+  void _updateRoomTags([_]) {
+    roomTags.clear();
+    for (final room in Matrix.of(context).client.rooms) {
+      for (final tag in room.tags.keys) {
+        if (tag.startsWith('u.')) roomTags[tag] = (roomTags[tag] ?? 0) + 1;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _cachedFilteredRooms = null;
+      if (activeTag != null && !roomTags.keys.contains(activeTag)) {
+        activeTag = null;
+        activeFilter = AppSettings.separateChatTypes.value
+            ? .messages
+            : .allChats;
+      }
+    });
   }
 
   bool isSearchMode = false;
@@ -518,6 +548,26 @@ class ChatListController extends State<ChatList>
           _cachedSpaces = null;
         });
 
+    _updateRoomTags();
+    _onRoomTagUpdate = Matrix.of(context).client.onSync.stream
+        .where(
+          (update) =>
+              update.rooms?.join?.values.any(
+                (roomUpdate) =>
+                    roomUpdate.accountData?.any(
+                      (accountData) => accountData.type == 'm.tag',
+                    ) ??
+                    false,
+              ) ??
+              false,
+        )
+        .listen(_updateRoomTags);
+
+    if (roomTags.containsKey(AppSettings.chatFilter.value)) {
+      activeFilter = .tag;
+      activeTag = AppSettings.chatFilter.value;
+    }
+
     super.initState();
   }
 
@@ -527,6 +577,7 @@ class ChatListController extends State<ChatList>
     _intentFileStreamSubscription?.cancel();
     _intentUriStreamSubscription?.cancel();
     _syncSubscription?.cancel();
+    _onRoomTagUpdate?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     searchController.dispose();
@@ -698,6 +749,30 @@ class ChatListController extends State<ChatList>
                 ],
               ),
             ),
+          if (activeTag == null)
+            PopupMenuItem(
+              value: ChatContextAction.addTag,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bookmark_add_outlined),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).addTag),
+                ],
+              ),
+            )
+          else
+            PopupMenuItem(
+              value: ChatContextAction.removeTag,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bookmark_remove_outlined),
+                  const SizedBox(width: 12),
+                  Text(L10n.of(context).removeTag),
+                ],
+              ),
+            ),
           if (spacesWithPowerLevels.isNotEmpty)
             PopupMenuItem(
               value: ChatContextAction.addToSpace,
@@ -808,6 +883,48 @@ class ChatListController extends State<ChatList>
         await showFutureLoadingSnackbar(
           context: context,
           future: () => room.setLowPriority(!room.isLowPriority),
+        );
+        return;
+      case ChatContextAction.addTag:
+        final existingTags = List.of(roomTags.keys);
+        existingTags.removeWhere((tag) => room.tags.containsKey(tag));
+        String? tag;
+        if (existingTags.isNotEmpty) {
+          tag = await showModalActionPopup<String?>(
+            context: context,
+            actions: [
+              ...existingTags.map((tag) {
+                final displayTag = tag.replaceFirst('u.', '');
+                return AdaptiveModalAction(
+                  label: displayTag,
+                  value: displayTag,
+                );
+              }),
+              AdaptiveModalAction(
+                label: L10n.of(context).createNewTag,
+                value: null,
+              ),
+            ],
+          );
+          if (!mounted) return;
+        }
+        tag ??= await showTextInputDialog(
+          context: context,
+          title: L10n.of(context).addTag,
+          hintText: L10n.of(context).tagName,
+        );
+        final newTag = tag;
+        if (!mounted) return;
+        if (newTag == null) return;
+        await showFutureLoadingSnackbar(
+          context: context,
+          future: () => room.addTag('u.$newTag'),
+        );
+        return;
+      case ChatContextAction.removeTag:
+        await showFutureLoadingSnackbar(
+          context: context,
+          future: () => room.removeTag(activeTag!),
         );
         return;
       case ChatContextAction.markUnread:
@@ -954,14 +1071,19 @@ class ChatListController extends State<ChatList>
     }
   }
 
-  void setActiveFilter(ActiveFilter filter) {
+  void setActiveFilter(ActiveFilter filter, [String? tag]) {
+    if (filter == .tag && tag == null) {
+      throw 'Must set a tag when setting filter to tags!';
+    }
     setState(() {
       _cachedFilteredRooms = null;
+      activeTag = tag;
       activeFilter = filter;
       if (filter != .spaces && activeSpaceId != null) {
         _activeSpaceId = null;
       }
     });
+    AppSettings.chatFilter.setItem(filter == .tag ? tag! : filter.name);
   }
 
   void setActiveClient(Client client) {
@@ -1078,6 +1200,8 @@ enum ChatContextAction {
   goToSpace,
   favorite,
   lowPriority,
+  addTag,
+  removeTag,
   markUnread,
   mute,
   leave,

@@ -1,6 +1,6 @@
 {
 	"@@locale": "de",
-	"@@last_modified": "2026-10-08T15:34:19.867Z",
+	"@@last_modified": "2026-10-25T20:16:56.909Z",
 	"alwaysUse24HourFormat": "true",
 	"@alwaysUse24HourFormat": {
 		"description": "Set to true to always display time of day in 24 hour format."
@@ -4327,5 +4327,62 @@
 	"@yesterday": {
 		"type": "String",
 		"placeholders": {}
+	},
+	"forwardedFrom": "Weitergeleitet von {sender}",
+	"forwardedMessage": "Weitergeleitete Nachricht",
+	"updateReleasesBehind": "{count, plural, one{Du bist # Version hinter der neuesten Version zurück.} other{Du bist # Versionen hinter der neuesten Version zurück.}}",
+	"repliesInThread": "{replyCount, plural, =1{1 Antwort} one{{replyCount} Antwort} other{{replyCount} Antworten}}",
+	"stopWatching": "Ansehen beenden",
+	"chooseStreamToWatch": "Aktive Streams",
+	"locationPublicRoomWarningTitle": "Dies ist ein öffentlicher Chat",
+	"locationPublicRoomWarningText": "Dein Standort bleibt im Nachrichtenverlauf und kann von anderen Mitgliedern gespeichert werden. Möchtest du wirklich fortfahren?",
+	"locationLargeRoomWarningTitle": "Dieser Chat scheint viele Mitglieder zu haben",
+	"locationLargeRoomWarningText": "Hier sind mehr als 50 Mitglieder. Dein Standort bleibt im Nachrichtenverlauf und kann von anderen Mitgliedern gespeichert werden. Möchtest du wirklich fortfahren?",
+	"@forwardedFrom": {
+		"type": "String",
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
+	},
+	"@forwardedMessage": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@updateReleasesBehind": {
+		"placeholders": {
+			"count": {
+				"type": "int",
+				"example": "1"
+			}
+		}
+	},
+	"createNewTag": "Neuen Tag erstellen",
+	"removeTag": "Tag entfernen",
+	"addTag": "Tag hinzufügen",
+	"tagName": "Tagname",
+	"@createNewTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@removeTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@addTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@tagName": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@incomingCallFrom": {
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"@@locale": "nl",
-	"@@last_modified": "2026-10-08T15:34:41.365Z",
+	"@@last_modified": "2026-10-25T20:17:13.711Z",
 	"@choicesSelected": {
 		"type": "String",
 		"placeholders": {
@@ -4208,5 +4208,62 @@
 	"@yesterday": {
 		"type": "String",
 		"placeholders": {}
+	},
+	"forwardedFrom": "Doorgestuurd van {sender}",
+	"forwardedMessage": "Doorgestuurd bericht",
+	"updateReleasesBehind": "{count, plural, one{Je loopt # versie achter op de nieuwste.} other{Je loopt # versies achter op de nieuwste.}}",
+	"repliesInThread": "{replyCount, plural, =1{1 antwoord} one{{replyCount} antwoord} other{{replyCount} antwoorden}}",
+	"stopWatching": "Stoppen met kijken",
+	"chooseStreamToWatch": "Lopende streams",
+	"locationPublicRoomWarningTitle": "Dit is een openbare chat",
+	"locationPublicRoomWarningText": "Je locatie blijft in de berichtgeschiedenis staan en kan door andere deelnemers worden opgeslagen. Weet je zeker dat je wilt doorgaan?",
+	"locationLargeRoomWarningTitle": "Het lijkt erop dat er veel deelnemers in deze chat zijn",
+	"locationLargeRoomWarningText": "Er zijn hier meer dan 50 deelnemers. Je locatie blijft in de berichtgeschiedenis staan en kan door andere deelnemers worden opgeslagen. Weet je zeker dat je wilt doorgaan?",
+	"@forwardedFrom": {
+		"type": "String",
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
+	},
+	"@forwardedMessage": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@updateReleasesBehind": {
+		"placeholders": {
+			"count": {
+				"type": "int",
+				"example": "1"
+			}
+		}
+	},
+	"createNewTag": "Nieuwe tag maken",
+	"removeTag": "Tag verwijderen",
+	"addTag": "Tag toevoegen",
+	"tagName": "Tagnaam",
+	"@createNewTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@removeTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@addTag": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@tagName": {
+		"type": "String",
+		"placeholders": {}
+	},
+	"@incomingCallFrom": {
+		"placeholders": {
+			"sender": {
+				"type": "String"
+			}
+		}
 	}
 }

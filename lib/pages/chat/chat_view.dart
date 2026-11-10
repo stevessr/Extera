@@ -632,27 +632,28 @@ class _ChatViewState extends State<ChatView> {
                           });
                         }
                       },
-                      child: SafeArea(
-                        top: false,
-                        child: Padding(
-                          padding: floatingInputBar
-                              ? EdgeInsets.symmetric(
-                                  horizontal: bottomSheetPadding,
-                                  vertical: bottomSheetPadding / 2,
-                                )
-                              : EdgeInsets.zero,
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: ConstrainedBox(
-                              constraints: AppSettings.floatingInputBar.value
-                                  ? const BoxConstraints(
-                                      maxWidth: FluffyThemes.columnWidth * 2.5,
-                                    )
-                                  : const BoxConstraints(),
-                              child:
-                                  controller.room.isExtinct &&
-                                      !AppSettings.alwaysShowInputBar.value
-                                  ? (floatingInputBar &&
+                      child: Padding(
+                        padding: floatingInputBar
+                            ? EdgeInsets.symmetric(
+                                horizontal: bottomSheetPadding,
+                                vertical: bottomSheetPadding / 2,
+                              )
+                            : EdgeInsets.zero,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: ConstrainedBox(
+                            constraints: AppSettings.floatingInputBar.value
+                                ? const BoxConstraints(
+                                    maxWidth: FluffyThemes.columnWidth * 2.5,
+                                  )
+                                : const BoxConstraints(),
+                            child:
+                                controller.room.isExtinct &&
+                                    !AppSettings.alwaysShowInputBar.value
+                                ? SafeArea(
+                                    top: false,
+                                    child:
+                                        floatingInputBar &&
                                             AppSettings
                                                 .enableChatFrostedGlass
                                                 .value
@@ -680,95 +681,104 @@ class _ChatViewState extends State<ChatView> {
                                             ),
                                             onPressed:
                                                 controller.goToNewRoomAction,
-                                          ))
-                                  : (controller.room.canSendDefaultMessages &&
-                                            controller.room.membership ==
-                                                .join) ||
-                                        AppSettings.alwaysShowInputBar.value
-                                  ? (() {
-                                      final inputChild =
-                                          controller.room.isAbandonedDMRoom &&
-                                              !AppSettings
-                                                  .alwaysShowInputBar
-                                                  .value
-                                          ? Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                TextButton.icon(
-                                                  style: TextButton.styleFrom(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          16,
-                                                        ),
-                                                    foregroundColor:
-                                                        theme.colorScheme.error,
-                                                  ),
-                                                  icon: const Icon(
-                                                    Icons.archive_outlined,
-                                                  ),
-                                                  onPressed:
-                                                      controller.leaveChat,
-                                                  label: Text(
-                                                    L10n.of(context).leave,
-                                                  ),
-                                                ),
-                                                TextButton.icon(
-                                                  style: TextButton.styleFrom(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          16,
-                                                        ),
-                                                  ),
-                                                  icon: const Icon(
-                                                    Icons.forum_outlined,
-                                                  ),
-                                                  onPressed:
-                                                      controller.recreateChat,
-                                                  label: Text(
-                                                    L10n.of(context).reopenChat,
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          : Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                ReplyDisplay(controller),
-                                                ChatInputRow(controller),
-                                                ChatEmojiPicker(controller),
-                                              ],
-                                            );
-                                      if (!floatingInputBar) {
-                                        return AppSettings
-                                                .enableChatFrostedGlass
+                                          ),
+                                  )
+                                : (controller.room.canSendDefaultMessages &&
+                                          controller.room.membership ==
+                                              .join) ||
+                                      AppSettings.alwaysShowInputBar.value
+                                ? (() {
+                                    final inputChild =
+                                        controller.room.isAbandonedDMRoom &&
+                                            !AppSettings
+                                                .alwaysShowInputBar
                                                 .value
-                                            ? _FloatingInputShell(
-                                                borderRadius: BorderRadius.zero,
-                                                child: inputChild,
-                                              )
-                                            : Material(
-                                                clipBehavior: Clip.hardEdge,
-                                                color: theme
-                                                    .colorScheme
-                                                    .surfaceContainerHigh,
-                                                shape: Border(
-                                                  top: BorderSide(
-                                                    color: theme.dividerColor,
+                                        ? Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              TextButton.icon(
+                                                style: TextButton.styleFrom(
+                                                  padding: const EdgeInsets.all(
+                                                    16,
+                                                  ),
+                                                  foregroundColor:
+                                                      theme.colorScheme.error,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.archive_outlined,
+                                                ),
+                                                onPressed: controller.leaveChat,
+                                                label: Text(
+                                                  L10n.of(context).leave,
+                                                ),
+                                              ),
+                                              TextButton.icon(
+                                                style: TextButton.styleFrom(
+                                                  padding: const EdgeInsets.all(
+                                                    16,
                                                   ),
                                                 ),
-                                                child: inputChild,
-                                              );
-                                      }
+                                                icon: const Icon(
+                                                  Icons.forum_outlined,
+                                                ),
+                                                onPressed:
+                                                    controller.recreateChat,
+                                                label: Text(
+                                                  L10n.of(context).reopenChat,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ReplyDisplay(controller),
+                                              ChatInputRow(controller),
+                                              ChatEmojiPicker(controller),
+                                            ],
+                                          );
+                                    if (!floatingInputBar) {
                                       return AppSettings
                                               .enableChatFrostedGlass
                                               .value
                                           ? _FloatingInputShell(
+                                              borderRadius: BorderRadius.zero,
+                                              child: SafeArea(
+                                                top: false,
+                                                child: inputChild,
+                                              ),
+                                            )
+                                          : Material(
+                                              clipBehavior: Clip.hardEdge,
+                                              color: theme
+                                                  .colorScheme
+                                                  .surfaceContainerHigh,
+                                              shape: Border(
+                                                top: BorderSide(
+                                                  color: theme.dividerColor,
+                                                ),
+                                              ),
+                                              child: SafeArea(
+                                                top: false,
+                                                child: inputChild,
+                                              ),
+                                            );
+                                    }
+                                    return AppSettings
+                                            .enableChatFrostedGlass
+                                            .value
+                                        ? SafeArea(
+                                            top: false,
+                                            child: _FloatingInputShell(
                                               borderRadius:
                                                   BorderRadius.circular(28),
                                               child: inputChild,
-                                            )
-                                          : Material(
+                                            ),
+                                          )
+                                        : SafeArea(
+                                            top: false,
+                                            child: Material(
                                               clipBehavior: Clip.hardEdge,
                                               color: theme
                                                   .colorScheme
@@ -781,10 +791,10 @@ class _ChatViewState extends State<ChatView> {
                                                 ),
                                               ),
                                               child: inputChild,
-                                            );
-                                    })()
-                                  : const SizedBox.shrink(),
-                            ),
+                                            ),
+                                          );
+                                  })()
+                                : const SizedBox.shrink(),
                           ),
                         ),
                       ),
